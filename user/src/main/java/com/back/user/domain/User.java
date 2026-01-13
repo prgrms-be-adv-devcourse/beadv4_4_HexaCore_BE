@@ -43,8 +43,8 @@ public class User extends BaseTimeEntity {
 
     @Builder.Default
     private int blindCount = 0;
-
     private LocalDateTime chatRestrictedUntil;
+
     private String fcmToken;
 
 }
