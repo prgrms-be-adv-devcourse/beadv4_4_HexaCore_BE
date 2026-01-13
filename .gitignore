@@ -5,6 +5,12 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
+### Custom ###
+db_dev.mv.db
+db_dev.trace.db
+.env
+application-local.yml
+
 ### STS ###
 .apt_generated
 .classpath
