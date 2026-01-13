@@ -16,11 +16,11 @@ public class ChatReport extends BaseTimeEntity {
     @JoinColumn(name = "chat_message_id", nullable = false)
     private ChatMessage chatMessage;
 
-    @Column(name = "reporter_member_id")
-    private Long reporterMemberId;
+    @Column(name = "reporter_user_id")
+    private Long reporterUserId;
 
-    @Column(name = "reported_member_id")
-    private Long reportedMemberId;
+    @Column(name = "reported_user_id")
+    private Long reportedUserId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "reason")
