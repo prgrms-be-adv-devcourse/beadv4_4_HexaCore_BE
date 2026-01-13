@@ -1,6 +1,6 @@
 package com.back.notification.domain;
 
-import com.back.common.domain.MongoBaseEntity;
+import com.back.common.entity.MongoBaseEntity;
 import com.back.notification.domain.enums.Type;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -20,7 +20,7 @@ public class Notification extends MongoBaseEntity {
     @Id
     private String id;
 
-    private Long memberId;
+    private Long userId;
 
     private Type type;
 
