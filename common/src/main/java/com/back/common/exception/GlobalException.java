@@ -26,7 +26,6 @@ public class GlobalException {
         final BindingResult bindingResult = ex.getBindingResult();
         final Map<String, String> fieldErrors = new HashMap<>();
         for (FieldError fieldError : bindingResult.getFieldErrors()) {
-            fieldErrors.put(fieldError.getField(), fieldError.getDefaultMessage());
         }
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(CommonResponse.createValidationError(bindingResult));
