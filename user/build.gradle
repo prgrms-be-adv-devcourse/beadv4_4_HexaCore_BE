@@ -6,7 +6,7 @@ plugins {
 
 group = 'com.back'
 version = '0.0.1-SNAPSHOT'
-description = 'member'
+description = 'user'
 
 java {
     toolchain {
@@ -33,6 +33,7 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok'
     testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    implementation project(":common")
 }
 
 tasks.named('test') {
