@@ -82,4 +82,3 @@ public class CommonResponse<T> {
         this.message = message;
     }
 }
-
