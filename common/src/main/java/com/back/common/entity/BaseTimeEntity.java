@@ -30,4 +30,7 @@ public abstract class BaseTimeEntity {
     @JsonDeserialize(using = LocalDateTimeDeserializer.class)
     @JsonSerialize(using = LocalDateTimeSerializer.class)
     private LocalDateTime lastModifiedAt;
+
+    @Column
+    private LocalDateTime deletedAt;
 }
