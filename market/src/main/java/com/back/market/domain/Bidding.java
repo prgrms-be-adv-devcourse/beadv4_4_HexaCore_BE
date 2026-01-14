@@ -23,14 +23,14 @@ import org.hibernate.annotations.SQLRestriction;
 @SQLDelete(sql = "UPDATE biddings SET deleted_at = NOW() WHERE id = ?")
 @SQLRestriction("deleted_at IS NULL")
 @Table(name = "biddings")
-public class Biddings extends BaseTimeEntity {
+public class Bidding extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;                        // PK
 
     @ManyToOne(fetch = FetchType.LAZY) // LAZY LOADING
     @JoinColumn(name = "user_id", nullable = false)
-    private MarketUsers marketUser;         // 누가 입찰했는지 (MarketUsers 참조)
+    private MarketUser marketUser;         // 누가 입찰했는지 (MarketUsers 참조)
 
     @ManyToOne(fetch = FetchType.LAZY) // LAZY LOADING
     @JoinColumn(name = "product_id", nullable = false)

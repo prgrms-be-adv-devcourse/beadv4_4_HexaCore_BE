@@ -24,7 +24,7 @@ import org.hibernate.annotations.SQLRestriction;
 @SQLDelete(sql = "UPDATE market_users SET deleted_at = NOW() WHERE id = ?")
 @SQLRestriction("deleted_at IS NULL")
 @Table(name = "market_users")
-public class MarketUsers extends BaseTimeEntity {
+public class MarketUser extends BaseTimeEntity {
     
     @Id
     @Column(name = "id")
@@ -34,16 +34,16 @@ public class MarketUsers extends BaseTimeEntity {
     @Enumerated(EnumType.STRING)
     private Role role;             // 권한(USER, ADMIN)
 
-    @Column(name = "nickname", nullable = false)
+    @Column(name = "nickname", nullable = false, length = 30)
     private String nickname;        // 닉네임
 
     @Column(name = "email", nullable = false)
     private String email;           // 이메일
 
-    @Column(name = "address")
+    @Column(name = "address", length = 500)
     private String address;         // 주소(기본 배송지로 사용예정)
 
-    @Column(name = "phone")
+    @Column(name = "phone", length = 20)
     private String phone;           // 연락처
 
     @Column(name = "profile_image_url")

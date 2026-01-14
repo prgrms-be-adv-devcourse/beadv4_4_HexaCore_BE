@@ -32,7 +32,7 @@ public class MarketProduct extends BaseTimeEntity {
     @Column(name = "id")
     private Long id;                    // 원본 Product의 PK를 그대로 사용
 
-    @Column(name = "size", nullable = false)
+    @Column(name = "size", nullable = false, length = 50)
     private String size;                // 상품 사이즈(옵션)
 
     // Product_info 테이블
