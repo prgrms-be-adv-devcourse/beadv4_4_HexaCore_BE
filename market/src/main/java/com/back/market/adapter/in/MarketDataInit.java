@@ -10,6 +10,8 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+
 /**
  * 더미 데이터 생성을 위한 클래스(MarketUser, MarketProduct)
  * CommandLineRunner를 통해 스프링 application이 시작될 때 run() 메소드도 실행하게끔 구현
@@ -62,8 +64,8 @@ public class MarketDataInit implements CommandLineRunner {
                 .brandName("Nike")
                 .name("Jordan 1 Retro High OG Chicago")
                 .productNumber("JD-101-CHI")
-                .size("270")
-                .originalPrice(209000L)
+                .productOption("270")
+                .originalPrice(BigDecimal.valueOf(209000L))
                 .categoryName("Sneakers")
                 .thumbnailImage("https://dummyimage.com/600x400/000/fff&text=Jordan1") // 임시 이미지
                 .build();
@@ -75,8 +77,8 @@ public class MarketDataInit implements CommandLineRunner {
                 .brandName("Nike")
                 .name("Jordan 1 Retro High OG Chicago")
                 .productNumber("JD-101-CHI")
-                .size("280")
-                .originalPrice(209000L)
+                .productOption("280")
+                .originalPrice(BigDecimal.valueOf(209000L))
                 .categoryName("Sneakers")
                 .thumbnailImage("https://dummyimage.com/600x400/000/fff&text=Jordan1")
                 .build();
@@ -88,8 +90,8 @@ public class MarketDataInit implements CommandLineRunner {
                 .brandName("Adidas")
                 .name("Yeezy Boost 350 V2 Zebra")
                 .productNumber("CP9654")
-                .size("260")
-                .originalPrice(289000L)
+                .productOption("260")
+                .originalPrice(BigDecimal.valueOf(289000L))
                 .categoryName("Sneakers")
                 .thumbnailImage("https://dummyimage.com/600x400/000/fff&text=Yeezy")
                 .build();

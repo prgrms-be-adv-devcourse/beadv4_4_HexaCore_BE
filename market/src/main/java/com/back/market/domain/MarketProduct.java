@@ -13,6 +13,8 @@ import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 
+import java.math.BigDecimal;
+
 /**
  * 입찰의 대상이 되는 테이블
  *
@@ -32,8 +34,8 @@ public class MarketProduct extends BaseTimeEntity {
     @Column(name = "id")
     private Long id;                    // 원본 Product의 PK를 그대로 사용
 
-    @Column(name = "size", nullable = false, length = 50)
-    private String size;                // 상품 사이즈(옵션)
+    @Column(name = "product_option", nullable = false, length = 100)
+    private String productOption;                // 상품 사이즈(옵션)
 
     // Product_info 테이블
     @Column(name = "name", nullable = false)
@@ -46,7 +48,7 @@ public class MarketProduct extends BaseTimeEntity {
     private String thumbnailImage;      // 제품 이미지
 
     @Column(name = "release_price")
-    private Long originalPrice;         // 발매가
+    private BigDecimal originalPrice;   // 발매가
 
     // Brand 테이블
     @Column(name = "brand_name", nullable = false)
