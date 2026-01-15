@@ -2,10 +2,8 @@ package com.back.market.domain;
 
 import com.back.common.entity.BaseTimeEntity;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import jakarta.validation.constraints.Min;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
@@ -32,8 +30,10 @@ public class Cart extends BaseTimeEntity {
     private MarketUser marketUser; // 장바구니 주인 (Replica User)
 
     @Column(name = "items_count", nullable = false)
+    @Min(value = 0) // 음수 방지
     private Integer itemsCount; // 담긴 상품 개수 (관리용)
 
     @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<CartItem> cartItems = new ArrayList<>(); // 장바구니에 담긴 상품들
 }
