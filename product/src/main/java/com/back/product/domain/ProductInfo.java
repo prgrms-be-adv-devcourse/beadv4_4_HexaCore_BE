@@ -37,9 +37,6 @@ public class ProductInfo extends BaseTimeEntity {
     @Column(nullable = false, length = 50)
     private String productCode;
 
-    @Column(nullable = false, length = 255)
-    private String imageUrl;
-
     @Column(nullable = false, precision = 10, scale = 0) // 10자리 정수
     @Min(0)
     private BigDecimal releasePrice;
