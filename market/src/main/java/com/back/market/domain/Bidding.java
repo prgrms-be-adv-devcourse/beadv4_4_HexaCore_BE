@@ -12,6 +12,8 @@ import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 
+import java.math.BigDecimal;
+
 /**
  * 입찰 테이블
  */
@@ -36,8 +38,8 @@ public class Bidding extends BaseTimeEntity {
     @JoinColumn(name = "product_id", nullable = false)
     private MarketProduct marketProduct;    // 어떤 상품(사이즈 포함)에 입찰했는지 (MarketProduct 참조)
 
-    @Column(name = "price", nullable = false)
-    private Long price;                     // 입찰 희망 가격
+    @Column(name = "price", nullable = false, precision = 15, scale = 2)
+    private BigDecimal price;               // 입찰 희망 가격
 
     @Column(name = "position", nullable = false)
     @Enumerated(EnumType.STRING)
