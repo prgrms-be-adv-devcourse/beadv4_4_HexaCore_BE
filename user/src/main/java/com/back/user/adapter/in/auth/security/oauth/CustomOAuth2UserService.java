@@ -58,8 +58,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                     );
                 });
 
-       user.updateEmail(response.getEmail());
-
         return new CustomOAuth2User(user.getRole(), user.getId(), oAuth2User.getAttributes());
     }
 }
