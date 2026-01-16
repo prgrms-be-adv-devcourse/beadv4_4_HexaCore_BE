@@ -21,6 +21,10 @@ public enum FailureCode {
      * 401 Unauthorized
      */
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "UNAUTHORIZED", "인증이 필요합니다."),
+    TOKEN_MISSING(HttpStatus.UNAUTHORIZED, "TOKEN_MISSING", "토큰이 존재하지 않습니다."),
+    TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "TOKEN_EXPIRED", "토큰이 만료되었습니다."),
+    TOKEN_INVALID(HttpStatus.UNAUTHORIZED, "TOKEN_INVALID", "토큰이 유효하지 않습니다."),
+    TOKEN_CATEGORY_INVALID(HttpStatus.UNAUTHORIZED, "TOKEN_CATEGORY_INVALID", "토큰 유형이 올바르지 않습니다."),
 
 
     /**

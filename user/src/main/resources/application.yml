@@ -1,0 +1,32 @@
+spring:
+  config:
+    import: optional:file:.env[.properties]
+  profiles:
+    active: local
+  output:
+    ansi:
+      enabled: always
+  jackson:
+    time-zone: Asia/Seoul
+    serialization:
+      fail-on-empty-beans: false
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        highlight_sql: true
+        use_sql_comments: true
+        default_batch_fetch_size: 100
+  batch:
+    job:
+      enabled: false
+logging:
+  level:
+    com.back: DEBUG
+    org.hibernate.orm.jdbc.bind: OFF
+    org.hibernate.orm.jdbc.extract: OFF
+    org.springframework.transaction.interceptor: TRACE

@@ -8,5 +8,6 @@ include(
         "market",
         "user",
         "product",
-        "settlement"
+        "settlement",
+        "security"
 )

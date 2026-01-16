@@ -4,7 +4,7 @@ import com.back.common.code.FailureCode;
 
 public class UnauthorizedException extends CustomException {
     public UnauthorizedException() {
-        super(FailureCode.BAD_REQUEST);
+        super(FailureCode.UNAUTHORIZED);
     }
 
     public UnauthorizedException(FailureCode failureCode) {

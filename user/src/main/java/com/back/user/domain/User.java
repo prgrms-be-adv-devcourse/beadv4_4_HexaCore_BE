@@ -31,6 +31,7 @@ public class User extends BaseTimeEntity {
     @Column(nullable = false)
     private Role role;
 
+    @Column(nullable = false, unique = true)
     private String nickname;
 
     private String email;
@@ -46,5 +47,16 @@ public class User extends BaseTimeEntity {
     private LocalDateTime chatRestrictedUntil;
 
     private String fcmToken;
+
+    public static User createSocialUser(String email, String nickname,
+                                        Provider provider, String providerId) {
+        return User.builder()
+                .provider(provider)
+                .providerId(providerId)
+                .nickname(nickname)
+                .email(email)
+                .role(Role.USER)
+                .build();
+    }
 
 }

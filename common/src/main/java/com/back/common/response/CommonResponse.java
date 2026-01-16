@@ -1,13 +1,15 @@
 package com.back.common.response;
 
-import java.util.HashMap;
-import java.util.Map;
+import com.back.common.code.SuccessCode;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -47,6 +49,15 @@ public class CommonResponse<T> {
             fieldErrors.put(fieldError.getField(), fieldError.getDefaultMessage());
         }
         return new CommonResponse<>(HttpStatus.BAD_REQUEST.value(), "VALIDATION_FAILED", "요청 데이터가 유효하지 않습니다.", fieldErrors);
+    }
+
+    public static <T> CommonResponse<T> success(SuccessCode successCode, T data) {
+        return new CommonResponse<>(
+                successCode.getHttpStatus().value(),
+                successCode.getCode(),
+                successCode.getMessage(),
+                data
+        );
     }
 
     private CommonResponse(int status, String message, T data) {
