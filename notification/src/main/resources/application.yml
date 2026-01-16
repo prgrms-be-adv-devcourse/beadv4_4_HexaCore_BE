@@ -5,5 +5,3 @@ spring:
     show-sql: true
   jackson:
     time-zone: Asia/Seoul
-
-debug: true
