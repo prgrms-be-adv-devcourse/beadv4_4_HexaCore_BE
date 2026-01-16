@@ -1,6 +1,6 @@
 package com.back.product.app.usecase;
 
-import com.back.product.dto.response.BrandResponseDto;
+import com.back.product.domain.Brand;
 import com.back.product.mapper.BrandMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -15,7 +15,7 @@ public class BrandUseCase {
     private final ProductSupport productSupport;
 
     @Transactional(readOnly = true)
-    public List<BrandResponseDto> getBrands() {
+    public List<BrandDto> getBrands() {
         return productSupport.getAllBrands().stream().map(brandMapper::toDto).toList();
     }
 }
