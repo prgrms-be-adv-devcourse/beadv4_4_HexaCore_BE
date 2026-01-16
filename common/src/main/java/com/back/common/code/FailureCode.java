@@ -47,6 +47,7 @@ public enum FailureCode {
     NOT_FOUND(HttpStatus.NOT_FOUND, "NOT_FOUND", "요청한 자원이 존재하지 않습니다."),
     ENTITY_NOT_FOUND(HttpStatus.NOT_FOUND, "ENTITY_NOT_FOUND", "대상을 찾을 수 없습니다."),
     SETTLEMENT_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "SETTLEMENT_ITEM_NOT_FOUND", "정산 상품을 찾을 수 없습니다."),
+    CHAT_ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "CHAT_ROOM_NOT_FOUND", "해당 채티방을 찾을 수 없습니다."),
 
     /**
      * 405 Method Not Allowed
