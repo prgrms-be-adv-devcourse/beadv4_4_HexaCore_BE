@@ -1,6 +1,6 @@
 package com.back.notification.domain;
 
-import com.back.common.market.event.BiddingCanceledEvent;
+import com.back.common.market.event.PurchaseCanceledEvent;
 import com.back.notification.domain.enums.NotificationTargetRole;
 import com.back.notification.domain.enums.Type;
 import com.back.notification.mapper.NotificationMapper;
@@ -12,7 +12,7 @@ import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
-public class BiddingCanceledStrategy implements NotificationStrategy<BiddingCanceledEvent> {
+public class PurchaseCanceledStrategy implements NotificationStrategy<PurchaseCanceledEvent> {
     private final NotificationMapper mapper;
 
     @Override
@@ -20,18 +20,18 @@ public class BiddingCanceledStrategy implements NotificationStrategy<BiddingCanc
         return Type.PURCHASE_CANCELED;
     }
 
-    public List<Notification> create(BiddingCanceledEvent event) {
+    public List<Notification> create(PurchaseCanceledEvent event) {
         return findTargets(event).entrySet()
                 .stream()
                 .map(entry ->
-                        mapper.toBidCanceledNotification(type(),
+                        mapper.toPurchaseCanceledNotification(type(),
                                 event,
                                 entry.getValue(),
                                 entry.getKey())
                 ).toList();
     }
 
-    private Map<NotificationTargetRole, Long> findTargets(BiddingCanceledEvent event) {
+    private Map<NotificationTargetRole, Long> findTargets(PurchaseCanceledEvent event) {
         return Map.of(
                 NotificationTargetRole.BUYER, event.buyerUserId(),
                 NotificationTargetRole.SELLER, event.sellerUserId()

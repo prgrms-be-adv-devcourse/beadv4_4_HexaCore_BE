@@ -1,6 +1,6 @@
 package com.back.notification.mapper;
 
-import com.back.common.market.event.BiddingCanceledEvent;
+import com.back.common.market.event.PurchaseCanceledEvent;
 import com.back.common.market.event.BiddingCompletedEvent;
 import com.back.notification.domain.Notification;
 import com.back.notification.domain.enums.NotificationTargetRole;
@@ -33,8 +33,8 @@ public class NotificationMapper {
                 .build();
     }
 
-    public Notification toBidCanceledNotification(Type type, BiddingCanceledEvent event,
-                                                  Long userId, NotificationTargetRole role) {
+    public Notification toPurchaseCanceledNotification(Type type, PurchaseCanceledEvent event,
+                                                       Long userId, NotificationTargetRole role) {
         return Notification.builder()
                 .userId(userId)
                 .type(type)

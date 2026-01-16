@@ -2,7 +2,7 @@ package com.back.common.market.event;
 
 import java.math.BigDecimal;
 
-public record BiddingCanceledEvent(
+public record PurchaseCanceledEvent(
         Long biddingId,
         Long buyerUserId,
         Long sellerUserId,
