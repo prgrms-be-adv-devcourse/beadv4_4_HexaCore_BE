@@ -12,13 +12,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping(path = "/api/v1/products", produces = "application/json")
+@RequestMapping(path = "/api/v1/products/brands", produces = "application/json")
 @RequiredArgsConstructor
 public class ApiV1BrandController implements BrandApiController {
     private final ProductFacade ProductFacade;
 
     @Override
-    @GetMapping("/brands")
+    @GetMapping
     public CommonResponse<BrandListResponseDto> getBrands() {
         BrandListResponseDto response = BrandListResponseDto.builder()
                 .brands(ProductFacade.getBrands())
@@ -27,7 +27,7 @@ public class ApiV1BrandController implements BrandApiController {
     }
 
     @Override
-    @PostMapping("/brands")
+    @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public CommonResponse<BrandResponseDto> createBrand(@RequestBody @Valid BrandCreateRequestDto request) {
         BrandResponseDto response = BrandResponseDto.builder()
