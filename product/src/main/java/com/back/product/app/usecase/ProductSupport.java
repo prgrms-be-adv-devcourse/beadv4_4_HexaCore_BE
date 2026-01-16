@@ -22,8 +22,4 @@ public class ProductSupport {
     public boolean existsByName(String name) {
         return brandRepository.existsBrandByNameIgnoreCase(name);
     }
-
-    public Brand save(Brand brand) {
-        return brandRepository.save(brand);
-    }
 }
