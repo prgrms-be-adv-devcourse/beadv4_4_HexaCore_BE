@@ -26,9 +26,4 @@ public class ChatController {
                 chatFacade.enterChatRoom(brandId)
         );
     }
-
-
-
-
-
 }
