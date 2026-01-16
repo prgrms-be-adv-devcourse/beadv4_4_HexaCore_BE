@@ -2,6 +2,7 @@ package com.back.product.app.usecase;
 
 import com.back.common.code.FailureCode;
 import com.back.common.exception.CustomException;
+import com.back.product.adapter.out.CategoryRepository;
 import com.back.product.domain.Category;
 import com.back.product.dto.CategoryDto;
 import com.back.product.dto.request.CategoryCreateRequestDto;
@@ -18,6 +19,7 @@ import java.util.List;
 public class CategoryUseCase {
     private final CategoryMapper categoryMapper;
     private final ProductSupport productSupport;
+    private final CategoryRepository categoryRepository;
 
     @Transactional(readOnly = true)
     public List<CategoryDto> getCategories() {
@@ -30,7 +32,9 @@ public class CategoryUseCase {
 
         Category category = categoryMapper.toEntity(request);
 
-        return categoryMapper.toDto(category);
+        Category newCategory = categoryRepository.save(category);
+
+        return categoryMapper.toDto(newCategory);
     }
 
     private void isDuplicateCategoryName(String name) {

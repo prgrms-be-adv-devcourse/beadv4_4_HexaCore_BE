@@ -2,6 +2,7 @@ package com.back.product.app.usecase;
 
 import com.back.common.code.FailureCode;
 import com.back.common.exception.CustomException;
+import com.back.product.adapter.out.BrandRepository;
 import com.back.product.domain.Brand;
 import com.back.product.dto.request.BrandCreateRequestDto;
 import com.back.product.dto.BrandDto;
@@ -18,6 +19,7 @@ import java.util.List;
 public class BrandUseCase {
     private final BrandMapper brandMapper;
     private final ProductSupport productSupport;
+    private final BrandRepository brandRepository;
 
     @Transactional(readOnly = true)
     public List<BrandDto> getBrands() {
@@ -30,7 +32,9 @@ public class BrandUseCase {
 
         Brand brand = brandMapper.toEntity(request);
 
-        return brandMapper.toDto(brand);
+        Brand newBrand = brandRepository.save(brand);
+
+        return brandMapper.toDto(newBrand);
     }
 
     private void validateDuplicateBrandName(String name) {
