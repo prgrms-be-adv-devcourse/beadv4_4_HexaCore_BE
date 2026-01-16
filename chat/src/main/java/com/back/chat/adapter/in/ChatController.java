@@ -5,6 +5,7 @@ import com.back.chat.dto.request.ChatRoomEnterRequestDto;
 import com.back.chat.dto.response.ChatRoomEnterResponseDto;
 import com.back.chat.mapper.ChatRoomMapper;
 import com.back.common.response.CommonResponse;
+import com.back.security.principal.AuthPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -15,19 +16,18 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/chat")
+@RequestMapping("/api/v1/chat")
 @RequiredArgsConstructor
 public class ChatController {
 
     private final ChatFacade chatFacade;
 
     @PostMapping("/enter")
-    public CommonResponse<ChatRoomEnterResponseDto> enter(@RequestParam("brandId") Long brandId,
-                                                          @AuthenticationPrincipal UserDetails userDetails){
+    public CommonResponse<ChatRoomEnterResponseDto> enter(@RequestParam("brandId") Long brandId){
         return CommonResponse.success(
                         HttpStatus.OK,
                 "로그인 성공",
-                chatFacade.enterChatRoom(ChatRoomMapper.toEnterRequestDto(brandId,userId))
+                chatFacade.enterChatRoom(ChatRoomMapper.toEnterRequestDto(brandId))
         );
     }
 
