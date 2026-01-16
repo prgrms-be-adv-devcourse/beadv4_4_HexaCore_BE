@@ -23,6 +23,7 @@ public enum FailureCode {
     INVALID_PRICE_UNIT(HttpStatus.BAD_REQUEST, "INVALID_PRICE_UNIT","입찰 가격은 1,000원 단위여야 합니다."),
     INVALID_BID_PRICE_BUY(HttpStatus.BAD_REQUEST, "INVALID_BID_PRICE_BUY","구매 입찰가는 즉시 구매가보다 낮아야 합니다."),
     INVALID_BID_PRICE_SELL(HttpStatus.BAD_REQUEST, "INVALID_BID_PRICE_SELL","판매 입찰가는 즉시 판매가보다 높아야 합니다."),
+    SELF_TRADING_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "SELF_TRADING_NOT_ALLOWED", "본인의 입찰 상품과는 거래할 수 없습니다."),
 
     /**
      * 401 Unauthorized

@@ -12,6 +12,7 @@ import com.back.market.domain.enums.BiddingStatus;
 import com.back.market.dto.request.BiddingRequestDto;
 import com.back.market.exception.InvalidBiddingPriceException;
 import com.back.market.exception.MarketEntityNotFoundException;
+import com.back.market.exception.SelfTradingException;
 import com.back.market.mapper.BiddingMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -49,6 +50,11 @@ public class RegisterBidUseCase {
                 BiddingStatus.PROCESS
         ).ifPresent(minSellingBid -> {
             if(requestDto.getPrice().compareTo(minSellingBid.getPrice()) >= 0) {
+                // 본인이 올린 상품의 거래를 막음
+                if (minSellingBid.getMarketUser().getId().equals(userId)) {
+                    throw new SelfTradingException(FailureCode.SELF_TRADING_NOT_ALLOWED);
+                }
+                // 그냥 CustomException을 던져도 무관하긴 한데 이름을 명시하기 위해 이렇게 구현
                 throw new InvalidBiddingPriceException(FailureCode.INVALID_BID_PRICE_BUY);
             }
         });
@@ -87,6 +93,11 @@ public class RegisterBidUseCase {
                 BiddingStatus.PROCESS
         ).ifPresent(maxBuyingBid -> {
             if(requestDto.getPrice().compareTo(maxBuyingBid.getPrice()) <= 0) {
+                // 본인이 올린 상품의 거래를 막음
+                if (maxBuyingBid.getMarketUser().getId().equals(userId)) {
+                    throw new SelfTradingException(FailureCode.SELF_TRADING_NOT_ALLOWED);
+                }
+
                 throw new InvalidBiddingPriceException(FailureCode.INVALID_BID_PRICE_SELL);
             }
         });
