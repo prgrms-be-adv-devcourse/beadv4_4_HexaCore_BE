@@ -1,15 +1,11 @@
 package com.back.chat.adapter.in;
 
 import com.back.chat.app.ChatFacade;
-import com.back.chat.dto.request.ChatRoomEnterRequestDto;
 import com.back.chat.dto.response.ChatRoomEnterResponseDto;
 import com.back.chat.mapper.ChatRoomMapper;
 import com.back.common.response.CommonResponse;
-import com.back.security.principal.AuthPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -27,7 +23,7 @@ public class ChatController {
         return CommonResponse.success(
                         HttpStatus.OK,
                 "로그인 성공",
-                chatFacade.enterChatRoom(ChatRoomMapper.toEnterRequestDto(brandId))
+                chatFacade.enterChatRoom(brandId)
         );
     }
 

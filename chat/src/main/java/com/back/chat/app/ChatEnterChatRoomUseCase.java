@@ -1,7 +1,6 @@
 package com.back.chat.app;
 
 import com.back.chat.domain.ChatRoom;
-import com.back.chat.dto.request.ChatRoomEnterRequestDto;
 import com.back.chat.dto.response.ChatRoomEnterResponseDto;
 import com.back.chat.mapper.ChatRoomMapper;
 import com.back.common.code.FailureCode;
@@ -15,8 +14,8 @@ public class ChatEnterChatRoomUseCase {
     private final ChatSupport chatSupport;
 
 
-    public ChatRoomEnterResponseDto enterChatRoom(ChatRoomEnterRequestDto dto) {
-        ChatRoom chatRoom = chatSupport.findRoomByBrandId(dto.getBrandId()).orElseThrow(()-> new BadRequestException(FailureCode.ENTITY_NOT_FOUND));
+    public ChatRoomEnterResponseDto enterChatRoom(Long brandId) {
+        ChatRoom chatRoom = chatSupport.findRoomByBrandId(brandId).orElseThrow(()-> new BadRequestException(FailureCode.ENTITY_NOT_FOUND));
         return ChatRoomMapper.toEnterResponseDto(chatRoom);
     }
 }
