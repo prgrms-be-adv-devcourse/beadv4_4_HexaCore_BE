@@ -24,7 +24,7 @@ public class BiddingCompletedStrategy implements NotificationStrategy<BiddingCom
     public List<Notification> create(BiddingCompletedEvent event) {
         return findTargets(event).entrySet().stream()
                 .map(entry ->
-                        mapper.toBidNotification(type(),
+                        mapper.toBidCompletedNotification(type(),
                                 event,
                                 entry.getValue(),   // userId
                                 entry.getKey())     // BUYER / SELLER

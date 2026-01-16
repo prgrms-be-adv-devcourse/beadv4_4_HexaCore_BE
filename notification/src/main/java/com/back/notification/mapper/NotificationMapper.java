@@ -11,8 +11,8 @@ import java.util.Map;
 @Component
 public class NotificationMapper {
 
-    public Notification toBidNotification(Type type, BiddingCompletedEvent event,
-                                          Long userId, NotificationTargetRole role) {
+    public Notification toBidCompletedNotification(Type type, BiddingCompletedEvent event,
+                                                   Long userId, NotificationTargetRole role) {
         return Notification.builder()
                 .userId(userId)
                 .type(type)
