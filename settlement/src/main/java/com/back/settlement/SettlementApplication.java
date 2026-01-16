@@ -2,8 +2,10 @@ package com.back.settlement;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = {"com.back.settlement", "com.back.security", "com.back.common"})
+@EnableJpaAuditing
 public class SettlementApplication {
 
     public static void main(String[] args) {

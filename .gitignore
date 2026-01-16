@@ -45,3 +45,5 @@ out/
 # macOS Finder
 .DS_Store
 **/.DS_Store
+/settlement/src/main/resources/application.yml
+/settlement/src/main/resources/data.sql
