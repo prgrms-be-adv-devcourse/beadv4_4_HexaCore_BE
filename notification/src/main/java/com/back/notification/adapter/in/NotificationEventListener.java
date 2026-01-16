@@ -1,0 +1,23 @@
+package com.back.notification.adapter.in;
+
+import com.back.common.market.event.BiddingCompletedEvent;
+import com.back.notification.app.NotificationFacade;
+import com.back.notification.domain.enums.Type;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
+
+@Component
+@RequiredArgsConstructor
+public class NotificationEventListener {
+    private final NotificationFacade notificationFacade;
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void handle(BiddingCompletedEvent event) {
+        notificationFacade.notify(Type.BID_COMPLETED, event);
+    }
+}
