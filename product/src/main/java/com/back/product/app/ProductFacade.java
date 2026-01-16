@@ -1,6 +1,8 @@
 package com.back.product.app;
 
 import com.back.product.app.usecase.BrandUseCase;
+import com.back.product.app.usecase.CategoryUseCase;
+import com.back.product.dto.CategoryDto;
 import com.back.product.dto.request.BrandCreateRequestDto;
 import com.back.product.dto.BrandDto;
 import jakarta.validation.Valid;
@@ -14,6 +16,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ProductFacade {
     private final BrandUseCase brandUseCase;
+    private final CategoryUseCase categoryUseCase;
 
     @Transactional(readOnly = true)
     public List<BrandDto> getBrands() {
@@ -23,5 +26,10 @@ public class ProductFacade {
     @Transactional
     public BrandDto createBrand(@Valid BrandCreateRequestDto request) {
         return brandUseCase.createBrand(request);
+    }
+
+    @Transactional(readOnly = true)
+    public List<CategoryDto> getCategories() {
+        return categoryUseCase.getCategories();
     }
 }
