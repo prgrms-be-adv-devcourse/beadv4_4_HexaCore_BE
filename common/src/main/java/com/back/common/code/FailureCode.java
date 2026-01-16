@@ -39,12 +39,14 @@ public enum FailureCode {
      * 403 Forbidden
      */
     FORBIDDEN(HttpStatus.FORBIDDEN, "FORBIDDEN", "접근 권한이 없습니다."),
+    SETTLEMENT_ACCESS_DENIED(HttpStatus.FORBIDDEN, "SETTLEMENT_ACCESS_DENIED", "해당 정산 내역에 접근 권한이 없습니다."),
 
     /**
      * 404 Not Found
      */
     NOT_FOUND(HttpStatus.NOT_FOUND, "NOT_FOUND", "요청한 자원이 존재하지 않습니다."),
     ENTITY_NOT_FOUND(HttpStatus.NOT_FOUND, "ENTITY_NOT_FOUND", "대상을 찾을 수 없습니다."),
+    SETTLEMENT_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "SETTLEMENT_ITEM_NOT_FOUND", "정산 상품을 찾을 수 없습니다."),
 
     /**
      * 405 Method Not Allowed
