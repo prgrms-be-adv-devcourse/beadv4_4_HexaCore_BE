@@ -17,6 +17,13 @@ public enum FailureCode {
     INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "INVALID_INPUT_VALUE", "입력값이 유효하지 않습니다."),
     INVALID_TYPE_VALUE(HttpStatus.BAD_REQUEST, "INVALID_TYPE_VALUE", "필드가 잘못되었습니다."),
 
+    // Market 모듈에서 사용
+    PRODUCT_NOT_FOUND(HttpStatus.BAD_REQUEST, "PRODUCT_NOT_FOUND","존재하지 않는 상품입니다."),
+    USER_NOT_FOUND(HttpStatus.BAD_REQUEST, "USER_NOT_FOUND","존재하지 않는 사용자입니다."),
+    INVALID_PRICE_UNIT(HttpStatus.BAD_REQUEST, "INVALID_PRICE_UNIT","입찰 가격은 1,000원 단위여야 합니다."),
+    INVALID_BID_PRICE_BUY(HttpStatus.BAD_REQUEST, "INVALID_BID_PRICE_BUY","구매 입찰가는 즉시 구매가보다 낮아야 합니다."),
+    INVALID_BID_PRICE_SELL(HttpStatus.BAD_REQUEST, "INVALID_BID_PRICE_SELL","판매 입찰가는 즉시 판매가보다 높아야 합니다."),
+
     /**
      * 401 Unauthorized
      */

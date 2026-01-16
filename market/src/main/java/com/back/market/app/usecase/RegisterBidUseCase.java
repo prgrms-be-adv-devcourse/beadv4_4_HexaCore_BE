@@ -1,5 +1,6 @@
 package com.back.market.app.usecase;
 
+import com.back.common.code.FailureCode;
 import com.back.market.adapter.out.BiddingRepository;
 import com.back.market.adapter.out.MarketProductRepository;
 import com.back.market.adapter.out.MarketUserRepository;
@@ -11,7 +12,6 @@ import com.back.market.domain.enums.BiddingStatus;
 import com.back.market.dto.request.BiddingRequestDto;
 import com.back.market.exception.InvalidBiddingPriceException;
 import com.back.market.exception.MarketEntityNotFoundException;
-import com.back.market.exception.code.MarketErrorCode;
 import com.back.market.mapper.BiddingMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -49,15 +49,15 @@ public class RegisterBidUseCase {
                 BiddingStatus.PROCESS
         ).ifPresent(minSellingBid -> {
             if(requestDto.getPrice().compareTo(minSellingBid.getPrice()) >= 0) {
-                throw new InvalidBiddingPriceException(MarketErrorCode.INVALID_BID_PRICE_BUY);
+                throw new InvalidBiddingPriceException(FailureCode.INVALID_BID_PRICE_BUY);
             }
         });
 
         // 엔티티 조회 및 예외 처리
         MarketUser user = marketUserRepository.findById(userId)
-                .orElseThrow(() -> new MarketEntityNotFoundException(MarketErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new MarketEntityNotFoundException(FailureCode.USER_NOT_FOUND));
         MarketProduct product = marketProductRepository.findById(requestDto.getProductId())
-                .orElseThrow(() -> new MarketEntityNotFoundException(MarketErrorCode.PRODUCT_NOT_FOUND));
+                .orElseThrow(() -> new MarketEntityNotFoundException(FailureCode.PRODUCT_NOT_FOUND));
 
         // TODO: 구매 입찰 등록 시 포인트 잔액 확인 및 차감 로직 추가 필요. MarketWallet 구성 이후 추가 예정
 
@@ -87,15 +87,15 @@ public class RegisterBidUseCase {
                 BiddingStatus.PROCESS
         ).ifPresent(maxBuyingBid -> {
             if(requestDto.getPrice().compareTo(maxBuyingBid.getPrice()) <= 0) {
-                throw new InvalidBiddingPriceException(MarketErrorCode.INVALID_BID_PRICE_SELL);
+                throw new InvalidBiddingPriceException(FailureCode.INVALID_BID_PRICE_SELL);
             }
         });
 
         // 엔티티 조회 및 예외 처리
         MarketUser user = marketUserRepository.findById(userId)
-                .orElseThrow(() -> new MarketEntityNotFoundException(MarketErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new MarketEntityNotFoundException(FailureCode.USER_NOT_FOUND));
         MarketProduct product = marketProductRepository.findById(requestDto.getProductId())
-                .orElseThrow(() -> new MarketEntityNotFoundException(MarketErrorCode.PRODUCT_NOT_FOUND));
+                .orElseThrow(() -> new MarketEntityNotFoundException(FailureCode.PRODUCT_NOT_FOUND));
 
         // 판매 입찰 저장
         Bidding bidding = biddingMapper.toEntity(requestDto, user, product, BiddingPosition.SELL);
@@ -110,7 +110,7 @@ public class RegisterBidUseCase {
      */
     private void validatePriceUnit(BigDecimal price) {
         if(price.remainder(BigDecimal.valueOf(1000)).compareTo(BigDecimal.ZERO)!=0) {
-            throw new InvalidBiddingPriceException(MarketErrorCode.INVALID_PRICE_UNIT);
+            throw new InvalidBiddingPriceException(FailureCode.INVALID_PRICE_UNIT);
         }
     }
 }
