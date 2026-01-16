@@ -3,6 +3,7 @@ package com.back.notification.mapper;
 import com.back.common.market.event.BiddingFailedEvent;
 import com.back.common.market.event.PurchaseCanceledEvent;
 import com.back.common.market.event.BiddingCompletedEvent;
+import com.back.common.product.event.InspectionCompletedEvent;
 import com.back.notification.domain.Notification;
 import com.back.notification.domain.enums.NotificationTargetRole;
 import com.back.notification.domain.enums.Type;
@@ -67,6 +68,23 @@ public class NotificationMapper {
                         "role", role
                 ))
                 .deepLink("/products/" + event.productId())     // Todo : 실제 딥링크로 수정
+                .isRead(false)
+                .build();
+    }
+
+    public Notification toInspectionCompletedNotification(Type type, InspectionCompletedEvent event, Long sellerId) {
+        return Notification.builder()
+                .userId(sellerId)
+                .type(type)
+                .content(Map.of(
+                        "requestedAt", event.requestedAt(),
+                        "productId", event.productId(),
+                        "productName", event.productName(),
+                        "productSize", event.productSize(),
+                        "price", event.price(),
+                        "productNumber", event.productNumber()
+                ))
+                .deepLink("/biddings/" + event.productId())     // Todo : 실제 딥링크로 수정
                 .isRead(false)
                 .build();
     }

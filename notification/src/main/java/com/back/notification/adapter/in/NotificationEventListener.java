@@ -3,6 +3,7 @@ package com.back.notification.adapter.in;
 import com.back.common.market.event.BiddingFailedEvent;
 import com.back.common.market.event.PurchaseCanceledEvent;
 import com.back.common.market.event.BiddingCompletedEvent;
+import com.back.common.product.event.InspectionCompletedEvent;
 import com.back.notification.app.NotificationFacade;
 import com.back.notification.domain.enums.Type;
 import lombok.RequiredArgsConstructor;
@@ -29,10 +30,16 @@ public class NotificationEventListener {
         notificationFacade.notify(Type.PURCHASE_CANCELED, event);
     }
 
-    // 30일
+    // 30일 초과되어 입찰에 실패
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void handle(BiddingFailedEvent event) {
         notificationFacade.notify(Type.BID_FAILED, event);
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void handle(InspectionCompletedEvent event) {
+        notificationFacade.notify(Type.INSPECTION_COMPLETED, event);
     }
 }
