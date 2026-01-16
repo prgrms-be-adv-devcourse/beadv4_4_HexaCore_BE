@@ -2,6 +2,7 @@ package com.back.notification.mapper;
 
 import com.back.common.Settlement.event.SettlementCompletedEvent;
 import com.back.common.market.event.BiddingFailedEvent;
+import com.back.common.market.event.PriceDroppedEvent;
 import com.back.common.market.event.PurchaseCanceledEvent;
 import com.back.common.market.event.BiddingCompletedEvent;
 import com.back.common.product.event.InspectionCompletedEvent;
@@ -100,6 +101,24 @@ public class NotificationMapper {
                         "totalNetAmount", event.totalNetAmount()
                 ))
                 .deepLink("/settlements/" + event.sellerId())     // Todo : 실제 딥링크로 수정
+                .isRead(false)
+                .build();
+    }
+
+    public Notification toPriceDroppedNotification(Type type, PriceDroppedEvent event, Long userId) {
+        return Notification.builder()
+                .userId(userId)
+                .type(type)
+                .content(Map.of(
+                        "targetPrice", event.targetPrice(),
+
+                        "productId", event.productId(),
+                        "productName", event.productName(),
+                        "productSize", event.productSize(),
+                        "thumbnailImage", event.thumbnailImage(),
+                        "brandName", event.brandName()
+                ))
+                .deepLink("/products/" + event.productId())     // Todo : 실제 딥링크로 수정
                 .isRead(false)
                 .build();
     }

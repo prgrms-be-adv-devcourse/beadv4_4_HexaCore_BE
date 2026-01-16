@@ -2,6 +2,7 @@ package com.back.notification.adapter.in;
 
 import com.back.common.Settlement.event.SettlementCompletedEvent;
 import com.back.common.market.event.BiddingFailedEvent;
+import com.back.common.market.event.PriceDroppedEvent;
 import com.back.common.market.event.PurchaseCanceledEvent;
 import com.back.common.market.event.BiddingCompletedEvent;
 import com.back.common.product.event.InspectionCompletedEvent;
@@ -49,5 +50,11 @@ public class NotificationEventListener {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void handle(SettlementCompletedEvent event) {
         notificationFacade.notify(Type.SETTLEMENT_COMPLETED, event);
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void handle(PriceDroppedEvent event) {
+        notificationFacade.notify(Type.PRICE_DROPPED, event);
     }
 }
