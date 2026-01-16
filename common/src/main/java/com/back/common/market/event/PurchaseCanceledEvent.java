@@ -7,7 +7,7 @@ public record PurchaseCanceledEvent(
         Long buyerUserId,
         Long sellerUserId,
 
-        String productId,
+        Long productId,
         String productName,
         String productSize,
 

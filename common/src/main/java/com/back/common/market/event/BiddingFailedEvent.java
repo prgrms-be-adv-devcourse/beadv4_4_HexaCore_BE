@@ -5,7 +5,7 @@ import java.math.BigDecimal;
 public record BiddingFailedEvent(
         Long sellerUserId,
 
-        String productId,
+        Long productId,
         String productName,
         String productSize,
 

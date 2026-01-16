@@ -7,7 +7,7 @@ public record BiddingCompletedEvent(
         Long buyerUserId,
         Long sellerUserId,
 
-        String productId,
+        Long productId,
         String productName,
         String productSize,
         String thumbnailImage,
