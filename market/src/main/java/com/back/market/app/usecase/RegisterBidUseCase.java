@@ -1,6 +1,7 @@
 package com.back.market.app.usecase;
 
 import com.back.common.code.FailureCode;
+import com.back.common.exception.BadRequestException;
 import com.back.market.adapter.out.BiddingRepository;
 import com.back.market.adapter.out.MarketProductRepository;
 import com.back.market.adapter.out.MarketUserRepository;
@@ -10,9 +11,6 @@ import com.back.market.domain.MarketUser;
 import com.back.market.domain.enums.BiddingPosition;
 import com.back.market.domain.enums.BiddingStatus;
 import com.back.market.dto.request.BiddingRequestDto;
-import com.back.market.exception.InvalidBiddingPriceException;
-import com.back.market.exception.MarketEntityNotFoundException;
-import com.back.market.exception.SelfTradingException;
 import com.back.market.mapper.BiddingMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -52,18 +50,18 @@ public class RegisterBidUseCase {
             if(requestDto.getPrice().compareTo(minSellingBid.getPrice()) >= 0) {
                 // 본인이 올린 상품의 거래를 막음
                 if (minSellingBid.getMarketUser().getId().equals(userId)) {
-                    throw new SelfTradingException(FailureCode.SELF_TRADING_NOT_ALLOWED);
+                    throw new BadRequestException(FailureCode.SELF_TRADING_NOT_ALLOWED);
                 }
-                // 그냥 CustomException을 던져도 무관하긴 한데 이름을 명시하기 위해 이렇게 구현
-                throw new InvalidBiddingPriceException(FailureCode.INVALID_BID_PRICE_BUY);
+
+                throw new BadRequestException(FailureCode.INVALID_BID_PRICE_BUY);
             }
         });
 
         // 엔티티 조회 및 예외 처리
         MarketUser user = marketUserRepository.findById(userId)
-                .orElseThrow(() -> new MarketEntityNotFoundException(FailureCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new BadRequestException(FailureCode.USER_NOT_FOUND));
         MarketProduct product = marketProductRepository.findById(requestDto.getProductId())
-                .orElseThrow(() -> new MarketEntityNotFoundException(FailureCode.PRODUCT_NOT_FOUND));
+                .orElseThrow(() -> new BadRequestException(FailureCode.PRODUCT_NOT_FOUND));
 
         // TODO: 구매 입찰 등록 시 포인트 잔액 확인 및 차감 로직 추가 필요. MarketWallet 구성 이후 추가 예정
 
@@ -95,18 +93,18 @@ public class RegisterBidUseCase {
             if(requestDto.getPrice().compareTo(maxBuyingBid.getPrice()) <= 0) {
                 // 본인이 올린 상품의 거래를 막음
                 if (maxBuyingBid.getMarketUser().getId().equals(userId)) {
-                    throw new SelfTradingException(FailureCode.SELF_TRADING_NOT_ALLOWED);
+                    throw new BadRequestException(FailureCode.SELF_TRADING_NOT_ALLOWED);
                 }
 
-                throw new InvalidBiddingPriceException(FailureCode.INVALID_BID_PRICE_SELL);
+                throw new BadRequestException(FailureCode.INVALID_BID_PRICE_SELL);
             }
         });
 
         // 엔티티 조회 및 예외 처리
         MarketUser user = marketUserRepository.findById(userId)
-                .orElseThrow(() -> new MarketEntityNotFoundException(FailureCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new BadRequestException(FailureCode.USER_NOT_FOUND));
         MarketProduct product = marketProductRepository.findById(requestDto.getProductId())
-                .orElseThrow(() -> new MarketEntityNotFoundException(FailureCode.PRODUCT_NOT_FOUND));
+                .orElseThrow(() -> new BadRequestException(FailureCode.PRODUCT_NOT_FOUND));
 
         // 판매 입찰 저장
         Bidding bidding = biddingMapper.toEntity(requestDto, user, product, BiddingPosition.SELL);
@@ -121,7 +119,7 @@ public class RegisterBidUseCase {
      */
     private void validatePriceUnit(BigDecimal price) {
         if(price.remainder(BigDecimal.valueOf(1000)).compareTo(BigDecimal.ZERO)!=0) {
-            throw new InvalidBiddingPriceException(FailureCode.INVALID_PRICE_UNIT);
+            throw new BadRequestException(FailureCode.INVALID_PRICE_UNIT);
         }
     }
 }
