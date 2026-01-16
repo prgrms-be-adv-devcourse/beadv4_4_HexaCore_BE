@@ -22,7 +22,7 @@ public class ChatController {
     public CommonResponse<ChatRoomEnterResponseDto> enter(@RequestParam("brandId") Long brandId){
         return CommonResponse.success(
                         HttpStatus.OK,
-                "로그인 성공",
+                "채팅방 입장 성공",
                 chatFacade.enterChatRoom(brandId)
         );
     }
