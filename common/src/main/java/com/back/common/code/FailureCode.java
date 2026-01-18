@@ -59,6 +59,8 @@ public enum FailureCode {
      * 409 Conflict
      */
     CONFLICT(HttpStatus.CONFLICT, "CONFLICT", "이미 존재하는 리소스입니다."),
+    BRAND_NAME_DUPLICATE(HttpStatus.CONFLICT, "BRAND_NAME_DUPLICATE", "이미 존재하는 브랜드 이름입니다."),
+    CATEGORY_NAME_DUPLICATE(HttpStatus.CONFLICT, "CATEGORY_NAME_DUPLICATE", "이미 존재하는 카테고리 이름입니다."),
 
     /**
      * 500 Internal Server Error
