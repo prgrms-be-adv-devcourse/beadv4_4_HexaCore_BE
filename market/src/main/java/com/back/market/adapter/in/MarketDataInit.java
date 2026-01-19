@@ -5,12 +5,13 @@ import com.back.market.adapter.out.MarketUserRepository;
 import com.back.market.domain.MarketProduct;
 import com.back.market.domain.MarketUser;
 import com.back.market.domain.enums.Role;
+import com.back.market.mapper.MarketProductMapper;
+import com.back.market.mapper.MarketUserMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 
 /**
  * 더미 데이터 생성을 위한 클래스(MarketUser, MarketProduct)
@@ -23,6 +24,8 @@ public class MarketDataInit implements CommandLineRunner {
     // 주입
     private final MarketUserRepository marketUserRepository;
     private final MarketProductRepository marketProductRepository;
+    private final MarketUserMapper marketUserMapper;
+    private final MarketProductMapper marketProductMapper;
 
     @Override
     @Transactional
@@ -36,65 +39,68 @@ public class MarketDataInit implements CommandLineRunner {
 
         // 1. MarketUser 생성 (ID 수동 지정)
         // 유저 1: 판매자 역할 (ID: 1L)
-        MarketUser seller = MarketUser.builder()
-                .id(1L) // 다른 모듈(User)의 ID를 그대로 쓴다고 가정
-                .email("seller@resello.com")
-                .nickname("나이키매니아")
-                .role(Role.USER)
-                .address("서울시 강남구 역삼동")
-                .phone("010-1234-5678")
-                .build();
+        MarketUser seller = marketUserMapper.toEntity(
+                1L,
+                Role.USER,
+                "나이키매니아",
+                "seller@resello.com",
+                "서울시 강남구 역삼동",
+                "010-1234-5678",
+                "https://dummyimage.com/100x100/000/fff&text=Seller"
+        );
+
         marketUserRepository.save(seller);
 
         // 유저 2: 구매자 역할 (ID: 2L)
-        MarketUser buyer = MarketUser.builder()
-                .id(2L)
-                .email("buyer@resello.com")
-                .nickname("신발덕후")
-                .role(Role.USER)
-                .address("경기도 성남시 분당구")
-                .phone("010-9876-5432")
-                .build();
+        MarketUser buyer = marketUserMapper.toEntity(
+                2L,
+                Role.USER,
+                "신발덕후",
+                "buyer@resello.com",
+                "경기도 성남시 분당구",
+                "010-9876-5432",
+                null
+        );
         marketUserRepository.save(buyer);
 
         // 2. MarketProduct 생성 (ID 수동 지정)
         // 상품 1: 나이키 조던 1 - 270 사이즈
-        MarketProduct product1 = MarketProduct.builder()
-                .id(100L) // 다른 모듈(Product)의 ID
-                .brandName("Nike")
-                .name("Jordan 1 Retro High OG Chicago")
-                .productNumber("JD-101-CHI")
-                .productOption("270")
-                .originalPrice(BigDecimal.valueOf(209000L))
-                .categoryName("Sneakers")
-                .thumbnailImage("https://dummyimage.com/600x400/000/fff&text=Jordan1") // 임시 이미지
-                .build();
+        MarketProduct product1 = marketProductMapper.toEntity(
+                100L,
+                "Nike",
+                "Jordan 1 Retro High OG Chicago",
+                "JD-101-CHI",
+                "270",
+                209000L, // Long 타입으로 편하게 입력
+                "Sneakers",
+                "https://dummyimage.com/600x400/000/fff&text=Jordan1"
+        );
         marketProductRepository.save(product1);
 
         // 상품 2: 나이키 조던 1 - 280 사이즈 (같은 모델, 다른 사이즈)
-        MarketProduct product2 = MarketProduct.builder()
-                .id(101L)
-                .brandName("Nike")
-                .name("Jordan 1 Retro High OG Chicago")
-                .productNumber("JD-101-CHI")
-                .productOption("280")
-                .originalPrice(BigDecimal.valueOf(209000L))
-                .categoryName("Sneakers")
-                .thumbnailImage("https://dummyimage.com/600x400/000/fff&text=Jordan1")
-                .build();
+        MarketProduct product2 = marketProductMapper.toEntity(
+                101L,
+                "Nike",
+                "Jordan 1 Retro High OG Chicago",
+                "JD-101-CHI",
+                "280",
+                209000L,
+                "Sneakers",
+                "https://dummyimage.com/600x400/000/fff&text=Jordan1"
+        );
         marketProductRepository.save(product2);
 
         // 상품 3: 아디다스 이지 부스트 - 260 사이즈
-        MarketProduct product3 = MarketProduct.builder()
-                .id(200L)
-                .brandName("Adidas")
-                .name("Yeezy Boost 350 V2 Zebra")
-                .productNumber("CP9654")
-                .productOption("260")
-                .originalPrice(BigDecimal.valueOf(289000L))
-                .categoryName("Sneakers")
-                .thumbnailImage("https://dummyimage.com/600x400/000/fff&text=Yeezy")
-                .build();
+        MarketProduct product3 = marketProductMapper.toEntity(
+                200L,
+                "Adidas",
+                "Yeezy Boost 350 V2 Zebra",
+                "CP9654",
+                "260",
+                289000L,
+                "Sneakers",
+                "https://dummyimage.com/600x400/000/fff&text=Yeezy"
+        );
         marketProductRepository.save(product3);
 
         System.out.println("======= [Market] 초기 데이터 생성 완료 (User: 2건, Product: 3건) =======");
