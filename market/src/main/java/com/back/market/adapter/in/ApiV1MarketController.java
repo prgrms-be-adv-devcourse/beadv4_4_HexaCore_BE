@@ -3,13 +3,12 @@ package com.back.market.adapter.in;
 import com.back.common.response.CommonResponse;
 import com.back.market.app.MarketFacade;
 import com.back.market.dto.request.BiddingRequestDto;
+import com.back.market.dto.response.InstantBuyPriceResponseDto;
+import com.back.market.dto.response.InstantSellPriceResponseDto;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -48,6 +47,18 @@ public class ApiV1MarketController {
         Long biddingId = marketFacade.registerSellBid(userId, requestDto);
 
         return CommonResponse.successWithData(HttpStatus.CREATED, biddingId);
+    }
+
+    @GetMapping("/product/{productId}/buy-now-price")
+    public CommonResponse<InstantBuyPriceResponseDto> getBuyNowPrice(@PathVariable Long productId) {
+        InstantBuyPriceResponseDto response = marketFacade.getBuyNowPrice(productId);
+        return CommonResponse.successWithData(HttpStatus.OK, response);
+    }
+
+    @GetMapping("/product/{productId}/sell-now-price")
+    public CommonResponse<InstantSellPriceResponseDto> getSellNowPrice(@PathVariable Long productId) {
+        InstantSellPriceResponseDto response = marketFacade.getSellNowPrice(productId);
+        return CommonResponse.successWithData(HttpStatus.OK, response);
     }
 
 }
