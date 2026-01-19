@@ -1,6 +1,9 @@
 package com.back.market.app.usecase;
 
+import com.back.common.code.FailureCode;
+import com.back.common.exception.BadRequestException;
 import com.back.market.adapter.out.BiddingRepository;
+import com.back.market.adapter.out.MarketProductRepository;
 import com.back.market.domain.Bidding;
 import com.back.market.domain.enums.BiddingPosition;
 import com.back.market.domain.enums.BiddingStatus;
@@ -20,6 +23,7 @@ import java.math.BigDecimal;
 public class GetInstantPriceUseCase {
 
     private final BiddingRepository biddingRepository;
+    private final MarketProductRepository marketProductRepository;
 
     /**
      * 즉시 구매가 조회
@@ -28,6 +32,9 @@ public class GetInstantPriceUseCase {
      */
     @Transactional(readOnly = true)
     public InstantBuyPriceResponseDto getBuyNowPrice(Long productId) {
+        // 상품 존재 여부 검증
+        validateProductExists(productId);
+        
         BigDecimal price = biddingRepository.findFirstByMarketProductIdAndPositionAndStatusOrderByPriceAsc(
                 productId,
                 BiddingPosition.SELL,
@@ -44,6 +51,8 @@ public class GetInstantPriceUseCase {
      */
     @Transactional(readOnly = true)
     public InstantSellPriceResponseDto getSellNowPrice(Long productId) {
+        //상품 존재 여부 검증
+        validateProductExists(productId);
         BigDecimal price = biddingRepository.findFirstByMarketProductIdAndPositionAndStatusOrderByPriceDesc(
                 productId,
                 BiddingPosition.BUY,
@@ -53,4 +62,9 @@ public class GetInstantPriceUseCase {
         return InstantSellPriceResponseDto.of(productId, price);
     }
 
+    private void validateProductExists(Long productId) {
+        if(!marketProductRepository.existsById(productId)) {
+            throw new BadRequestException(FailureCode.PRODUCT_NOT_FOUND);
+        }
+    }
 }
