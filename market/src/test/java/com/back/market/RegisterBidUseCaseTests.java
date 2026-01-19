@@ -20,7 +20,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -62,7 +61,7 @@ public class RegisterBidUseCaseTests {
 
         // [Given] 3. 요청 객체 생성 (위에서 정한 ID 사용)
         BigDecimal price = BigDecimal.valueOf(30000);
-        BiddingRequestDto request = new BiddingRequestDto(
+        BiddingRequestDto request = BiddingRequestDto.of(
                 productId, // 100L
                 price,
                 "270"
@@ -86,7 +85,7 @@ public class RegisterBidUseCaseTests {
         // given
         Long userId = 1L;
         BigDecimal invalidPrice = BigDecimal.valueOf(30500); // 500원 단위 (유효하지 않음)
-        BiddingRequestDto request = new BiddingRequestDto(1L, invalidPrice, "270");
+        BiddingRequestDto request = BiddingRequestDto.of(1L, invalidPrice, "270");
 
         // when & then
         BadRequestException exception = assertThrows(BadRequestException.class, () -> {
@@ -147,7 +146,7 @@ public class RegisterBidUseCaseTests {
 
 
         // [When] 내가 30,000원에 사겠다고 입찰 시도 (이미 파는 사람이 있으니 에러 나야 함)
-        BiddingRequestDto request = new BiddingRequestDto(productId, BigDecimal.valueOf(30000), "270");
+        BiddingRequestDto request = BiddingRequestDto.of(productId, BigDecimal.valueOf(30000), "270");
 
         // [Then]
         BadRequestException exception = assertThrows(BadRequestException.class, () -> {
@@ -161,7 +160,7 @@ public class RegisterBidUseCaseTests {
     @DisplayName("잔액 부족 시 예외가 발생하고 DB에 저장되지 않아야 한다")
     void registerBuyBid_fail_rollback() {
         Long userId = 1L;
-        BiddingRequestDto requestDto = new BiddingRequestDto(1L, BigDecimal.valueOf(9999), "270");
+        BiddingRequestDto requestDto = BiddingRequestDto.of(1L, BigDecimal.valueOf(9999), "270");
 
         assertThrows(BadRequestException.class, () -> {
             usecase.registerBuyBid(userId, requestDto);

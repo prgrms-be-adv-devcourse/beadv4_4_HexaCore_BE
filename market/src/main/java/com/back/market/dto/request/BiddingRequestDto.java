@@ -10,4 +10,7 @@ public record BiddingRequestDto(
         BigDecimal price,
         String size
 ) {
+    public static BiddingRequestDto of(Long productId, BigDecimal price, String size) {
+        return new BiddingRequestDto(productId, price, size);
+    }
 }

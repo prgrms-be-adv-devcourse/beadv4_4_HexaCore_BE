@@ -29,7 +29,7 @@ public class FakeCashClient implements CashClient {
                     .build();
         }
 
-        CashHoldResponseDto fakeData = new CashHoldResponseDto(userId, amount);
+        CashHoldResponseDto fakeData = CashHoldResponseDto.of(userId, amount);
 
         System.out.println("[FakeCashClient] User " + userId + "의 " + amount + "원 홀딩 성공 (Ref: " + requestDto.relType() + " / " + requestDto.relId() + ")");
 

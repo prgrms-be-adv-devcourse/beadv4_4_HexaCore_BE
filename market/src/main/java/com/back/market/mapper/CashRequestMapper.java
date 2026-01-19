@@ -10,7 +10,7 @@ import java.math.BigDecimal;
 public class CashRequestMapper {
     //구매 입찰용 요청 생성
     public PayAndHoldRequestDto toPayAndHoldRequestForBidding(Long userId, BigDecimal price, Long biddingId) {
-        return new PayAndHoldRequestDto(
+        return PayAndHoldRequestDto.of(
                 userId,
                 price,
                 "구매 입찰 포인트 충전",
@@ -21,7 +21,7 @@ public class CashRequestMapper {
 
     //주문용 요청 생성
     public PayAndHoldRequestDto toPayAndHoldRequestForOrder(Long userId, BigDecimal totalPrice, String productName, Long orderId) {
-        return new PayAndHoldRequestDto(
+        return PayAndHoldRequestDto.of(
                 userId,
                 totalPrice,
                 productName,

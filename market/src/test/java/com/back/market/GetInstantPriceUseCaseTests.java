@@ -139,7 +139,7 @@ class GetInstantPriceUseCaseTests {
         MarketProduct product = marketProductRepository.findById(productId).orElseThrow();
         MarketUser user = marketUserRepository.findById(userId).orElseThrow();
 
-        BiddingRequestDto requestDto = new BiddingRequestDto(productId, BigDecimal.valueOf(price), "270");
+        BiddingRequestDto requestDto = BiddingRequestDto.of(productId, BigDecimal.valueOf(price), "270");
 
         // BiddingMapper를 사용하여 엔티티 생성 및 저장
         Bidding bidding = biddingMapper.toEntity(requestDto, user, product, position);
