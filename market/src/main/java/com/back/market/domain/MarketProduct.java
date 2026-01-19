@@ -48,7 +48,7 @@ public class MarketProduct extends BaseTimeEntity {
     private String thumbnailImage;      // 제품 이미지
 
     @Column(name = "release_price")
-    private BigDecimal originalPrice;   // 발매가
+    private BigDecimal releasePrice;   // 발매가
 
     // Brand 테이블
     @Column(name = "brand_name", nullable = false)
