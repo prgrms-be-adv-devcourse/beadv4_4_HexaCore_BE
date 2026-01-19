@@ -45,16 +45,16 @@ public class RegisterBidUseCase {
     @Transactional
     public Long registerBuyBid(Long userId, BiddingRequestDto requestDto) {
         // 가격 유효성 검사(1000원단위인지 아닌지)
-        validatePriceUnit(requestDto.getPrice());
+        validatePriceUnit(requestDto.price());
 
         // 가격 정책 검사: 내 입찰가 >= 최저 판매가(즉시구매가)일 경우 에러
         // 에러 발생 시 즉시 구매로 유도
         biddingRepository.findFirstByMarketProductIdAndPositionAndStatusOrderByPriceAsc(
-                requestDto.getProductId(),
+                requestDto.productId(),
                 BiddingPosition.SELL,
                 BiddingStatus.PROCESS
         ).ifPresent(minSellingBid -> {
-            if(requestDto.getPrice().compareTo(minSellingBid.getPrice()) >= 0) {
+            if(requestDto.price().compareTo(minSellingBid.getPrice()) >= 0) {
                 // 본인이 올린 상품의 거래를 막음
                 if (minSellingBid.getMarketUser().getId().equals(userId)) {
                     throw new BadRequestException(FailureCode.SELF_TRADING_NOT_ALLOWED);
@@ -67,7 +67,7 @@ public class RegisterBidUseCase {
         // 엔티티 조회 및 예외 처리
         MarketUser user = marketUserRepository.findById(userId)
                 .orElseThrow(() -> new BadRequestException(FailureCode.USER_NOT_FOUND));
-        MarketProduct product = marketProductRepository.findById(requestDto.getProductId())
+        MarketProduct product = marketProductRepository.findById(requestDto.productId())
                 .orElseThrow(() -> new BadRequestException(FailureCode.PRODUCT_NOT_FOUND));
 
         // 구매 입찰 엔티티 생성 및 저장(id 생성을 위해 먼저 진행)
@@ -77,7 +77,7 @@ public class RegisterBidUseCase {
         // TODO: 구매 입찰 등록 시 포인트 잔액 확인 및 차감 로직 추가 필요. MarketWallet 구성 이후 추가 예정, 임시로 FakeCashClient 구현해서 테스트
         PayAndHoldRequestDto cashRequest = cashRequestMapper.toPayAndHoldRequestForBidding(
                 userId,
-                requestDto.getPrice(),
+                requestDto.price(),
                 savedBidding.getId()
         );
 
@@ -104,16 +104,16 @@ public class RegisterBidUseCase {
     @Transactional
     public Long registerSellBid(Long userId, BiddingRequestDto requestDto) {
         // 가격 유효성 검사(1000원단위인지 아닌지)
-        validatePriceUnit(requestDto.getPrice());
+        validatePriceUnit(requestDto.price());
 
         // 가격 정책 검사: 내 판매가 <= 최고 구매가(즉시판매가)일 경우 에러
         // 에러 발생 시 즉시 판매로 유도
         biddingRepository.findFirstByMarketProductIdAndPositionAndStatusOrderByPriceDesc(
-                requestDto.getProductId(),
+                requestDto.productId(),
                 BiddingPosition.BUY,
                 BiddingStatus.PROCESS
         ).ifPresent(maxBuyingBid -> {
-            if(requestDto.getPrice().compareTo(maxBuyingBid.getPrice()) <= 0) {
+            if(requestDto.price().compareTo(maxBuyingBid.getPrice()) <= 0) {
                 // 본인이 올린 상품의 거래를 막음
                 if (maxBuyingBid.getMarketUser().getId().equals(userId)) {
                     throw new BadRequestException(FailureCode.SELF_TRADING_NOT_ALLOWED);
@@ -126,7 +126,7 @@ public class RegisterBidUseCase {
         // 엔티티 조회 및 예외 처리
         MarketUser user = marketUserRepository.findById(userId)
                 .orElseThrow(() -> new BadRequestException(FailureCode.USER_NOT_FOUND));
-        MarketProduct product = marketProductRepository.findById(requestDto.getProductId())
+        MarketProduct product = marketProductRepository.findById(requestDto.productId())
                 .orElseThrow(() -> new BadRequestException(FailureCode.PRODUCT_NOT_FOUND));
 
         // 판매 입찰 저장

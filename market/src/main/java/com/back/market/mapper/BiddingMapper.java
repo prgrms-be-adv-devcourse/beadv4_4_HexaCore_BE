@@ -14,7 +14,7 @@ public class BiddingMapper {
         return Bidding.builder()
                 .marketUser(user)
                 .marketProduct(product)
-                .price(requestDto.getPrice())
+                .price(requestDto.price())
                 .position(position)
                 .status(BiddingStatus.PROCESS)
                 .build();

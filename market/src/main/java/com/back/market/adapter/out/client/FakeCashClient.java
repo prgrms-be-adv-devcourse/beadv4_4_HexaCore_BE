@@ -9,7 +9,6 @@ import com.back.market.dto.response.CashHoldResponseDto;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
-import java.util.Random;
 
 @Component
 public class FakeCashClient implements CashClient {
@@ -30,10 +29,7 @@ public class FakeCashClient implements CashClient {
                     .build();
         }
 
-        CashHoldResponseDto fakeData = CashHoldResponseDto.builder()
-                .userId(userId)
-                .holdAmount(amount)
-                .build();
+        CashHoldResponseDto fakeData = new CashHoldResponseDto(userId, amount);
 
         System.out.println("[FakeCashClient] User " + userId + "의 " + amount + "원 홀딩 성공 (Ref: " + requestDto.relType() + " / " + requestDto.relId() + ")");
 
