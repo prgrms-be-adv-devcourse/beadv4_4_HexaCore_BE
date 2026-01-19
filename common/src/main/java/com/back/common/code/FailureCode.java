@@ -24,6 +24,7 @@ public enum FailureCode {
     INVALID_BID_PRICE_BUY(HttpStatus.BAD_REQUEST, "INVALID_BID_PRICE_BUY","구매 입찰가는 즉시 구매가보다 낮아야 합니다."),
     INVALID_BID_PRICE_SELL(HttpStatus.BAD_REQUEST, "INVALID_BID_PRICE_SELL","판매 입찰가는 즉시 판매가보다 높아야 합니다."),
     SELF_TRADING_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "SELF_TRADING_NOT_ALLOWED", "본인의 입찰 상품과는 거래할 수 없습니다."),
+    WALLET_CHARGE_FAILED(HttpStatus.BAD_REQUEST, "WALLET_CHARGE_FAILED", "예치금 충전에 실패하였습니다."),
 
     /**
      * 401 Unauthorized
@@ -65,7 +66,8 @@ public enum FailureCode {
     /**
      * 500 Internal Server Error
      */
-    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR", "서버 내부 오류가 발생했습니다.");
+    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR", "서버 내부 오류가 발생했습니다."),
+    CASH_MODULE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "CASH_MODULE_ERROR", "CASH 모듈과의 통신 중 오류가 발생했습니다.");
 
 
     private final HttpStatus httpStatus;
