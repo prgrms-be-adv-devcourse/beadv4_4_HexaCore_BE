@@ -2,9 +2,11 @@ package com.back.market.mapper;
 
 import com.back.market.dto.enums.RelType;
 import com.back.market.dto.request.PayAndHoldRequestDto;
+import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 
+@Component
 public class CashRequestMapper {
     //구매 입찰용 요청 생성
     public PayAndHoldRequestDto toPayAndHoldRequestForBidding(Long userId, BigDecimal price, Long biddingId) {
