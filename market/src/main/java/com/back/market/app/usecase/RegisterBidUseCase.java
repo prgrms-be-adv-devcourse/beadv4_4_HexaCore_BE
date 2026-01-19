@@ -5,13 +5,18 @@ import com.back.common.exception.BadRequestException;
 import com.back.market.adapter.out.BiddingRepository;
 import com.back.market.adapter.out.MarketProductRepository;
 import com.back.market.adapter.out.MarketUserRepository;
+import com.back.market.app.port.out.CashClient;
 import com.back.market.domain.Bidding;
 import com.back.market.domain.MarketProduct;
 import com.back.market.domain.MarketUser;
 import com.back.market.domain.enums.BiddingPosition;
 import com.back.market.domain.enums.BiddingStatus;
 import com.back.market.dto.request.BiddingRequestDto;
+import com.back.market.dto.request.PayAndHoldRequestDto;
+import com.back.market.dto.response.CashApiResponse;
+import com.back.market.dto.response.CashHoldResponseDto;
 import com.back.market.mapper.BiddingMapper;
+import com.back.market.mapper.CashRequestMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +33,8 @@ public class RegisterBidUseCase {
     private final MarketUserRepository marketUserRepository;
     private final MarketProductRepository marketProductRepository;
     private final BiddingMapper biddingMapper;
+    private final CashClient cashClient;
+    private final CashRequestMapper cashRequestMapper;
 
     /**
      * MARKET-010: 구매 입찰 등록
@@ -63,12 +70,28 @@ public class RegisterBidUseCase {
         MarketProduct product = marketProductRepository.findById(requestDto.getProductId())
                 .orElseThrow(() -> new BadRequestException(FailureCode.PRODUCT_NOT_FOUND));
 
-        // TODO: 구매 입찰 등록 시 포인트 잔액 확인 및 차감 로직 추가 필요. MarketWallet 구성 이후 추가 예정
-
-        // 구매 입찰 저장
+        // 구매 입찰 엔티티 생성 및 저장(id 생성을 위해 먼저 진행)
         Bidding bidding = biddingMapper.toEntity(requestDto, user, product, BiddingPosition.BUY);
-
         Bidding savedBidding = biddingRepository.save(bidding);
+
+        // TODO: 구매 입찰 등록 시 포인트 잔액 확인 및 차감 로직 추가 필요. MarketWallet 구성 이후 추가 예정, 임시로 FakeCashClient 구현해서 테스트
+        PayAndHoldRequestDto cashRequest = cashRequestMapper.toPayAndHoldRequestForBidding(
+                userId,
+                requestDto.getPrice(),
+                savedBidding.getId()
+        );
+
+        CashApiResponse<CashHoldResponseDto> cashResponse = cashClient.requestBidHold(cashRequest);
+
+        // 결과 처리
+        if(!cashResponse.isSuccess()) {
+            if(cashResponse.isChargeFailed()) {
+                // 실패 시 예외 발생 -> 트랜잭션 롤백 -> 위에서 저장한 Bidding도 같이 삭제됨
+                throw new BadRequestException(FailureCode.WALLET_CHARGE_FAILED);
+            }
+            throw new BadRequestException(FailureCode.CASH_MODULE_ERROR);
+        }
+
         return savedBidding.getId();
     }
 

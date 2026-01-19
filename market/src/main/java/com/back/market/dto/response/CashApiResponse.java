@@ -18,9 +18,9 @@ public class CashApiResponse<T> {
 
     // ... 편의 메서드(isSuccess) 그대로 ...
     public boolean isSuccess() {
-        return SuccessCode.OK.equals(this.code);
+        return SuccessCode.OK.getCode().equals(this.code);
     }
     public boolean isChargeFailed() {
-        return FailureCode.WALLET_CHARGE_FAILED.equals(this.code);
+        return FailureCode.WALLET_CHARGE_FAILED.getCode().equals(this.code);
     }
 }
