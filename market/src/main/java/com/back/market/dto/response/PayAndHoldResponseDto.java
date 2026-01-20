@@ -13,7 +13,13 @@ public record PayAndHoldResponseDto(
         BigDecimal pgRequiredAmount,
         String tossOrderId
 ) {
-    public static PayAndHoldResponseDto of(PayAndHoldStatus status, RelType relType, Long relId, BigDecimal walletUsedAmount, BigDecimal pgRequiredAmount, String tossOrderId) {
+    public static PayAndHoldResponseDto of(
+            PayAndHoldStatus status,
+            RelType relType,
+            Long relId,
+            BigDecimal walletUsedAmount,
+            BigDecimal pgRequiredAmount,
+            String tossOrderId) {
         return new PayAndHoldResponseDto(status, relType, relId, walletUsedAmount, pgRequiredAmount, tossOrderId);
     }
 }
