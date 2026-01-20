@@ -113,18 +113,18 @@ public class MatchInstantTradeUseCaseTestsV2 {
     @Test
     @DisplayName("즉시 구매 성공(PG필요): 예치금이 부족하면 REQUIRES_PG 상태를 반환한다")
     void buyNow_success_requiresPg() {
-        // [Given] 예치금 부족 상황을 가정하는 금액 (9999원)
+        // [Given] 예치금 부족 상황을 가정하는 금액 (9000)
         Long productId = 100L;
         Long sellerId = 1L;
         Long buyerId = 2L;
         String buyerAddress = "서울시 강남구 역삼동";
         setupBaseData(productId, sellerId, buyerId, buyerAddress);
 
-        // 판매 입찰 (9999원)
-        createBidding(productId, sellerId, 9999, BiddingPosition.SELL);
+        // 판매 입찰 (9000)
+        createBidding(productId, sellerId, 9000, BiddingPosition.SELL);
 
         // [When] 구매 실행
-        BiddingRequestDto request = new BiddingRequestDto(productId, BigDecimal.valueOf(9999), "270");
+        BiddingRequestDto request = new BiddingRequestDto(productId, BigDecimal.valueOf(9000), "270");
         PayAndHoldResponseDto response = matchInstantTradeUseCase.buyNow(buyerId, request);
 
         // [Then] 응답 검증
