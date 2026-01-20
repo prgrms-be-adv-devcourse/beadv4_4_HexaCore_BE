@@ -49,4 +49,11 @@ public class Bidding extends BaseTimeEntity {
     @Enumerated(EnumType.STRING)
     private BiddingStatus status;           // 입찰 상태
 
+    /**
+     * 상태 변경을 위한 메서드(setter 역할)
+     * @param status 입찰상태
+     */
+    public void changeStatus(BiddingStatus status) {
+        this.status = status;
+    }
 }

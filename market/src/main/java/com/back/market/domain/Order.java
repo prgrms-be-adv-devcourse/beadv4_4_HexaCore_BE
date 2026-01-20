@@ -11,6 +11,7 @@ import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -36,7 +37,7 @@ public class Order extends BaseTimeEntity {
     private Bidding sellBidding;                // 판매 입찰 내역(1:1)
 
     @Column(name = "price", nullable = false)
-    private Long price;                          // 체결 가격(입찰가 변동과 무관)
+    private BigDecimal price;                          // 체결 가격(입찰가 변동과 무관)
 
     @Column(name = "address", nullable = false, length = 500)
     private String address;                      // 배송지 주소(사용자 주소 변경과 무관)
