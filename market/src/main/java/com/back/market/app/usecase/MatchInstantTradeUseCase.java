@@ -1,16 +1,22 @@
 package com.back.market.app.usecase;
 
 import com.back.common.code.FailureCode;
+import com.back.common.code.SuccessCode;
 import com.back.common.exception.BadRequestException;
 import com.back.market.adapter.out.BiddingRepository;
 import com.back.market.adapter.out.MarketUserRepository;
 import com.back.market.adapter.out.OrderRepository;
+import com.back.market.adapter.out.client.FakeCashClient;
 import com.back.market.domain.Bidding;
 import com.back.market.domain.MarketUser;
 import com.back.market.domain.Order;
 import com.back.market.domain.enums.BiddingPosition;
 import com.back.market.domain.enums.BiddingStatus;
+import com.back.market.dto.enums.RelType;
 import com.back.market.dto.request.BiddingRequestDto;
+import com.back.market.dto.request.PayAndHoldRequestDto;
+import com.back.market.dto.response.CashApiResponse;
+import com.back.market.dto.response.CashHoldResponseDto;
 import com.back.market.mapper.BiddingMapper;
 import com.back.market.mapper.OrderMapper;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +31,7 @@ public class MatchInstantTradeUseCase {
     private final OrderMapper orderMapper;
     private final MarketUserRepository marketUserRepository;
     private final BiddingMapper biddingMapper;
+    private final FakeCashClient fakeCashClient;
 
     /**
      * MARKET-009 즉시 구매 실행
@@ -89,7 +96,25 @@ public class MatchInstantTradeUseCase {
         } else {
             order = orderMapper.toEntity(targetBid, myBid, targetBid.getMarketUser().getAddress());
         }
+        orderRepository.save(order);
 
-        return orderRepository.save(order).getId();
+        // 5. 실제 결제 요청(fakecashclient 사용)
+        PayAndHoldRequestDto paymentReq = PayAndHoldRequestDto.of(
+                order.getBuyBidding().getMarketUser().getId(),
+                order.getPrice(),
+                order.getBuyBidding().getMarketProduct().getName(),
+                RelType.ORDER,
+                order.getId()
+        );
+
+        CashApiResponse<CashHoldResponseDto> response = fakeCashClient.requestBidHold(paymentReq);
+        if(!response.isSuccess()) {
+            if (response.isChargeFailed()) {
+                throw new BadRequestException(FailureCode.WALLET_CHARGE_FAILED);
+            }
+            throw new BadRequestException(FailureCode.CASH_MODULE_ERROR);
+        }
+
+        return order.getId();
     }
 }
