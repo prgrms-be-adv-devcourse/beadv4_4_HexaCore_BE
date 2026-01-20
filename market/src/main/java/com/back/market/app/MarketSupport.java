@@ -1,4 +1,4 @@
-package com.back.market.app.usecase;
+package com.back.market.app;
 
 import com.back.common.code.FailureCode;
 import com.back.common.exception.BadRequestException;

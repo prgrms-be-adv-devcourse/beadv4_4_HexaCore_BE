@@ -5,7 +5,7 @@ import com.back.common.exception.BadRequestException;
 import com.back.market.adapter.out.BiddingRepository;
 import com.back.market.adapter.out.MarketProductRepository;
 import com.back.market.adapter.out.MarketUserRepository;
-import com.back.market.app.port.out.CashClient;
+import com.back.market.app.MarketSupport;
 import com.back.market.domain.Bidding;
 import com.back.market.domain.MarketProduct;
 import com.back.market.domain.MarketUser;
@@ -15,7 +15,6 @@ import com.back.market.dto.enums.PayAndHoldStatus;
 import com.back.market.dto.enums.RelType;
 import com.back.market.dto.request.BiddingRequestDto;
 import com.back.market.dto.request.PayAndHoldRequestDto;
-import com.back.market.dto.response.CashApiResponse;
 import com.back.market.dto.response.PayAndHoldResponseDto;
 import com.back.market.mapper.BiddingMapper;
 import com.back.market.mapper.CashRequestMapper;
@@ -37,7 +36,6 @@ public class RegisterBidUseCase {
     private final MarketUserRepository marketUserRepository;
     private final MarketProductRepository marketProductRepository;
     private final BiddingMapper biddingMapper;
-    private final CashClient cashClient;
     private final CashRequestMapper cashRequestMapper;
     private final MarketSupport marketSupport;
 

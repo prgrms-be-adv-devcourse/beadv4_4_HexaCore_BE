@@ -5,7 +5,7 @@ import com.back.common.exception.BadRequestException;
 import com.back.market.adapter.out.BiddingRepository;
 import com.back.market.adapter.out.MarketUserRepository;
 import com.back.market.adapter.out.OrderRepository;
-import com.back.market.adapter.out.client.FakeCashClient;
+import com.back.market.app.MarketSupport;
 import com.back.market.domain.Bidding;
 import com.back.market.domain.MarketUser;
 import com.back.market.domain.Order;
