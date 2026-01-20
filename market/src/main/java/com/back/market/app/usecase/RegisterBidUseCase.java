@@ -11,13 +11,16 @@ import com.back.market.domain.MarketProduct;
 import com.back.market.domain.MarketUser;
 import com.back.market.domain.enums.BiddingPosition;
 import com.back.market.domain.enums.BiddingStatus;
+import com.back.market.dto.enums.PayAndHoldStatus;
+import com.back.market.dto.enums.RelType;
 import com.back.market.dto.request.BiddingRequestDto;
 import com.back.market.dto.request.PayAndHoldRequestDto;
 import com.back.market.dto.response.CashApiResponse;
-import com.back.market.dto.response.CashHoldResponseDto;
+import com.back.market.dto.response.PayAndHoldResponseDto;
 import com.back.market.mapper.BiddingMapper;
 import com.back.market.mapper.CashRequestMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +29,7 @@ import java.math.BigDecimal;
 /**
  * 구매/판매입찰 등록 비즈니스 로직
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class RegisterBidUseCase {
@@ -43,26 +47,13 @@ public class RegisterBidUseCase {
      * @return 저장된 구매 입찰의 PK
      */
     @Transactional
-    public Long registerBuyBid(Long userId, BiddingRequestDto requestDto) {
+    public PayAndHoldResponseDto registerBuyBid(Long userId, BiddingRequestDto requestDto) {
         // 가격 유효성 검사(1000원단위인지 아닌지)
         validatePriceUnit(requestDto.price());
 
         // 가격 정책 검사: 내 입찰가 >= 최저 판매가(즉시구매가)일 경우 에러
         // 에러 발생 시 즉시 구매로 유도
-        biddingRepository.findFirstByMarketProductIdAndPositionAndStatusOrderByPriceAsc(
-                requestDto.productId(),
-                BiddingPosition.SELL,
-                BiddingStatus.PROCESS
-        ).ifPresent(minSellingBid -> {
-            if(requestDto.price().compareTo(minSellingBid.getPrice()) >= 0) {
-                // 본인이 올린 상품의 거래를 막음
-                if (minSellingBid.getMarketUser().getId().equals(userId)) {
-                    throw new BadRequestException(FailureCode.SELF_TRADING_NOT_ALLOWED);
-                }
-
-                throw new BadRequestException(FailureCode.INVALID_BID_PRICE_BUY);
-            }
-        });
+        checkBuyPricePolicy(userId, requestDto);
 
         // 엔티티 조회 및 예외 처리
         MarketUser user = marketUserRepository.findById(userId)
@@ -81,7 +72,7 @@ public class RegisterBidUseCase {
                 savedBidding.getId()
         );
 
-        CashApiResponse<CashHoldResponseDto> cashResponse = cashClient.requestBidHold(cashRequest);
+        CashApiResponse<PayAndHoldResponseDto> cashResponse = cashClient.requestBidHold(cashRequest);
 
         // 결과 처리
         if(!cashResponse.isSuccess()) {
@@ -92,7 +83,17 @@ public class RegisterBidUseCase {
             throw new BadRequestException(FailureCode.CASH_MODULE_ERROR);
         }
 
-        return savedBidding.getId();
+        PayAndHoldResponseDto responseData = cashResponse.data();
+        if (responseData.status() == PayAndHoldStatus.PAID) {
+            log.info("[RegisterBid] 예치금 홀딩 완료 - BiddingId: {}", savedBidding.getId());
+            savedBidding.changeStatus(BiddingStatus.PROCESS);
+        } else if (responseData.status() == PayAndHoldStatus.REQUIRES_PG) {
+            log.info("[RegisterBid] PG 결제 필요 - TossOrderId: {}", responseData.tossOrderId());
+            // TODO: PG사 결제가 필요할 경우 입찰 상태를 PG_PENDING으로 변경하고, 나중에 결제가 완료된걸 확인 후 PROCESS로 변경하는 식으로 추가 예정
+            // savedBidding.changeStatus(BiddingStatus.PG_PENDING);
+        }
+
+        return responseData;
     }
 
     /**
@@ -102,12 +103,72 @@ public class RegisterBidUseCase {
      * @return 저장된 판매 입찰의 PK
      */
     @Transactional
-    public Long registerSellBid(Long userId, BiddingRequestDto requestDto) {
+    public PayAndHoldResponseDto registerSellBid(Long userId, BiddingRequestDto requestDto) {
         // 가격 유효성 검사(1000원단위인지 아닌지)
         validatePriceUnit(requestDto.price());
 
         // 가격 정책 검사: 내 판매가 <= 최고 구매가(즉시판매가)일 경우 에러
         // 에러 발생 시 즉시 판매로 유도
+        checkSellPricePolicy(userId, requestDto);
+
+        // 엔티티 조회 및 예외 처리
+        MarketUser user = marketUserRepository.findById(userId)
+                .orElseThrow(() -> new BadRequestException(FailureCode.USER_NOT_FOUND));
+        MarketProduct product = marketProductRepository.findById(requestDto.productId())
+                .orElseThrow(() -> new BadRequestException(FailureCode.PRODUCT_NOT_FOUND));
+
+        // 판매 입찰 저장
+        Bidding bidding = biddingMapper.toEntity(requestDto, user, product, BiddingPosition.SELL);
+
+        Bidding savedBidding = biddingRepository.save(bidding);
+        return PayAndHoldResponseDto.of(
+                PayAndHoldStatus.PAID, // 판매 입찰은 결제가 필요없으므로 완료 상태로 생성
+                RelType.BIDDING,
+                savedBidding.getId(),
+                BigDecimal.ZERO, // 사용된 예치금 없음
+                BigDecimal.ZERO, // 필요한 PG 금액 없음
+                null
+        );
+    }
+
+    /**
+     * 유효성 검사(금액이 천원 단위인지 확인)
+     * @param price 물품 가격
+     */
+    private void validatePriceUnit(BigDecimal price) {
+        if(price.remainder(BigDecimal.valueOf(1000)).compareTo(BigDecimal.ZERO)!=0) {
+            throw new BadRequestException(FailureCode.INVALID_PRICE_UNIT);
+        }
+    }
+
+    /**
+     * 구매 시 가격 정책 검사
+     * @param userId 사용자ID
+     * @param requestDto BiddingRequestDto
+     */
+    private void checkBuyPricePolicy(Long userId, BiddingRequestDto requestDto) {
+        biddingRepository.findFirstByMarketProductIdAndPositionAndStatusOrderByPriceAsc(
+                requestDto.productId(),
+                BiddingPosition.SELL,
+                BiddingStatus.PROCESS
+        ).ifPresent(minSellingBid -> {
+            if(requestDto.price().compareTo(minSellingBid.getPrice()) >= 0) {
+                // 본인이 올린 상품의 거래를 막음
+                if (minSellingBid.getMarketUser().getId().equals(userId)) {
+                    throw new BadRequestException(FailureCode.SELF_TRADING_NOT_ALLOWED);
+                }
+
+                throw new BadRequestException(FailureCode.INVALID_BID_PRICE_BUY);
+            }
+        });
+    }
+
+    /**
+     * 판매 시 가격 정책 검사
+     * @param userId 사용자ID
+     * @param requestDto BiddingRequestDto
+     */
+    private void checkSellPricePolicy(Long userId, BiddingRequestDto requestDto) {
         biddingRepository.findFirstByMarketProductIdAndPositionAndStatusOrderByPriceDesc(
                 requestDto.productId(),
                 BiddingPosition.BUY,
@@ -122,27 +183,5 @@ public class RegisterBidUseCase {
                 throw new BadRequestException(FailureCode.INVALID_BID_PRICE_SELL);
             }
         });
-
-        // 엔티티 조회 및 예외 처리
-        MarketUser user = marketUserRepository.findById(userId)
-                .orElseThrow(() -> new BadRequestException(FailureCode.USER_NOT_FOUND));
-        MarketProduct product = marketProductRepository.findById(requestDto.productId())
-                .orElseThrow(() -> new BadRequestException(FailureCode.PRODUCT_NOT_FOUND));
-
-        // 판매 입찰 저장
-        Bidding bidding = biddingMapper.toEntity(requestDto, user, product, BiddingPosition.SELL);
-
-        Bidding savedBidding = biddingRepository.save(bidding);
-        return savedBidding.getId();
-    }
-
-    /**
-     * 유효성 검사(금액이 천원 단위인지 확인)
-     * @param price 물품 가격
-     */
-    private void validatePriceUnit(BigDecimal price) {
-        if(price.remainder(BigDecimal.valueOf(1000)).compareTo(BigDecimal.ZERO)!=0) {
-            throw new BadRequestException(FailureCode.INVALID_PRICE_UNIT);
-        }
     }
 }
