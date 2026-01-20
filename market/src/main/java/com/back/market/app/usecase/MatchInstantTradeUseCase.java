@@ -18,6 +18,7 @@ import com.back.market.dto.request.PayAndHoldRequestDto;
 import com.back.market.dto.response.CashApiResponse;
 import com.back.market.dto.response.CashHoldResponseDto;
 import com.back.market.mapper.BiddingMapper;
+import com.back.market.mapper.CashRequestMapper;
 import com.back.market.mapper.OrderMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -31,6 +32,7 @@ public class MatchInstantTradeUseCase {
     private final OrderMapper orderMapper;
     private final MarketUserRepository marketUserRepository;
     private final BiddingMapper biddingMapper;
+    private final CashRequestMapper cashRequestMapper;
     private final FakeCashClient fakeCashClient;
 
     /**
@@ -99,13 +101,7 @@ public class MatchInstantTradeUseCase {
         orderRepository.save(order);
 
         // 5. 실제 결제 요청(fakecashclient 사용)
-        PayAndHoldRequestDto paymentReq = PayAndHoldRequestDto.of(
-                order.getBuyBidding().getMarketUser().getId(),
-                order.getPrice(),
-                order.getBuyBidding().getMarketProduct().getName(),
-                RelType.ORDER,
-                order.getId()
-        );
+        PayAndHoldRequestDto paymentReq = cashRequestMapper.toPayAndHoldRequestForOrder(order);
 
         CashApiResponse<CashHoldResponseDto> response = fakeCashClient.requestBidHold(paymentReq);
         if(!response.isSuccess()) {

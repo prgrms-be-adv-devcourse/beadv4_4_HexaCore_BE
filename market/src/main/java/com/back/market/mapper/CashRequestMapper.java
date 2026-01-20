@@ -1,5 +1,6 @@
 package com.back.market.mapper;
 
+import com.back.market.domain.Order;
 import com.back.market.dto.enums.RelType;
 import com.back.market.dto.request.PayAndHoldRequestDto;
 import org.springframework.stereotype.Component;
@@ -20,13 +21,16 @@ public class CashRequestMapper {
     }
 
     //주문용 요청 생성
-    public PayAndHoldRequestDto toPayAndHoldRequestForOrder(Long userId, BigDecimal totalPrice, String productName, Long orderId) {
+    public PayAndHoldRequestDto toPayAndHoldRequestForOrder(
+            Order order
+    //        Long userId, BigDecimal totalPrice, String productName, Long orderId
+    ) {
         return PayAndHoldRequestDto.of(
-                userId,
-                totalPrice,
-                productName,
+                order.getBuyBidding().getMarketUser().getId(),
+                order.getPrice(),
+                order.getBuyBidding().getMarketProduct().getName(),
                 RelType.ORDER,
-                orderId
+                order.getId()
         );
     }
 }
