@@ -5,7 +5,6 @@ import com.back.market.app.MarketFacade;
 import com.back.market.dto.request.BiddingRequestDto;
 import com.back.market.dto.response.InstantBuyPriceResponseDto;
 import com.back.market.dto.response.InstantSellPriceResponseDto;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -18,7 +17,6 @@ public class ApiV1MarketController implements ApiV1Market{
     private final MarketFacade marketFacade;
 
     @Override
-    @PostMapping("/bids/buy")
     public CommonResponse<Long> registerBuyBid(
             // TODO: 인증 로직 구현 완료시 수정 필요
             // CustomUserDetails userDetails,
@@ -35,7 +33,6 @@ public class ApiV1MarketController implements ApiV1Market{
     }
 
     @Override
-    @PostMapping("/bids/sell")
     public CommonResponse<Long> registerSellBid(
             // TODO: 인증 로직 구현 완료시 수정 필요
             // CustomUserDetails userDetails,
@@ -52,21 +49,18 @@ public class ApiV1MarketController implements ApiV1Market{
     }
 
     @Override
-    @GetMapping("/products/{productId}/buy-now-price")
     public CommonResponse<InstantBuyPriceResponseDto> getBuyNowPrice(Long productId) {
         InstantBuyPriceResponseDto response = marketFacade.getBuyNowPrice(productId);
         return CommonResponse.successWithData(HttpStatus.OK, response);
     }
 
     @Override
-    @GetMapping("/products/{productId}/sell-now-price")
     public CommonResponse<InstantSellPriceResponseDto> getSellNowPrice(Long productId) {
         InstantSellPriceResponseDto response = marketFacade.getSellNowPrice(productId);
         return CommonResponse.successWithData(HttpStatus.OK, response);
     }
 
     @Override
-    @PostMapping("/buy-now")
     public CommonResponse<Long> buyNow(BiddingRequestDto requestDto) {
         Long userId = 1L; //TODO: 인증 적용 시 수정
         Long orderId = marketFacade.purchaseNow(userId, requestDto);
@@ -74,11 +68,10 @@ public class ApiV1MarketController implements ApiV1Market{
     }
 
     @Override
-    @PostMapping("/sell-now")
     public CommonResponse<Long> sellNow(BiddingRequestDto requestDto) {
         Long userId = 2L; //TODO: 인증 적용 시 수정
         Long orderId = marketFacade.sellNow(userId, requestDto);
         return CommonResponse.successWithData(HttpStatus.CREATED, orderId);
     }
-    
+
 }
