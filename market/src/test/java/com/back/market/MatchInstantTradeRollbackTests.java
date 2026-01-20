@@ -49,9 +49,9 @@ public class MatchInstantTradeRollbackTests {
         setupBaseData(productId, sellerId, buyerId, "인천시");
 
         // 초기 상태 PROCESS인 입찰 생성
-        Bidding sellBid = createBidding(productId, sellerId, 9999, BiddingPosition.SELL);
+        Bidding sellBid = createBidding(productId, sellerId, 5000, BiddingPosition.SELL);
 
-        BiddingRequestDto request = new BiddingRequestDto(productId, BigDecimal.valueOf(9999), "270");
+        BiddingRequestDto request = new BiddingRequestDto(productId, BigDecimal.valueOf(5000), "270");
 
         // [When] 결제 실패 상황 발생
         BadRequestException exception = assertThrows(BadRequestException.class, () -> {
