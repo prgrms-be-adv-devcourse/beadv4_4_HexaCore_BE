@@ -43,6 +43,30 @@ public class MatchInstantTradeUseCaseTests {
     @Autowired private MarketProductMapper marketProductMapper;
 
     @Test
+    @DisplayName("통합 검증: 즉시 구매 성공 시 결제 모듈(Fake)이 호출되고 주문이 최종 저장된다")
+    void buyNow_integration_success() {
+        // [Given]
+        Long productId = 100L;
+        Long sellerId = 1L;
+        Long buyerId = 2L;
+        setupBaseData(productId, sellerId, buyerId, "서울시 강남구");
+        createBidding(productId, sellerId, 200000, BiddingPosition.SELL);
+
+        BiddingRequestDto request = new BiddingRequestDto(productId, BigDecimal.valueOf(200000), "270");
+
+        // [When] 실제 UseCase 호출 (내부에서 FakeCashClient의 "요청 성공" 로직이 실행됨)
+        Long orderId = matchInstantTradeUseCase.buyNow(buyerId, request);
+
+        // [Then] 1. 주문 저장 확인 ✅
+        Order savedOrder = orderRepository.findById(orderId).orElseThrow();
+        assertThat(savedOrder.getPrice()).isEqualByComparingTo(BigDecimal.valueOf(200000));
+
+        // 2. 입찰 상태 변경 확인 ✅
+        Bidding buyBid = savedOrder.getBuyBidding();
+        assertThat(buyBid.getStatus()).isEqualTo(BiddingStatus.MATCHED);
+    }
+
+    @Test
     @DisplayName("즉시 구매 실패: 해당 상품에 판매 입찰(SELL)이 하나도 없으면 예외가 발생한다")
     void buyNow_fail_noBidding() {
         // [Given] 상품은 존재하지만 판매 입찰은 없는 상태
