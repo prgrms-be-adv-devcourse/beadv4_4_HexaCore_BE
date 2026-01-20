@@ -34,7 +34,7 @@ public class MatchInstantTradeUseCase {
      * @throws BadRequestException 해당 상품의 판매 입찰(매물)이 존재하지 않을 경우 (BIDDING_NOT_FOUND)
      */
     @Transactional
-    public Long purchaseNow(Long buyerId, BiddingRequestDto requestDto) {
+    public Long buyNow(Long buyerId, BiddingRequestDto requestDto) {
         Bidding targetSellBid = biddingRepository.findFirstByMarketProductIdAndPositionAndStatusOrderByPriceAsc(requestDto.productId(), BiddingPosition.SELL, BiddingStatus.PROCESS).orElseThrow(() -> new BadRequestException(FailureCode.BIDDING_NOT_FOUND));
 
         return executeTrade(buyerId, requestDto, targetSellBid, BiddingPosition.BUY);

@@ -44,7 +44,7 @@ public class MatchInstantTradeUseCaseTests {
 
     @Test
     @DisplayName("즉시 구매 실패: 해당 상품에 판매 입찰(SELL)이 하나도 없으면 예외가 발생한다")
-    void purchaseNow_fail_noBidding() {
+    void buyNow_fail_noBidding() {
         // [Given] 상품은 존재하지만 판매 입찰은 없는 상태
         Long productId = 300L;
         Long buyerId = 5L;
@@ -54,7 +54,7 @@ public class MatchInstantTradeUseCaseTests {
 
         // [When & Then] BIDDING_NOT_FOUND 예외 확인
         BadRequestException exception = assertThrows(BadRequestException.class, () -> {
-            matchInstantTradeUseCase.purchaseNow(buyerId, request);
+            matchInstantTradeUseCase.buyNow(buyerId, request);
         });
 
         assertThat(exception.getMessage()).isEqualTo(FailureCode.BIDDING_NOT_FOUND.getMessage()); //
@@ -75,7 +75,7 @@ public class MatchInstantTradeUseCaseTests {
 
         // [Then] SELF_TRADING_NOT_ALLOWED 예외 확인
         BadRequestException exception = assertThrows(BadRequestException.class, () -> {
-            matchInstantTradeUseCase.purchaseNow(userId, request);
+            matchInstantTradeUseCase.buyNow(userId, request);
         });
 
         assertThat(exception.getMessage()).isEqualTo(FailureCode.SELF_TRADING_NOT_ALLOWED.getMessage()); //
@@ -83,7 +83,7 @@ public class MatchInstantTradeUseCaseTests {
 
     @Test
     @DisplayName("즉시 구매 성공: 판매 입찰이 있을 때 즉시 구매하면 Bidding 상태가 변경되고 Order가 생성된다")
-    void purchaseNow_success() {
+    void buyNow_success() {
         // [Given] 기초 데이터 세팅
         Long productId = 100L;
         Long sellerId = 1L;
@@ -97,7 +97,7 @@ public class MatchInstantTradeUseCaseTests {
 
         // [When] 구매자가 즉시 구매 실행 (200,000원)
         BiddingRequestDto request = new BiddingRequestDto(productId, BigDecimal.valueOf(200000), "270");
-        Long orderId = matchInstantTradeUseCase.purchaseNow(buyerId, request);
+        Long orderId = matchInstantTradeUseCase.buyNow(buyerId, request);
 
         // [Then] 1. 주문 생성 확인
         Order savedOrder = orderRepository.findById(orderId).orElseThrow();
