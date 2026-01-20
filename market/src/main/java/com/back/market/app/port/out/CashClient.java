@@ -2,10 +2,8 @@ package com.back.market.app.port.out;
 
 import com.back.market.dto.request.PayAndHoldRequestDto;
 import com.back.market.dto.response.CashApiResponse;
-import com.back.market.dto.response.CashHoldResponseDto;
+import com.back.market.dto.response.PayAndHoldResponseDto;
 import org.springframework.web.bind.annotation.RequestBody;
-
-import java.math.BigDecimal;
 
 public interface CashClient {
 
@@ -14,5 +12,5 @@ public interface CashClient {
      * @param requestDto 요청 dto
      * @return 성공 여부(true: 성공, false: 잔액부족 등 실패)
      */
-    CashApiResponse<CashHoldResponseDto> requestBidHold(@RequestBody PayAndHoldRequestDto requestDto);
+    CashApiResponse<PayAndHoldResponseDto> requestBidHold(@RequestBody PayAndHoldRequestDto requestDto);
 }

@@ -3,40 +3,69 @@ package com.back.market.adapter.out.client;
 import com.back.common.code.FailureCode;
 import com.back.common.code.SuccessCode;
 import com.back.market.app.port.out.CashClient;
+import com.back.market.dto.enums.PayAndHoldStatus;
+import com.back.market.dto.enums.RelType;
 import com.back.market.dto.request.PayAndHoldRequestDto;
 import com.back.market.dto.response.CashApiResponse;
-import com.back.market.dto.response.CashHoldResponseDto;
+import com.back.market.dto.response.PayAndHoldResponseDto;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 
+/**
+ * Cash 모듈의 기능을 하는 가짜 클라이언트
+ */
+@Slf4j
 @Component
 public class FakeCashClient implements CashClient {
+    /**
+     * 결제 및 홀딩 요청 처리
+     * @param requestDto 요청 dto, 구매자 ID, 금액, 참조 타입(ORDER/BIDDING), 참조 ID 포함
+     * @return 결제 완료(PAID) 또는 PG 결제 필요(REQUIRES_PG) 응답
+     */
     @Override
-    public CashApiResponse<CashHoldResponseDto> requestBidHold(PayAndHoldRequestDto requestDto) {
+    public CashApiResponse<PayAndHoldResponseDto> requestBidHold(PayAndHoldRequestDto requestDto) {
+        String actionType = requestDto.relType() == RelType.BIDDING ? "입찰 홀딩" : "즉시 결제";
+        log.info("[FakeCashClient] {} 요청 수신: {}", actionType, requestDto);
+
         Long userId = requestDto.buyerId();
         BigDecimal amount = requestDto.totalAmount();
 
-        // 잘 들어왔는지 확인용 로그
-        System.out.println("[FakeCashClient] 요청 수신: " + requestDto);
-
         //테스트용(9999원 요청시 잔액 부족 에러가 나도록)
         if (amount.intValue() == 9999) {
-            return CashApiResponse.<CashHoldResponseDto>builder()
-                    .code(FailureCode.WALLET_CHARGE_FAILED.getCode()) // 잔액 부족 코드
-                    .message(FailureCode.WALLET_CHARGE_FAILED.getMessage())
-                    .data(null)
+            log.info("[FakeCashClient] 예치금 부족 -> PG 결제 유도 (REQUIRES_PG) | RelId: {}", requestDto.relId());
+            PayAndHoldResponseDto pgResponse = PayAndHoldResponseDto.of(
+                    PayAndHoldStatus.REQUIRES_PG, // PG 결제 필요 상태
+                    requestDto.relType(),         // 요청받은 RelType 유지
+                    requestDto.relId(),           // 요청받은 RelId 유지
+                    BigDecimal.ZERO,              // 예치금 사용액 0원
+                    amount,     // 전액 PG 결제 필요
+                    "toss-order-fake-9999"        // 가짜 토스 주문 ID 생성
+            );
+
+            return CashApiResponse.<PayAndHoldResponseDto>builder()
+                    .code(SuccessCode.OK.getCode()) //API 통신 자체는 성공
+                    .message(FailureCode.WALLET_CHARGE_FAILED.getMessage()) // 잔액 부족 코드
+                    .data(pgResponse)
                     .build();
         }
 
-        CashHoldResponseDto fakeData = CashHoldResponseDto.of(userId, amount);
+        PayAndHoldResponseDto paidResponse = PayAndHoldResponseDto.of(
+                PayAndHoldStatus.PAID,         // 즉시 결제 완료 상태
+                requestDto.relType(),
+                requestDto.relId(),
+                amount,                        // 전액 예치금 사용
+                BigDecimal.ZERO,               // PG 필요 금액 0원
+                null                           // PG 정보 없음
+        );
 
-        System.out.println("[FakeCashClient] User " + userId + "의 " + amount + "원 홀딩 성공 (Ref: " + requestDto.relType() + " / " + requestDto.relId() + ")");
+        log.info("[FakeCashClient] 결제/홀딩 완료 (PAID): User {}, Amount {}", userId, amount);
 
-        return CashApiResponse.<CashHoldResponseDto>builder()
+        return CashApiResponse.<PayAndHoldResponseDto>builder()
                 .code(SuccessCode.OK.getCode())
                 .message("요청 성공 (Fake)")
-                .data(fakeData)
+                .data(paidResponse)
                 .build();
     }
 }
