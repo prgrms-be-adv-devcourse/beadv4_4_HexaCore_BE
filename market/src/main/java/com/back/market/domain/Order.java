@@ -51,4 +51,12 @@ public class Order extends BaseTimeEntity {
 
     @Column(name = "payment_date")
     private LocalDateTime paymentDate;           // 실제 결제일 (결제 완료 시 업데이트)
+
+    /**
+     * 상태 변경을 위한 메서드(setter 역할)
+     * @param status 입찰상태
+     */
+    public void changeStatus(OrderStatus status) {
+        this.orderStatus = status;
+    }
 }

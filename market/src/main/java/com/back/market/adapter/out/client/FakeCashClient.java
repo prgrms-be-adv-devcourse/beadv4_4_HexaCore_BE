@@ -32,8 +32,17 @@ public class FakeCashClient implements CashClient {
         Long userId = requestDto.buyerId();
         BigDecimal amount = requestDto.totalAmount();
 
-        //테스트용(9999원 요청시 잔액 부족 에러가 나도록)
-        if (amount.intValue() == 9999) {
+        // 강제 실패 시뮬레이션 (5000원) -> 롤백 테스트용
+        if (amount.intValue() == 5000) {
+            log.warn("[FakeCashClient] 강제 실패 트리거 작동 (5000원)");
+            return CashApiResponse.<PayAndHoldResponseDto>builder()
+                    .code(FailureCode.WALLET_CHARGE_FAILED.getCode()) // 실패 코드 (400)
+                    .message("강제 결제 실패")
+                    .build(); // success = false
+        }
+
+        //테스트용(9000원 요청시 잔액 부족 에러가 나도록)
+        if (amount.intValue() == 9000) {
             log.info("[FakeCashClient] 예치금 부족 -> PG 결제 유도 (REQUIRES_PG) | RelId: {}", requestDto.relId());
             PayAndHoldResponseDto pgResponse = PayAndHoldResponseDto.of(
                     PayAndHoldStatus.REQUIRES_PG, // PG 결제 필요 상태
@@ -41,7 +50,7 @@ public class FakeCashClient implements CashClient {
                     requestDto.relId(),           // 요청받은 RelId 유지
                     BigDecimal.ZERO,              // 예치금 사용액 0원
                     amount,     // 전액 PG 결제 필요
-                    "toss-order-fake-9999"        // 가짜 토스 주문 ID 생성
+                    "toss-order-fake-9000"        // 가짜 토스 주문 ID 생성
             );
 
             return CashApiResponse.<PayAndHoldResponseDto>builder()

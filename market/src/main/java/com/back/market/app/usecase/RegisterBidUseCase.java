@@ -39,6 +39,7 @@ public class RegisterBidUseCase {
     private final BiddingMapper biddingMapper;
     private final CashClient cashClient;
     private final CashRequestMapper cashRequestMapper;
+    private final MarketSupport marketSupport;
 
     /**
      * MARKET-010: 구매 입찰 등록
@@ -72,18 +73,8 @@ public class RegisterBidUseCase {
                 savedBidding.getId()
         );
 
-        CashApiResponse<PayAndHoldResponseDto> cashResponse = cashClient.requestBidHold(cashRequest);
+        PayAndHoldResponseDto responseData = marketSupport.getPayAndHoldResult(cashRequest);
 
-        // 결과 처리
-        if(!cashResponse.isSuccess()) {
-            if(cashResponse.isChargeFailed()) {
-                // 실패 시 예외 발생 -> 트랜잭션 롤백 -> 위에서 저장한 Bidding도 같이 삭제됨
-                throw new BadRequestException(FailureCode.WALLET_CHARGE_FAILED);
-            }
-            throw new BadRequestException(FailureCode.CASH_MODULE_ERROR);
-        }
-
-        PayAndHoldResponseDto responseData = cashResponse.data();
         if (responseData.status() == PayAndHoldStatus.PAID) {
             log.info("[RegisterBid] 예치금 홀딩 완료 - BiddingId: {}", savedBidding.getId());
             savedBidding.changeStatus(BiddingStatus.PROCESS);
