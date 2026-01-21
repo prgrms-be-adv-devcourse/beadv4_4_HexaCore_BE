@@ -2,6 +2,7 @@ package com.back.user.app;
 
 import com.back.user.domain.User;
 import com.back.user.dto.request.UpdateFcmTokenRequest;
+import com.back.user.dto.request.UpdateNotificationSettingsRequest;
 import com.back.user.dto.response.UserIdResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,14 @@ public class UserFacade {
         User user = userSupport.findById(userId);
 
         userUpdateUsecase.updateFcmToken(user, request);
+
+        return UserIdResponse.of(user);
+    }
+
+    public UserIdResponse updateNotificationSettings(Long userId, UpdateNotificationSettingsRequest request) {
+        User user = userSupport.findById(userId);
+
+        userUpdateUsecase.updateNotificationSettings(user, request);
 
         return UserIdResponse.of(user);
     }

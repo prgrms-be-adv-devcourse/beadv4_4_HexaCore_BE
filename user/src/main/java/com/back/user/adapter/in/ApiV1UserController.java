@@ -5,6 +5,7 @@ import com.back.common.response.CommonResponse;
 import com.back.security.principal.AuthPrincipal;
 import com.back.user.app.UserFacade;
 import com.back.user.dto.request.UpdateFcmTokenRequest;
+import com.back.user.dto.request.UpdateNotificationSettingsRequest;
 import com.back.user.dto.response.UserIdResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -27,4 +28,13 @@ public class ApiV1UserController implements UserApiV1 {
         UserIdResponse response = userFacade.registerOrUpdateFcmToken(authPrincipal.getUserId(), request);
         return CommonResponse.success(SuccessCode.OK, response);
     }
+
+    @PatchMapping("/me/notifications/setting")
+    @Override
+    public CommonResponse<UserIdResponse> updateNotificationSettings(@AuthenticationPrincipal AuthPrincipal authPrincipal,
+                                                                     @RequestBody UpdateNotificationSettingsRequest request) {
+        UserIdResponse response = userFacade.updateNotificationSettings(authPrincipal.getUserId(), request);
+        return CommonResponse.success(SuccessCode.OK, response);
+    }
+
 }
