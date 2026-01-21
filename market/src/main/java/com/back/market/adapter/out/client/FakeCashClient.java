@@ -6,7 +6,9 @@ import com.back.common.response.CommonResponse;
 import com.back.market.dto.enums.PayAndHoldStatus;
 import com.back.market.dto.enums.RelType;
 import com.back.market.dto.request.PayAndHoldRequestDto;
+import com.back.market.dto.request.PaymentCancelRequestDto;
 import com.back.market.dto.response.PayAndHoldResponseDto;
+import com.back.market.dto.response.PaymentCancelResponseDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
@@ -78,22 +80,17 @@ public class FakeCashClient implements CashClient {
      * @return 홀딩 해제 완료 응답
      */
     @Override
-    public CommonResponse<PayAndHoldResponseDto> refundBidHold(PayAndHoldRequestDto requestDto) {
+    public CommonResponse<PaymentCancelResponseDto> refundBidHold(PaymentCancelRequestDto requestDto) {
         log.info("[FakeCashClient] 환불(홀딩 해제) 요청 수신: {}", requestDto);
 
         // 환불 결과 DTO 생성
         // (환불이 완료되었다는 의미로 PAID 상태 사용, 실제 금액 차감은 없으므로 0원 처리)
-        PayAndHoldResponseDto response = PayAndHoldResponseDto.of(
-                PayAndHoldStatus.PAID,
-                requestDto.relType(),
-                requestDto.relId(),
-                BigDecimal.ZERO,
-                BigDecimal.ZERO,
-                null
+        PaymentCancelResponseDto response = PaymentCancelResponseDto.of(
+                requestDto.userId(),
+                requestDto.amount()
         );
 
-        log.info("[FakeCashClient] 예치금 홀딩 해제 완료 - User: {}, BidId: {}, Amount: {}",
-                requestDto.buyerId(), requestDto.relId(), requestDto.totalAmount());
+        log.info("[FakeCashClient] 예치금 홀딩 해제 완료 - User: {}, RelId: {}, Amount: {}", requestDto.userId(), requestDto.relId(), requestDto.amount());
 
         return CommonResponse.success(SuccessCode.OK, response);
     }

@@ -6,7 +6,9 @@ import com.back.common.exception.BadRequestException;
 import com.back.common.response.CommonResponse;
 import com.back.market.adapter.out.client.CashClient;
 import com.back.market.dto.request.PayAndHoldRequestDto;
+import com.back.market.dto.request.PaymentCancelRequestDto;
 import com.back.market.dto.response.PayAndHoldResponseDto;
+import com.back.market.dto.response.PaymentCancelResponseDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -40,23 +42,22 @@ public class MarketSupport {
         return response.getData();
     }
 
-    public PayAndHoldResponseDto refundBidPayment(PayAndHoldRequestDto refundRequest) {
+    public PaymentCancelResponseDto refundBidPayment(PaymentCancelRequestDto refundRequest) {
         // 1. 요청 전송
-        CommonResponse<PayAndHoldResponseDto> response = cashClient.refundBidHold(refundRequest);
+        CommonResponse<PaymentCancelResponseDto> response = cashClient.refundBidHold(refundRequest);
 
         // 2. 응답 검증
-        boolean isSuccess = response != null &&
-                SuccessCode.OK.getCode().equals(response.getCode());
+        boolean isSuccess = response != null && SuccessCode.OK.getCode().equals(response.getCode());
 
         if (!isSuccess) {
             String msg = (response != null) ? response.getMessage() : "No Response";
-            log.error("[MarketSupport] 환불 요청 실패 - User: {}, Reason: {}", refundRequest.buyerId(), msg);
+            log.error("[MarketSupport] 환불 요청 실패 - User: {}, Reason: {}", refundRequest.userId(), msg);
 
             // 환불 실패 시 예외를 던져 트랜잭션 롤백 유도
             throw new BadRequestException(FailureCode.WALLET_CHARGE_FAILED);
         }
 
-        log.info("[MarketSupport] 환불 요청 성공 - RelId: {}", refundRequest.relId());
+        log.info("[MarketSupport] 환불 성공: {}, RelId: {}", (response.getMessage() != null ? response.getMessage() : "OK"), refundRequest.relId());
 
         // 3. 데이터 반환 (.getData() 사용)
         return response.getData();

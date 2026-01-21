@@ -2,7 +2,9 @@ package com.back.market.adapter.out.client;
 
 import com.back.common.response.CommonResponse;
 import com.back.market.dto.request.PayAndHoldRequestDto;
+import com.back.market.dto.request.PaymentCancelRequestDto;
 import com.back.market.dto.response.PayAndHoldResponseDto;
+import com.back.market.dto.response.PaymentCancelResponseDto;
 import org.springframework.web.bind.annotation.RequestBody;
 
 public interface CashClient {
@@ -19,5 +21,5 @@ public interface CashClient {
      * @param requestDto 요청 dto
      * @return 성공 여부 및 결과 DTO
      */
-    CommonResponse<PayAndHoldResponseDto> refundBidHold(@RequestBody PayAndHoldRequestDto requestDto);
+    CommonResponse<PaymentCancelResponseDto> refundBidHold(@RequestBody PaymentCancelRequestDto requestDto);
 }
