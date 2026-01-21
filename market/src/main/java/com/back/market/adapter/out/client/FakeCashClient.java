@@ -2,7 +2,6 @@ package com.back.market.adapter.out.client;
 
 import com.back.common.code.FailureCode;
 import com.back.common.code.SuccessCode;
-import com.back.market.app.port.out.CashClient;
 import com.back.market.dto.enums.PayAndHoldStatus;
 import com.back.market.dto.enums.RelType;
 import com.back.market.dto.request.PayAndHoldRequestDto;
@@ -75,6 +74,36 @@ public class FakeCashClient implements CashClient {
                 .code(SuccessCode.OK.getCode())
                 .message("요청 성공 (Fake)")
                 .data(paidResponse)
+                .build();
+    }
+
+    /**
+     * 입찰 취소 시 예치금 환불(홀딩 해제) 요청 처리)
+     * @param requestDto 요청 dto
+     * @return 홀딩 해제 완료 응답
+     */
+    @Override
+    public CashApiResponse<PayAndHoldResponseDto> refundBidHold(PayAndHoldRequestDto requestDto) {
+        log.info("[FakeCashClient] 환불(홀딩 해제) 요청 수신: {}", requestDto);
+
+        // 환불 결과 DTO 생성
+        // (환불이 완료되었다는 의미로 PAID 상태 사용, 실제 금액 차감은 없으므로 0원 처리)
+        PayAndHoldResponseDto response = PayAndHoldResponseDto.of(
+                PayAndHoldStatus.PAID,
+                requestDto.relType(),
+                requestDto.relId(),
+                BigDecimal.ZERO,
+                BigDecimal.ZERO,
+                null
+        );
+
+        log.info("[FakeCashClient] 예치금 홀딩 해제 완료 - User: {}, BidId: {}, Amount: {}",
+                requestDto.buyerId(), requestDto.relId(), requestDto.totalAmount());
+
+        return CashApiResponse.<PayAndHoldResponseDto>builder()
+                .code(SuccessCode.OK.getCode())
+                .message("환불(홀딩 해제) 성공")
+                .data(response)
                 .build();
     }
 }
