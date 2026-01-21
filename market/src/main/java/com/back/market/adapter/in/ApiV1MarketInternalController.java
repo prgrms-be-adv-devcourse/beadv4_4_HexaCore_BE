@@ -1,5 +1,6 @@
 package com.back.market.adapter.in;
 
+import com.back.common.code.SuccessCode;
 import com.back.common.response.CommonResponse;
 import com.back.market.app.MarketInternalFacade;
 import com.back.market.dto.request.PaymentCompletedRequestDto;
@@ -15,7 +16,10 @@ public class ApiV1MarketInternalController implements ApiV1MarketInternal {
 
     @Override
     public CommonResponse<Void> confirmPayment(PaymentCompletedRequestDto requestDto) {
-        marketInternalFacade.confirmPayment(requestDto);
-        return CommonResponse.successWithData(HttpStatus.OK, null);
+        boolean isSuccess = marketInternalFacade.confirmPayment(requestDto);
+        if(!isSuccess) {
+            return CommonResponse.success(SuccessCode.ALREADY_PROCESSED, null);
+        }
+        return CommonResponse.success(SuccessCode.OK, null);
     }
 }
