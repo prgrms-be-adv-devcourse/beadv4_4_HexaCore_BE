@@ -31,4 +31,25 @@ public class UserSetting extends BaseTimeEntity {
     @Builder.Default
     private boolean settlementEnabled = true;
 
+    public static UserSetting of(User user) {
+        return UserSetting.builder()
+                .user(user)
+                .build();
+    }
+
+    public void setBidStatusEnabled(Boolean enabled) {
+        this.bidStatusEnabled = enabled;
+    }
+
+    public void setProductStatusEnabled(Boolean enabled) {
+        this.productStatusEnabled = enabled;
+    }
+
+    public void setPriceEnabled(Boolean enabled) {
+        this.priceEnabled = enabled;
+    }
+
+    public void setSettlementEnabled(Boolean enabled) {
+        this.settlementEnabled = enabled;
+    }
 }
