@@ -34,7 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest
 @Transactional
-public class MatchInstantTradeUseCaseTestsV2 {
+public class MatchInstantTradeUseCaseV2Tests {
     // ... 필드 주입 부분은 동일 ...
     @Autowired private MatchInstantTradeUseCase matchInstantTradeUseCase;
     @Autowired private BiddingRepository biddingRepository;

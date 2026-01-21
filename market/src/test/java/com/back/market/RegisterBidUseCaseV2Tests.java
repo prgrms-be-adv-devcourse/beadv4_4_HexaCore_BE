@@ -29,7 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest
 @Transactional
-public class RegisterBidUseCaseTestsV2 {
+public class RegisterBidUseCaseV2Tests {
     @Autowired RegisterBidUseCase useCase;
     @Autowired BiddingRepository biddingRepository;
     @Autowired MarketProductRepository productRepository;
