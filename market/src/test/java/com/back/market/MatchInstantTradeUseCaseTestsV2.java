@@ -47,6 +47,28 @@ public class MatchInstantTradeUseCaseTestsV2 {
     @Autowired private MarketProductMapper marketProductMapper;
 
     @Test
+    @DisplayName("즉시 판매 실패: 본인이 등록한 구매 입찰에 즉시 판매(자전거래)하려 하면 예외가 발생한다")
+    void sellNow_fail_selfTrading() {
+        // [Given] 유저와 상품 세팅
+        Long productId = 500L; // 기존 테스트와 겹치지 않게 ID 설정
+        Long userId = 1L;      // 구매자이자 동시에 판매자가 될 유저
+        setupBaseData(productId, userId, userId, "서울시 마포구");
+
+        // [Given] 본인이 "15만원에 사겠다(BUY)"고 입찰 등록
+        createBidding(productId, userId, 150000, BiddingPosition.BUY);
+
+        // [When] 본인이 "15만원에 팔겠다(즉시 판매)"고 요청
+        BiddingRequestDto request = new BiddingRequestDto(productId, BigDecimal.valueOf(150000), "270");
+
+        // [Then] SELF_TRADING_NOT_ALLOWED 예외 발생 검증
+        BadRequestException exception = assertThrows(BadRequestException.class, () -> {
+            matchInstantTradeUseCase.sellNow(userId, request);
+        });
+
+        assertThat(exception.getMessage()).isEqualTo(FailureCode.SELF_TRADING_NOT_ALLOWED.getMessage());
+    }
+
+    @Test
     @DisplayName("통합 검증: 즉시 구매 성공 시 결제 모듈이 호출되고 주문(PAID)이 최종 저장된다")
     void buyNow_integration_success() {
         // [Given]
@@ -184,6 +206,9 @@ public class MatchInstantTradeUseCaseTestsV2 {
         MarketUser user = marketUserRepository.findById(userId).orElseThrow();
         BiddingRequestDto requestDto = BiddingRequestDto.of(productId, BigDecimal.valueOf(price), "270");
         Bidding bidding = biddingMapper.toEntity(requestDto, user, product, position);
+
+        bidding.changeStatus(BiddingStatus.PROCESS); //테스트 데이터이고, 매칭 대상이 되어야 하므로 PROCESS로 변경
+
         return biddingRepository.save(bidding);
     }
 }

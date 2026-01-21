@@ -10,6 +10,7 @@ import com.back.market.domain.Bidding;
 import com.back.market.domain.MarketProduct;
 import com.back.market.domain.MarketUser;
 import com.back.market.domain.enums.BiddingPosition;
+import com.back.market.domain.enums.BiddingStatus;
 import com.back.market.domain.enums.Role;
 import com.back.market.dto.request.BiddingRequestDto;
 import com.back.market.dto.response.InstantBuyPriceResponseDto;
@@ -143,6 +144,7 @@ class GetInstantPriceUseCaseTests {
 
         // BiddingMapper를 사용하여 엔티티 생성 및 저장
         Bidding bidding = biddingMapper.toEntity(requestDto, user, product, position);
+        bidding.changeStatus(BiddingStatus.PROCESS); //테스트데이터이므로 강제로 등록 완료 상태로 변경
         biddingRepository.save(bidding);
     }
 }

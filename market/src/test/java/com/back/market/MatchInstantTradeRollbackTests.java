@@ -85,6 +85,8 @@ public class MatchInstantTradeRollbackTests {
         MarketProduct product = marketProductRepository.findById(productId).orElseThrow();
         MarketUser user = marketUserRepository.findById(userId).orElseThrow();
         BiddingRequestDto requestDto = BiddingRequestDto.of(productId, BigDecimal.valueOf(price), "270");
-        return biddingRepository.save(biddingMapper.toEntity(requestDto, user, product, position));
+        Bidding bidding = biddingMapper.toEntity(requestDto, user, product, position);
+        bidding.changeStatus(BiddingStatus.PROCESS); // 테스트 셋업을 위해 PROCESS로 변경
+        return biddingRepository.save(bidding);
     }
 }
