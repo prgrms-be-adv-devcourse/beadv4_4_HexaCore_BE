@@ -64,22 +64,19 @@ public class RegisterBidUseCase {
         Bidding bidding = biddingMapper.toEntity(requestDto, user, product, BiddingPosition.BUY);
         Bidding savedBidding = biddingRepository.save(bidding);
 
-        // TODO: 구매 입찰 등록 시 포인트 잔액 확인 및 차감 로직 추가 필요. MarketWallet 구성 이후 추가 예정, 임시로 FakeCashClient 구현해서 테스트
+        // TODO: 구매 입찰 등록 시 포인트 잔액 확인 및 차감 로직 추가 필요. 임시로 FakeCashClient 구현해서 테스트(marketSupport 클래스 확인)
         PayAndHoldRequestDto cashRequest = cashRequestMapper.toPayAndHoldRequestForBidding(
                 userId,
                 requestDto.price(),
                 savedBidding.getId()
         );
-
         PayAndHoldResponseDto responseData = marketSupport.getPayAndHoldResult(cashRequest);
 
         if (responseData.status() == PayAndHoldStatus.PAID) {
-            log.info("[RegisterBid] 예치금 홀딩 완료 - BiddingId: {}", savedBidding.getId());
             savedBidding.changeStatus(BiddingStatus.PROCESS);
+            log.info("[RegisterBid] 예치금 홀딩 & 입찰 등록 완료 (HOLD->PROCESS) - BiddingId: {}", savedBidding.getId());
         } else if (responseData.status() == PayAndHoldStatus.REQUIRES_PG) {
-            log.info("[RegisterBid] PG 결제 필요 - TossOrderId: {}", responseData.tossOrderId());
-            // TODO: PG사 결제가 필요할 경우 입찰 상태를 PG_PENDING으로 변경하고, 나중에 결제가 완료된걸 확인 후 PROCESS로 변경하는 식으로 추가 예정
-            // savedBidding.changeStatus(BiddingStatus.PG_PENDING);
+            log.info("[RegisterBid] PG 결제 필요, HOLD 상태 유지- relId: {}", responseData.relId());
         }
 
         return responseData;
@@ -108,7 +105,7 @@ public class RegisterBidUseCase {
 
         // 판매 입찰 저장
         Bidding bidding = biddingMapper.toEntity(requestDto, user, product, BiddingPosition.SELL);
-
+        bidding.changeStatus(BiddingStatus.PROCESS); // 판매 입찰은 결제 과정이 없으므로 즉시 활성화
         Bidding savedBidding = biddingRepository.save(bidding);
         return PayAndHoldResponseDto.of(
                 PayAndHoldStatus.PAID, // 판매 입찰은 결제가 필요없으므로 완료 상태로 생성
