@@ -47,6 +47,53 @@ public class MatchInstantTradeUseCaseV2Tests {
     @Autowired private MarketProductMapper marketProductMapper;
 
     @Test
+    @DisplayName("정합성 검사: 요청 시점의 가격(화면 가격)과 실제 최저가가 다르면 예외가 발생해야 한다")
+    void buyNow_fail_price_mismatch() {
+        // [Given] 실제 최저가는 20만원
+        Long productId = 700L;
+        Long seller = 13L;
+        Long buyer = 14L;
+        setupBaseData(productId, seller, buyer, "주소");
+        createBidding(productId, seller, 200000, BiddingPosition.SELL);
+
+        // [When] 사용자가 화면에서 19만원을 보고 요청했다고 가정 (가격 불일치)
+        BiddingRequestDto request = new BiddingRequestDto(productId, BigDecimal.valueOf(190000), "270");
+
+        // [Then] 예외 발생 (Bad Request or Price Mismatch)
+        // 주의: UseCase에 이 검증 로직(request.price != bidding.price)이 구현되어 있어야 통과합니다.
+        assertThrows(BadRequestException.class, () -> {
+            matchInstantTradeUseCase.buyNow(buyer, request);
+        });
+    }
+
+    @Test
+    @DisplayName("FIFO 검증: 동일한 가격의 판매 입찰이 여러 개일 경우, 가장 먼저 등록된(오래된) 입찰이 체결되어야 한다")
+    void buyNow_match_oldest_bidding_first() {
+        // [Given]
+        Long productId = 600L;
+        Long seller1 = 10L;
+        Long seller2 = 11L;
+        Long buyer = 12L;
+        setupBaseData(productId, seller1, buyer, "주소");
+        marketUserRepository.save(MarketUser.builder().id(seller2).nickname("s2").email("s2@t.com").role(Role.USER).build());
+
+        // 동일 가격(20만원)으로 시간차를 두고 입찰 등록
+        createBidding(productId, seller1, 200000, BiddingPosition.SELL); // 1. 먼저 등록 (Target)
+        try { Thread.sleep(100); } catch (InterruptedException e) {} // 시간차 확보
+        createBidding(productId, seller2, 200000, BiddingPosition.SELL); // 2. 나중에 등록
+
+        // [When] 구매 실행
+        BiddingRequestDto request = new BiddingRequestDto(productId, BigDecimal.valueOf(200000), "270");
+        PayAndHoldResponseDto response = matchInstantTradeUseCase.buyNow(buyer, request);
+
+        // [Then] seller1(먼저 등록한 사람)의 입찰과 체결되었는지 확인
+        Order savedOrder = orderRepository.findById(response.relId()).orElseThrow();
+        Long matchedSellerId = savedOrder.getSellBidding().getMarketUser().getId();
+
+        assertThat(matchedSellerId).isEqualTo(seller1); // seller2가 되면 실패!
+    }
+
+    @Test
     @DisplayName("즉시 판매 실패: 본인이 등록한 구매 입찰에 즉시 판매(자전거래)하려 하면 예외가 발생한다")
     void sellNow_fail_selfTrading() {
         // [Given] 유저와 상품 세팅
