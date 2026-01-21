@@ -23,6 +23,7 @@ public enum FailureCode {
     PRODUCT_NOT_FOUND(HttpStatus.BAD_REQUEST, "PRODUCT_NOT_FOUND","존재하지 않는 상품입니다."),
     USER_NOT_FOUND(HttpStatus.BAD_REQUEST, "USER_NOT_FOUND","존재하지 않는 사용자입니다."),
     BIDDING_NOT_FOUND(HttpStatus.BAD_REQUEST, "BIDDING_NOT_FOUND","존재하지 않는 입찰입니다."),
+    ORDER_NOT_FOUND(HttpStatus.BAD_REQUEST, "ORDER_NOT_FOUND","존재하지 않는 주문입니다."),
     INVALID_PRICE_UNIT(HttpStatus.BAD_REQUEST, "INVALID_PRICE_UNIT","입찰 가격은 1,000원 단위여야 합니다."),
     INVALID_BID_PRICE_BUY(HttpStatus.BAD_REQUEST, "INVALID_BID_PRICE_BUY","구매 입찰가는 즉시 구매가보다 낮아야 합니다."),
     INVALID_BID_PRICE_SELL(HttpStatus.BAD_REQUEST, "INVALID_BID_PRICE_SELL","판매 입찰가는 즉시 판매가보다 높아야 합니다."),
@@ -54,6 +55,7 @@ public enum FailureCode {
     SETTLEMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "SETTLEMENT_NOT_FOUND", "해당 정산서를 찾을 수 없습니다."),
     CHAT_ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "CHAT_ROOM_NOT_FOUND", "해당 채팅방을 찾을 수 없습니다."),
     WALLET_NOT_FOUND(HttpStatus.NOT_FOUND, "WALLET_NOT_FOUND", "사용자 지갑을 찾을 수 없습니다."),
+    CHAT_MESSAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "CHAT_MESSAGE_NOT_FOUND", "해당 메시지를 찾을 수 없습니다."),
 
     /**
      * 405 Method Not Allowed
@@ -67,6 +69,7 @@ public enum FailureCode {
     CONFLICT(HttpStatus.CONFLICT, "CONFLICT", "이미 존재하는 리소스입니다."),
     BRAND_NAME_DUPLICATE(HttpStatus.CONFLICT, "BRAND_NAME_DUPLICATE", "이미 존재하는 브랜드 이름입니다."),
     CATEGORY_NAME_DUPLICATE(HttpStatus.CONFLICT, "CATEGORY_NAME_DUPLICATE", "이미 존재하는 카테고리 이름입니다."),
+    REPORT_DUPLICATE(HttpStatus.CONFLICT, "REPORT_DUPLICATE", "이미 신고한 메시지입니다."),
 
     /**
      * 500 Internal Server Error

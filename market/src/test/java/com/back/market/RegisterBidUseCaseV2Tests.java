@@ -29,7 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest
 @Transactional
-public class RegisterBidUseCaseTestsV2 {
+public class RegisterBidUseCaseV2Tests {
     @Autowired RegisterBidUseCase useCase;
     @Autowired BiddingRepository biddingRepository;
     @Autowired MarketProductRepository productRepository;
@@ -167,5 +167,54 @@ public class RegisterBidUseCaseTestsV2 {
             useCase.registerBuyBid(USER_ID, request);
         });
         assertThat(exception.getMessage()).isEqualTo(FailureCode.INVALID_BID_PRICE_BUY.getMessage());
+    }
+
+    @Test
+    @DisplayName("판매 입찰(실패): 가격 단위가 1000원 단위가 아니면 실패해야 한다")
+    void registerSellBid_fail_invalid_unit() {
+        // [Given]
+        BigDecimal invalidPrice = BigDecimal.valueOf(30500);
+        BiddingRequestDto request = BiddingRequestDto.of(PRODUCT_ID, invalidPrice, "270");
+
+        // [When & Then]
+        BadRequestException exception = assertThrows(BadRequestException.class, () -> {
+            useCase.registerSellBid(USER_ID, request);
+        });
+        assertThat(exception.getMessage()).isEqualTo(FailureCode.INVALID_PRICE_UNIT.getMessage());
+    }
+
+    @Test
+    @DisplayName("판매 입찰(실패): 이미 더 저렴한 구매 입찰이 존재하면 '즉시 판매'를 유도하며 실패해야 한다")
+    void registerSellBid_fail_induce_immediate_sell() {
+        // [Given] 다른 판매자 생성
+        Long buyerId = 30L;
+        MarketUser buyer = MarketUser.builder()
+                .id(buyerId)
+                .nickname("buyer_user")
+                .email("seller@test.com")
+                .role(Role.USER)
+                .build();
+        userRepository.save(buyer);
+
+        // [Given] 기존 구매 입찰 등록 (가격 100,000원에 사겠다고 함)
+        MarketProduct product = productRepository.findById(PRODUCT_ID).orElseThrow();
+        Bidding existingSellBid = Bidding.builder()
+                .marketUser(buyer)
+                .marketProduct(product)
+                .position(BiddingPosition.BUY)
+                .status(BiddingStatus.PROCESS)
+                .price(BigDecimal.valueOf(100000))
+                .build();
+        biddingRepository.save(existingSellBid);
+
+        // [When] 내가 90,000원에 팔겠다고 판매 입찰 시도
+        // (구매 희망가 10만원보다 싸게 판다고 하니, 입찰 말고 즉시 판매를 해야 함)
+        BiddingRequestDto request = BiddingRequestDto.of(PRODUCT_ID, BigDecimal.valueOf(90000), "270");
+
+        // [Then]
+        BadRequestException exception = assertThrows(BadRequestException.class, () -> {
+            useCase.registerSellBid(USER_ID, request);
+        });
+        assertThat(exception.getMessage()).isEqualTo(FailureCode.INVALID_BID_PRICE_SELL.getMessage());
     }
 }

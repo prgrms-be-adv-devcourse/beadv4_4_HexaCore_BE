@@ -4,6 +4,7 @@ import com.back.chat.adapter.out.ChatMessageRepository;
 import com.back.chat.adapter.out.ChatReportRepository;
 import com.back.chat.adapter.out.ChatRoomRepository;
 import com.back.chat.domain.ChatMessage;
+import com.back.chat.domain.ChatReport;
 import com.back.chat.domain.ChatRoom;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -35,6 +36,20 @@ public class ChatSupport {
 
     public List<ChatMessage> findByRoomIdAndIdLessThanOrderByIdDesc(Long roomId, Long cursorMessageId, Pageable pageable){
         return chatMessageRepository.findByRoomIdAndIdLessThanOrderByIdDesc(roomId, cursorMessageId, pageable);
+    }
+
+    public Optional<ChatMessage> findMessageById(Long chatMessageId){
+        return chatMessageRepository.findById(chatMessageId);
+    }
+
+    public ChatReport saveReport(ChatReport chatReport) {
+        return chatReportRepository.save(chatReport);
+    }
+
+    public int incrementReportCount(Long chatMessageId){ return chatMessageRepository.incrementReportCount(chatMessageId);}
+
+    public int blindIfReached(Long messageId, int threshold) {
+        return chatMessageRepository.blindIfReached(messageId, threshold);
     }
 
 

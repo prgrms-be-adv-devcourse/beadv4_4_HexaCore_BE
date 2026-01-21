@@ -1,6 +1,7 @@
 package com.back.chat.adapter.out.redis;
 
-import com.back.chat.domain.ChatMessageBlindPolicy;
+import com.back.chat.event.ChatEventEnvelope;
+import com.back.chat.event.payload.ChatMessageBlindedPayload;
 import com.back.chat.event.payload.ChatMessagePayload;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +22,6 @@ public class RedisChatMessageSubscriber implements MessageListener {
 
     private final ObjectMapper objectMapper;
     private final SimpMessagingTemplate messagingTemplate;
-    private final ChatMessageBlindPolicy chatMessageBlindPolicy;
 
     @Override
     public void onMessage(Message message, byte[] pattern) {
@@ -29,16 +29,33 @@ public class RedisChatMessageSubscriber implements MessageListener {
         String rawBody = new String(message.getBody(), StandardCharsets.UTF_8);
 
         try {
-            ChatMessagePayload payload =
-                    objectMapper.readValue(rawBody, ChatMessagePayload.class);
+            ChatEventEnvelope envelope = objectMapper.readValue(rawBody, ChatEventEnvelope.class);
 
-            ChatMessagePayload applied = chatMessageBlindPolicy.apply(payload);
+            switch (envelope.type()) {
+                case CHAT_MESSAGE -> {
+                    ChatMessagePayload payload =
+                            objectMapper.treeToValue(envelope.data(), ChatMessagePayload.class);
 
-            String destination = roomTopic(applied.roomId());
-            messagingTemplate.convertAndSend(destination, applied);
+                    String destination = roomTopic(payload.roomId());
+                    messagingTemplate.convertAndSend(destination, payload);
 
-            log.info("[CHAT][REDIS-SUB] channel={}, roomId={}, messageId={}, blinded={}, destination={}",
-                    channel, applied.roomId(), applied.messageId(), applied.isBlinded(), destination);
+                    log.info("[CHAT][REDIS-SUB] channel={}, type=CHAT_MESSAGE roomId={}, messageId={}, blinded={}, destination={}",
+                            channel, payload.roomId(), payload.messageId(), payload.isBlinded(), destination);
+                }
+
+                case MESSAGE_BLINDED -> {
+                    ChatMessageBlindedPayload payload =
+                            objectMapper.treeToValue(envelope.data(), ChatMessageBlindedPayload.class);
+
+                    String destination = roomTopic(payload.roomId());
+                    messagingTemplate.convertAndSend(destination, payload);
+
+                    log.info("[CHAT][REDIS-SUB] channel={}, type=MESSAGE_BLINDED roomId={}, messageId={}, destination={}",
+                            channel, payload.roomId(), payload.chatMessageId(), destination);
+                }
+
+                default -> log.warn("[CHAT][REDIS-SUB][WARN] unknown type. channel={}, rawBody={}", channel, rawBody);
+            }
 
         } catch (Exception e) {
             log.error("[CHAT][REDIS-SUB][ERROR] channel={}, rawBody={}", channel, rawBody, e);

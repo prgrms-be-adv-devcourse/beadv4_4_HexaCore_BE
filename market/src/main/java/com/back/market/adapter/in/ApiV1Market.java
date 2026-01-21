@@ -8,12 +8,10 @@ import com.back.market.dto.response.PayAndHoldResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Market API", description = "상품 구매 및 주문 관련 API")
+@RequestMapping("/api/v1/market")
 public interface ApiV1Market {
     @Operation(summary = "구매 입찰 등록", description = "구매자가 원하는 가격으로 새로운 구매 입찰을 등록한다.")
     @PostMapping("/bids/buy")

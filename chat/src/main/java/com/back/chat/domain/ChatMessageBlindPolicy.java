@@ -6,19 +6,11 @@ import org.springframework.stereotype.Component;
 @Component
 public class ChatMessageBlindPolicy {
 
-    private static final String BLINDED_TEXT = "블라인드된 메시지입니다";
-
-    public ChatMessagePayload apply(ChatMessagePayload payload) {
-        if (!payload.isBlinded()) {
-            return payload;
-        }
-        return new ChatMessagePayload(
-                payload.messageId(),
-                payload.userId(),
-                payload.roomId(),
-                BLINDED_TEXT,
-                true,
-                payload.createdAt()
-        );
+    private ChatMessageBlindPolicy() {
     }
+
+    public static final int MESSAGE_BLIND_THRESHOLD = 3;
+
+    public static final int CHAT_RESTRICT_THRESHOLD = 3;
+
 }

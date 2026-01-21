@@ -28,6 +28,9 @@ public class ChatMessage extends BaseTimeEntity {
     @Column(name = "is_blinded", nullable = false)
     private boolean isBlinded = false;
 
+    @Column(name = "report_count", nullable = false)
+    private int reportCount = 0;
+
     private ChatMessage(
             Long roomId,
             Long userId,

@@ -5,7 +5,7 @@ import com.back.common.exception.BadRequestException;
 import com.back.market.adapter.out.BiddingRepository;
 import com.back.market.adapter.out.MarketUserRepository;
 import com.back.market.adapter.out.OrderRepository;
-import com.back.market.adapter.out.client.FakeCashClient;
+import com.back.market.app.MarketSupport;
 import com.back.market.domain.Bidding;
 import com.back.market.domain.MarketUser;
 import com.back.market.domain.Order;
@@ -50,6 +50,9 @@ public class MatchInstantTradeUseCase {
     public PayAndHoldResponseDto buyNow(Long buyerId, BiddingRequestDto requestDto) {
         Bidding targetSellBid = biddingRepository.findFirstByMarketProductIdAndPositionAndStatusOrderByPriceAsc(requestDto.productId(), BiddingPosition.SELL, BiddingStatus.PROCESS).orElseThrow(() -> new BadRequestException(FailureCode.BIDDING_NOT_FOUND));
 
+        // 정합성 검사 추가: 사용자가 화면에서 본 가격과 실제 조회된 가격이 다르면 예외 처리
+        validatePriceMatch(targetSellBid, requestDto.price());
+
         return executeTrade(buyerId, requestDto, targetSellBid, BiddingPosition.BUY);
     }
 
@@ -66,7 +69,17 @@ public class MatchInstantTradeUseCase {
                         requestDto.productId(), BiddingPosition.BUY, BiddingStatus.PROCESS)
                 .orElseThrow(() -> new BadRequestException(FailureCode.BIDDING_NOT_FOUND));
 
+        // 정합성 검사 추가: 사용자가 화면에서 본 가격과 실제 조회된 가격이 다르면 예외 처리
+        validatePriceMatch(targetBuyBid, requestDto.price());
+
         return executeTrade(sellerId, requestDto, targetBuyBid, BiddingPosition.SELL);
+    }
+
+    private void validatePriceMatch(Bidding bidding, BigDecimal requestPrice) {
+        if(bidding.getPrice().compareTo(requestPrice) != 0) {
+            log.warn("[Price Mismatch] 가격 변동 감지 - 요청가: {}, 실가: {}, BiddingId: {}", requestPrice, bidding.getPrice(), bidding.getId());
+            throw new BadRequestException(FailureCode.AMOUNT_MISMATCH);
+        }
     }
 
     /**

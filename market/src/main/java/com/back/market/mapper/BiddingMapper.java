@@ -16,7 +16,7 @@ public class BiddingMapper {
                 .marketProduct(product)
                 .price(requestDto.price())
                 .position(position)
-                .status(BiddingStatus.PROCESS)
+                .status(BiddingStatus.HOLD) // 기본 상태: HOLD
                 .build();
     }
 }

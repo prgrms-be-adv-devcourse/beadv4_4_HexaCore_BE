@@ -1,6 +1,6 @@
 package com.back.chat;
 
-import com.back.chat.adapter.out.redis.RedisChatMessagePublisher;
+import com.back.chat.adapter.out.redis.RedisChatEventPublisher;
 import com.back.chat.event.payload.ChatMessagePayload;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class RedisPublishIntegrationTest {
 
     @Autowired
-    private RedisChatMessagePublisher redisChatMessagePublisher;
+    private RedisChatEventPublisher redisChatMessagePublisher;
 
     @Autowired
     private RedisMessageListenerContainer redisMessageListenerContainer;
@@ -55,7 +55,7 @@ class RedisPublishIntegrationTest {
         redisMessageListenerContainer.addMessageListener(listener, new ChannelTopic(channel));
 
         // when
-        redisChatMessagePublisher.publish(roomId, payload);
+        redisChatMessagePublisher.publishChatMessage(roomId, payload);
 
         // then
         boolean messageReceived = latch.await(2, TimeUnit.SECONDS);
