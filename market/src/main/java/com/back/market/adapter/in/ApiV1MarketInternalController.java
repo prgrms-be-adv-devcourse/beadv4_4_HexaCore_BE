@@ -5,7 +5,6 @@ import com.back.common.response.CommonResponse;
 import com.back.market.app.MarketInternalFacade;
 import com.back.market.dto.request.PaymentCompletedRequestDto;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
