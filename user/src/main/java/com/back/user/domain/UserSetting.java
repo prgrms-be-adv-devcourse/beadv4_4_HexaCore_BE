@@ -10,7 +10,7 @@ import lombok.*;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Builder
 @Table(name = "user_notification_settings")
-public class UserNotificationSetting extends BaseTimeEntity {
+public class UserSetting extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -20,7 +20,7 @@ public class UserNotificationSetting extends BaseTimeEntity {
     private User user;
 
     @Builder.Default
-    private boolean bdStatusEnabled = true;
+    private boolean bidStatusEnabled = true;
 
     @Builder.Default
     private boolean productStatusEnabled = true;
