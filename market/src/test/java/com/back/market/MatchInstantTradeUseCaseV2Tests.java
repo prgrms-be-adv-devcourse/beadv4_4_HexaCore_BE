@@ -61,9 +61,11 @@ public class MatchInstantTradeUseCaseV2Tests {
 
         // [Then] 예외 발생 (Bad Request or Price Mismatch)
         // 주의: UseCase에 이 검증 로직(request.price != bidding.price)이 구현되어 있어야 통과합니다.
-        assertThrows(BadRequestException.class, () -> {
+        BadRequestException exception = assertThrows(BadRequestException.class, () -> {
             matchInstantTradeUseCase.buyNow(buyer, request);
         });
+
+        assertThat(exception.getMessage()).isEqualTo(FailureCode.AMOUNT_MISMATCH.getMessage());
     }
 
     @Test
