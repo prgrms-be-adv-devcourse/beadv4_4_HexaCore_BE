@@ -103,7 +103,7 @@ jobs:
   # Job 3: 변경된 이미지 태그를 Helm Chart에 반영하는 작업
   update-helm-chart:
     name: Update Helm Chart
-    needs: build-and-push # 'build-and-push' job이 성공적으로 끝나야 실행됩니다.
+    needs: [changes, build-and-push] # 'build-and-push'와 'changes' 작업이 모두 성공해야 실행됩니다.
     if: github.ref == 'refs/heads/main' && github.event_name == 'push' # 'main' 브랜치에 'push' 이벤트가 발생했을 때만 실행합니다.
     runs-on: ubuntu-latest
 
@@ -124,12 +124,18 @@ jobs:
         run: echo "lowercase_owner=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
 
       - name: Update image tags in values.yaml
+        env:
+          MODULES_JSON:
+            ${{ 
+              contains(needs.changes.outputs.modules, '"all"') && 
+              '["user", "product", "market", "chat", "cash", "notification", "settlement"]' ||
+              needs.changes.outputs.modules 
+            }}
         run: |
-          modules_json='${{ contains(needs.changes.outputs.modules, '"all"') && toJSON('["user", "product", "market", "chat", "cash", "notification", "settlement"]') || needs.changes.outputs.modules }}'
-          echo "Modules to update: $modules_json"
+          echo "Modules to update: $MODULES_JSON"
 
           # JSON 배열을 순회하며 각 모듈의 values.yaml 파일을 업데이트합니다.
-          for module in $(echo "$modules_json" | yq -r '.[]'); do
+          for module in $(echo "$MODULES_JSON" | yq -r '.[]'); do
             # 각 모듈에 맞는 values.yaml 파일 경로를 동적으로 설정합니다.
             VALUES_FILE="applications/$module/values.yaml"
             echo "Checking for $VALUES_FILE..."
@@ -140,7 +146,7 @@ jobs:
               # values.yaml 파일 내의 image.tag 값을 직접 업데이트합니다.
               yq -i ".image.tag = \"${{ github.sha }}\"" $VALUES_FILE
 
-              레포지토리 주소도 업데이트가 필요하다면 아래 주석을 해제하고 사용하세요.
+              # 레포지토리 주소도 업데이트가 필요하다면 아래 주석을 해제하고 사용하세요.
               yq -i ".image.repository = \"ghcr.io/${{ steps.string.outputs.lowercase_owner }}/$module\"" $VALUES_FILE
             else
               echo "Warning: $VALUES_FILE not found. Skipping update for $module."
