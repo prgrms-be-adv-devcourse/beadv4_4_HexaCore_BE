@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/market")
 public class ApiV1MarketController implements ApiV1Market{
 
     private final MarketFacade marketFacade;
