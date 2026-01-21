@@ -6,8 +6,10 @@ import com.back.user.adapter.in.auth.security.oauth.userinfo.KakaoResponse;
 import com.back.user.adapter.in.auth.security.oauth.userinfo.NaverResponse;
 import com.back.user.adapter.in.auth.security.oauth.userinfo.OAuth2Response;
 import com.back.user.adapter.out.UserRepository;
+import com.back.user.adapter.out.UserSettingRepository;
 import com.back.user.app.auth.GenerateNicknameUseCase;
 import com.back.user.domain.User;
+import com.back.user.domain.UserSetting;
 import com.back.user.domain.enums.Provider;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +28,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private final UserRepository userRepository;
     private final GenerateNicknameUseCase generateNicknameUseCase;
+    private final UserSettingRepository userSettingRepository;
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
@@ -57,6 +60,9 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                             )
                     );
                 });
+
+        UserSetting userSetting = userSettingRepository.findByUser(user)
+                .orElseGet(() -> userSettingRepository.save(UserSetting.of(user)));
 
         return new CustomOAuth2User(user.getRole(), user.getId(), oAuth2User.getAttributes());
     }
