@@ -17,6 +17,9 @@ import java.util.List;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Document(indexName = "products")
 public class ProductDocument extends BaseDocument<String> {
+    @Field(type = FieldType.Long)
+    private Long productInfoId;
+
     @Field(type = FieldType.Text, analyzer = "nori")
     private String productName;
 
