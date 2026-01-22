@@ -78,8 +78,8 @@ public class NotificationEventPublisher {
             Type type = notification.getType();
 
             boolean isEnabled = switch (type) {
-                case BID_COMPLETED, BID_FAILED -> setting.isBidStatusEnabled();
-                case INSPECTION_COMPLETED, PURCHASE_CANCELED -> setting.isProductStatusEnabled();
+                case BID_COMPLETED, BID_FAILED, PURCHASE_CANCELED -> setting.isBidStatusEnabled();
+                case INSPECTION_COMPLETED -> setting.isProductStatusEnabled();
                 case PRICE_DROPPED -> setting.isPriceEnabled();
                 case SETTLEMENT_COMPLETED -> setting.isSettlementEnabled();
             };
