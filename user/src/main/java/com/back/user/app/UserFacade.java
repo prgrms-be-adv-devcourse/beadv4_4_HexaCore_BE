@@ -25,10 +25,12 @@ public class UserFacade {
         return UserIdResponse.of(user);
     }
 
+    @Transactional
     public void incrementBlindCount(Long userId) {
         userIncrementBlindCountUseCase.incrementBlindCount(userId);
     }
 
+    @Transactional
     public LocalDateTime getChatRestrictedUntil(Long userId){
         User user = userSupport.findById(userId);
         return user.getChatRestrictedUntil();
