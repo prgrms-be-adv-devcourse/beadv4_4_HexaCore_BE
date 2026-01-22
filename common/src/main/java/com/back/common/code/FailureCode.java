@@ -30,6 +30,9 @@ public enum FailureCode {
     SELF_TRADING_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "SELF_TRADING_NOT_ALLOWED", "본인의 입찰 상품과는 거래할 수 없습니다."),
     WALLET_CHARGE_FAILED(HttpStatus.BAD_REQUEST, "WALLET_CHARGE_FAILED", "예치금 충전에 실패하였습니다."),
     AMOUNT_MISMATCH(HttpStatus.BAD_REQUEST, "AMOUNT_MISMATCH", "결제 금액이 일치하지 않습니다."),
+    CANNOT_CANCEL_BID(HttpStatus.BAD_REQUEST, "CANNOT_CANCEL_BID", "이미 체결되었거나 취소할 수 없는 상태입니다."),
+    WALLET_REFUND_FAILED(HttpStatus.BAD_REQUEST, "WALLET_REFUND_FAILED", "예치금 환불에 실패하였습니다"),
+
     /**
      * 401 Unauthorized
      */

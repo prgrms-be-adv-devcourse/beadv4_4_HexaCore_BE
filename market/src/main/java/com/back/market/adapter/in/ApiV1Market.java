@@ -5,6 +5,7 @@ import com.back.market.dto.request.BiddingRequestDto;
 import com.back.market.dto.response.InstantBuyPriceResponseDto;
 import com.back.market.dto.response.InstantSellPriceResponseDto;
 import com.back.market.dto.response.PayAndHoldResponseDto;
+import com.back.market.dto.response.PaymentCancelResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -47,4 +48,10 @@ public interface ApiV1Market {
             // @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody @Valid BiddingRequestDto requestDto);
 
+    @Operation(summary = "입찰 취소", description = "대기 중인 입찰을 취소하고 구매 입찰일 경우 예치금 환불을 진행한다.")
+    @DeleteMapping("/bid/{biddingId}")
+    CommonResponse<PaymentCancelResponseDto> cancelBid(
+            //@AuthenticationPrincipal CustomUserDetails user,
+            @PathVariable Long biddingId
+    );
 }
