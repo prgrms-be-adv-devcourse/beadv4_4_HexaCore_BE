@@ -54,6 +54,8 @@ public enum FailureCode {
     ENTITY_NOT_FOUND(HttpStatus.NOT_FOUND, "ENTITY_NOT_FOUND", "대상을 찾을 수 없습니다."),
     SETTLEMENT_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "SETTLEMENT_ITEM_NOT_FOUND", "정산 상품을 찾을 수 없습니다."),
     SETTLEMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "SETTLEMENT_NOT_FOUND", "해당 정산서를 찾을 수 없습니다."),
+    REQUIRED_FAILURE_REASON(HttpStatus.NOT_FOUND, "FAILURE_REASON_REQUIRED", "실패 사유는 필수입니다."),
+    REQUIRED_HOLD_REASON(HttpStatus.NOT_FOUND, "HOLD", "보류 사유는 필수입니다."),
     CHAT_ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "CHAT_ROOM_NOT_FOUND", "해당 채팅방을 찾을 수 없습니다."),
     WALLET_NOT_FOUND(HttpStatus.NOT_FOUND, "WALLET_NOT_FOUND", "사용자 지갑을 찾을 수 없습니다."),
     PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "PAYMENT_NOT_FOUND", "결제 정보를 찾을 수 없습니다."),
