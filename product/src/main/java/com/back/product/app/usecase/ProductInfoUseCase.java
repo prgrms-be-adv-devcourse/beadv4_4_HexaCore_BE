@@ -55,9 +55,18 @@ public class ProductInfoUseCase {
 
     @Transactional
     public void deleteProductInfo(Long productInfoId) {
-        ProductInfo productInfo = productSupport.findProductInfoById(productInfoId)
-                .orElseThrow(() -> new CustomException(FailureCode.PRODUCT_INFO_NOT_FOUND));
+        ProductInfo productInfo = getProductInfoExists(productInfoId);
 
         productInfoRepository.delete(productInfo);
+    }
+
+    @Transactional(readOnly = true)
+    public ProductInfo findProductInfo(Long productInfoId) {
+        return getProductInfoExists(productInfoId);
+    }
+
+    private ProductInfo getProductInfoExists(Long productInfoId) {
+        return productSupport.findProductInfoById(productInfoId)
+                .orElseThrow(() -> new CustomException(FailureCode.PRODUCT_INFO_NOT_FOUND));
     }
 }

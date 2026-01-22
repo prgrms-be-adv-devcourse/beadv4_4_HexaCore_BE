@@ -88,6 +88,15 @@ public class ProductFacade {
         productInfoUseCase.deleteProductInfo(productInfoId);
     }
 
+    @Transactional(readOnly = true)
+    public ProductResponseDto getProductDetail(Long productInfoId) {
+        ProductInfo productInfo = productInfoUseCase.findProductInfo(productInfoId);
+
+        List<ProductDto> productDtos = productUseCase.findAllProduct(productInfo);
+
+        return buildProductResponseDto(productInfo, productDtos);
+    }
+
     private ProductResponseDto buildProductResponseDto(ProductInfo productInfo, List<ProductDto> productDtos) {
         return ProductResponseDto.builder()
                 .productInfo(productInfoMapper.toDto(productInfo))
