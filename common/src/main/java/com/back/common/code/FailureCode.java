@@ -19,6 +19,7 @@ public enum FailureCode {
     INSUFFICIENT_BALANCE(HttpStatus.BAD_REQUEST, "INSUFFICIENT_BALANCE", "잔액이 부족하여 결제할 수 없습니다."),
     MISSING_SELLER_NAME(HttpStatus.BAD_REQUEST, "MISSING_SELLER_NAME", "판매자 이름이 필요합니다."),
     INVALID_CANCEL(HttpStatus.BAD_REQUEST, "INVALID_CANCEL", "취소할 수 없는 결제 상태입니다."),
+    INVALID_AMOUNT(HttpStatus.BAD_REQUEST, "INVALID_AMOUNT", "유효하지 않은 금액입니다."),
 
     // Market 모듈에서 사용
     PRODUCT_NOT_FOUND(HttpStatus.BAD_REQUEST, "PRODUCT_NOT_FOUND","존재하지 않는 상품입니다."),
