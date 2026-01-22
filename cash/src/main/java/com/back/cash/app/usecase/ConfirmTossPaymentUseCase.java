@@ -1,7 +1,9 @@
-package com.back.cash.app;
+package com.back.cash.app.usecase;
 
 import com.back.cash.adapter.out.PaymentRepository;
 import com.back.cash.adapter.out.TossPaymentsClient;
+import com.back.cash.app.CashLogSupport;
+import com.back.cash.app.WalletSupport;
 import com.back.cash.domain.Payment;
 import com.back.cash.domain.Wallet;
 import com.back.cash.domain.enums.PaymentStatus;

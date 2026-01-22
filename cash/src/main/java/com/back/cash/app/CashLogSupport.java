@@ -97,4 +97,21 @@ public class CashLogSupport {
         cashLogRepository.save(buyerLog);
         cashLogRepository.save(systemLog);
     }
+
+    public void recordSettlementPayoutLog(
+            Wallet payeeWallet,
+            BigDecimal amount,
+            Long settlementId
+    ) {
+        CashLog log = CashLog.builder()
+                .wallet(payeeWallet)
+                .amount(amount)
+                .balance(payeeWallet.getBalance())
+                .type(Type.SETTLEMENT_PRINCIPAL)
+                .relType(RelType.SETTLEMENT)
+                .relId(settlementId)
+                .build();
+
+        cashLogRepository.save(log);
+    }
 }
