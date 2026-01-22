@@ -1,4 +1,4 @@
-package com.back.cash.adapter.in;
+package com.back.cash.adapter.in.internal;
 
 import com.back.cash.app.CashFacade;
 import com.back.cash.dto.request.PaymentCancelRequestDto;
@@ -27,4 +27,6 @@ public class ApiV1InternalCashController {
                 .status(SuccessCode.OK.getHttpStatus())
                 .body(CommonResponse.success(SuccessCode.OK, result));
     }
+
+
 }
