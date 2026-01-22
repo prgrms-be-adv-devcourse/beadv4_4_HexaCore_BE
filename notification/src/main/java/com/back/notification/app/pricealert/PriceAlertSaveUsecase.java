@@ -1,4 +1,4 @@
-package com.back.notification.app;
+package com.back.notification.app.pricealert;
 
 import com.back.notification.adapter.out.NotificationProductRepository;
 import com.back.notification.adapter.out.NotificationUserRepository;

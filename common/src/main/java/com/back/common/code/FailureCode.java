@@ -69,6 +69,7 @@ public enum FailureCode {
     OPTION_VALUE_NOT_FOUND(HttpStatus.NOT_FOUND, "OPTION_VALUE_NOT_FOUND", "존재하지 않는 옵션 값입니다."),
     PRODUCT_INFO_NOT_FOUND(HttpStatus.NOT_FOUND, "PRODUCT_INFO_NOT_FOUND", "존재하지 않는 상품 기본 정보입니다."),
     CHAT_MESSAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "CHAT_MESSAGE_NOT_FOUND", "해당 메시지를 찾을 수 없습니다."),
+    USER_SETTING_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_SETTING_NOT_FOUND", "해당 유저의 알림 세팅을 찾을 수 없습니다."),
 
     /**
      * 405 Method Not Allowed

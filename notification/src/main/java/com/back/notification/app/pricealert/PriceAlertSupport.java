@@ -1,4 +1,4 @@
-package com.back.notification.app;
+package com.back.notification.app.pricealert;
 
 import com.back.common.market.event.SellBiddingCreatedEvent;
 import com.back.notification.adapter.out.PriceAlertRepository;

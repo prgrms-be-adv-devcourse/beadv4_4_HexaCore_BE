@@ -3,6 +3,7 @@ package com.back.user.adapter.in;
 import com.back.common.response.CommonResponse;
 import com.back.security.principal.AuthPrincipal;
 import com.back.user.dto.request.UpdateFcmTokenRequest;
+import com.back.user.dto.request.UpdateNotificationSettingsRequest;
 import com.back.user.dto.response.UserIdResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -27,5 +28,20 @@ public interface UserApiV1 {
             AuthPrincipal authPrincipal,
             UpdateFcmTokenRequest request
     );
+
+    @Operation(
+            summary = "알림 설정 변경",
+            description = """
+            로그인한 사용자의 알림 설정을 변경합니다.
+            항목별로 ON/OFF 설정이 가능하며,
+            요청에 포함된 필드만 부분적으로 변경(PATCH)됩니다.
+            """
+    )
+    @ApiResponse(responseCode = "200", description = "알림 설정 변경 성공")
+    @ApiResponse(responseCode = "401", description = "인증 실패", content = @Content)
+    @ApiResponse(responseCode = "404", description = "알림 설정 찾을 수 없음", content = @Content)
+    @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
+    CommonResponse<UserIdResponse> updateNotificationSettings(AuthPrincipal authPrincipal,
+                                                              UpdateNotificationSettingsRequest request);
 
 }

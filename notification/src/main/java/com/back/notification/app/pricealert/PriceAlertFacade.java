@@ -1,4 +1,4 @@
-package com.back.notification.app;
+package com.back.notification.app.pricealert;
 
 import com.back.notification.dto.request.PriceAlertSaveRequestDto;
 import com.back.notification.dto.response.PriceAlertIdDto;

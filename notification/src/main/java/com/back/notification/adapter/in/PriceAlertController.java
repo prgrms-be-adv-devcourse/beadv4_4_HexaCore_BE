@@ -2,7 +2,7 @@ package com.back.notification.adapter.in;
 
 import com.back.common.code.SuccessCode;
 import com.back.common.response.CommonResponse;
-import com.back.notification.app.PriceAlertFacade;
+import com.back.notification.app.pricealert.PriceAlertFacade;
 import com.back.notification.dto.request.PriceAlertSaveRequestDto;
 import com.back.notification.dto.response.PriceAlertIdDto;
 import com.back.security.principal.AuthPrincipal;
