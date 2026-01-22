@@ -18,6 +18,7 @@ public enum FailureCode {
     INVALID_TYPE_VALUE(HttpStatus.BAD_REQUEST, "INVALID_TYPE_VALUE", "필드가 잘못되었습니다."),
     INSUFFICIENT_BALANCE(HttpStatus.BAD_REQUEST, "INSUFFICIENT_BALANCE", "잔액이 부족하여 결제할 수 없습니다."),
     MISSING_SELLER_NAME(HttpStatus.BAD_REQUEST, "MISSING_SELLER_NAME", "판매자 이름이 필요합니다."),
+    INVALID_CANCEL(HttpStatus.BAD_REQUEST, "INVALID_CANCEL", "취소할 수 없는 결제 상태입니다."),
 
     // Market 모듈에서 사용
     PRODUCT_NOT_FOUND(HttpStatus.BAD_REQUEST, "PRODUCT_NOT_FOUND","존재하지 않는 상품입니다."),
@@ -49,7 +50,7 @@ public enum FailureCode {
     FORBIDDEN(HttpStatus.FORBIDDEN, "FORBIDDEN", "접근 권한이 없습니다."),
     SETTLEMENT_ACCESS_DENIED(HttpStatus.FORBIDDEN, "SETTLEMENT_ACCESS_DENIED", "해당 정산 내역에 접근 권한이 없습니다."),
     CHAT_RESTRICTED(HttpStatus.FORBIDDEN, "CHAT_RESTRICTED", "채팅이 제한된 사용자입니다."),
-
+    OWNER_MISMATCH(HttpStatus.FORBIDDEN, "OWNER_MISMATCH", "결제 요청자 정보가 일치하지 않습니다."),
     /**
      * 404 Not Found
      */
@@ -84,13 +85,14 @@ public enum FailureCode {
     PAYMENT_CONFIRM_FAILED(HttpStatus.CONFLICT, "PAYMENT_CONFIRM_FAILED", "결제 승인을 실패했습니다."),
     DUPLICATE_PRODUCT_INFO(HttpStatus.CONFLICT, "DUPLICATE_PRODUCT_INFO", "이미 존재하는 상품 정보입니다."),
     REPORT_DUPLICATE(HttpStatus.CONFLICT, "REPORT_DUPLICATE", "이미 신고한 메시지입니다."),
-
+    PAYMENT_ALREADY_RELEASED(HttpStatus.CONFLICT, "PAYMENT_ALREADY_RELEASED", "이미 환급된 결제입니다."),
     /**
      * 500 Internal Server Error
      */
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR", "서버 내부 오류가 발생했습니다."),
-    CASH_MODULE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "CASH_MODULE_ERROR", "CASH 모듈과의 통신 중 오류가 발생했습니다.");
-
+    CASH_MODULE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "CASH_MODULE_ERROR", "CASH 모듈과의 통신 중 오류가 발생했습니다."),
+    PAYMENT_TOTAL_AMOUNT_MISSING(HttpStatus.INTERNAL_SERVER_ERROR, "PAYMENT_TOTAL_AMOUNT_MISSING","결제 데이터에 totalAmount가 없습니다."),
+    PAYMENT_STATE_INCONSISTENT(HttpStatus.INTERNAL_SERVER_ERROR, "PAYMENT_STATE_INCONSISTENT", "결제 상태가 일관되지 않습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

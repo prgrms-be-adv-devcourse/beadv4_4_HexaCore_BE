@@ -85,4 +85,8 @@ public class Payment extends BaseTimeEntity {
     public void markReleased() {
         this.releasedAt = LocalDateTime.now();
     }
+
+    public void markAsCanceled() {
+        this.status = PaymentStatus.CANCELED;
+    }
 }
