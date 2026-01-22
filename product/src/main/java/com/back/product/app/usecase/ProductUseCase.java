@@ -71,11 +71,7 @@ public class ProductUseCase {
         handleUpdates(productInfo, variantsToUpdate, optionValueMap, existProducts);
         handleCreations(productInfo, variantsToCreate, optionValueMap);
 
-        List<Product> updatedProducts = productSupport.getAllProductsByProductInfo(productInfo);
-        List<ProductOptionValues> updatedProductOptionValues = productSupport.getAllProductOptionValuesByProductsIn(updatedProducts);
-        List<ProductImage> updatedProductImages = productSupport.getAllProductImagesByProductsIn(updatedProducts);
-
-        return convertToDto(updatedProducts, updatedProductOptionValues, updatedProductImages);
+        return findAllProduct(productInfo);
     }
 
     @Transactional
