@@ -44,7 +44,7 @@ public class CashPayoutUseCase {
             );
 
         } catch (DataIntegrityViolationException e) {
-            log.warn("중복 정산 스킵 - settlementId: {}", req.settlementId());
+            log.warn("동시성 충돌 발생 - settlementId: {}", req.settlementId());
             return;
         }
 
