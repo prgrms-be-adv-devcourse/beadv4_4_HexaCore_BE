@@ -80,8 +80,8 @@ class ApiV1BrandControllerTest {
         @WithMockUser
         void createBrand_Success() throws Exception {
             // given
-            BrandCreateRequestDto requestDto = new BrandCreateRequestDto("New Balance", "logo.png");
-            BrandDto responseDto = BrandDto.builder().name("New Balance").logoUrl("logo.png").build();
+            BrandCreateRequestDto requestDto = new BrandCreateRequestDto("New Balance", "https://exmaple.com/logo.png");
+            BrandDto responseDto = BrandDto.builder().name("New Balance").logoUrl("https://exmaple.com/logo.png").build();
 
             given(productFacade.createBrand(any(BrandCreateRequestDto.class))).willReturn(responseDto);
 
@@ -94,7 +94,7 @@ class ApiV1BrandControllerTest {
                     .andExpect(status().isCreated())
                     .andExpect(jsonPath("$.code").value("CREATED"))
                     .andExpect(jsonPath("$.data.brand.name").value("New Balance"))
-                    .andExpect(jsonPath("$.data.brand.logoUrl").value("logo.png"));
+                    .andExpect(jsonPath("$.data.brand.logoUrl").value("https://exmaple.com/logo.png"));
 
             verify(productFacade).createBrand(any(BrandCreateRequestDto.class));
         }
@@ -104,7 +104,7 @@ class ApiV1BrandControllerTest {
         @WithMockUser
         void createBrand_Fail_DuplicateName() throws Exception {
             // given
-            BrandCreateRequestDto requestDto = new BrandCreateRequestDto("Existing Brand", "logo.png");
+            BrandCreateRequestDto requestDto = new BrandCreateRequestDto("Existing Brand", "https://exmaple.com/logo.png");
             given(productFacade.createBrand(any(BrandCreateRequestDto.class)))
                     .willThrow(new CustomException(FailureCode.BRAND_NAME_DUPLICATE));
 
@@ -124,7 +124,7 @@ class ApiV1BrandControllerTest {
         @WithMockUser
         void createBrand_Fail_Validation() throws Exception {
             // given
-            BrandCreateRequestDto requestDto = new BrandCreateRequestDto(" ", "logo.png");
+            BrandCreateRequestDto requestDto = new BrandCreateRequestDto(" ", "https://exmaple.com/logo.png");
 
             // when & then
             mockMvc.perform(

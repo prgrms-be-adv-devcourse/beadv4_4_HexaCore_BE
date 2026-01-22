@@ -1,5 +1,6 @@
 package com.back.chat.adapter.in;
 
+import com.back.chat.adapter.out.UserClient;
 import com.back.chat.adapter.out.redis.RedisChatEventPublisher;
 import com.back.chat.event.ChatMessageBlindedEvent;
 import com.back.chat.event.payload.ChatMessageBlindedPayload;
@@ -18,10 +19,12 @@ public class ChatMessageBlindedListener {
 
     private final RedisChatEventPublisher redisChatMessagePublisher;
 
+    private final UserClient userClient;
+
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handle(ChatMessageBlindedEvent event){
 
-        // TODO: 유저모듈 연동해서 blindCount +1 증가 로직 구현.
+        userClient.incrementBlindCount(event.reportedUserId(), event.chatMessageId());
 
         // 실시간 블라인드 전파
         ChatMessageBlindedPayload payload = new ChatMessageBlindedPayload(event.roomId(), event.chatMessageId(), LocalDateTime.now());

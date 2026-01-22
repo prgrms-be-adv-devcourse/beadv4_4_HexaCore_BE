@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 public class BrandMapper {
     public BrandDto toDto(Brand brand) {
         return BrandDto.builder()
+                .brandId(brand.getId())
                 .name(brand.getName())
                 .logoUrl(brand.getImageUrl())
                 .build();

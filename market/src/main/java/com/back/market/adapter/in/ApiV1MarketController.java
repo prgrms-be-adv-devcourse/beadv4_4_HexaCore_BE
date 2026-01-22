@@ -1,11 +1,14 @@
 package com.back.market.adapter.in;
 
+import com.back.common.code.SuccessCode;
 import com.back.common.response.CommonResponse;
 import com.back.market.app.MarketFacade;
 import com.back.market.dto.request.BiddingRequestDto;
 import com.back.market.dto.response.InstantBuyPriceResponseDto;
 import com.back.market.dto.response.InstantSellPriceResponseDto;
 import com.back.market.dto.response.PayAndHoldResponseDto;
+import com.back.market.dto.response.PaymentCancelResponseDto;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -20,7 +23,7 @@ public class ApiV1MarketController implements ApiV1Market{
     public CommonResponse<PayAndHoldResponseDto> registerBuyBid(
             // TODO: 인증 로직 구현 완료시 수정 필요
             // CustomUserDetails userDetails,
-            BiddingRequestDto requestDto
+            @RequestBody @Valid BiddingRequestDto requestDto
     ) {
         // TODO: 인증 적용 시 하드코딩해둔 값 삭제 필요
         // Long userId = userDetails.getId();
@@ -36,7 +39,7 @@ public class ApiV1MarketController implements ApiV1Market{
     public CommonResponse<PayAndHoldResponseDto> registerSellBid(
             // TODO: 인증 로직 구현 완료시 수정 필요
             // CustomUserDetails userDetails,
-            BiddingRequestDto requestDto
+            @RequestBody @Valid BiddingRequestDto requestDto
     ) {
         // TODO: 인증 적용 시 하드코딩해둔 값 삭제 필요
         // Long userId = userDetails.getId();
@@ -49,29 +52,37 @@ public class ApiV1MarketController implements ApiV1Market{
     }
 
     @Override
-    public CommonResponse<InstantBuyPriceResponseDto> getBuyNowPrice(Long productId) {
+    public CommonResponse<InstantBuyPriceResponseDto> getBuyNowPrice(@PathVariable Long productId) {
         InstantBuyPriceResponseDto response = marketFacade.getBuyNowPrice(productId);
         return CommonResponse.successWithData(HttpStatus.OK, response);
     }
 
     @Override
-    public CommonResponse<InstantSellPriceResponseDto> getSellNowPrice(Long productId) {
+    public CommonResponse<InstantSellPriceResponseDto> getSellNowPrice(@PathVariable Long productId) {
         InstantSellPriceResponseDto response = marketFacade.getSellNowPrice(productId);
         return CommonResponse.successWithData(HttpStatus.OK, response);
     }
 
     @Override
-    public CommonResponse<PayAndHoldResponseDto> buyNow(BiddingRequestDto requestDto) {
+    public CommonResponse<PayAndHoldResponseDto> buyNow(@RequestBody @Valid BiddingRequestDto requestDto) {
         Long userId = 1L; //TODO: 인증 적용 시 수정
         PayAndHoldResponseDto response = marketFacade.purchaseNow(userId, requestDto);
         return CommonResponse.successWithData(HttpStatus.CREATED, response);
     }
 
     @Override
-    public CommonResponse<PayAndHoldResponseDto> sellNow(BiddingRequestDto requestDto) {
+    public CommonResponse<PayAndHoldResponseDto> sellNow(@RequestBody @Valid BiddingRequestDto requestDto) {
         Long userId = 2L; //TODO: 인증 적용 시 수정
         PayAndHoldResponseDto response = marketFacade.sellNow(userId, requestDto);
         return CommonResponse.successWithData(HttpStatus.CREATED, response);
     }
+
+    @Override
+    public CommonResponse<PaymentCancelResponseDto> cancelBid(@PathVariable Long biddingId) {
+        Long userId = 1L; //TODO: 인증 적용 시 수정
+        PaymentCancelResponseDto result = marketFacade.cancelBid(userId, biddingId);
+        return CommonResponse.success(SuccessCode.OK, result);
+    }
+
 
 }

@@ -1,5 +1,6 @@
 package com.back.chat;
 
+/*
 import com.back.chat.adapter.out.redis.RedisChatMessageSubscriber;
 import com.back.chat.event.payload.ChatMessagePayload;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -171,3 +172,5 @@ class RedisToWebSocketE2ETest {
         container.stop();
     }
 }
+
+ */

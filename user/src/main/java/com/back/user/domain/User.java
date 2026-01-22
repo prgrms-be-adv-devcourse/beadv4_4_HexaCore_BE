@@ -3,6 +3,7 @@ package com.back.user.domain;
 import com.back.common.entity.BaseTimeEntity;
 import com.back.user.domain.enums.Provider;
 import com.back.user.domain.enums.Role;
+import com.back.user.domain.policy.ChatRestrictionPolicy;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -62,4 +63,22 @@ public class User extends BaseTimeEntity {
     public void updateFcmToken(String fcmToken) {
         this.fcmToken = fcmToken;
     }
+
+    public void incrementBlindCount() {
+        this.blindCount++;
+    }
+
+    public void restrictChatForDays(int days) {
+        if (this.chatRestrictedUntil == null
+                || this.chatRestrictedUntil.isBefore(LocalDateTime.now())) {
+            this.chatRestrictedUntil = LocalDateTime.now().plusDays(days);
+        } else {
+            this.chatRestrictedUntil = this.chatRestrictedUntil.plusDays(days);
+        }
+    }
+
+    public void resetBlindCount(){
+        this.blindCount=0;
+    }
+
 }

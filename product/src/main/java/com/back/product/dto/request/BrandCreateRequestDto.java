@@ -3,6 +3,7 @@ package com.back.product.dto.request;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import org.hibernate.validator.constraints.URL;
 
 public record BrandCreateRequestDto(
         @NotBlank(message = "브랜드 이름은 필수입니다.")
@@ -12,6 +13,7 @@ public record BrandCreateRequestDto(
 
         @NotBlank(message = "로고 URL은 필수입니다.")
         @Size(min=1, max=255, message = "로고 URL은 1자 이상 255자 이하여야 합니다.")
+        @URL(message = "유효한 URL 형식이 아닙니다.")
         String logoUrl
 ) {
 }

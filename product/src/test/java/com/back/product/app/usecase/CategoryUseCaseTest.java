@@ -5,10 +5,7 @@ import com.back.product.adapter.out.CategoryRepository;
 import com.back.product.domain.Category;
 import com.back.product.dto.CategoryDto;
 import com.back.product.dto.request.CategoryCreateRequestDto;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,8 +26,8 @@ class CategoryUseCaseTest {
     @Autowired
     private CategoryRepository categoryRepository;
 
-    @AfterEach
-    void tearDown() {
+    @BeforeEach
+    void setUp() {
         categoryRepository.deleteAll();
     }
 
@@ -43,8 +40,8 @@ class CategoryUseCaseTest {
         void getCategories_Success() {
             // given
             categoryRepository.saveAll(List.of(
-                    Category.builder().name("Tops").imageUrl("image.png").build(),
-                    Category.builder().name("Bottoms").imageUrl("image.png").build()
+                    Category.builder().name("Tops").imageUrl("https://example.com/image.png").build(),
+                    Category.builder().name("Bottoms").imageUrl("https://example.com/image.png").build()
             ));
 
             // when
@@ -64,7 +61,7 @@ class CategoryUseCaseTest {
         @DisplayName("새로운 카테고리를 DB에 저장하고 생성된 정보를 반환한다")
         void createCategory_Success() {
             // given
-            CategoryCreateRequestDto requestDto = CategoryCreateRequestDto.builder().name("Accessories").imageUrl("image.png").build();
+            CategoryCreateRequestDto requestDto = CategoryCreateRequestDto.builder().name("Accessories").imageUrl("https://example.com/image.png").build();
 
             // when
             CategoryDto result = categoryUseCase.createCategory(requestDto);
@@ -84,8 +81,8 @@ class CategoryUseCaseTest {
         void createCategory_Fail_DuplicateName() {
             // given
             // DB에 미리 같은 이름의 카테고리를 저장
-            categoryRepository.save(Category.builder().name("Existed").imageUrl("image.png").build());
-            CategoryCreateRequestDto requestDto = CategoryCreateRequestDto.builder().name("Existed").imageUrl("image.png").build();
+            categoryRepository.save(Category.builder().name("Existed").imageUrl("https://example.com/image.png").build());
+            CategoryCreateRequestDto requestDto = CategoryCreateRequestDto.builder().name("Existed").imageUrl("https://example.com/image.png").build();
 
             // when & then
             assertThatThrownBy(() -> categoryUseCase.createCategory(requestDto))

@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Builder;
+import org.hibernate.validator.constraints.URL;
 
 @Builder
 public record CategoryCreateRequestDto(
@@ -14,6 +15,7 @@ public record CategoryCreateRequestDto(
 
         @NotBlank(message = "이미지 URL은 필수입니다.")
         @Size(min=1, max=255, message = "이미지 URL은 1자 이상 255자 이하여야 합니다.")
+        @URL(message = "유효한 URL 형식이 아닙니다.")
         String imageUrl
 ) {
 }

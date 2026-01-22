@@ -8,6 +8,8 @@ import com.back.product.dto.request.BrandCreateRequestDto;
 import com.back.product.dto.BrandDto;
 import com.back.product.mapper.BrandMapper;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,5 +43,11 @@ public class BrandUseCase {
         if (productSupport.existsBrandByName(name)) {
             throw new CustomException(FailureCode.BRAND_NAME_DUPLICATE);
         }
+    }
+
+    @Transactional(readOnly = true)
+    public Brand findBrandExists(Long brandId) {
+        return productSupport.findBrandById(brandId)
+                .orElseThrow(() -> new CustomException(FailureCode.BRAND_NOT_FOUND));
     }
 }

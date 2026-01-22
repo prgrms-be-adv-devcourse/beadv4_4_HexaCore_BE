@@ -8,6 +8,8 @@ import com.back.product.dto.CategoryDto;
 import com.back.product.dto.request.CategoryCreateRequestDto;
 import com.back.product.mapper.CategoryMapper;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,5 +43,11 @@ public class CategoryUseCase {
         if (productSupport.existsCategoryByName(name)) {
             throw new CustomException(FailureCode.CATEGORY_NAME_DUPLICATE);
         }
+    }
+
+    @Transactional(readOnly = true)
+    public Category findCategoryExists(Long categoryId) {
+        return productSupport.findCategoryById(categoryId)
+                .orElseThrow(() -> new CustomException(FailureCode.CATEGORY_NOT_FOUND));
     }
 }

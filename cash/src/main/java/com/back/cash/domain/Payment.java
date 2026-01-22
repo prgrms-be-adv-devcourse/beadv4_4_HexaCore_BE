@@ -7,6 +7,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Entity
 @Getter
@@ -50,6 +51,8 @@ public class Payment extends BaseTimeEntity {
     @Enumerated(EnumType.STRING)
     private PaymentStatus status;
 
+    private LocalDateTime releasedAt;
+
     public void markAsDone() {
         this.status = PaymentStatus.DONE;
     }
@@ -63,5 +66,27 @@ public class Payment extends BaseTimeEntity {
         if (this.tossOrderId == null) {
             this.tossOrderId = tossOrderId;
         }
+    }
+
+    public void setPaymentKeyIfAbsent(String paymentKey) {
+        if (this.paymentKey == null) {
+            this.paymentKey = paymentKey;
+        }
+    }
+
+    public void markAsFail() {
+        this.status = PaymentStatus.FAIL;
+    }
+
+    public boolean isReleased() {
+        return releasedAt != null;
+    }
+
+    public void markReleased() {
+        this.releasedAt = LocalDateTime.now();
+    }
+
+    public void markAsCanceled() {
+        this.status = PaymentStatus.CANCELED;
     }
 }

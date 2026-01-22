@@ -79,7 +79,7 @@ class ApiV1CategoryControllerTest {
         @WithMockUser
         void createCategory_Success() throws Exception {
             // given
-            CategoryCreateRequestDto requestDto = CategoryCreateRequestDto.builder().name("Tops").imageUrl("image.png").build();
+            CategoryCreateRequestDto requestDto = CategoryCreateRequestDto.builder().name("Tops").imageUrl("https://exmaple.com/image.png").build();
             CategoryDto responseDto = CategoryDto.builder().name("Tops").build();
 
             given(productFacade.createCategory(any(CategoryCreateRequestDto.class))).willReturn(responseDto);
@@ -102,7 +102,7 @@ class ApiV1CategoryControllerTest {
         @WithMockUser
         void createCategory_Fail_DuplicateName() throws Exception {
             // given
-            CategoryCreateRequestDto requestDto = CategoryCreateRequestDto.builder().name("Existed").imageUrl("image.png").build();
+            CategoryCreateRequestDto requestDto = CategoryCreateRequestDto.builder().name("Existed").imageUrl("https://exmaple.com/image.png").build();
             given(productFacade.createCategory(any(CategoryCreateRequestDto.class)))
                     .willThrow(new CustomException(FailureCode.CATEGORY_NAME_DUPLICATE));
 
@@ -122,7 +122,7 @@ class ApiV1CategoryControllerTest {
         @WithMockUser
         void createCategory_Fail_Validation() throws Exception {
             // given
-            CategoryCreateRequestDto requestDto = CategoryCreateRequestDto.builder().name(" ").name("image.png").build();
+            CategoryCreateRequestDto requestDto = CategoryCreateRequestDto.builder().name(" ").name("https://exmaple.com/image.png").build();
 
             // when & then
             mockMvc.perform(

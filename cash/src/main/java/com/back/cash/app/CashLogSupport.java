@@ -45,4 +45,56 @@ public class CashLogSupport {
         cashLogRepository.save(buyerLog);
         cashLogRepository.save(systemLog);
     }
+
+    public void recordUserPgTopUpLog(
+            Wallet buyerWallet,
+            BigDecimal amount,
+            RelType relType,
+            Long relId
+    ) {
+        CashLog userTopUp = CashLog.builder()
+                .wallet(buyerWallet)
+                .amount(amount)
+                .balance(buyerWallet.getBalance())
+                .type(Type.TOPUP_PG)
+                .relType(relType)
+                .relId(relId)
+                .build();
+
+        cashLogRepository.save(userTopUp);
+    }
+
+    public void recordReleaseOnPaymentFail(Wallet buyerWallet, Wallet systemWallet,
+                                           BigDecimal amount, RelType relType, Long relId) {
+        recordRelease(buyerWallet, systemWallet, amount, relType, relId, Type.RELEASE_ON_FAIL);
+    }
+
+    public void recordCancelRefund(Wallet buyerWallet, Wallet systemWallet,
+                                   BigDecimal amount, RelType relType, Long relId) {
+        recordRelease(buyerWallet, systemWallet, amount, relType, relId, Type.REFUND_ON_CANCEL);
+    }
+
+    private void recordRelease(Wallet buyerWallet, Wallet systemWallet,
+                               BigDecimal amount, RelType relType, Long relId, Type type) {
+        CashLog buyerLog = CashLog.builder()
+                .wallet(buyerWallet)
+                .amount(amount)
+                .balance(buyerWallet.getBalance())
+                .type(type)
+                .relType(relType)
+                .relId(relId)
+                .build();
+
+        CashLog systemLog = CashLog.builder()
+                .wallet(systemWallet)
+                .amount(amount.negate())
+                .balance(systemWallet.getBalance())
+                .type(type)
+                .relType(relType)
+                .relId(relId)
+                .build();
+
+        cashLogRepository.save(buyerLog);
+        cashLogRepository.save(systemLog);
+    }
 }
