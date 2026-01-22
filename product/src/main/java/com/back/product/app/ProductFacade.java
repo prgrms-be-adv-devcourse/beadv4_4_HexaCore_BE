@@ -7,6 +7,7 @@ import com.back.product.dto.ProductDto;
 import com.back.product.dto.request.*;
 import com.back.product.dto.BrandDto;
 import com.back.product.dto.response.ProductResponseDto;
+import com.back.product.dto.response.ProductSearchListResponseDto;
 import com.back.product.mapper.ProductInfoMapper;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +26,7 @@ public class ProductFacade {
     private final ProductInfoUseCase productInfoUseCase;
     private final ProductUseCase productUseCase;
     private final ProductInfoMapper productInfoMapper;
-
+    private final ProductDocumentUseCase productDocumentUseCase;
 
     @Transactional(readOnly = true)
     public List<BrandDto> getBrands() {
@@ -95,6 +96,11 @@ public class ProductFacade {
         List<ProductDto> productDtos = productUseCase.findAllProduct(productInfo);
 
         return buildProductResponseDto(productInfo, productDtos);
+    }
+
+    @Transactional(readOnly = true)
+    public ProductSearchListResponseDto findProductPage(@Valid ProductSearchRequestDto request, Long page, Long size) {
+        return productDocumentUseCase.findProductPage(request, page, size);
     }
 
     private ProductResponseDto buildProductResponseDto(ProductInfo productInfo, List<ProductDto> productDtos) {
