@@ -2,7 +2,7 @@ package com.back.notification.app.strategy;
 
 import com.back.common.market.event.SellBiddingCreatedEvent;
 import com.back.notification.app.NotificationProductUsecase;
-import com.back.notification.app.PriceAlertSupport;
+import com.back.notification.app.pricealert.PriceAlertSupport;
 import com.back.notification.domain.Notification;
 import com.back.notification.domain.NotificationProduct;
 import com.back.notification.domain.NotificationUser;
