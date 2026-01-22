@@ -83,6 +83,17 @@ public class FakeCashClient implements CashClient {
     public CommonResponse<PaymentCancelResponseDto> refundBidHold(PaymentCancelRequestDto requestDto) {
         log.info("[FakeCashClient] 환불(홀딩 해제) 요청 수신: {}", requestDto);
 
+        // 테스트용 강제 실패 트리거 (7000원)
+        if (requestDto.amount().intValue() == 7000) {
+            log.warn("[FakeCashClient] 환불 강제 실패 트리거 작동 (7000원)");
+            return CommonResponse.createError(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    FailureCode.WALLET_REFUND_FAILED.getCode(),
+                    "Cash 모듈 환불 처리 중 오류 발생 (테스트)",
+                    null
+            );
+        }
+
         // 환불 결과 DTO 생성
         // (환불이 완료되었다는 의미로 PAID 상태 사용, 실제 금액 차감은 없으므로 0원 처리)
         PaymentCancelResponseDto response = PaymentCancelResponseDto.of(

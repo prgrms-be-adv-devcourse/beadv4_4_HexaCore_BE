@@ -27,7 +27,7 @@ public class MarketSupport {
         if (!isSuccess) {
             // 응답이 아예 없거나 실패한 경우
             if (response != null) {
-                // [변경 포인트] isChargeFailed() 메서드가 없으므로 직접 코드 비교
+
                 if (FailureCode.WALLET_CHARGE_FAILED.getCode().equals(response.getCode())) {
                     throw new BadRequestException(FailureCode.WALLET_CHARGE_FAILED);
                 }
@@ -54,7 +54,7 @@ public class MarketSupport {
             log.error("[MarketSupport] 환불 요청 실패 - User: {}, Reason: {}", refundRequest.userId(), msg);
 
             // 환불 실패 시 예외를 던져 트랜잭션 롤백 유도
-            throw new BadRequestException(FailureCode.WALLET_CHARGE_FAILED);
+            throw new BadRequestException(FailureCode.WALLET_REFUND_FAILED);
         }
 
         log.info("[MarketSupport] 환불 성공: {}, RelId: {}", (response.getMessage() != null ? response.getMessage() : "OK"), refundRequest.relId());
