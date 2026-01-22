@@ -4,7 +4,7 @@ import com.back.common.code.FailureCode;
 import com.back.common.code.SuccessCode;
 import com.back.common.exception.BadRequestException;
 import com.back.common.response.CommonResponse;
-import com.back.market.adapter.out.client.CashClient;
+import com.back.market.adapter.out.cash.CashClient;
 import com.back.market.dto.request.PayAndHoldRequestDto;
 import com.back.market.dto.request.PaymentCancelRequestDto;
 import com.back.market.dto.response.PayAndHoldResponseDto;

@@ -1,4 +1,4 @@
-package com.back.market.adapter.out.client;
+package com.back.market.adapter.out.cash;
 
 import com.back.common.response.CommonResponse;
 import com.back.market.dto.request.PayAndHoldRequestDto;
@@ -7,6 +7,9 @@ import com.back.market.dto.response.PayAndHoldResponseDto;
 import com.back.market.dto.response.PaymentCancelResponseDto;
 import org.springframework.web.bind.annotation.RequestBody;
 
+/**
+ * MarketSupport(비즈니스 로직)가 바라보는 공통 인터페이스
+ */
 public interface CashClient {
 
     /**
