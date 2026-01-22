@@ -26,8 +26,9 @@ public class ApiV1CashController {
     private final CashFacade cashFacade;
 
     @PostMapping
-    public PayAndHoldResponseDto payAndHold(@RequestBody PayAndHoldRequestDto dto) {
-        return cashFacade.payAndHold(dto);
+    public CommonResponse<PayAndHoldResponseDto> payAndHold(@RequestBody PayAndHoldRequestDto dto) {
+        PayAndHoldResponseDto result = cashFacade.payAndHold(dto);
+        return CommonResponse.success(SuccessCode.OK, result);
     }
 
     @PostMapping("/confirm/toss")
