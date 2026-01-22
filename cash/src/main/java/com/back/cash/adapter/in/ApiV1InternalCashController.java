@@ -1,4 +1,4 @@
-package com.back.cash.adapter.in.internal;
+package com.back.cash.adapter.in;
 
 import com.back.cash.app.CashFacade;
 import com.back.cash.dto.request.PaymentCancelRequestDto;
