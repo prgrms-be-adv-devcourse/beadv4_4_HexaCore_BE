@@ -100,6 +100,15 @@ jobs:
             org.opencontainers.image.source=${{ github.repositoryUrl }}
             org.opencontainers.image.revision=${{ github.sha }}
 
+      - name: Delete old image versions
+        if: github.event_name == 'push'
+        uses: actions/delete-package-versions@v5
+        with:
+          package-name: '${{ steps.string.outputs.lowercase_owner }}-${{ matrix.module }}'
+          min-versions-to-keep: 5
+          token: '${{ secrets.GITHUB_TOKEN }}'
+          package-type: 'container'
+
   # Job 3: 변경된 이미지 태그를 Helm Chart에 반영하는 작업
   update-helm-chart:
     name: Update Helm Chart
