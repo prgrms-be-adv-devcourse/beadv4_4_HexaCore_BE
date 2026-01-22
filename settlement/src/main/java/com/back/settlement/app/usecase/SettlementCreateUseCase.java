@@ -8,6 +8,7 @@ import com.back.settlement.adapter.out.SettlementItemRepository;
 import com.back.settlement.adapter.out.SettlementRepository;
 import com.back.settlement.app.dto.internal.SettlementWithItems;
 import com.back.settlement.app.dto.request.SettlementRequest;
+import com.back.settlement.app.support.DomainEventPublisher;
 import com.back.settlement.app.support.SettlementSupport;
 import com.back.settlement.app.support.YearMonthUtils;
 import com.back.settlement.domain.Settlement;
@@ -31,6 +32,7 @@ public class SettlementCreateUseCase {
     private final SettlementRepository settlementRepository;
     private final SettlementItemRepository settlementItemRepository;
     private final SettlementSupport settlementSupport;
+    private final DomainEventPublisher domainEventPublisher;
     private static final String SYSTEM_NAME = "SYSTEM";
 
     public SettlementWithItems createSettlementForPayee(Long payeeId, YearMonth targetMonth) {
@@ -72,6 +74,7 @@ public class SettlementCreateUseCase {
         Settlement savedSettlement = settlementRepository.save(settlement);
         items.forEach(item -> item.addSettlement(savedSettlement));
         settlementItemRepository.saveAll(items);
+        domainEventPublisher.publishEvents(savedSettlement);
     }
 
     private String extractPayeeName(List<SettlementItem> items) {

@@ -64,12 +64,23 @@ public class CashLogSupport {
         cashLogRepository.save(userTopUp);
     }
 
-    public void recordReleaseLog(Wallet buyerWallet, Wallet systemWallet, BigDecimal amount, RelType relType, Long relId) {
+    public void recordReleaseOnPaymentFail(Wallet buyerWallet, Wallet systemWallet,
+                                           BigDecimal amount, RelType relType, Long relId) {
+        recordRelease(buyerWallet, systemWallet, amount, relType, relId, Type.RELEASE_ON_FAIL);
+    }
+
+    public void recordCancelRefund(Wallet buyerWallet, Wallet systemWallet,
+                                   BigDecimal amount, RelType relType, Long relId) {
+        recordRelease(buyerWallet, systemWallet, amount, relType, relId, Type.REFUND_ON_CANCEL);
+    }
+
+    private void recordRelease(Wallet buyerWallet, Wallet systemWallet,
+                               BigDecimal amount, RelType relType, Long relId, Type type) {
         CashLog buyerLog = CashLog.builder()
                 .wallet(buyerWallet)
                 .amount(amount)
                 .balance(buyerWallet.getBalance())
-                .type(Type.RELEASE)
+                .type(type)
                 .relType(relType)
                 .relId(relId)
                 .build();
@@ -78,7 +89,7 @@ public class CashLogSupport {
                 .wallet(systemWallet)
                 .amount(amount.negate())
                 .balance(systemWallet.getBalance())
-                .type(Type.RELEASE)
+                .type(type)
                 .relType(relType)
                 .relId(relId)
                 .build();

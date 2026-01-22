@@ -1,12 +1,10 @@
 package com.back.cash.app;
 
 import com.back.cash.adapter.out.market.MarketPaymentsClient;
-import com.back.cash.dto.request.PayAndHoldRequestDto;
-import com.back.cash.dto.request.PaymentFailedRequestDto;
-import com.back.cash.dto.request.TossConfirmRequest;
-import com.back.cash.dto.request.TossFailRequestDto;
+import com.back.cash.dto.request.*;
 import com.back.cash.dto.response.ConfirmResultResponseDto;
 import com.back.cash.dto.response.PayAndHoldResponseDto;
+import com.back.cash.dto.response.PaymentCancelResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +19,7 @@ public class CashFacade {
     private final ConfirmTossPaymentUseCase confirmTossPaymentUseCase;
     private final MarketPaymentsClient marketPaymentsClient;
     private final FailTossPaymentUseCase failTossPaymentUseCase;
+    private final CancelPaymentUseCase cancelPaymentUseCase;
 
     @Transactional
     public PayAndHoldResponseDto payAndHold(PayAndHoldRequestDto dto) {
@@ -56,5 +55,10 @@ public class CashFacade {
                 marketPaymentsClient.notifyPaymentFailed(failedDto);
             }
         });
+    }
+
+    @Transactional
+    public PaymentCancelResponseDto cancelPayment(PaymentCancelRequestDto req) {
+        return cancelPaymentUseCase.execute(req);
     }
 }

@@ -26,22 +26,25 @@ public class ConfirmPaymentUseCase {
     /**
      * Cash 모듈로부터 결제 완료(입금 확인) 통지를 수신하여 주문 상태를 확정 or 입찰 상태를 PROCESS로 변경
      * @param requestDto PaymentCompletedRequestDto
+     * @return true: 정상 처리됨 / false: 이미 처리된 요청(중복)
      */
     @Transactional
-    public void confirmPayment(PaymentCompletedRequestDto requestDto) {
+    public boolean confirmPayment(PaymentCompletedRequestDto requestDto) {
         log.info("[Market(Internal)] 결제 완료 통지 수신 - Type: {}, Id: {}, Amount: {}", requestDto.relType(), requestDto.relId(), requestDto.totalAmount());
         if (requestDto.relType() == RelType.ORDER) {
-            processOrderPayment(requestDto);
+            return processOrderPayment(requestDto);
         } else if (requestDto.relType() == RelType.BIDDING) {
-            processBiddingPayment(requestDto);
+            return processBiddingPayment(requestDto);
         }
+        return false;
     }
 
     /**
      * 주문 조회 및 금액 검증 후 주문 상태를 변경하는 메서드
      * @param requestDto PaymentCompletedRequestDto
+     * @return true: 정상 처리됨 / false: 이미 처리된 요청(중복)
      */
-    private void processOrderPayment(PaymentCompletedRequestDto requestDto) {
+    private boolean processOrderPayment(PaymentCompletedRequestDto requestDto) {
         // 1. 주문 조회
         Order order = orderRepository.findById(requestDto.relId()).orElseThrow(() -> new BadRequestException(FailureCode.ORDER_NOT_FOUND));
 
@@ -55,18 +58,22 @@ public class ConfirmPaymentUseCase {
         if (order.getOrderStatus() == OrderStatus.HOLD) {
             order.changeStatus(OrderStatus.PAID);
             log.info("[Market] 주문 상태 변경 완료 (HOLD -> PAID) - OrderId: {}", order.getId());
+            return true;
         } else if (order.getOrderStatus() == OrderStatus.PAID) {
             log.info("[Market] 이미 결제 완료된 주문입니다.");
+            return false;
         } else {
             log.warn("[Market] 결제 처리가 불가능한 상태입니다. Status: {}", order.getOrderStatus());
+            return false;
         }
     }
 
     /**
      * 구매 입찰 조회 및 금액 검증 후 입찰 상태를 변경하는 메서드
      * @param requestDto PaymentCompletedRequestDto
+     * @return true: 정상 처리됨 / false: 이미 처리된 요청(중복)
      */
-    private void processBiddingPayment(PaymentCompletedRequestDto requestDto) {
+    private boolean processBiddingPayment(PaymentCompletedRequestDto requestDto) {
         // 1. 입찰 조회
         Bidding bidding = biddingRepository.findById(requestDto.relId())
                 .orElseThrow(() -> new BadRequestException(FailureCode.BIDDING_NOT_FOUND));
@@ -82,10 +89,13 @@ public class ConfirmPaymentUseCase {
         if (bidding.getStatus() == BiddingStatus.HOLD) {
             bidding.changeStatus(BiddingStatus.PROCESS);
             log.info("[Market] 구매 입찰 등록 완료 (HOLD -> PROCESS) - BiddingId: {}", bidding.getId());
+            return true;
         } else if (bidding.getStatus() == BiddingStatus.PROCESS) {
             log.info("[Market] 이미 등록된 입찰입니다.");
+            return false;
         } else {
             log.warn("[Market] 입찰 처리가 불가능한 상태입니다. Status: {}", bidding.getStatus());
+            return false;
         }
     }
 }

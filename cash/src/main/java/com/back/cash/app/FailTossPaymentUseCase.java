@@ -57,7 +57,7 @@ public class FailTossPaymentUseCase {
         systemWallet.withdraw(held);
         buyerWallet.deposit(held);
 
-        cashLogSupport.recordReleaseLog(
+        cashLogSupport.recordReleaseOnPaymentFail(
                 buyerWallet, systemWallet, held,
                 payment.getRelType(), payment.getRelId()
         );
