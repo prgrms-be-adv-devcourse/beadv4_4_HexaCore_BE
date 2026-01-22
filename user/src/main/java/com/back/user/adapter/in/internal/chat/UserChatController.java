@@ -4,10 +4,9 @@ import com.back.user.app.UserFacade;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
 
 @RestController
 @RequiredArgsConstructor
@@ -33,4 +32,23 @@ public class UserChatController {
     public void incrementBlindCount (@PathVariable Long userId){
         userFacade.incrementBlindCount(userId);
     }
+
+
+    @Operation(
+            summary = "User 채팅 제한 종료 시각 조회",
+            description = """
+                Chat 서비스에서 사용자 메시지 전송 시
+                채팅 제한 종료 시각을 확인하기 위해 호출하는 내부 API입니다.
+
+                - 채팅 제한이 없는 경우 null을 반환합니다.
+                - 채팅 제한이 존재하는 경우 제한 종료 시각(LocalDateTime)을 반환합니다.
+                """
+    )
+    @GetMapping("{userId}/chat-restricted")
+    public LocalDateTime getChatRestrictedUntil(
+            @PathVariable("userId") Long userId
+    ) {
+        return userFacade.getChatRestrictedUntil(userId);
+    }
+
 }

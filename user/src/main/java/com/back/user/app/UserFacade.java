@@ -7,6 +7,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+
 @Service
 @RequiredArgsConstructor
 public class UserFacade {
@@ -26,4 +28,10 @@ public class UserFacade {
     public void incrementBlindCount(Long userId) {
         userIncrementBlindCountUseCase.incrementBlindCount(userId);
     }
+
+    public LocalDateTime getChatRestrictedUntil(Long userId){
+        User user = userSupport.findById(userId);
+        return user.getChatRestrictedUntil();
+    }
+
 }
