@@ -1,6 +1,6 @@
-package com.back.market.dto.request;
+package com.back.common.feign.cash.request;
 
-import com.back.market.dto.enums.RelType;
+import com.back.common.feign.cash.enums.RelType;
 
 import java.math.BigDecimal;
 

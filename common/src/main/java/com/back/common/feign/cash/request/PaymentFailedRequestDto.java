@@ -1,6 +1,6 @@
-package com.back.market.dto.request;
+package com.back.common.feign.cash.request;
 
-import com.back.market.dto.enums.RelType;
+import com.back.common.feign.cash.enums.RelType;
 
 /**
  * 캐시 -> 마켓 : 결제 실패 콜백(내부 통지)

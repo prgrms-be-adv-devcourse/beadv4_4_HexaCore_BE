@@ -1,7 +1,7 @@
-package com.back.market.dto.response;
+package com.back.common.feign.cash.response;
 
-import com.back.market.dto.enums.PayAndHoldStatus;
-import com.back.market.dto.enums.RelType;
+import com.back.common.feign.cash.enums.PayAndHoldStatus;
+import com.back.common.feign.cash.enums.RelType;
 
 import java.math.BigDecimal;
 

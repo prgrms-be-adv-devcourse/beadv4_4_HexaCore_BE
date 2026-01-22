@@ -1,4 +1,4 @@
-package com.back.market.dto.response;
+package com.back.common.feign.cash.response;
 
 import java.math.BigDecimal;
 

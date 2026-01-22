@@ -1,10 +1,10 @@
 package com.back.market.adapter.out.cash;
 
 import com.back.common.response.CommonResponse;
-import com.back.market.dto.request.PayAndHoldRequestDto;
-import com.back.market.dto.request.PaymentCancelRequestDto;
-import com.back.market.dto.response.PayAndHoldResponseDto;
-import com.back.market.dto.response.PaymentCancelResponseDto;
+import com.back.common.feign.cash.request.PayAndHoldRequestDto;
+import com.back.common.feign.cash.request.PaymentCancelRequestDto;
+import com.back.common.feign.cash.response.PayAndHoldResponseDto;
+import com.back.common.feign.cash.response.PaymentCancelResponseDto;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;

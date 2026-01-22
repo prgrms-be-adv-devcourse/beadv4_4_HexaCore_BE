@@ -1,4 +1,4 @@
-package com.back.market.dto.enums;
+package com.back.common.feign.cash.enums;
 
 public enum PayAndHoldStatus {
     PAID,

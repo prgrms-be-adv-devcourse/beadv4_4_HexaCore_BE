@@ -12,11 +12,11 @@ import com.back.market.domain.Order;
 import com.back.market.domain.enums.BiddingPosition;
 import com.back.market.domain.enums.BiddingStatus;
 import com.back.market.domain.enums.OrderStatus;
-import com.back.market.dto.enums.PayAndHoldStatus;
-import com.back.market.dto.enums.RelType;
+import com.back.common.feign.cash.enums.PayAndHoldStatus;
+import com.back.common.feign.cash.enums.RelType;
 import com.back.market.dto.request.BiddingRequestDto;
-import com.back.market.dto.request.PayAndHoldRequestDto;
-import com.back.market.dto.response.PayAndHoldResponseDto;
+import com.back.common.feign.cash.request.PayAndHoldRequestDto;
+import com.back.common.feign.cash.response.PayAndHoldResponseDto;
 import com.back.market.mapper.BiddingMapper;
 import com.back.market.mapper.CashRequestMapper;
 import com.back.market.mapper.OrderMapper;
@@ -117,7 +117,7 @@ public class MatchInstantTradeUseCase {
         }
         Order savedOrder = orderRepository.save(order);
 
-        // 5. 실제 결제 요청(fakecashclient 사용)
+        // 5. 실제 결제 요청(FeignClient 사용)
 
         if(myPosition == BiddingPosition.BUY) {
             PayAndHoldRequestDto paymentReq = cashRequestMapper.toPayAndHoldRequestForOrder(savedOrder);
