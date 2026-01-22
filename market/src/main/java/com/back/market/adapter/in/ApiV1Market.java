@@ -4,7 +4,6 @@ import com.back.common.response.CommonResponse;
 import com.back.market.dto.request.BiddingRequestDto;
 import com.back.market.dto.response.InstantBuyPriceResponseDto;
 import com.back.market.dto.response.InstantSellPriceResponseDto;
-import com.back.common.dto.cash.response.PayAndHoldResponseDto;
 import com.back.common.dto.cash.response.PaymentCancelResponseDto;
 import com.back.market.dto.response.MarketPaymentResponseDto;
 import com.back.security.principal.AuthPrincipal;
