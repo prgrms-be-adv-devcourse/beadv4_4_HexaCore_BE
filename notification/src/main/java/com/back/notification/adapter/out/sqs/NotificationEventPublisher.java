@@ -41,7 +41,7 @@ public class NotificationEventPublisher {
                 NotificationUser user =
                         notificationUserSupport.findById(notification.getUserId());
 
-                if (!checkAlertOn(user, notification))
+                if (!isAlertEnabled(user, notification))
                     continue;
 
                 String fcmToken = user.getFcmToken();
@@ -71,7 +71,7 @@ public class NotificationEventPublisher {
         }
     }
 
-    private boolean checkAlertOn(NotificationUser user, Notification notification) {
+    private boolean isAlertEnabled(NotificationUser user, Notification notification) {
         try {
             NotificationUserSetting setting = notificationUserSettingUsecase.findById(user.getId());
 
