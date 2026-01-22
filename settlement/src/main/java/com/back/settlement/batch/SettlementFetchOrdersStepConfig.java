@@ -2,8 +2,8 @@ package com.back.settlement.batch;
 
 import static com.back.settlement.domain.SettlementPolicy.CHUNK_SIZE;
 
+import com.back.common.dto.settlement.SettlementTargetOrder;
 import com.back.settlement.adapter.out.feign.market.OrderClient;
-import com.back.settlement.app.event.SettlementItemRequest;
 import com.back.settlement.app.support.YearMonthUtils;
 import com.back.settlement.app.usecase.SettlementItemAddUseCase;
 import java.time.YearMonth;
@@ -33,7 +33,7 @@ public class SettlementFetchOrdersStepConfig {
     @Bean
     public Step fetchOrdersAndCreateItemsStep(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
         return new StepBuilder("fetchOrdersAndCreateItemsStep", jobRepository)
-                .<SettlementItemRequest, SettlementItemRequest>chunk(CHUNK_SIZE, transactionManager)
+                .<SettlementTargetOrder, SettlementTargetOrder>chunk(CHUNK_SIZE, transactionManager)
                 .reader(orderItemReader(null))
                 .processor(orderItemProcessor())
                 .writer(orderItemWriter())
@@ -42,14 +42,14 @@ public class SettlementFetchOrdersStepConfig {
 
     @Bean
     @StepScope
-    public ItemReader<SettlementItemRequest> orderItemReader(@Value("#{jobParameters['targetMonth']}") String targetMonthStr) {
+    public ItemReader<SettlementTargetOrder> orderItemReader(@Value("#{jobParameters['targetMonth']}") String targetMonthStr) {
         return new ItemReader<>() {
             private int page = 0;
-            private Iterator<SettlementItemRequest> currentPageIterator;
+            private Iterator<SettlementTargetOrder> currentPageIterator;
             private boolean exhausted = false;
 
             @Override
-            public SettlementItemRequest read() {
+            public SettlementTargetOrder read() {
                 if (exhausted) {
                     return null;
                 }
@@ -58,7 +58,7 @@ public class SettlementFetchOrdersStepConfig {
                 }
 
                 YearMonth targetMonth = YearMonthUtils.parseOrDefault(targetMonthStr);
-                List<SettlementItemRequest> pageData = orderClient.findSettlementTargetOrders(targetMonth, page++, CHUNK_SIZE);
+                List<SettlementTargetOrder> pageData = orderClient.findSettlementTargetOrders(targetMonth, page++, CHUNK_SIZE);
 
                 if (pageData.isEmpty()) {
                     exhausted = true;
@@ -73,7 +73,7 @@ public class SettlementFetchOrdersStepConfig {
     }
 
     @Bean
-    public ItemProcessor<SettlementItemRequest, SettlementItemRequest> orderItemProcessor() {
+    public ItemProcessor<SettlementTargetOrder, SettlementTargetOrder> orderItemProcessor() {
         return request -> {
             log.debug("주문 처리 중. orderId={}", request.orderId());
             return request;
@@ -81,9 +81,9 @@ public class SettlementFetchOrdersStepConfig {
     }
 
     @Bean
-    public ItemWriter<SettlementItemRequest> orderItemWriter() {
+    public ItemWriter<SettlementTargetOrder> orderItemWriter() {
         return chunk -> {
-            for (SettlementItemRequest request : chunk) {
+            for (SettlementTargetOrder request : chunk) {
                 settlementItemAddUseCase.add(request);
             }
             log.info("SettlementItem 생성 완료. 처리 건수: {}", chunk.size());

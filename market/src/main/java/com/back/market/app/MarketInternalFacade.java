@@ -1,7 +1,7 @@
 package com.back.market.app;
 
 import com.back.market.app.usecase.ConfirmPaymentUseCase;
-import com.back.common.feign.cash.request.PaymentCompletedRequestDto;
+import com.back.common.dto.cash.request.PaymentCompletedRequestDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

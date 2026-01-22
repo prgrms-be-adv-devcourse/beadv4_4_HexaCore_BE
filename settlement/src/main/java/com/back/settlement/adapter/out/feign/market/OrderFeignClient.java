@@ -1,8 +1,9 @@
 package com.back.settlement.adapter.out.feign.market;
 
-import com.back.settlement.app.event.SettlementItemRequest;
 import java.time.YearMonth;
 import java.util.List;
+
+import com.back.common.dto.settlement.SettlementTargetOrder;
 import org.springframework.context.annotation.Profile;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -15,7 +16,7 @@ public interface OrderFeignClient extends OrderClient {
 
     @Override
     @GetExchange("/api/v1/orders/settlement-target")
-    List<SettlementItemRequest> findSettlementTargetOrders(
+    List<SettlementTargetOrder> findSettlementTargetOrders(
             @RequestParam("targetMonth") @DateTimeFormat(pattern = "yyyy-MM") YearMonth targetMonth,
             @RequestParam("page") int page,
             @RequestParam("size") int size

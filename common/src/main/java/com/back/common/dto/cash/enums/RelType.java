@@ -1,4 +1,4 @@
-package com.back.common.feign.cash.enums;
+package com.back.common.dto.cash.enums;
 
 public enum RelType {
     ORDER,

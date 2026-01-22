@@ -3,7 +3,7 @@ package com.back.settlement.domain;
 import static com.back.settlement.domain.SettlementPolicy.PLATFORM_FEE_RATE;
 
 import com.back.common.entity.BaseTimeEntity;
-import com.back.settlement.app.event.SettlementItemRequest;
+import com.back.common.dto.settlement.SettlementTargetOrder;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -74,7 +74,7 @@ public class SettlementItem extends BaseTimeEntity {
     @Column(name = "confirmed_at")
     private LocalDateTime confirmedAt; // 구매 확정 시간
 
-    public static List<SettlementItem> createSettlementItem(SettlementItemRequest request, Long systemPayeeId) {
+    public static List<SettlementItem> createSettlementItem(SettlementTargetOrder request, Long systemPayeeId) {
         BigDecimal price = request.price();
         BigDecimal feeAmount = price.multiply(PLATFORM_FEE_RATE).setScale(0, RoundingMode.HALF_UP);
         BigDecimal netAmount = price.subtract(feeAmount);

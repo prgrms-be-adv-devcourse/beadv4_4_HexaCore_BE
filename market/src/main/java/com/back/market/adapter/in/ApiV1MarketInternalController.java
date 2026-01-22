@@ -3,7 +3,7 @@ package com.back.market.adapter.in;
 import com.back.common.code.SuccessCode;
 import com.back.common.response.CommonResponse;
 import com.back.market.app.MarketInternalFacade;
-import com.back.common.feign.cash.request.PaymentCompletedRequestDto;
+import com.back.common.dto.cash.request.PaymentCompletedRequestDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
