@@ -1,10 +1,10 @@
 package com.back.cash.mapper;
 
 import com.back.cash.domain.Payment;
-import com.back.cash.domain.enums.PayAndHoldStatus;
 import com.back.cash.domain.enums.PaymentStatus;
-import com.back.cash.dto.request.PayAndHoldRequestDto;
-import com.back.cash.dto.response.PayAndHoldResponseDto;
+import com.back.common.dto.cash.enums.PayAndHoldStatus;
+import com.back.common.dto.cash.request.PayAndHoldRequestDto;
+import com.back.common.dto.cash.response.PayAndHoldResponseDto;
 
 import java.math.BigDecimal;
 

@@ -1,8 +1,8 @@
 package com.back.cash.domain;
 
 
-import com.back.cash.domain.enums.RelType;
 import com.back.cash.domain.enums.Type;
+import com.back.common.dto.cash.enums.RelType;
 import com.back.common.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.*;

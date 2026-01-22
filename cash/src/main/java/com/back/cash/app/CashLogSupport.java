@@ -1,10 +1,10 @@
 package com.back.cash.app;
 
+import com.back.cash.adapter.out.CashLogRepository;
 import com.back.cash.domain.CashLog;
 import com.back.cash.domain.Wallet;
-import com.back.cash.domain.enums.RelType;
 import com.back.cash.domain.enums.Type;
-import com.back.cash.adapter.out.CashLogRepository;
+import com.back.common.dto.cash.enums.RelType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
