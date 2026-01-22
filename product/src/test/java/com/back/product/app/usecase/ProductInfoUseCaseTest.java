@@ -196,4 +196,40 @@ class ProductInfoUseCaseTest {
             verify(productInfoRepository, never()).delete(any(ProductInfo.class));
         }
     }
+
+    @Nested
+    @DisplayName("findProductInfo 메서드")
+    class FindProductInfoTest {
+
+        @Test
+        @DisplayName("성공: 상품 정보를 조회한다")
+        void findProductInfo_Success() {
+            // given
+            long productInfoId = 1L;
+            given(productSupport.findProductInfoById(productInfoId)).willReturn(Optional.of(productInfo));
+
+            // when
+            ProductInfo result = productInfoUseCase.findProductInfo(productInfoId);
+
+            // then
+            assertThat(result).isNotNull();
+            assertThat(result.getId()).isEqualTo(productInfoId);
+            verify(productSupport).findProductInfoById(productInfoId);
+        }
+
+        @Test
+        @DisplayName("실패: 존재하지 않는 상품 정보 ID이면 예외를 발생시킨다")
+        void findProductInfo_Fail_NotFound() {
+            // given
+            long productInfoId = 99L;
+            given(productSupport.findProductInfoById(productInfoId)).willReturn(Optional.empty());
+
+            // when & then
+            CustomException exception = assertThrows(CustomException.class, () ->
+                    productInfoUseCase.findProductInfo(productInfoId)
+            );
+            assertThat(exception.getFailureCode()).isEqualTo(FailureCode.PRODUCT_INFO_NOT_FOUND);
+            verify(productSupport).findProductInfoById(productInfoId);
+        }
+    }
 }
