@@ -2,7 +2,7 @@ package com.back.cash;
 
 import com.back.cash.adapter.out.PaymentRepository;
 import com.back.cash.app.CashLogSupport;
-import com.back.cash.app.PayAndHoldUseCase;
+import com.back.cash.app.usecase.PayAndHoldUseCase;
 import com.back.cash.app.WalletSupport;
 import com.back.cash.domain.Payment;
 import com.back.cash.domain.Wallet;
