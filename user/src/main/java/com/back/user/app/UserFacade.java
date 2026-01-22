@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserFacade {
     private final UserSupport userSupport;
     private final UserUpdateUsecase userUpdateUsecase;
+    private final UserIncrementBlindCountUseCase userIncrementBlindCountUseCase;
 
     @Transactional
     public UserIdResponse registerOrUpdateFcmToken(Long userId, UpdateFcmTokenRequest request) {
@@ -20,5 +21,9 @@ public class UserFacade {
         userUpdateUsecase.updateFcmToken(user, request);
 
         return UserIdResponse.of(user);
+    }
+
+    public void incrementBlindCount(Long userId) {
+        userIncrementBlindCountUseCase.incrementBlindCount(userId);
     }
 }
