@@ -1,4 +1,15 @@
+ext {
+    springCloudVersion = "2025.1.0"
+}
 dependencies {
     implementation project(':common')
     implementation project(':security')
+
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+}
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.cloud:spring-cloud-dependencies:$springCloudVersion"
+    }
 }

@@ -4,4 +4,8 @@ spring:
   profiles:
     active: local
 server:
-  port: 8080
+  port: 8083
+
+feign:
+  cash:
+    url: http://localhost:8081

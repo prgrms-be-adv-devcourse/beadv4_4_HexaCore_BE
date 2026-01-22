@@ -1,7 +1,7 @@
 package com.back.settlement.app.usecase;
 
+import com.back.common.dto.settlement.SettlementTargetOrder;
 import com.back.settlement.adapter.out.SettlementItemRepository;
-import com.back.settlement.app.event.SettlementItemRequest;
 import com.back.settlement.app.support.SettlementSupport;
 import com.back.settlement.domain.SettlementItem;
 import java.util.List;
@@ -24,7 +24,7 @@ public class SettlementItemAddUseCase {
 
     // 정산 아이템
     @Transactional
-    public void add(SettlementItemRequest request) {
+    public void add(SettlementTargetOrder request) {
         if (settlementSupport.existsByOrderId(request.orderId())) {
             log.warn("이미 처리된 주문입니다. orderId={}", request.orderId());
             return;

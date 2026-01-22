@@ -1,10 +1,10 @@
 package com.back.settlement.adapter.in;
 
 import com.back.common.code.SuccessCode;
+import com.back.common.dto.settlement.SettlementTargetOrder;
 import com.back.common.response.CommonResponse;
 import com.back.settlement.adapter.out.feign.cash.TestCashClient;
 import com.back.settlement.adapter.out.feign.market.TestOrderClient;
-import com.back.settlement.app.event.SettlementItemRequest;
 import com.back.settlement.app.event.SettlementPayoutRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -29,7 +29,7 @@ public class FeignTestController {
 
     @Operation(summary = "테스트 주문 데이터 추가", description = "TestOrderClient에 테스트용 주문 데이터를 추가합니다.")
     @PostMapping("/orders")
-    public CommonResponse<Void> addTestOrder(@RequestBody SettlementItemRequest order) {
+    public CommonResponse<Void> addTestOrder(@RequestBody SettlementTargetOrder order) {
         testOrderClient.addOrder(order);
         return CommonResponse.success(SuccessCode.CREATED, null);
     }

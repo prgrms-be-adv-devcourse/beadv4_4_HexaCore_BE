@@ -1,4 +1,4 @@
-package com.back.market.dto.enums;
+package com.back.common.dto.cash.enums;
 
 public enum RelType {
     ORDER,

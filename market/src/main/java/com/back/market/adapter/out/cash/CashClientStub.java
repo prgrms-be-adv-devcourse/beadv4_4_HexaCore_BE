@@ -1,15 +1,16 @@
-package com.back.market.adapter.out.client;
+package com.back.market.adapter.out.cash;
 
 import com.back.common.code.FailureCode;
 import com.back.common.code.SuccessCode;
 import com.back.common.response.CommonResponse;
-import com.back.market.dto.enums.PayAndHoldStatus;
-import com.back.market.dto.enums.RelType;
-import com.back.market.dto.request.PayAndHoldRequestDto;
-import com.back.market.dto.request.PaymentCancelRequestDto;
-import com.back.market.dto.response.PayAndHoldResponseDto;
-import com.back.market.dto.response.PaymentCancelResponseDto;
+import com.back.common.dto.cash.enums.PayAndHoldStatus;
+import com.back.common.dto.cash.enums.RelType;
+import com.back.common.dto.cash.request.PayAndHoldRequestDto;
+import com.back.common.dto.cash.request.PaymentCancelRequestDto;
+import com.back.common.dto.cash.response.PayAndHoldResponseDto;
+import com.back.common.dto.cash.response.PaymentCancelResponseDto;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
@@ -20,7 +21,8 @@ import java.math.BigDecimal;
  */
 @Slf4j
 @Component
-public class FakeCashClient implements CashClient {
+@Profile("local") //local 환경일 때만 활성화
+public class CashClientStub implements CashClient{
     /**
      * 결제 및 홀딩 요청 처리
      * @param requestDto 요청 dto, 구매자 ID, 금액, 참조 타입(ORDER/BIDDING), 참조 ID 포함

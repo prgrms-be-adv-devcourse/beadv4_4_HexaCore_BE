@@ -1,7 +1,7 @@
 package com.back.market.adapter.in;
 
 import com.back.common.response.CommonResponse;
-import com.back.market.dto.request.PaymentCompletedRequestDto;
+import com.back.common.dto.cash.request.PaymentCompletedRequestDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.PostMapping;

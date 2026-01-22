@@ -1,8 +1,8 @@
 package com.back.market.mapper;
 
 import com.back.market.domain.Order;
-import com.back.market.dto.enums.RelType;
-import com.back.market.dto.request.PayAndHoldRequestDto;
+import com.back.common.dto.cash.enums.RelType;
+import com.back.common.dto.cash.request.PayAndHoldRequestDto;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
