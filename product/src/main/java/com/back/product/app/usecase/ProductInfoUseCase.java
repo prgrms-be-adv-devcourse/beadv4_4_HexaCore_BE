@@ -60,6 +60,11 @@ public class ProductInfoUseCase {
         productInfoRepository.delete(productInfo);
     }
 
+    @Transactional(readOnly = true)
+    public ProductInfo findProductInfo(Long productInfoId) {
+        return getProductInfoExists(productInfoId);
+    }
+
     private ProductInfo getProductInfoExists(Long productInfoId) {
         return productSupport.findProductInfoById(productInfoId)
                 .orElseThrow(() -> new CustomException(FailureCode.PRODUCT_INFO_NOT_FOUND));
