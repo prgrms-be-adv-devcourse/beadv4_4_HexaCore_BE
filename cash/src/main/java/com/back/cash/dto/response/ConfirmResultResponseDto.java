@@ -1,7 +1,8 @@
 package com.back.cash.dto.response;
 
-import com.back.cash.dto.request.PaymentCompletedRequestDto;
-import com.back.cash.dto.request.PaymentFailedRequestDto;
+
+import com.back.common.dto.cash.request.PaymentCompletedRequestDto;
+import com.back.common.dto.cash.request.PaymentFailedRequestDto;
 
 public record ConfirmResultResponseDto(
         boolean isSuccess,
