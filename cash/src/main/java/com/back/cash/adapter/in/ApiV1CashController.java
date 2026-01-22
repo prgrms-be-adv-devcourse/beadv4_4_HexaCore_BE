@@ -1,11 +1,9 @@
 package com.back.cash.adapter.in;
 
 import com.back.cash.app.CashFacade;
-import com.back.cash.dto.request.PayAndHoldRequestDto;
 import com.back.cash.dto.request.TossConfirmRequest;
 import com.back.cash.dto.request.TossFailRequestDto;
 import com.back.cash.dto.response.ConfirmResultResponseDto;
-import com.back.cash.dto.response.PayAndHoldResponseDto;
 import com.back.common.code.FailureCode;
 import com.back.common.code.SuccessCode;
 import com.back.common.response.CommonResponse;
@@ -24,12 +22,6 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 public class ApiV1CashController {
     private final CashFacade cashFacade;
-
-    @PostMapping
-    public CommonResponse<PayAndHoldResponseDto> payAndHold(@RequestBody PayAndHoldRequestDto dto) {
-        PayAndHoldResponseDto result = cashFacade.payAndHold(dto);
-        return CommonResponse.success(SuccessCode.OK, result);
-    }
 
     @PostMapping("/confirm/toss")
     public ResponseEntity<CommonResponse<?>> confirm(@RequestBody TossConfirmRequest req) {

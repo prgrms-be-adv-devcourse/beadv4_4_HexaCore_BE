@@ -1,7 +1,9 @@
 package com.back.cash.adapter.in;
 
 import com.back.cash.app.CashFacade;
+import com.back.cash.dto.request.PayAndHoldRequestDto;
 import com.back.cash.dto.request.PaymentCancelRequestDto;
+import com.back.cash.dto.response.PayAndHoldResponseDto;
 import com.back.cash.dto.response.PaymentCancelResponseDto;
 import com.back.common.code.SuccessCode;
 import com.back.common.response.CommonResponse;
@@ -26,6 +28,12 @@ public class ApiV1InternalCashController {
         return ResponseEntity
                 .status(SuccessCode.OK.getHttpStatus())
                 .body(CommonResponse.success(SuccessCode.OK, result));
+    }
+
+    @PostMapping
+    public CommonResponse<PayAndHoldResponseDto> payAndHold(@RequestBody PayAndHoldRequestDto dto) {
+        PayAndHoldResponseDto result = cashFacade.payAndHold(dto);
+        return CommonResponse.success(SuccessCode.OK, result);
     }
 
 
