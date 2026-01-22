@@ -24,7 +24,7 @@ public class ChatMessageBlindedListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handle(ChatMessageBlindedEvent event){
 
-        userClient.incrementBlindCount(event.reportedUserId(), event.chatMessageId());
+        userClient.incrementBlindCount(event.reportedUserId());
 
         // 실시간 블라인드 전파
         ChatMessageBlindedPayload payload = new ChatMessageBlindedPayload(event.roomId(), event.chatMessageId(), LocalDateTime.now());
