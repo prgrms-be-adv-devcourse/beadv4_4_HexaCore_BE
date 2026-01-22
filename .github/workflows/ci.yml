@@ -95,7 +95,7 @@ jobs:
           push: ${{ github.event_name == 'push' }}
           build-args: |
             MODULE_NAME=${{ matrix.module }}
-          tags: ghcr.io/${{ steps.string.outputs.lowercase_owner }}/${{ matrix.module }}:${{ github.sha }}
+          tags: ghcr.io/${{ steps.string.outputs.lowercase_owner }}/${{ steps.string.outputs.lowercase_owner }}-${{ matrix.module }}:${{ github.sha }}
           labels: |
             org.opencontainers.image.source=${{ github.repositoryUrl }}
             org.opencontainers.image.revision=${{ github.sha }}
@@ -147,7 +147,7 @@ jobs:
               yq -i ".image.tag = \"${{ github.sha }}\"" $VALUES_FILE
 
               # 레포지토리 주소도 업데이트가 필요하다면 아래 주석을 해제하고 사용하세요.
-              yq -i ".image.repository = \"ghcr.io/${{ steps.string.outputs.lowercase_owner }}/$module\"" $VALUES_FILE
+              yq -i ".image.repository = \"ghcr.io/${{ steps.string.outputs.lowercase_owner }}/${{ steps.string.outputs.lowercase_owner }}-$module\"" $VALUES_FILE
             else
               echo "Warning: $VALUES_FILE not found. Skipping update for $module."
             fi
