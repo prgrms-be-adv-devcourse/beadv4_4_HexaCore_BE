@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 @FeignClient(name = "cash-client", url = "${feign.cash.url}")
 public interface CashFeignApi {
-    @PostMapping("/api/v1/cash/payments")
+    @PostMapping("/api/v1/internal/cash/payments")
     CommonResponse<PayAndHoldResponseDto> requestBidHold(@RequestBody PayAndHoldRequestDto requestDto);
 
     @PostMapping("/api/v1/internal/cash/payments/cancel")
