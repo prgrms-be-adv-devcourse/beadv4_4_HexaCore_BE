@@ -43,4 +43,11 @@ public class ApiV1ProductController implements ProductApiController {
         productFacade.deleteProduct(productInfoId);
         return CommonResponse.success(SuccessCode.NO_CONTENT, null);
     }
+
+    @Override
+    @GetMapping("/{productInfoId}")
+    public CommonResponse<ProductResponseDto> getProductDetail(@PathVariable Long productInfoId) {
+        ProductResponseDto response = productFacade.getProductDetail(productInfoId);
+        return CommonResponse.success(SuccessCode.OK, response);
+    }
 }

@@ -108,7 +108,7 @@ public class ConfirmTossPaymentUseCase {
         systemWallet.withdraw(held);
         buyerWallet.deposit(held);
 
-        cashLogSupport.recordReleaseLog(buyerWallet, systemWallet, held, payment.getRelType(), payment.getRelId());
+        cashLogSupport.recordReleaseOnPaymentFail(buyerWallet, systemWallet, held, payment.getRelType(), payment.getRelId());
 
         payment.markReleased();
     }

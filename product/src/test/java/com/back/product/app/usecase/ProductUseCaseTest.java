@@ -1,5 +1,7 @@
 package com.back.product.app.usecase;
 
+import com.back.common.code.FailureCode;
+import com.back.common.exception.CustomException;
 import com.back.product.adapter.out.ProductImageRepository;
 import com.back.product.adapter.out.ProductOptionValuesRepository;
 import com.back.product.adapter.out.ProductRepository;
@@ -23,12 +25,15 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -235,6 +240,52 @@ class ProductUseCaseTest {
 
             verify(productRepository).deleteAll(deleteCaptor.capture());
             assertThat(deleteCaptor.getValue()).hasSize(2);
+        }
+    }
+
+    @Nested
+    @DisplayName("findAllProduct 메서드")
+    class FindAllProductTest {
+
+        @Test
+        @DisplayName("성공: ProductInfo에 속한 모든 상품(variant)들을 조회한다")
+        void findAllProduct_Success() {
+            // given
+            Product product1 = Product.builder().id(1L).build();
+            Product product2 = Product.builder().id(2L).build();
+            List<Product> products = List.of(product1, product2);
+
+            given(productSupport.getAllProductsByProductInfo(productInfo)).willReturn(products);
+            given(productSupport.getAllProductOptionValuesByProductsIn(products)).willReturn(List.of());
+            given(productSupport.getAllProductImagesByProductsIn(products)).willReturn(List.of());
+            given(productMapper.toDto(any(), any(), any())).willReturn(ProductDto.builder().build());
+
+            // when
+            List<ProductDto> result = productUseCase.findAllProduct(productInfo);
+
+            // then
+            assertThat(result).hasSize(2);
+            verify(productSupport).getAllProductsByProductInfo(productInfo);
+            verify(productSupport).getAllProductOptionValuesByProductsIn(products);
+            verify(productSupport).getAllProductImagesByProductsIn(products);
+            verify(productMapper, times(2)).toDto(any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("실패: ProductInfo에 속한 상품이 없으면 예외를 발생시킨다")
+        void findAllProduct_Fail_NoProducts() {
+            // given
+            given(productSupport.getAllProductsByProductInfo(productInfo)).willReturn(Collections.emptyList());
+
+            // when & then
+            CustomException exception = assertThrows(CustomException.class, () ->
+                    productUseCase.findAllProduct(productInfo)
+            );
+            assertThat(exception.getFailureCode()).isEqualTo(FailureCode.ENTITY_NOT_FOUND);
+
+            verify(productSupport).getAllProductsByProductInfo(productInfo);
+            verify(productSupport, never()).getAllProductOptionValuesByProductsIn(any());
+            verify(productSupport, never()).getAllProductImagesByProductsIn(any());
         }
     }
 }

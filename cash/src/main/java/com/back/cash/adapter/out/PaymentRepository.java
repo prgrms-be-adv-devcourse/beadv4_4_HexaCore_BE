@@ -12,5 +12,8 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     Optional<Payment> findByRelTypeAndRelId(RelType relType, Long relId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
+    Optional<Payment> findWithLockByRelTypeAndRelId(RelType relType, Long relId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<Payment> findWithLockByTossOrderId(String tossOrderId);
 }

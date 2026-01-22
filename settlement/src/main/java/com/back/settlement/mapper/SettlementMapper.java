@@ -1,9 +1,11 @@
 package com.back.settlement.mapper;
 
 import com.back.settlement.app.dto.response.SettlementItemResponse;
+import com.back.settlement.app.dto.response.SettlementLogResponse;
 import com.back.settlement.app.dto.response.SettlementResponse;
 import com.back.settlement.domain.Settlement;
 import com.back.settlement.domain.SettlementItem;
+import com.back.settlement.domain.SettlementLog;
 import java.util.List;
 import org.springframework.stereotype.Component;
 
@@ -50,6 +52,25 @@ public class SettlementMapper {
     public List<SettlementItemResponse> toSettlementItemResponseList(List<SettlementItem> settlementItems) {
         return settlementItems.stream()
                 .map(this::toSettlementItemResponse)
+                .toList();
+    }
+
+    public SettlementLogResponse toSettlementLogResponse(SettlementLog settlementLog) {
+        return SettlementLogResponse.builder()
+                .logId(settlementLog.getId())
+                .settlementId(settlementLog.getSettlement().getId())
+                .previousStatus(settlementLog.getPreviousStatus())
+                .newStatus(settlementLog.getNewStatus())
+                .reason(settlementLog.getReason())
+                .actorType(settlementLog.getActorType())
+                .actorId(settlementLog.getActorId())
+                .createdAt(settlementLog.getCreatedAt())
+                .build();
+    }
+
+    public List<SettlementLogResponse> toSettlementLogResponseList(List<SettlementLog> settlementLogs) {
+        return settlementLogs.stream()
+                .map(this::toSettlementLogResponse)
                 .toList();
     }
 }

@@ -71,17 +71,27 @@ public class ProductUseCase {
         handleUpdates(productInfo, variantsToUpdate, optionValueMap, existProducts);
         handleCreations(productInfo, variantsToCreate, optionValueMap);
 
-        List<Product> updatedProducts = productSupport.getAllProductsByProductInfo(productInfo);
-        List<ProductOptionValues> updatedProductOptionValues = productSupport.getAllProductOptionValuesByProductsIn(updatedProducts);
-        List<ProductImage> updatedProductImages = productSupport.getAllProductImagesByProductsIn(updatedProducts);
-
-        return convertToDto(updatedProducts, updatedProductOptionValues, updatedProductImages);
+        return findAllProduct(productInfo);
     }
 
     @Transactional
     public void deleteMultipleProduct(Long productInfoId) {
         List<Product> deletedProducts = productSupport.getAllProductsByProductInfoId(productInfoId);
         deleteProducts(deletedProducts);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ProductDto> findAllProduct(ProductInfo productInfo) {
+        List<Product> products = productSupport.getAllProductsByProductInfo(productInfo);
+
+        if (products.isEmpty()) {
+            throw new CustomException(FailureCode.ENTITY_NOT_FOUND);
+        }
+
+        List<ProductOptionValues> productOptionValues = productSupport.getAllProductOptionValuesByProductsIn(products);
+        List<ProductImage> productImages = productSupport.getAllProductImagesByProductsIn(products);
+
+        return convertToDto(products, productOptionValues, productImages);
     }
 
     private void handleCreations(ProductInfo productInfo, List<ProductVariantUpdateRequestDto> variantsToCreate, Map<Long, OptionValue> optionValueMap) {

@@ -2,13 +2,15 @@ package com.back.market.adapter.out.client;
 
 import com.back.common.code.FailureCode;
 import com.back.common.code.SuccessCode;
-import com.back.market.app.port.out.CashClient;
+import com.back.common.response.CommonResponse;
 import com.back.market.dto.enums.PayAndHoldStatus;
 import com.back.market.dto.enums.RelType;
 import com.back.market.dto.request.PayAndHoldRequestDto;
-import com.back.market.dto.response.CashApiResponse;
+import com.back.market.dto.request.PaymentCancelRequestDto;
 import com.back.market.dto.response.PayAndHoldResponseDto;
+import com.back.market.dto.response.PaymentCancelResponseDto;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -25,7 +27,7 @@ public class FakeCashClient implements CashClient {
      * @return 결제 완료(PAID) 또는 PG 결제 필요(REQUIRES_PG) 응답
      */
     @Override
-    public CashApiResponse<PayAndHoldResponseDto> requestBidHold(PayAndHoldRequestDto requestDto) {
+    public CommonResponse<PayAndHoldResponseDto> requestBidHold(PayAndHoldRequestDto requestDto) {
         String actionType = requestDto.relType() == RelType.BIDDING ? "입찰 홀딩" : "즉시 결제";
         log.info("[FakeCashClient] {} 요청 수신: {}", actionType, requestDto);
 
@@ -35,10 +37,12 @@ public class FakeCashClient implements CashClient {
         // 강제 실패 시뮬레이션 (5000원) -> 롤백 테스트용
         if (amount.intValue() == 5000) {
             log.warn("[FakeCashClient] 강제 실패 트리거 작동 (5000원)");
-            return CashApiResponse.<PayAndHoldResponseDto>builder()
-                    .code(FailureCode.WALLET_CHARGE_FAILED.getCode()) // 실패 코드 (400)
-                    .message("강제 결제 실패")
-                    .build(); // success = false
+            return CommonResponse.createError(
+                    HttpStatus.BAD_REQUEST,
+                    FailureCode.WALLET_CHARGE_FAILED.getCode(),
+                    "강제 결제 실패",
+                    null
+            );
         }
 
         //테스트용(9000원 요청시 잔액 부족 에러가 나도록)
@@ -53,11 +57,7 @@ public class FakeCashClient implements CashClient {
                     "toss-order-fake-9000"        // 가짜 토스 주문 ID 생성
             );
 
-            return CashApiResponse.<PayAndHoldResponseDto>builder()
-                    .code(SuccessCode.OK.getCode()) //API 통신 자체는 성공
-                    .message(FailureCode.WALLET_CHARGE_FAILED.getMessage()) // 잔액 부족 코드
-                    .data(pgResponse)
-                    .build();
+            return CommonResponse.success(SuccessCode.OK, pgResponse);
         }
 
         PayAndHoldResponseDto paidResponse = PayAndHoldResponseDto.of(
@@ -71,10 +71,38 @@ public class FakeCashClient implements CashClient {
 
         log.info("[FakeCashClient] 결제/홀딩 완료 (PAID): User {}, Amount {}", userId, amount);
 
-        return CashApiResponse.<PayAndHoldResponseDto>builder()
-                .code(SuccessCode.OK.getCode())
-                .message("요청 성공 (Fake)")
-                .data(paidResponse)
-                .build();
+        return CommonResponse.success(SuccessCode.OK, paidResponse);
+    }
+
+    /**
+     * 입찰 취소 시 예치금 환불(홀딩 해제) 요청 처리)
+     * @param requestDto 요청 dto
+     * @return 홀딩 해제 완료 응답
+     */
+    @Override
+    public CommonResponse<PaymentCancelResponseDto> refundBidHold(PaymentCancelRequestDto requestDto) {
+        log.info("[FakeCashClient] 환불(홀딩 해제) 요청 수신: {}", requestDto);
+
+        // 테스트용 강제 실패 트리거 (7000원)
+        if (requestDto.amount().intValue() == 7000) {
+            log.warn("[FakeCashClient] 환불 강제 실패 트리거 작동 (7000원)");
+            return CommonResponse.createError(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    FailureCode.WALLET_REFUND_FAILED.getCode(),
+                    "Cash 모듈 환불 처리 중 오류 발생 (테스트)",
+                    null
+            );
+        }
+
+        // 환불 결과 DTO 생성
+        // (환불이 완료되었다는 의미로 PAID 상태 사용, 실제 금액 차감은 없으므로 0원 처리)
+        PaymentCancelResponseDto response = PaymentCancelResponseDto.of(
+                requestDto.userId(),
+                requestDto.amount()
+        );
+
+        log.info("[FakeCashClient] 예치금 홀딩 해제 완료 - User: {}, RelId: {}, Amount: {}", requestDto.userId(), requestDto.relId(), requestDto.amount());
+
+        return CommonResponse.success(SuccessCode.OK, response);
     }
 }

@@ -1,5 +1,6 @@
 package com.back.market.app;
 
+import com.back.market.app.usecase.CancelBidUseCase;
 import com.back.market.app.usecase.GetInstantPriceUseCase;
 import com.back.market.app.usecase.MatchInstantTradeUseCase;
 import com.back.market.app.usecase.RegisterBidUseCase;
@@ -7,6 +8,7 @@ import com.back.market.dto.request.BiddingRequestDto;
 import com.back.market.dto.response.InstantBuyPriceResponseDto;
 import com.back.market.dto.response.InstantSellPriceResponseDto;
 import com.back.market.dto.response.PayAndHoldResponseDto;
+import com.back.market.dto.response.PaymentCancelResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +19,7 @@ public class MarketFacade {
     private final RegisterBidUseCase registerBidUseCase;
     private final GetInstantPriceUseCase getInstantPriceUseCase;
     private final MatchInstantTradeUseCase matchInstantTradeUseCase;
+    private final CancelBidUseCase cancelBidUseCase;
 
     /**
      * MARKET-010: 구매 입찰 등록
@@ -78,6 +81,16 @@ public class MarketFacade {
      */
     public PayAndHoldResponseDto sellNow(Long sellerId, BiddingRequestDto requestDto) {
         return matchInstantTradeUseCase.sellNow(sellerId, requestDto);
+    }
+
+    /**
+     * MARKET-013: 입찰 취소
+     * @param userId 사용자ID
+     * @param biddingId 입찰ID
+     * @return PaymentCancelResponseDto
+     */
+    public PaymentCancelResponseDto cancelBid(Long userId, Long biddingId) {
+        return cancelBidUseCase.cancelBid(userId, biddingId);
     }
 
 }

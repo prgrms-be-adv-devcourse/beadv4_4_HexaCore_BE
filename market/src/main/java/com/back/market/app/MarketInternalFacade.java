@@ -16,7 +16,7 @@ public class MarketInternalFacade {
      * @param requestDto PaymentCompletedRequestDto
      */
     @Transactional
-    public void confirmPayment(PaymentCompletedRequestDto requestDto) {
-        confirmPaymentUseCase.confirmPayment(requestDto);
+    public boolean confirmPayment(PaymentCompletedRequestDto requestDto) {
+        return confirmPaymentUseCase.confirmPayment(requestDto);
     }
 }
