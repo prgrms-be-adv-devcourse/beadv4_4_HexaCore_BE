@@ -2,9 +2,9 @@ name: Dynamic CI for Multi-Module Project (MSA)
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "dev" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "dev" ]
 
 jobs:
   # Job 1: 변경된 서비스 모듈을 감지하는 작업
@@ -104,7 +104,7 @@ jobs:
   update-helm-chart:
     name: Update Helm Chart
     needs: [changes, build-and-push] # 'build-and-push'와 'changes' 작업이 모두 성공해야 실행됩니다.
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push' # 'main' 브랜치에 'push' 이벤트가 발생했을 때만 실행합니다.
+    if: github.event_name == 'push' # 'dev' 브랜치에 'push' 이벤트가 발생했을 때만 실행합니다.
     runs-on: ubuntu-latest
 
     steps:
