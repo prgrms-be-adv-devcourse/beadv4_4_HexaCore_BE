@@ -1,0 +1,21 @@
+package com.back.product.adapter.in;
+
+import com.back.common.response.CommonResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
+@Tag(name = "Product", description = "상품 관련 API")
+public interface ProductQueryApiController {
+    @Operation(summary = "상품 상세 조회", description = """
+            상품의 상세 정보를 조회합니다.
+            상품 기본 정보 (ProductInfo)를 기반으로 이로 파생된 상세 상품(Product)들을 모두 조회합니다.
+            ex. A 상품(ProductInfo)의 색상, 사이즈(ProductOptionValues)에 따른 개별 상품(Product) 조회
+    """)
+    @ApiResponse(responseCode = "200", description = "상품 상세 조회 성공")
+    @ApiResponse(responseCode = "401", description = "인증 실패", content = @Content)
+    @ApiResponse(responseCode = "403", description = "권한 없음", content = @Content)
+    @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
+    CommonResponse<?> getProductDetail(Long productInfoId);
+}

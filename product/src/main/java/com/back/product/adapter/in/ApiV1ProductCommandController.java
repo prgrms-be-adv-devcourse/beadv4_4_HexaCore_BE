@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping(path = "/api/v1/products", produces = MediaType.APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
-public class ApiV1ProductController implements ProductApiController {
+public class ApiV1ProductCommandController implements ProductCommandApiController {
     private final ProductFacade productFacade;
 
     @Override
@@ -42,12 +42,5 @@ public class ApiV1ProductController implements ProductApiController {
     public CommonResponse<?> deleteProduct(@PathVariable Long productInfoId) {
         productFacade.deleteProduct(productInfoId);
         return CommonResponse.success(SuccessCode.NO_CONTENT, null);
-    }
-
-    @Override
-    @GetMapping("/{productInfoId}")
-    public CommonResponse<ProductResponseDto> getProductDetail(@PathVariable Long productInfoId) {
-        ProductResponseDto response = productFacade.getProductDetail(productInfoId);
-        return CommonResponse.success(SuccessCode.OK, response);
     }
 }
