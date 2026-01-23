@@ -10,8 +10,7 @@ import java.util.List;
 @Builder
 public record ProductSearchRequestDto(
         // 1. 검색어 (전문 검색)
-        @Size(max = 50, message = "Name must be between 1 and 50 characters")
-        @Pattern(regexp = "^[A-Za-z0-9 ]{50}$", message = "Name must be alphanumeric and up to 50 characters")
+        @Pattern(regexp = "^[A-Za-z0-9 ]{0,50}$", message = "Keyword must be alphanumeric and up to 50 characters")
         String keyword,
 
         // 2. 필터링 조건 (다중 선택 가능)
