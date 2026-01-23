@@ -16,7 +16,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -34,18 +33,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(ApiV1ProductController.class)
+@WebMvcTest(ApiV1ProductCommandController.class)
 @DisplayName("ApiV1ProductController 테스트")
-class ApiV1ProductControllerTest {
+class ApiV1ProductCommandControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
     @MockitoBean
     private JWTUtil jwtUtil;
-
-    @MockitoBean
-    private JpaMetamodelMappingContext jpaMetamodelMappingContext;
 
     @MockitoBean
     private ProductFacade productFacade;
@@ -212,51 +208,6 @@ class ApiV1ProductControllerTest {
                     .andExpect(status().isNotFound());
 
             verify(productFacade).deleteProduct(productInfoId);
-        }
-    }
-
-    @Nested
-    @DisplayName("GET /api/v1/products/{productInfoId}")
-    class GetProductDetailTest {
-
-        @Test
-        @DisplayName("상품 상세 조회를 성공한다")
-        @WithMockUser
-        void getProductDetail_Success() throws Exception {
-            // given
-            long productInfoId = 1L;
-            ProductResponseDto response = RequestFixture.createProductResponse();
-            given(productFacade.getProductDetail(productInfoId)).willReturn(response);
-
-            // when & then
-            mockMvc.perform(
-                            get("/api/v1/products/{productInfoId}", productInfoId)
-                    ).andDo(print())
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.code").value("OK"))
-                    .andExpect(jsonPath("$.data.productInfo.productInfoId").value(response.productInfo().productInfoId()))
-                    .andExpect(jsonPath("$.data.products[0].productId").value(response.products().getFirst().productId()));
-
-            verify(productFacade).getProductDetail(productInfoId);
-        }
-
-        @Test
-        @DisplayName("존재하지 않는 상품 정보 ID로 조회 시 404 Not Found를 반환한다")
-        @WithMockUser
-        void getProductDetail_Fail_NotFound() throws Exception {
-            // given
-            long productInfoId = 999L;
-            given(productFacade.getProductDetail(productInfoId))
-                    .willThrow(new CustomException(FailureCode.PRODUCT_INFO_NOT_FOUND));
-
-            // when & then
-            mockMvc.perform(
-                            get("/api/v1/products/{productInfoId}", productInfoId)
-                    ).andDo(print())
-                    .andExpect(status().isNotFound())
-                    .andExpect(jsonPath("$.code").value("PRODUCT_INFO_NOT_FOUND"));
-
-            verify(productFacade).getProductDetail(productInfoId);
         }
     }
 }
