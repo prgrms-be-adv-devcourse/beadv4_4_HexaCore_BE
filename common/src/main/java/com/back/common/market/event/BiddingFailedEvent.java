@@ -1,5 +1,7 @@
 package com.back.common.market.event;
 
+import com.back.common.event.EventName;
+
 import java.math.BigDecimal;
 
 public record BiddingFailedEvent(
@@ -11,5 +13,5 @@ public record BiddingFailedEvent(
 
         BigDecimal price,
         String biddingPosition
-) {
+) implements EventName {
 }
