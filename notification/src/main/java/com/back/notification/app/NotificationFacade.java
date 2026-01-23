@@ -4,6 +4,7 @@ import com.back.notification.app.strategy.NotificationStrategyRegistry;
 import com.back.notification.domain.Notification;
 import com.back.notification.app.strategy.NotificationStrategy;
 import com.back.notification.domain.NotificationUser;
+import com.back.notification.dto.NotificationCreatedEvent;
 import com.back.notification.dto.NotificationIdResponseDto;
 import com.back.notification.dto.NotificationMessage;
 import com.back.notification.domain.enums.Type;
@@ -51,7 +52,8 @@ public class NotificationFacade {
 
         notificationSaveUsecase.saveAll(notifications);
 
-        eventPublisher.publishEvent(mapper.toNotificationCreatedEvent(notifications));
+        NotificationCreatedEvent createdEvent = mapper.toNotificationCreatedEvent(notifications);
+        eventPublisher.publishEvent(createdEvent);
     }
 
     @Transactional

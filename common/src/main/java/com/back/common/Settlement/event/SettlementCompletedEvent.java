@@ -1,5 +1,7 @@
 package com.back.common.Settlement.event;
 
+import com.back.common.event.EventName;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -8,5 +10,5 @@ public record SettlementCompletedEvent(
         LocalDateTime startAt,
         LocalDateTime endAt,
         BigDecimal totalNetAmount
-) {
+) implements EventName {
 }
