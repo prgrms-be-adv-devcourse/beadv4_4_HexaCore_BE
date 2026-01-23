@@ -1,8 +1,8 @@
 package com.back.cash.adapter.in;
 
 import com.back.cash.app.CashPayoutFacade;
-import com.back.cash.dto.request.SettlementPayoutRequest;
 import com.back.common.code.SuccessCode;
+import com.back.common.dto.settlement.SettlementPayoutRequest;
 import com.back.common.response.CommonResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;

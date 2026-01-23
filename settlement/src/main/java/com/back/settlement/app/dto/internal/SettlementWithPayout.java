@@ -1,6 +1,6 @@
 package com.back.settlement.app.dto.internal;
 
-import com.back.settlement.app.event.SettlementPayoutRequest;
+import com.back.common.dto.settlement.SettlementPayoutRequest;
 import com.back.settlement.domain.Settlement;
 
 public record SettlementWithPayout(
