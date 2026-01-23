@@ -2,6 +2,7 @@ package com.back.product.app;
 
 import com.back.common.code.FailureCode;
 import com.back.common.exception.CustomException;
+import com.back.product.BaseIntegrationTest;
 import com.back.product.adapter.out.*;
 import com.back.product.domain.*;
 import com.back.product.dto.response.ProductResponseDto;
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -22,8 +24,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest
 @Transactional
-@DisplayName("ProductFacade 조회 통합 테스트")
-class ProductQueryTest {
+@Testcontainers
+@DisplayName("ProductQuery 통합 테스트")
+class ProductQueryTest extends BaseIntegrationTest {
 
     @Autowired
     private ProductFacade productFacade;

@@ -1,6 +1,7 @@
 package com.back.product.app.usecase;
 
 import com.back.common.exception.CustomException;
+import com.back.product.BaseIntegrationTest;
 import com.back.product.adapter.out.CategoryRepository;
 import com.back.product.domain.Category;
 import com.back.product.dto.CategoryDto;
@@ -9,6 +10,7 @@ import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.List;
 
@@ -17,8 +19,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
 @Transactional
+@Testcontainers
 @DisplayName("CategoryUseCase 통합 테스트")
-class CategoryUseCaseTest {
+class CategoryUseCaseTest extends BaseIntegrationTest {
 
     @Autowired
     private CategoryUseCase categoryUseCase;

@@ -1,5 +1,6 @@
 package com.back.product.app;
 
+import com.back.product.BaseIntegrationTest;
 import com.back.product.adapter.out.*;
 import com.back.product.domain.*;
 import com.back.product.dto.ProductDto;
@@ -16,6 +17,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -24,8 +26,9 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
-@DisplayName("ProductFacade 통합 테스트")
-class ProductCommandTest {
+@Testcontainers
+@DisplayName("ProductCommand 통합 테스트")
+class ProductCommandTest extends BaseIntegrationTest {
 
     @Autowired
     private ProductFacade productFacade;
