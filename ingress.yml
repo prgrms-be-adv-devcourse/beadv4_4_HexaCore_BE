@@ -25,6 +25,22 @@ spec:
                 port:
                   number: 8080
 
+          - path: /oauth2/authorization
+            pathType: Prefix
+            backend:
+              service:
+                name: user-service
+                port:
+                  number: 8080
+
+          - path: /login/oauth2/code
+            pathType: Prefix
+            backend:
+              service:
+                name: user-service
+                port:
+                  number: 8080
+
           - path: /api/v1/products
             pathType: Prefix
             backend:
