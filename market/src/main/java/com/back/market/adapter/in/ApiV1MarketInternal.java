@@ -1,12 +1,15 @@
 package com.back.market.adapter.in;
 
+import com.back.common.dto.settlement.SettlementTargetOrder;
 import com.back.common.response.CommonResponse;
 import com.back.common.dto.cash.request.PaymentCompletedRequestDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.YearMonth;
+import java.util.List;
 
 @Tag(name = "Market Internal API", description = "내부 통신용 API")
 @RequestMapping("/api/v1/internal/market")
@@ -18,4 +21,12 @@ public interface ApiV1MarketInternal {
 
     // TODO 사용자가 결제 도중 실패했을 때 받아주는 컨트롤러 없음
     // /api/v1/internal/market/payments/fail
+
+    @Operation(summary = "정산 모듈로 주문 데이터 전송")
+    @GetMapping("/orders/settlement-target")
+    List<SettlementTargetOrder> findSettlementTargetOrders(
+            @RequestParam("targetMonth") @DateTimeFormat(pattern = "yyyy-MM") YearMonth targetMonth,
+            @RequestParam("page") int page,
+            @RequestParam("size") int size
+    );
 }
