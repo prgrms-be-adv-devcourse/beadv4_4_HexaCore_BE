@@ -67,10 +67,12 @@ Resello 프로젝트의 배포 및 인프라 구성
 │ ┌──────────────────────────────────────────────────────────────────────────────────┐ │
 │ │                         호스트 Docker (K3s 외부)                                    │ │
 │ │                                                                                  │ │
-│ │  ┌───────────┐  ┌───────────────┐                                                │ │
-│ │  │PostgreSQL │  │ Elasticsearch │   ← Docker 컨테이너로 실행                         │ │
-│ │  │  :5432    │  │    :9200      │     (K3s Pod에서 호스트 IP로 접근)                  │ │
-│ │  └───────────┘  └───────────────┘                                                │ │
+│ │  ┌───────────┐  ┌───────────────┐  ┌───────────┐  ┌───────────┐                  │ │
+│ │  │PostgreSQL │  │ Elasticsearch │  │   Kafka   │  │   Redis   │                  │ │
+│ │  │  :5432    │  │    :9200      │  │   :9092   │  │   :6379   │                  │ │
+│ │  └───────────┘  └───────────────┘  └───────────┘  └───────────┘                  │ │
+│ │                                                                                  │ │
+│ │                     ← Docker 컨테이너로 실행 (K3s Pod에서 호스트 IP로 접근)              │ │
 │ └──────────────────────────────────────────────────────────────────────────────────┘ │
 └──────────────────────────────────────────────────────────────────────────────────────┘
                                        │
@@ -92,15 +94,19 @@ Resello 프로젝트의 배포 및 인프라 구성
 # 현재 실행 중인 컨테이너
 docker ps
 
-CONTAINER ID   IMAGE                 PORTS                          NAMES
-c24491afe32e   postgres:15           0.0.0.0:5432->5432/tcp         postgres-db
-b7be28b042a8   elasticsearch:8.9.0   0.0.0.0:9200->9200/tcp, 9300   elasticsearch-db
+CONTAINER ID   IMAGE                             PORTS                          NAMES
+c24491afe32e   postgres:15                       0.0.0.0:5432->5432/tcp         postgres-db
+b7be28b042a8   elasticsearch:8.9.0               0.0.0.0:9200->9200/tcp, 9300   elasticsearch-db
+a1b2c3d4e5f6   confluentinc/cp-kafka:7.5.0       0.0.0.0:9092->9092/tcp         kafka
+d5e6f7g8h9i0   redis:7                           0.0.0.0:6379->6379/tcp         redis
 ```
 
 | 서비스 | 이미지 | 포트 | 용도 |
 |--------|--------|------|------|
 | PostgreSQL | postgres:15 | 5432 | 메인 데이터베이스 |
 | Elasticsearch | elasticsearch:8.9.0 | 9200, 9300 | 검색 엔진 |
+| Kafka | confluentinc/cp-kafka:7.5.0 | 9092 | 메시지 브로커 |
+| Redis | redis:7 | 6379 | 캐시 |
 
 > **참고**: DB는 K3s Pod이 아닌 호스트 Docker에서 직접 실행 중. 애플리케이션에서 `host.docker.internal` 또는 호스트 IP로 접근해야됨
 
@@ -147,7 +153,7 @@ b7be28b042a8   elasticsearch:8.9.0   0.0.0.0:9200->9200/tcp, 9300   elasticsearc
 | `chat` | 채팅 서비스 | `/api/v1/chat`, `/api/v1/chat-ws` |
 | `cash` | 결제/캐시 관리 | `/api/v1/cash/payments` |
 | `notification` | 알림 서비스 | `/api/v1/notifications`, `/api/v1/price-alerts` |
-| `settlement` | 정산 서비스 | `/api/v1/admin/settlements` |
+| `settlement` | 정산 서비스 | `/api/v1/settlements`, `/api/v1/admin/settlements` |
 
 ### 공유 라이브러리 (2개)
 
@@ -165,8 +171,8 @@ b7be28b042a8   elasticsearch:8.9.0   0.0.0.0:9200->9200/tcp, 9300   elasticsearc
 | **빌드** | Gradle | - |
 | **DB** | PostgreSQL | 15 |
 | **검색** | Elasticsearch | 8.9.0 |
-| **캐시** | Redis | - |
-| **메시징** | AWS SQS | - |
+| **캐시** | Redis | 7 |
+| **메시징** | Kafka, AWS SQS | 7.5.0, - |
 | **인증** | JWT, OAuth2, Spring Security | - |
 
 ---
@@ -319,20 +325,11 @@ curl -I http://api.resello.co.kr
 | `/api/v1/products` | product-service | 8080 |
 | `/api/v1/market` | market-service | 8080 |
 | `/api/v1/chat` | chat-service | 8080 |
+| `/api/v1/chat-ws` | chat-service | 8080 |
 | `/api/v1/cash` | cash-service | 8080 |
 | `/api/v1/notifications` | notification-service | 8080 |
 | `/api/v1/price-alerts` | notification-service | 8080 |
+| `/api/v1/settlements` | settlement-service | 8080 |
 | `/api/v1/admin/settlements` | settlement-service | 8080 |
 
 **www.resello.co.kr (프론트엔드)**
-
-| 경로 | 서비스 | 포트 |
-|------|--------|------|
-| `/` | frontend-service | 3000 |
-
-### 프론트엔드 (www.resello.co.kr)
-
-**Vercel 등 외부 서비스 사용 시:**
-1. DNS에서 `www` A 레코드를 Vercel IP로 변경
-2. 이 서버의 Ingress 설정은 무시됨 (DNS가 다른 곳을 가리키므로)
-3. Vercel이 자동으로 SSL 처리
