@@ -2,10 +2,4 @@ spring:
   application:
     name: market
   profiles:
-    active: local
-server:
-  port: 8083
-
-feign:
-  cash:
-    url: http://localhost:8081
+    active: test

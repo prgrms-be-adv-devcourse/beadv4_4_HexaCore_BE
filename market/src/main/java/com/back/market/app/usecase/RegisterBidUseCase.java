@@ -16,6 +16,7 @@ import com.back.common.dto.cash.enums.RelType;
 import com.back.market.dto.request.BiddingRequestDto;
 import com.back.common.dto.cash.request.PayAndHoldRequestDto;
 import com.back.common.dto.cash.response.PayAndHoldResponseDto;
+import com.back.market.dto.response.MarketPaymentResponseDto;
 import com.back.market.mapper.BiddingMapper;
 import com.back.market.mapper.CashRequestMapper;
 import lombok.RequiredArgsConstructor;
@@ -46,7 +47,7 @@ public class RegisterBidUseCase {
      * @return 저장된 구매 입찰의 PK
      */
     @Transactional
-    public PayAndHoldResponseDto registerBuyBid(Long userId, BiddingRequestDto requestDto) {
+    public MarketPaymentResponseDto registerBuyBid(Long userId, BiddingRequestDto requestDto) {
         // 가격 유효성 검사(1000원단위인지 아닌지)
         validatePriceUnit(requestDto.price());
 
@@ -79,7 +80,12 @@ public class RegisterBidUseCase {
             log.info("[RegisterBid] PG 결제 필요, HOLD 상태 유지- relId: {}", responseData.relId());
         }
 
-        return responseData;
+        return MarketPaymentResponseDto.from(
+                responseData, // cash에서 보낸 정보
+                product.getName(),
+                user.getNickname(),
+                user.getEmail()
+        );
     }
 
     /**
@@ -89,7 +95,7 @@ public class RegisterBidUseCase {
      * @return 저장된 판매 입찰의 PK
      */
     @Transactional
-    public PayAndHoldResponseDto registerSellBid(Long userId, BiddingRequestDto requestDto) {
+    public MarketPaymentResponseDto registerSellBid(Long userId, BiddingRequestDto requestDto) {
         // 가격 유효성 검사(1000원단위인지 아닌지)
         validatePriceUnit(requestDto.price());
 
@@ -107,13 +113,22 @@ public class RegisterBidUseCase {
         Bidding bidding = biddingMapper.toEntity(requestDto, user, product, BiddingPosition.SELL);
         bidding.changeStatus(BiddingStatus.PROCESS); // 판매 입찰은 결제 과정이 없으므로 즉시 활성화
         Bidding savedBidding = biddingRepository.save(bidding);
-        return PayAndHoldResponseDto.of(
-                PayAndHoldStatus.PAID, // 판매 입찰은 결제가 필요없으므로 완료 상태로 생성
+
+        // 가짜 Cash 응답 생성 (판매는 결제 완료 상태)
+        PayAndHoldResponseDto cashResponse = PayAndHoldResponseDto.of(
+                PayAndHoldStatus.PAID,
                 RelType.BIDDING,
                 savedBidding.getId(),
-                BigDecimal.ZERO, // 사용된 예치금 없음
-                BigDecimal.ZERO, // 필요한 PG 금액 없음
+                BigDecimal.ZERO,
+                BigDecimal.ZERO,
                 null
+        );
+
+        return MarketPaymentResponseDto.from(
+                cashResponse,
+                product.getName(),
+                user.getNickname(),
+                user.getEmail()
         );
     }
 
