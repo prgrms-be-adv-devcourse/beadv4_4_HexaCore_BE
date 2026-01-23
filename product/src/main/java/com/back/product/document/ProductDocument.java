@@ -30,13 +30,13 @@ public class ProductDocument extends BaseDocument<String> {
     @Field(type = FieldType.Long)
     private Long brandId;
 
-    @Field(type =  FieldType.Keyword)
+    @Field(type =  FieldType.Text)
     private String brandName;
 
     @Field(type = FieldType.Long)
     private Long categoryId;
 
-    @Field(type = FieldType.Keyword)
+    @Field(type = FieldType.Text)
     private String categoryName;
 
     @Field(type = FieldType.Double)
@@ -45,7 +45,7 @@ public class ProductDocument extends BaseDocument<String> {
     @Field(type = FieldType.Long)
     private Long totalInventory;
 
-    @Field(type = FieldType.Keyword)
+    @Field(type = FieldType.Text)
     private List<String> totalOptions;
 
     @Field(type = FieldType.Date, format = DateFormat.date_hour_minute_second_millis)

@@ -46,10 +46,10 @@ public class ProductDocumentUseCase {
         // 검색어 (전문 검색)
         if (StringUtils.hasText(keyword)) {
             criteria = criteria.and(
-                    new Criteria("productName").contains(keyword)
-                            .or("totalOptions").contains(keyword)
-                            .or("brandName").contains(keyword)
-                            .or("categoryName").contains(keyword)
+                    new Criteria("productName").matches(keyword)
+                            .or("totalOptions").matches(keyword)
+                            .or("brandName").matches(keyword)
+                            .or("categoryName").matches(keyword)
             );
         }
 
