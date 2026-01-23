@@ -322,6 +322,8 @@ curl -I http://api.resello.co.kr
 | 경로 | 서비스 | 포트 |
 |------|--------|------|
 | `/api/v1/users` | user-service | 8080 |
+| `/oauth2/authorization` | user-service | 8080 |
+| `/login/oauth2/code` | user-service | 8080 |
 | `/api/v1/products` | product-service | 8080 |
 | `/api/v1/market` | market-service | 8080 |
 | `/api/v1/chat` | chat-service | 8080 |
