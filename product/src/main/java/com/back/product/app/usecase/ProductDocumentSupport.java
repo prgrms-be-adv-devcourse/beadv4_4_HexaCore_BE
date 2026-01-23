@@ -1,6 +1,5 @@
 package com.back.product.app.usecase;
 
-import com.back.product.adapter.out.ProductDocumentRepository;
 import com.back.product.document.ProductDocument;
 import com.back.product.dto.enums.ProductSortType;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +18,6 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class ProductDocumentSupport {
-    private final ProductDocumentRepository productDocumentRepository;
     private final ElasticsearchOperations elasticsearchOperations;
 
     @Transactional(readOnly = true)
