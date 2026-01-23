@@ -20,14 +20,14 @@ public class BaseDocument<ID> implements Persistable<ID> {
 
     @Field(
             type = FieldType.Date,
-            format = DateFormat.date_time
+            format = DateFormat.date_hour_minute_second_millis
     )
     @CreatedDate
     private LocalDateTime createdAt;
 
     @Field(
             type = FieldType.Date,
-            format =  DateFormat.date_time
+            format =  DateFormat.date_hour_minute_second_millis
     )
     @LastModifiedDate
     private LocalDateTime modifiedAt;
