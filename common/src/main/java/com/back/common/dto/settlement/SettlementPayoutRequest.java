@@ -1,4 +1,4 @@
-package com.back.settlement.app.event;
+package com.back.common.dto.settlement;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
