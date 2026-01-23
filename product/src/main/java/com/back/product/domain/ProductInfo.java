@@ -19,7 +19,7 @@ import java.time.LocalDateTime;
 @SQLRestriction("deleted_at IS NULL")
 @Table(name = "product_info",
     uniqueConstraints = {
-        @UniqueConstraint(name = "uk_product_info_brand_code", columnNames = {"brand_id", "code"})
+        @UniqueConstraint(name = "uk_product_info_brand_code", columnNames = {"brand_id", "productCode"})
     }
 )
 public class ProductInfo extends BaseTimeEntity {
