@@ -72,14 +72,15 @@ public class ReissueTokenUseCase {
         }
     }
 
+    // todo: 환경변수 분리 및 util 클래스로 빼기
     private Cookie createCookie(String key, String value, Duration ttl) {
 
         Cookie cookie = new Cookie(key, value);
         cookie.setMaxAge((int) ttl.getSeconds());
-        cookie.setAttribute("SameSite", "Lax");
+        cookie.setSecure(true); // 운영 환경 설정
         cookie.setPath("/");
         cookie.setHttpOnly(true);
-
+        cookie.setAttribute("SameSite", "Lax");
         return cookie;
     }
 
