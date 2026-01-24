@@ -17,7 +17,7 @@ public class ReissueSecurityConfig {
     public SecurityFilterChain reissueChain(HttpSecurity http) throws Exception {
 
         // reissue만 이 체인이 담당
-        http.securityMatcher("/api/v1/reissue");
+        http.securityMatcher("/api/v1/users/reissue");
 
         http.csrf(csrf -> csrf.disable());
         http.formLogin(form -> form.disable());
@@ -27,7 +27,7 @@ public class ReissueSecurityConfig {
         http.requestCache(cache -> cache.disable());
 
         http.authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/v1/reissue").permitAll()
+                .requestMatchers("/api/v1/users/reissue").permitAll()
                 .anyRequest().denyAll()
         );
 
