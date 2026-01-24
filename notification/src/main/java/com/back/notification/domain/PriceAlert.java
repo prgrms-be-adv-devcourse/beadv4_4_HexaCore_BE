@@ -27,9 +27,8 @@ public class PriceAlert extends BaseTimeEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private NotificationUser user;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "product_id", nullable = false)
-    private NotificationProduct product;
+    @Column(name = "product_id", nullable = false)
+    private Long productId;
 
     private BigDecimal targetPrice;
 
