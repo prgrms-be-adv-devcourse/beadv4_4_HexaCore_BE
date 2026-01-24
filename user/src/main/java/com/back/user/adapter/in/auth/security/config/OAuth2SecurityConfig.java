@@ -12,6 +12,8 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 
+import static org.springframework.security.config.Customizer.withDefaults;
+
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
@@ -24,7 +26,7 @@ public class OAuth2SecurityConfig {
     @Order(1)
     public SecurityFilterChain oauth2Chain(HttpSecurity http) throws Exception {
         http.securityMatcher("/oauth2/**", "/login/**");
-
+        http.cors(withDefaults());
         http.csrf(csrf -> csrf.disable());
         http.formLogin(form -> form.disable());
         http.httpBasic(basic -> basic.disable());
