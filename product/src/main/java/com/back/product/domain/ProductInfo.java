@@ -19,7 +19,7 @@ import java.time.LocalDateTime;
 @SQLRestriction("deleted_at IS NULL")
 @Table(name = "product_info",
     uniqueConstraints = {
-        @UniqueConstraint(name = "uk_product_info_brand_code", columnNames = {"brand_id", "productCode"})
+        @UniqueConstraint(name = "uk_product_info_brand_code", columnNames = {"brand_id", "product_code"})
     }
 )
 public class ProductInfo extends BaseTimeEntity {
@@ -38,7 +38,7 @@ public class ProductInfo extends BaseTimeEntity {
     @Column(nullable = false, length = 50)
     private String name;
 
-    @Column(nullable = false, length = 50)
+    @Column(name = "product_code", nullable = false, length = 50)
     private String productCode;
 
     @Column(nullable = false, precision = 10, scale = 0) // 10자리 정수
