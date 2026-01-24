@@ -12,7 +12,7 @@ import java.util.List;
 
 public interface ProductImageRepository extends JpaRepository<ProductImage, Long> {
     @Modifying
-    @Query("update ProductImage pi set pi.deletedAt = now() where pi.product in :products")
+    @Query("update ProductImage pi set pi.deletedAt = CURRENT_TIMESTAMP where pi.product in :products")
     void deleteAllByProductIn(@Param("products") List<Product> existsProducts);
 
     List<ProductImage> findALlByProductIn(List<Product> products);
