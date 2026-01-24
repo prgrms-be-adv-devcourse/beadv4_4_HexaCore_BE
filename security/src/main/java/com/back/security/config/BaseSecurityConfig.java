@@ -64,8 +64,11 @@ public class BaseSecurityConfig {
         return (HttpServletRequest request) -> {
             CorsConfiguration configuration = new CorsConfiguration();
             configuration.setAllowedOriginPatterns(List.of(
+                    // todo: 추후 환경변수로 분리
                     "http://localhost:*",
-                    "http://127.0.0.1:*"
+                    "http://127.0.0.1:*",
+                    "https://resello.co.kr",
+                    "https://www.resello.co.kr"
             ));
             configuration.setAllowedMethods(Collections.singletonList("*"));
             configuration.setAllowCredentials(true);
