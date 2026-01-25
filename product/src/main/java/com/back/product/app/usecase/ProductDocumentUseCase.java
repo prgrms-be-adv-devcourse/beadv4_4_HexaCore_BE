@@ -49,14 +49,23 @@ public class ProductDocumentUseCase {
     private Query buildSearchQuery(String keyword, List<Long> brands, List<Long> categories, BigDecimal minPrice, BigDecimal maxPrice, Boolean excludeSoldOut) {
         Criteria criteria = new Criteria();
 
-        // 검색어 (전문 검색)
         if (StringUtils.hasText(keyword)) {
-            criteria = criteria.and(
-                    new Criteria("productName").contains(keyword)
-                            .or("totalOptions").contains(keyword)
-                            .or("brandName").contains(keyword)
-                            .or("categoryName").contains(keyword)
-            );
+            Criteria keywordCriteria = new Criteria();
+            keywordCriteria = keywordCriteria
+                    .or("productName").matches(keyword)
+                    .or("productName.nori").matches(keyword)
+                    .or("productName.ngram").matches(keyword)
+
+                    .or("brandName").matches(keyword)
+                    .or("brandName.nori").matches(keyword)
+                    .or("brandName.ngram").matches(keyword)
+
+                    .or("categoryName").matches(keyword)
+                    .or("categoryName.nori").matches(keyword)
+
+                    .or("totalOptions").matches(keyword);
+
+            criteria = criteria.subCriteria(keywordCriteria);
         }
 
         // 필터링 조건 (다중 선택 가능)
