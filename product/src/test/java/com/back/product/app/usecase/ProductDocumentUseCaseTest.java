@@ -14,6 +14,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.elasticsearch.core.query.Query;
 
 import java.math.BigDecimal;
@@ -59,11 +61,12 @@ class ProductDocumentUseCaseTest {
 
             ProductDocument document = ProductDocument.builder().productName("Test Product").build();
             List<ProductDocument> documents = List.of(document);
-            
+            PageImpl<ProductDocument> productPage = new PageImpl<>(documents, PageRequest.of((int) page, (int) size), documents.size());
+
             ProductSearchResponseDto dto = ProductSearchResponseDto.builder().productName("Test Product").build();
 
             given(productDocumentSupport.findProductPage(any(Query.class), any(ProductSortType.class), any(Long.class), any(Long.class)))
-                    .willReturn(documents);
+                    .willReturn(productPage);
             given(productDocumentMapper.toDto(document)).willReturn(dto);
 
             // when
@@ -72,13 +75,16 @@ class ProductDocumentUseCaseTest {
             // then
             ArgumentCaptor<Query> queryCaptor = ArgumentCaptor.forClass(Query.class);
             verify(productDocumentSupport).findProductPage(queryCaptor.capture(), any(ProductSortType.class), any(Long.class), any(Long.class));
-            
+
             verify(productDocumentMapper).toDto(document);
             assertThat(result).isNotNull();
             assertThat(result.products()).hasSize(1);
             assertThat(result.products().getFirst().productName()).isEqualTo("Test Product");
+            assertThat(result.totalElements()).isEqualTo(1);
+            assertThat(result.totalPages()).isEqualTo(1);
+            assertThat(result.currentPage()).isEqualTo(0);
         }
-        
+
         @Test
         @DisplayName("성공: 조건이 없는 경우에도 정상적으로 동작한다")
         void findProductPage_Success_NoConditions() {
@@ -91,10 +97,12 @@ class ProductDocumentUseCaseTest {
 
             ProductDocument document = ProductDocument.builder().productName("Another Product").build();
             List<ProductDocument> documents = List.of(document);
+            PageImpl<ProductDocument> productPage = new PageImpl<>(documents, PageRequest.of((int) page, (int) size), documents.size());
+
             ProductSearchResponseDto dto = ProductSearchResponseDto.builder().productName("Another Product").build();
-            
+
             given(productDocumentSupport.findProductPage(any(Query.class), any(ProductSortType.class), any(Long.class), any(Long.class)))
-                    .willReturn(documents);
+                    .willReturn(productPage);
             given(productDocumentMapper.toDto(document)).willReturn(dto);
 
             // when
@@ -103,11 +111,14 @@ class ProductDocumentUseCaseTest {
             // then
             ArgumentCaptor<Query> queryCaptor = ArgumentCaptor.forClass(Query.class);
             verify(productDocumentSupport).findProductPage(queryCaptor.capture(), any(ProductSortType.class), any(Long.class), any(Long.class));
-            
+
             // Verify result
             assertThat(result).isNotNull();
             assertThat(result.products()).hasSize(1);
             assertThat(result.products().getFirst().productName()).isEqualTo("Another Product");
+            assertThat(result.totalElements()).isEqualTo(1);
+            assertThat(result.totalPages()).isEqualTo(1);
+            assertThat(result.currentPage()).isEqualTo(0);
         }
     }
 }
