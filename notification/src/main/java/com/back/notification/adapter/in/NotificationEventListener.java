@@ -6,7 +6,9 @@ import com.back.common.market.event.SellBiddingCreatedEvent;
 import com.back.common.market.event.PurchaseCanceledEvent;
 import com.back.common.market.event.BiddingCompletedEvent;
 import com.back.common.product.event.InspectionCompletedEvent;
+import com.back.common.user.event.fcmTokenChangedEvent;
 import com.back.notification.app.NotificationFacade;
+import com.back.notification.app.NotificationUserUsecase;
 import com.back.notification.domain.enums.Type;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -16,6 +18,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class NotificationEventListener {
     private final NotificationFacade notificationFacade;
+    private final NotificationUserUsecase notificationUserUsecase;
 
     @KafkaListener(topics = "BiddingCompletedEvent", groupId = "PostEventListener__handle__1")
     public void handle(BiddingCompletedEvent event) {
@@ -47,5 +50,10 @@ public class NotificationEventListener {
     @KafkaListener(topics = "SellBiddingCreatedEvent", groupId = "PostEventListener__handle__5")
     public void handle(SellBiddingCreatedEvent event) {
         notificationFacade.notify(Type.PRICE_DROPPED, event);
+    }
+
+    @KafkaListener(topics = "fcmTokenChangedEvent", groupId = "PostEventListener__handle__6")
+    public void handle(fcmTokenChangedEvent event) {
+        notificationUserUsecase.updateFcmToken(event.userId(), event.fcmToken());
     }
 }
