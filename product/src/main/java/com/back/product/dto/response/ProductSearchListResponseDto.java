@@ -6,6 +6,9 @@ import java.util.List;
 
 @Builder
 public record ProductSearchListResponseDto(
-        List<ProductSearchResponseDto> products
+        List<ProductSearchResponseDto> products,
+        Long totalPages,
+        Long totalElements,
+        Long currentPage
 ) {
 }

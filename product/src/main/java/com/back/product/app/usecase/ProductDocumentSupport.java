@@ -3,17 +3,17 @@ package com.back.product.app.usecase;
 import com.back.product.document.ProductDocument;
 import com.back.product.dto.enums.ProductSortType;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
-import org.springframework.data.elasticsearch.core.SearchHit;
-import org.springframework.data.elasticsearch.core.SearchHits;
+import org.springframework.data.elasticsearch.core.*;
 import org.springframework.data.elasticsearch.core.query.Query;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -21,14 +21,17 @@ public class ProductDocumentSupport {
     private final ElasticsearchOperations elasticsearchOperations;
 
     @Transactional(readOnly = true)
-    public List<ProductDocument> findProductPage(Query searchQuery, ProductSortType sort, Long page, Long size) {
+    public PageImpl<ProductDocument> findProductPage(Query searchQuery, ProductSortType sort, Long page, Long size) {
         Pageable pageable = buildPageable(sort, page, size);
 
         searchQuery.setPageable(pageable);
 
         SearchHits<ProductDocument> searchHits = elasticsearchOperations.search(searchQuery, ProductDocument.class);
 
-        return searchHits.stream().map(SearchHit::getContent).toList();
+        List<ProductDocument> content = searchHits.getSearchHits() .stream()
+                .map(SearchHit::getContent) .toList();
+
+        return new PageImpl<>(content, pageable, searchHits.getTotalHits());
     }
 
     private Pageable buildPageable(ProductSortType sortType, Long page, Long size) {

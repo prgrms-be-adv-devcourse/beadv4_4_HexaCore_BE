@@ -8,6 +8,7 @@ import com.back.product.mapper.ProductDocumentMapper;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.elasticsearch.core.query.Criteria;
 import org.springframework.data.elasticsearch.core.query.CriteriaQuery;
 import org.springframework.data.elasticsearch.core.query.Query;
@@ -35,9 +36,14 @@ public class ProductDocumentUseCase {
                 request.excludeSoldOut()
         );
 
-        List<ProductDocument> productPage = productDocumentSupport.findProductPage(query, request.sort(), page, size);
+        PageImpl<ProductDocument> productPage = productDocumentSupport.findProductPage(query, request.sort(), page, size);
 
-        return convertToDto(productPage);
+        return convertToDto(
+                productPage.getContent(),
+                (long) productPage.getTotalPages(),
+                productPage.getTotalElements(),
+                (long) page.intValue()
+        );
     }
 
     private Query buildSearchQuery(String keyword, List<Long> brands, List<Long> categories, BigDecimal minPrice, BigDecimal maxPrice, Boolean excludeSoldOut) {
@@ -77,11 +83,14 @@ public class ProductDocumentUseCase {
         return new CriteriaQuery(criteria);
     }
 
-    private ProductSearchListResponseDto convertToDto(List<ProductDocument> productList) {
+    private ProductSearchListResponseDto convertToDto(List<ProductDocument> productList, Long totalPages, Long totalElements, Long currentPage) {
         List<ProductSearchResponseDto> products = productList.stream().map(productDocumentMapper::toDto).toList();
 
         return ProductSearchListResponseDto.builder()
                 .products(products)
+                .totalElements(totalElements)
+                .totalPages(totalPages)
+                .currentPage(currentPage)
                 .build();
     }
 }
