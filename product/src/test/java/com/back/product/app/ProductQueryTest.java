@@ -230,7 +230,7 @@ class ProductQueryTest extends BaseIntegrationTest {
                     .categoryName(savedCategory.getName())
                     .releasePrice(BigDecimal.valueOf(20000))
                     .totalInventory(20L)
-                    .releasedDate(LocalDateTime.now())
+                    .releasedDate(LocalDateTime.now().minusDays(1))
                     .build();
 
             productDocumentRepository.saveAll(List.of(doc1, doc2));
