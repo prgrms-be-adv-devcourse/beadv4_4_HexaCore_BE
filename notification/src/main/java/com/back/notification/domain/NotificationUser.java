@@ -30,4 +30,8 @@ public class NotificationUser extends BaseTimeEntity {
     private String email;
 
     private String fcmToken;
+
+    public void updateFcmToken(String fcmToken) {
+        this.fcmToken = fcmToken;
+    }
 }
