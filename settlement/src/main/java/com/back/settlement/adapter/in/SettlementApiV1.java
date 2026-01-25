@@ -1,23 +1,30 @@
 package com.back.settlement.adapter.in;
 
 import com.back.common.response.CommonResponse;
+import com.back.security.principal.AuthPrincipal;
+import com.back.settlement.app.dto.request.SettlementItemSearchRequest;
+import com.back.settlement.app.dto.request.SettlementSearchRequest;
 import com.back.settlement.app.dto.response.SettlementItemResponse;
 import com.back.settlement.app.dto.response.SettlementResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 
-@Tag(name = "Settlement", description = "정산 관련 API")
+@Tag(name = "Settlement", description = "정산 관련 API (판매자)")
 public interface SettlementApiV1 {
 
     @Operation(
             summary = "판매자 정산 내역 조회",
-            description = "로그인한 판매자의 정산 내역을 조회합니다.",
+            description = "로그인한 판매자의 정산 내역을 조회합니다. 날짜 범위로 필터링할 수 있습니다.",
             responses = {
                     @ApiResponse(
                             responseCode = "200",
@@ -31,32 +38,25 @@ public interface SettlementApiV1 {
                                                 {
                                                   "status": 200,
                                                   "message": "OK",
-                                                  "data": [
-                                                    {
-                                                      "settlementItemId": 1,
-                                                      "sellerId": 1001,
-                                                      "status": "COMPLETED",
-                                                      "expectedAt": "2024-03-15T00:00:00",
-                                                      "startAt": "2024-02-01T00:00:00",
-                                                      "endAt": "2024-02-29T23:59:59",
-                                                      "completedAt": "2024-03-15T11:00:00",
-                                                      "totalSalesAmount": 2300000,
-                                                      "totalFeeAmount": 230000,
-                                                      "totalNetAmount": 2070000
-                                                    },
-                                                    {
-                                                      "settlementItemId": 2,
-                                                      "sellerId": 1,
-                                                      "status": "COMPLETED",
-                                                      "expectedAt": "2024-03-15T00:00:00",
-                                                      "startAt": "2024-02-01T00:00:00",
-                                                      "endAt": "2024-02-29T23:59:59",
-                                                      "completedAt": "2024-03-15T11:00:00",
-                                                      "totalSalesAmount": 2300000,
-                                                      "totalFeeAmount": 230000,
-                                                      "totalNetAmount": 2070000
-                                                    }
-                                                  ]
+                                                  "data": {
+                                                    "content": [
+                                                      {
+                                                        "settlementId": 1,
+                                                        "sellerId": 1001,
+                                                        "sellerName": "판매자1",
+                                                        "status": "COMPLETED",
+                                                        "expectedAt": "2024-03-15T00:00:00",
+                                                        "startAt": "2024-02-01T00:00:00",
+                                                        "endAt": "2024-02-29T23:59:59",
+                                                        "completedAt": "2024-03-15T11:00:00",
+                                                        "totalSalesAmount": 2300000,
+                                                        "totalFeeAmount": 230000,
+                                                        "totalNetAmount": 2070000
+                                                      }
+                                                    ],
+                                                    "totalElements": 1,
+                                                    "totalPages": 1
+                                                  }
                                                 }
                                                 """
                                     )
@@ -66,20 +66,24 @@ public interface SettlementApiV1 {
                     @ApiResponse(responseCode = "500", description = "서버 내부 오류", content = @Content)
             }
     )
-    CommonResponse<List<SettlementResponse>> getSettlements();
+    CommonResponse<Page<SettlementResponse>> getSettlementsByDateRange(
+            @AuthenticationPrincipal AuthPrincipal authPrincipal,
+            @ModelAttribute SettlementSearchRequest request,
+            @Parameter(hidden = true) Pageable pageable
+    );
 
     @Operation(
-            summary = "판매자 정산 상품 조회",
-            description = "로그인한 판매자의 정산 상품을 조회합니다.",
+            summary = "판매자 정산 항목 상세 조회",
+            description = "로그인한 판매자의 특정 정산 항목을 조회합니다.",
             responses = {
                     @ApiResponse(
                             responseCode = "200",
-                            description = "정산 상품 조회 성공",
+                            description = "정산 항목 조회 성공",
                             content = @Content(
                                     mediaType = "application/json",
                                     schema = @Schema(implementation = SettlementItemResponse.class),
                                     examples = @ExampleObject(
-                                            name = "정산 내역 조회 성공 예시",
+                                            name = "정산 항목 조회 성공 예시",
                                             value = """
                                                 {
                                                   "status": 200,
@@ -88,13 +92,13 @@ public interface SettlementApiV1 {
                                                     "settlementItemId": 3,
                                                     "orderId": 1003,
                                                     "productId": 103,
-                                                    "buyerId": 203,
-                                                    "sellerId": 1,
-                                                    "status": "REFUNDED",
-                                                    "salesAmount": 30000,
-                                                    "feeAmount": 3000,
-                                                    "netAmount": 27000,
-                                                    "transactionAt": "2024-01-12T16:45:00"
+                                                    "payerId": 203,
+                                                    "payeeId": 1,
+                                                    "sellerName": "판매자1",
+                                                    "eventType": "SETTLEMENT_PRODUCT_SALES_AMOUNT",
+                                                    "status": "INCLUDED",
+                                                    "amount": 30000,
+                                                    "confirmedAt": "2024-01-12T16:45:00"
                                                   }
                                                 }
                                                 """
@@ -108,6 +112,56 @@ public interface SettlementApiV1 {
             }
     )
     CommonResponse<SettlementItemResponse> getSettlementItem(
-            @PathVariable("settlementItemId") Long settlementItemId
+            @Parameter(hidden = true) @AuthenticationPrincipal AuthPrincipal principal,
+            @Parameter(description = "정산 항목 ID", required = true, example = "1") @PathVariable("settlementItemId") Long settlementItemId
+    );
+
+    @Operation(
+            summary = "판매자 정산 항목 목록 조회",
+            description = "로그인한 판매자의 정산 항목 목록을 조회합니다. 주문번호, 상품번호, 상태, 날짜 범위로 필터링할 수 있습니다.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "정산 항목 목록 조회 성공",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = SettlementItemResponse.class),
+                                    examples = @ExampleObject(
+                                            name = "정산 항목 목록 조회 성공 예시",
+                                            value = """
+                                                {
+                                                  "status": 200,
+                                                  "message": "OK",
+                                                  "data": {
+                                                    "content": [
+                                                      {
+                                                        "settlementItemId": 3,
+                                                        "orderId": 1003,
+                                                        "productId": 103,
+                                                        "payerId": 203,
+                                                        "payeeId": 1,
+                                                        "sellerName": "판매자1",
+                                                        "eventType": "SETTLEMENT_PRODUCT_SALES_AMOUNT",
+                                                        "status": "INCLUDED",
+                                                        "amount": 30000,
+                                                        "confirmedAt": "2024-01-12T16:45:00"
+                                                      }
+                                                    ],
+                                                    "totalElements": 1,
+                                                    "totalPages": 1
+                                                  }
+                                                }
+                                                """
+                                    )
+                            )
+                    ),
+                    @ApiResponse(responseCode = "401", description = "인증 실패", content = @Content),
+                    @ApiResponse(responseCode = "500", description = "서버 내부 오류", content = @Content)
+            }
+    )
+    CommonResponse<Page<SettlementItemResponse>> getSettlementItems(
+            @Parameter(hidden = true) @AuthenticationPrincipal AuthPrincipal principal,
+            @ModelAttribute SettlementItemSearchRequest request,
+            @Parameter(hidden = true) Pageable pageable
     );
 }

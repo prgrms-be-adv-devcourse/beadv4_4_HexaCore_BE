@@ -1,5 +1,7 @@
 package com.back.common.product.event;
 
+import com.back.common.event.EventName;
+
 import java.time.LocalDateTime;
 
 public record InspectionCompletedEvent(
@@ -12,5 +14,5 @@ public record InspectionCompletedEvent(
         String productSize,
         String productName,
         String productNumber
-) {
+) implements EventName {
 }

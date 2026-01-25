@@ -3,9 +3,5 @@ spring:
     name: market
   profiles:
     active: local
-server:
-  port: 8083
-
-feign:
-  cash:
-    url: http://localhost:8081
+  jackson:
+    time-zone: Asia/Seoul

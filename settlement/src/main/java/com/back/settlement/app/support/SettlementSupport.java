@@ -6,10 +6,12 @@ import com.back.settlement.adapter.out.SettlementItemRepository;
 import com.back.settlement.adapter.out.SettlementRepository;
 import com.back.settlement.domain.Settlement;
 import com.back.settlement.domain.SettlementItem;
+import com.back.settlement.domain.SettlementItemStatus;
 import com.back.settlement.domain.SettlementStatus;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,5 +49,42 @@ public class SettlementSupport {
 
     public List<Settlement> findPendingSettlements(Pageable pageable) {
         return settlementRepository.findByStatus(SettlementStatus.PENDING, pageable);
+    }
+
+    public Settlement findById(Long settlementId) {
+        return settlementRepository.findById(settlementId)
+                .orElseThrow(() -> new EntityNotFoundException(FailureCode.SETTLEMENT_NOT_FOUND));
+    }
+
+    public org.springframework.data.domain.Page<Settlement> findByFilters(
+            SettlementStatus status,
+            Long sellerId,
+            LocalDateTime startDate,
+            LocalDateTime endDate,
+            Pageable pageable
+    ) {
+        return settlementRepository.findByFilters(status, sellerId, startDate, endDate, pageable);
+    }
+
+    public long count() {
+        return settlementRepository.count();
+    }
+
+    public long countByStatus(SettlementStatus status) {
+        return settlementRepository.countByStatus(status);
+    }
+
+    public Page<SettlementItem> findItemsByPayeeIdAndFilters(
+            Long payeeId,
+            Long orderId,
+            Long productId,
+            SettlementItemStatus status,
+            LocalDateTime startDate,
+            LocalDateTime endDate,
+            Pageable pageable
+    ) {
+        return settlementItemRepository.findByPayeeIdAndFilters(
+                payeeId, orderId, productId, status, startDate, endDate, pageable
+        );
     }
 }

@@ -6,8 +6,8 @@ import com.back.market.app.MarketFacade;
 import com.back.market.dto.request.BiddingRequestDto;
 import com.back.market.dto.response.InstantBuyPriceResponseDto;
 import com.back.market.dto.response.InstantSellPriceResponseDto;
-import com.back.common.dto.cash.response.PayAndHoldResponseDto;
 import com.back.common.dto.cash.response.PaymentCancelResponseDto;
+import com.back.market.dto.response.MarketPaymentResponseDto;
 import com.back.security.principal.AuthPrincipal;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -22,25 +22,25 @@ public class ApiV1MarketController implements ApiV1Market{
     private final MarketFacade marketFacade;
 
     @Override
-    public CommonResponse<PayAndHoldResponseDto> registerBuyBid(
+    public CommonResponse<MarketPaymentResponseDto> registerBuyBid(
             @AuthenticationPrincipal AuthPrincipal principal,
             @RequestBody @Valid BiddingRequestDto requestDto
     ) {
         Long userId = principal.getUserId();
 
-        PayAndHoldResponseDto response = marketFacade.registerBuyBid(userId, requestDto);
+        MarketPaymentResponseDto response = marketFacade.registerBuyBid(userId, requestDto);
 
         return CommonResponse.successWithData(HttpStatus.CREATED, response);
     }
 
     @Override
-    public CommonResponse<PayAndHoldResponseDto> registerSellBid(
+    public CommonResponse<MarketPaymentResponseDto> registerSellBid(
             @AuthenticationPrincipal AuthPrincipal principal,
             @RequestBody @Valid BiddingRequestDto requestDto
     ) {
         Long userId = principal.getUserId();
 
-        PayAndHoldResponseDto response = marketFacade.registerSellBid(userId, requestDto);
+        MarketPaymentResponseDto response = marketFacade.registerSellBid(userId, requestDto);
 
         return CommonResponse.successWithData(HttpStatus.CREATED, response);
     }
@@ -58,24 +58,24 @@ public class ApiV1MarketController implements ApiV1Market{
     }
 
     @Override
-    public CommonResponse<PayAndHoldResponseDto> buyNow(
+    public CommonResponse<MarketPaymentResponseDto> buyNow(
             @AuthenticationPrincipal AuthPrincipal principal,
             @RequestBody @Valid BiddingRequestDto requestDto) {
 
         Long userId = principal.getUserId();
 
-        PayAndHoldResponseDto response = marketFacade.purchaseNow(userId, requestDto);
+        MarketPaymentResponseDto response = marketFacade.purchaseNow(userId, requestDto);
         return CommonResponse.successWithData(HttpStatus.CREATED, response);
     }
 
     @Override
-    public CommonResponse<PayAndHoldResponseDto> sellNow(
+    public CommonResponse<MarketPaymentResponseDto> sellNow(
             @AuthenticationPrincipal AuthPrincipal principal,
             @RequestBody @Valid BiddingRequestDto requestDto) {
 
         Long userId = principal.getUserId();
 
-        PayAndHoldResponseDto response = marketFacade.sellNow(userId, requestDto);
+        MarketPaymentResponseDto response = marketFacade.sellNow(userId, requestDto);
         return CommonResponse.successWithData(HttpStatus.CREATED, response);
     }
 

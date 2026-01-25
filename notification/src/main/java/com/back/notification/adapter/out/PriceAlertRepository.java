@@ -14,7 +14,7 @@ public interface PriceAlertRepository extends JpaRepository<PriceAlert, Long> {
     @Query("""
     SELECT pa
     FROM PriceAlert pa
-    WHERE pa.product.id = :productId
+    WHERE pa.productId = :productId
       AND pa.targetPrice >= :currentPrice
       AND (
             pa.triggeredAt IS NULL

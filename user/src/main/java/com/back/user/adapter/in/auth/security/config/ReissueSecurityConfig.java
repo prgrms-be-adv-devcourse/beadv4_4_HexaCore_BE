@@ -8,6 +8,8 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 
+import static org.springframework.security.config.Customizer.withDefaults;
+
 @Configuration
 @RequiredArgsConstructor
 public class ReissueSecurityConfig {
@@ -17,8 +19,8 @@ public class ReissueSecurityConfig {
     public SecurityFilterChain reissueChain(HttpSecurity http) throws Exception {
 
         // reissue만 이 체인이 담당
-        http.securityMatcher("/api/v1/reissue");
-
+        http.securityMatcher("/api/v1/users/reissue");
+        http.cors(withDefaults());
         http.csrf(csrf -> csrf.disable());
         http.formLogin(form -> form.disable());
         http.httpBasic(basic -> basic.disable());
@@ -27,7 +29,7 @@ public class ReissueSecurityConfig {
         http.requestCache(cache -> cache.disable());
 
         http.authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/v1/reissue").permitAll()
+                .requestMatchers("/api/v1/users/reissue").permitAll()
                 .anyRequest().denyAll()
         );
 

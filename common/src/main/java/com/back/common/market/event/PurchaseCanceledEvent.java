@@ -1,5 +1,7 @@
 package com.back.common.market.event;
 
+import com.back.common.event.EventName;
+
 import java.math.BigDecimal;
 
 public record PurchaseCanceledEvent(
@@ -13,5 +15,5 @@ public record PurchaseCanceledEvent(
 
         BigDecimal price,
         String biddingPosition
-) {
+) implements EventName {
 }

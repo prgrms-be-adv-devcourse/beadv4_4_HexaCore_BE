@@ -7,7 +7,6 @@ import com.back.common.market.event.PurchaseCanceledEvent;
 import com.back.common.market.event.BiddingCompletedEvent;
 import com.back.common.product.event.InspectionCompletedEvent;
 import com.back.notification.domain.Notification;
-import com.back.notification.domain.NotificationProduct;
 import com.back.notification.domain.enums.NotificationTargetRole;
 import com.back.notification.domain.enums.Type;
 import com.back.notification.dto.NotificationCreatedEvent;
@@ -113,19 +112,17 @@ public class NotificationMapper {
                 .build();
     }
 
-    public Notification toPriceDroppedNotification(Type type, SellBiddingCreatedEvent event, Long userId,
-                                                   NotificationProduct product) {
+    public Notification toPriceDroppedNotification(Type type, SellBiddingCreatedEvent event, Long userId) {
         return Notification.builder()
                 .userId(userId)
                 .type(type)
                 .content(Map.of(
                         "targetPrice", event.currentPrice(),
-
                         "productId", event.productId(),
-                        "productName", product.getProductName(),
-                        "productSize", product.getProductOption(),
-                        "thumbnailImage", product.getThumbnailImage(),
-                        "brandName", product.getBrandName()
+                        "productName", event.productName(),
+                        "productSize", event.productOption(),
+                        "thumbnailImage", event.thumbnailImage(),
+                        "brandName", event.brandName()
                 ))
                 .deepLink("/products/" + event.productId())     // Todo : 실제 딥링크로 수정
                 .isRead(false)

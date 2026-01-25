@@ -7,8 +7,8 @@ import com.back.market.app.usecase.RegisterBidUseCase;
 import com.back.market.dto.request.BiddingRequestDto;
 import com.back.market.dto.response.InstantBuyPriceResponseDto;
 import com.back.market.dto.response.InstantSellPriceResponseDto;
-import com.back.common.dto.cash.response.PayAndHoldResponseDto;
 import com.back.common.dto.cash.response.PaymentCancelResponseDto;
+import com.back.market.dto.response.MarketPaymentResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,7 +28,7 @@ public class MarketFacade {
      * @return PayAndHoldResponseDto (결제/홀딩 상태 포함)
      */
     @Transactional
-    public PayAndHoldResponseDto registerBuyBid(Long userId, BiddingRequestDto requestDto) {
+    public MarketPaymentResponseDto registerBuyBid(Long userId, BiddingRequestDto requestDto) {
         return registerBidUseCase.registerBuyBid(userId, requestDto);
     }
 
@@ -39,7 +39,7 @@ public class MarketFacade {
      * @return PayAndHoldResponseDto (결제 불필요, PAID 상태)
      */
     @Transactional
-    public PayAndHoldResponseDto registerSellBid(Long userId, BiddingRequestDto requestDto) {
+    public MarketPaymentResponseDto registerSellBid(Long userId, BiddingRequestDto requestDto) {
         return registerBidUseCase.registerSellBid(userId, requestDto);
     }
 
@@ -69,7 +69,7 @@ public class MarketFacade {
      * @param requestDto BiddingRequestDto
      * @return 생성된 주문(Order)의 ID
      */
-    public PayAndHoldResponseDto purchaseNow(Long buyerId, BiddingRequestDto requestDto) {
+    public MarketPaymentResponseDto purchaseNow(Long buyerId, BiddingRequestDto requestDto) {
         return matchInstantTradeUseCase.buyNow(buyerId, requestDto);
     }
 
@@ -79,7 +79,7 @@ public class MarketFacade {
      * @param requestDto BiddingRequestDto
      * @return 생성된 주문(Order)의 ID
      */
-    public PayAndHoldResponseDto sellNow(Long sellerId, BiddingRequestDto requestDto) {
+    public MarketPaymentResponseDto sellNow(Long sellerId, BiddingRequestDto requestDto) {
         return matchInstantTradeUseCase.sellNow(sellerId, requestDto);
     }
 

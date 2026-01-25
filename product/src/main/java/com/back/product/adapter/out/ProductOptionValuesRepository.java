@@ -11,7 +11,7 @@ import java.util.List;
 
 public interface ProductOptionValuesRepository extends JpaRepository<ProductOptionValues, Long> {
     @Modifying
-    @Query("update ProductOptionValues pov set pov.deletedAt = now() where pov.product in :products")
+    @Query("update ProductOptionValues pov set pov.deletedAt = CURRENT_TIMESTAMP where pov.product in :products")
     void deleteAllByProductIn(@Param("products") List<Product> products);
 
     List<ProductOptionValues> findAllByProductIn(List<Product> products);

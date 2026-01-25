@@ -17,6 +17,7 @@ import com.back.common.dto.cash.enums.RelType;
 import com.back.market.dto.request.BiddingRequestDto;
 import com.back.common.dto.cash.request.PayAndHoldRequestDto;
 import com.back.common.dto.cash.response.PayAndHoldResponseDto;
+import com.back.market.dto.response.MarketPaymentResponseDto;
 import com.back.market.mapper.BiddingMapper;
 import com.back.market.mapper.CashRequestMapper;
 import com.back.market.mapper.OrderMapper;
@@ -47,7 +48,7 @@ public class MatchInstantTradeUseCase {
      * @throws BadRequestException 해당 상품의 판매 입찰(매물)이 존재하지 않을 경우 (BIDDING_NOT_FOUND)
      */
     @Transactional
-    public PayAndHoldResponseDto buyNow(Long buyerId, BiddingRequestDto requestDto) {
+    public MarketPaymentResponseDto buyNow(Long buyerId, BiddingRequestDto requestDto) {
         Bidding targetSellBid = biddingRepository.findFirstByMarketProductIdAndPositionAndStatusOrderByPriceAsc(requestDto.productId(), BiddingPosition.SELL, BiddingStatus.PROCESS).orElseThrow(() -> new BadRequestException(FailureCode.BIDDING_NOT_FOUND));
 
         // 정합성 검사 추가: 사용자가 화면에서 본 가격과 실제 조회된 가격이 다르면 예외 처리
@@ -64,7 +65,7 @@ public class MatchInstantTradeUseCase {
      * @throws BadRequestException 해당 상품의 판매 입찰(매물)이 존재하지 않을 경우 (BIDDING_NOT_FOUND)
      */
     @Transactional
-    public PayAndHoldResponseDto sellNow(Long sellerId, BiddingRequestDto requestDto) {
+    public MarketPaymentResponseDto sellNow(Long sellerId, BiddingRequestDto requestDto) {
         Bidding targetBuyBid = biddingRepository.findFirstByMarketProductIdAndPositionAndStatusOrderByPriceDesc(
                         requestDto.productId(), BiddingPosition.BUY, BiddingStatus.PROCESS)
                 .orElseThrow(() -> new BadRequestException(FailureCode.BIDDING_NOT_FOUND));
@@ -91,7 +92,7 @@ public class MatchInstantTradeUseCase {
      * 4. 배송지 정보를 포함한 최종 주문(Order) 생성
      * </p>
      */
-    private PayAndHoldResponseDto executeTrade(Long userId, BiddingRequestDto requestDto, Bidding targetBid, BiddingPosition myPosition) {
+    private MarketPaymentResponseDto executeTrade(Long userId, BiddingRequestDto requestDto, Bidding targetBid, BiddingPosition myPosition) {
         // 1. 자전거래 검증
         if(targetBid.getMarketUser().getId().equals(userId)){
             throw new BadRequestException(FailureCode.SELF_TRADING_NOT_ALLOWED);
@@ -118,8 +119,8 @@ public class MatchInstantTradeUseCase {
         Order savedOrder = orderRepository.save(order);
 
         // 5. 실제 결제 요청(FeignClient 사용)
-
         if(myPosition == BiddingPosition.BUY) {
+            // Cash 호출
             PayAndHoldRequestDto paymentReq = cashRequestMapper.toPayAndHoldRequestForOrder(savedOrder);
             PayAndHoldResponseDto resultData = marketSupport.getPayAndHoldResult(paymentReq);
 
@@ -133,18 +134,31 @@ public class MatchInstantTradeUseCase {
                 // (Order 생성 시 기본값이 HOLD이므로 별도 상태 변경 불필요)
                 log.info("[MatchInstantTrade] PG 결제 필요 (REQUIRES_PG) - OrderId: {}, TossId: {}", savedOrder.getId(), resultData.tossOrderId());
             }
-            return resultData;
+            return MarketPaymentResponseDto.from(
+                    resultData,
+                    targetBid.getMarketProduct().getName(), // 상품명
+                    me.getNickname(),                       // 구매자 이름
+                    me.getEmail()                           // 구매자 이메일
+            );
         } else {
             // 내가 판매자라면 홀딩할 필요가 없음(이미 구매자가 홀딩한 금액 존재)
             log.info("[MatchTrade] 즉시 판매 체결 (결제 불필요) - OrderId: {}", savedOrder.getId());
             savedOrder.changeStatus(OrderStatus.PAID);
-            return PayAndHoldResponseDto.of(
+
+            PayAndHoldResponseDto cashResponse = PayAndHoldResponseDto.of(
                     PayAndHoldStatus.PAID,
                     RelType.ORDER,
                     savedOrder.getId(),
-                    BigDecimal.ZERO, // 판매자가 내는 돈은 0원
+                    BigDecimal.ZERO,
                     BigDecimal.ZERO,
                     null
+            );
+
+            return MarketPaymentResponseDto.from(
+                    cashResponse,
+                    targetBid.getMarketProduct().getName(),
+                    me.getNickname(),
+                    me.getEmail()
             );
         }
     }
