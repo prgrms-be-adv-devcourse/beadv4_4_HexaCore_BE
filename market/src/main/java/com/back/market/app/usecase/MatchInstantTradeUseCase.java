@@ -1,7 +1,9 @@
 package com.back.market.app.usecase;
 
 import com.back.common.code.FailureCode;
+import com.back.common.event.KafkaEventPublisher;
 import com.back.common.exception.BadRequestException;
+import com.back.common.market.event.BiddingCompletedEvent;
 import com.back.market.adapter.out.BiddingRepository;
 import com.back.market.adapter.out.MarketUserRepository;
 import com.back.market.adapter.out.OrderRepository;
@@ -39,6 +41,7 @@ public class MatchInstantTradeUseCase {
     private final BiddingMapper biddingMapper;
     private final CashRequestMapper cashRequestMapper;
     private final MarketSupport marketSupport;
+    private final KafkaEventPublisher kafkaEventPublisher;
 
     /**
      * MARKET-009 즉시 구매 실행
@@ -129,6 +132,9 @@ public class MatchInstantTradeUseCase {
                 // 결제 완료 -> 주문 상태 변경
                 log.info("[MatchInstantTrade] 결제 완료 (PAID) - OrderId: {}", savedOrder.getId());
                 savedOrder.changeStatus(OrderStatus.PAID);
+                
+                // 즉시 구매 완료 이벤트 발행
+                publishBiddingCompletedEvent(myBid, targetBid, BiddingPosition.BUY);
             } else if (resultData.status() == PayAndHoldStatus.REQUIRES_PG) {
                 // PG 결제 필요 -> 주문은 대기 상태 유지 (HOLD)
                 // (Order 생성 시 기본값이 HOLD이므로 별도 상태 변경 불필요)
@@ -144,6 +150,9 @@ public class MatchInstantTradeUseCase {
             // 내가 판매자라면 홀딩할 필요가 없음(이미 구매자가 홀딩한 금액 존재)
             log.info("[MatchTrade] 즉시 판매 체결 (결제 불필요) - OrderId: {}", savedOrder.getId());
             savedOrder.changeStatus(OrderStatus.PAID);
+            
+            // 즉시 판매 완료 이벤트 발행
+            publishBiddingCompletedEvent(targetBid, myBid, BiddingPosition.SELL);
 
             PayAndHoldResponseDto cashResponse = PayAndHoldResponseDto.of(
                     PayAndHoldStatus.PAID,
@@ -161,6 +170,29 @@ public class MatchInstantTradeUseCase {
                     me.getEmail()
             );
         }
+    }
+
+    /**
+     * 입찰 체결 완료 이벤트 발행
+     * @param buyBid 구매 입찰
+     * @param sellBid 판매 입찰
+     * @param triggerPosition 어떤 포지션(구매/판매)에서 트리거되었는지
+     */
+    private void publishBiddingCompletedEvent(Bidding buyBid, Bidding sellBid, BiddingPosition triggerPosition) {
+        BiddingCompletedEvent event = new BiddingCompletedEvent(
+                triggerPosition == BiddingPosition.BUY ? buyBid.getId() : sellBid.getId(),
+                buyBid.getMarketUser().getId(),
+                sellBid.getMarketUser().getId(),
+                buyBid.getMarketProduct().getId(),
+                buyBid.getMarketProduct().getName(),
+                buyBid.getMarketProduct().getProductOption(),
+                buyBid.getMarketProduct().getThumbnailImage(),
+                buyBid.getMarketProduct().getBrandName(),
+                buyBid.getPrice(),
+                triggerPosition.name()
+        );
+        
+        kafkaEventPublisher.publish(event);
     }
 
 
