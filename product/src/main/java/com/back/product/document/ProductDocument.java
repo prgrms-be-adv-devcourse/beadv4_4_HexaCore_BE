@@ -2,10 +2,7 @@ package com.back.product.document;
 
 import com.back.product.global.document.BaseDocument;
 import lombok.*;
-import org.springframework.data.elasticsearch.annotations.DateFormat;
-import org.springframework.data.elasticsearch.annotations.Document;
-import org.springframework.data.elasticsearch.annotations.Field;
-import org.springframework.data.elasticsearch.annotations.FieldType;
+import org.springframework.data.elasticsearch.annotations.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -18,10 +15,18 @@ import java.util.List;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Document(indexName = "products")
 public class ProductDocument extends BaseDocument<String> {
+
     @Field(type = FieldType.Long)
     private Long productInfoId;
 
-    @Field(type = FieldType.Text, analyzer = "nori")
+    // 👇 [수정 핵심] MultiField 적용 (productName)
+    @MultiField(
+        mainField = @Field(type = FieldType.Text, analyzer = "standard"),
+        otherFields = {
+            @InnerField(suffix = "nori", type = FieldType.Text, analyzer = "my_nori_analyzer"),
+            @InnerField(suffix = "ngram", type = FieldType.Text, analyzer = "my_ngram_analyzer")
+        }
+    )
     private String productName;
 
     @Field(type = FieldType.Keyword)
@@ -30,13 +35,24 @@ public class ProductDocument extends BaseDocument<String> {
     @Field(type = FieldType.Long)
     private Long brandId;
 
-    @Field(type =  FieldType.Text)
+    @MultiField(
+        mainField = @Field(type = FieldType.Text, analyzer = "standard"),
+        otherFields = {
+            @InnerField(suffix = "nori", type = FieldType.Text, analyzer = "my_nori_analyzer"),
+            @InnerField(suffix = "ngram", type = FieldType.Text, analyzer = "my_ngram_analyzer")
+        }
+    )
     private String brandName;
 
     @Field(type = FieldType.Long)
     private Long categoryId;
 
-    @Field(type = FieldType.Text)
+    @MultiField(
+        mainField = @Field(type = FieldType.Text, analyzer = "standard"),
+        otherFields = {
+            @InnerField(suffix = "nori", type = FieldType.Text, analyzer = "my_nori_analyzer")
+        }
+    )
     private String categoryName;
 
     @Field(type = FieldType.Double)
@@ -45,7 +61,12 @@ public class ProductDocument extends BaseDocument<String> {
     @Field(type = FieldType.Long)
     private Long totalInventory;
 
-    @Field(type = FieldType.Text)
+    @MultiField(
+        mainField = @Field(type = FieldType.Text, analyzer = "standard"),
+        otherFields = {
+            @InnerField(suffix = "nori", type = FieldType.Text, analyzer = "my_nori_analyzer")
+        }
+    )
     private List<String> totalOptions;
 
     @Field(type = FieldType.Date, format = DateFormat.date_hour_minute_second_millis)
