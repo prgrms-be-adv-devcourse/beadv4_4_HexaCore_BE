@@ -98,7 +98,6 @@ public class SettlementReadUseCase {
             LocalDateTime endDate,
             Pageable pageable
     ) {
-        // TODO QueryDSL로 변경 예정
         return settlementSupport.findItemsByPayeeIdAndFilters(sellerId, orderId, productId, status, startDate, endDate, pageable)
                 .map(settlementMapper::toSettlementItemResponse);
     }
