@@ -48,7 +48,8 @@ public class BaseSecurityConfig {
                         // --- Swagger 관련 경로 추가 ---
                         "/v3/api-docs/**",
                         "/swagger-ui/**",
-                        "/swagger-ui.html"
+                        "/swagger-ui.html",
+                        "/ws/**"
                 ).permitAll()
                 .anyRequest().authenticated()
         );
