@@ -1,10 +1,10 @@
 package com.back.cash;
 
+import com.back.cash.adapter.out.CashLogRepository;
 import com.back.cash.app.CashLogSupport;
 import com.back.cash.domain.CashLog;
 import com.back.cash.domain.Wallet;
-import com.back.cash.domain.enums.RelType;
-import com.back.cash.adapter.out.CashLogRepository;
+import com.back.common.dto.cash.enums.RelType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

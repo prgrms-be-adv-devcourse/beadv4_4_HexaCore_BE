@@ -2,17 +2,17 @@ package com.back.cash;
 
 import com.back.cash.adapter.out.PaymentRepository;
 import com.back.cash.app.CashLogSupport;
-import com.back.cash.app.usecase.PayAndHoldUseCase;
 import com.back.cash.app.WalletSupport;
+import com.back.cash.app.usecase.PayAndHoldUseCase;
 import com.back.cash.domain.Payment;
 import com.back.cash.domain.Wallet;
-import com.back.cash.domain.enums.PayAndHoldStatus;
 import com.back.cash.domain.enums.PaymentStatus;
-import com.back.cash.domain.enums.RelType;
 import com.back.cash.domain.enums.WalletType;
-import com.back.cash.dto.request.PayAndHoldRequestDto;
-import com.back.cash.dto.response.PayAndHoldResponseDto;
 import com.back.cash.mapper.PaymentMapper;
+import com.back.common.dto.cash.enums.PayAndHoldStatus;
+import com.back.common.dto.cash.enums.RelType;
+import com.back.common.dto.cash.request.PayAndHoldRequestDto;
+import com.back.common.dto.cash.response.PayAndHoldResponseDto;
 import com.back.common.exception.BadRequestException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -215,7 +215,7 @@ class PayAndHoldUseCaseTest {
     }
 
     private PayAndHoldRequestDto dto(BigDecimal total) {
-        return new PayAndHoldRequestDto(relType, relId, buyerId, total, orderName);
+        return new PayAndHoldRequestDto(buyerId, total, orderName, relType, relId);
     }
 
     private Payment givenNewPayment(PayAndHoldRequestDto dto) {

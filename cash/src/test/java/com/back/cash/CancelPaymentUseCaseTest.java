@@ -1,16 +1,16 @@
 package com.back.cash;
 
 import com.back.cash.adapter.out.PaymentRepository;
-import com.back.cash.app.usecase.CancelPaymentUseCase;
 import com.back.cash.app.CashLogSupport;
 import com.back.cash.app.WalletSupport;
+import com.back.cash.app.usecase.CancelPaymentUseCase;
 import com.back.cash.domain.Payment;
 import com.back.cash.domain.Wallet;
 import com.back.cash.domain.enums.PaymentStatus;
-import com.back.cash.domain.enums.RelType;
-import com.back.cash.dto.request.PaymentCancelRequestDto;
-import com.back.cash.dto.response.PaymentCancelResponseDto;
 import com.back.common.code.FailureCode;
+import com.back.common.dto.cash.enums.RelType;
+import com.back.common.dto.cash.request.PaymentCancelRequestDto;
+import com.back.common.dto.cash.response.PaymentCancelResponseDto;
 import com.back.common.exception.CustomException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
