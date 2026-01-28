@@ -2,7 +2,6 @@ package com.back.settlement.batch;
 
 import static com.back.settlement.domain.SettlementPolicy.CHUNK_SIZE;
 
-import com.back.settlement.app.dto.internal.SettlementWithPayout;
 import com.back.settlement.app.support.SettlementSupport;
 import com.back.settlement.app.usecase.SettlementCompleteUseCase;
 import com.back.settlement.domain.Settlement;
@@ -34,10 +33,10 @@ public class SettlementMonthSettlementStepConfig {
     @Bean
     public Step monthSettlementStep(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
         return new StepBuilder("monthSettlementStep", jobRepository)
-                .<Settlement, SettlementWithPayout>chunk(CHUNK_SIZE, transactionManager)
+                .<Settlement, Settlement>chunk(CHUNK_SIZE, transactionManager)
                 .reader(pendingSettlementReader())
                 .processor(settlementCompleteProcessor())
-                .writer(settlementPayoutWriter())
+                .writer(settlementWriter())
                 .build();
     }
 
@@ -65,23 +64,23 @@ public class SettlementMonthSettlementStepConfig {
     }
 
     /**
-     * 정산서를 완료 상태로 변경하고 캐시 지급 요청 DTO를 생성
+     * 정산서를 완료 상태로 변경
      */
     @Bean
-    public ItemProcessor<Settlement, SettlementWithPayout> settlementCompleteProcessor() {
+    public ItemProcessor<Settlement, Settlement> settlementCompleteProcessor() {
         return settlementCompleteUseCase::completeSettlement;
     }
 
     /**
-     * 정산서를 저장하고 캐시 지급 요청을 전송
+     * 정산서를 저장하고 도메인 이벤트 발행 (캐시 지급은 이벤트 핸들러에서 처리)
      */
     @Bean
-    public ItemWriter<SettlementWithPayout> settlementPayoutWriter() {
+    public ItemWriter<Settlement> settlementWriter() {
         return chunk -> {
-            List<SettlementWithPayout> items = chunk.getItems().stream()
-                    .map(item -> (SettlementWithPayout) item)
+            List<Settlement> settlements = chunk.getItems().stream()
+                    .map(item -> (Settlement) item)
                     .toList();
-            settlementCompleteUseCase.saveAndRequestPayout(items);
+            settlementCompleteUseCase.saveAndPublishEvents(settlements);
         };
     }
 }
