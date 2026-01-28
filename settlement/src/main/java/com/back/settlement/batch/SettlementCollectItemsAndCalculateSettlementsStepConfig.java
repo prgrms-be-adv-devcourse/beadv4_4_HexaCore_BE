@@ -37,7 +37,7 @@ public class SettlementCollectItemsAndCalculateSettlementsStepConfig {
                 .<Long, SettlementWithItems>chunk(CHUNK_SIZE, transactionManager)
                 .reader(unsettledPayeeIdReader(null))      // ItemReader: 미정산 payeeId 목록 조회
                 .processor(settlementProcessor(null))      // ItemProcessor: 정산서 생성
-                .writer(settlementWriter())                // ItemWriter: DB 저장
+                .writer(settlementWithItemsItemWriter())   // ItemWriter: DB 저장
                 .build();
     }
 
@@ -84,7 +84,7 @@ public class SettlementCollectItemsAndCalculateSettlementsStepConfig {
      * 정산서와 항목을 DB에 저장하는 ItemWriter
      */
     @Bean
-    public ItemWriter<SettlementWithItems> settlementWriter() {
+    public ItemWriter<SettlementWithItems> settlementWithItemsItemWriter() {
         return chunk -> {
             for (SettlementWithItems settlementWithItems : chunk) {
                 settlementCreateUseCase.saveSettlementWithItems(
