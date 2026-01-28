@@ -2,6 +2,7 @@ package com.back.settlement.app.support;
 
 import com.back.common.code.FailureCode;
 import com.back.common.exception.EntityNotFoundException;
+import com.back.settlement.adapter.out.SettlementCustomRepositoryImpl;
 import com.back.settlement.adapter.out.SettlementItemRepository;
 import com.back.settlement.adapter.out.SettlementRepository;
 import com.back.settlement.domain.Settlement;
@@ -25,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class SettlementSupport {
     private final SettlementRepository settlementRepository;
     private final SettlementItemRepository settlementItemRepository;
+    private final SettlementCustomRepositoryImpl settlementCustomRepository;
 
     public List<Settlement> findBySellerId(Long sellerId) {
         return settlementRepository.findBySellerId(sellerId);
@@ -40,11 +42,11 @@ public class SettlementSupport {
     }
 
     public List<Long> findUnsettledPayeeIds(LocalDateTime startAt, LocalDateTime endAt) {
-        return settlementItemRepository.findDistinctPayeeIdBySettlementIsNullAndConfirmedAtBetween(startAt, endAt);
+        return settlementCustomRepository.findDistinctUnsettledPayeeIds(startAt, endAt);
     }
 
     public List<SettlementItem> findUnsettledItemsByPayeeId(Long payeeId, LocalDateTime startAt, LocalDateTime endAt) {
-        return settlementItemRepository.findByPayeeIdAndSettlementIsNullAndConfirmedAtBetween(payeeId, startAt, endAt);
+        return settlementCustomRepository.findUnsettledItemsByPayeeId(payeeId, startAt, endAt);
     }
 
     public List<Settlement> findPendingSettlements(Pageable pageable) {
@@ -56,14 +58,14 @@ public class SettlementSupport {
                 .orElseThrow(() -> new EntityNotFoundException(FailureCode.SETTLEMENT_NOT_FOUND));
     }
 
-    public org.springframework.data.domain.Page<Settlement> findByFilters(
+    public Page<Settlement> findByFilters(
             SettlementStatus status,
             Long sellerId,
             LocalDateTime startDate,
             LocalDateTime endDate,
             Pageable pageable
     ) {
-        return settlementRepository.findByFilters(status, sellerId, startDate, endDate, pageable);
+        return settlementCustomRepository.findSettlementsByFilters(status, sellerId, startDate, endDate, pageable);
     }
 
     public long count() {
@@ -83,7 +85,7 @@ public class SettlementSupport {
             LocalDateTime endDate,
             Pageable pageable
     ) {
-        return settlementItemRepository.findByPayeeIdAndFilters(
+        return settlementCustomRepository.findItemsByFilters(
                 payeeId, orderId, productId, status, startDate, endDate, pageable
         );
     }
