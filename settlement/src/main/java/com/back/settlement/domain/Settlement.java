@@ -138,7 +138,9 @@ public class Settlement extends BaseTimeEntity {
                 this.id,
                 previousStatus,
                 this.totalNetAmount,
-                this.sellerId
+                this.sellerId,
+                this.sellerName,
+                this.completedAt
         ));
     }
 
