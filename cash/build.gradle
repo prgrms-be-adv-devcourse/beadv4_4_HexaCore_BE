@@ -1,34 +1,4 @@
-plugins {
-    id 'java'
-    id 'org.springframework.boot' version '4.0.1'
-    id 'io.spring.dependency-management' version '1.1.7'
-}
-
-group = 'com.back'
-version = '0.0.1-SNAPSHOT'
-description = 'cash'
-
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(25)
-    }
-}
-
-configurations {
-    compileOnly {
-        extendsFrom annotationProcessor
-    }
-}
-
-repositories {
-    mavenCentral()
-}
-
 dependencies {
-    implementation project(":common")
-    implementation project(":security")
-}
-
-tasks.named('test') {
-    useJUnitPlatform()
+    implementation project(':common')
+    implementation project(':security')
 }

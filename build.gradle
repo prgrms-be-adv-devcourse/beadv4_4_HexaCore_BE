@@ -8,6 +8,18 @@ group = 'com.back'
 version = '0.0.1-SNAPSHOT'
 description = 'resello'
 
+ext {
+    set('springCloudVersion', '2025.1.0')
+    set('jjwtVersion', '0.12.3')
+    set('querydslVersion', '5.1.0')
+    set('springdocVersion', '3.0.1')
+}
+
+allprojects {
+    repositories {
+        mavenCentral()
+    }
+}
 
 subprojects {
     apply plugin: 'java'
@@ -27,28 +39,42 @@ subprojects {
         }
     }
 
-    repositories {
-        mavenCentral()
+    dependencyManagement {
+        imports {
+            mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+        }
     }
 
     dependencies {
+        // Spring Core
         implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-        implementation 'org.springframework.boot:spring-boot-h2console'
         implementation 'org.springframework.boot:spring-boot-starter-webmvc'
         implementation 'org.springframework.boot:spring-boot-starter-validation'
-        implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.1'
-        implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
-        compileOnly 'org.projectlombok:lombok'
-        developmentOnly 'org.springframework.boot:spring-boot-devtools'
         runtimeOnly 'com.h2database:h2'
-        runtimeOnly 'org.postgresql:postgresql'
-        annotationProcessor 'org.projectlombok:lombok'
-        testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
-        testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
-        testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+        // Swagger
+        implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${springdocVersion}"
 
-        // kafka
-        implementation("org.springframework.boot:spring-boot-starter-kafka")
+        // Jackson
+        implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+
+        // Database
+        runtimeOnly 'org.postgresql:postgresql'
+
+        // Kafka
+        implementation 'org.springframework.boot:spring-boot-starter-kafka'
+
+        // Lombok
+        compileOnly 'org.projectlombok:lombok'
+        annotationProcessor 'org.projectlombok:lombok'
+        testCompileOnly 'org.projectlombok:lombok'
+        testAnnotationProcessor 'org.projectlombok:lombok'
+
+        // DevTools
+        developmentOnly 'org.springframework.boot:spring-boot-devtools'
+
+        // Test
+        testImplementation 'org.springframework.boot:spring-boot-starter-test'
+        testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     }
 
     tasks.named('test') {
@@ -56,4 +82,27 @@ subprojects {
     }
 }
 
-bootJar.enabled
+// common, security 모듈 bootJar 비활성화
+configure(subprojects.findAll { it.name in ['common', 'security'] }) {
+    bootJar.enabled = false
+    jar.enabled = true
+}
+
+// QueryDSL 설정 ( common, settlement 모듈만 )
+configure(subprojects.findAll { it.name in ['common', 'settlement'] }) {
+    def querydslDir = "${layout.buildDirectory.get()}/generated/querydsl"
+
+    sourceSets {
+        main.java.srcDirs += querydslDir
+    }
+
+    tasks.withType(JavaCompile).configureEach {
+        options.generatedSourceOutputDirectory.set(file(querydslDir))
+    }
+
+    clean {
+        delete file(querydslDir)
+    }
+}
+
+bootJar.enabled = false
