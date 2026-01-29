@@ -21,6 +21,7 @@ public class ProductSupport {
     private final ProductRepository productRepository;
     private final ProductOptionValuesRepository productOptionValuesRepository;
     private final ProductImageRepository productImageRepository;
+    private final OptionGroupRepository optionGroupRepository;
 
     @Transactional(readOnly = true)
     public List<Brand> getAllBrands() {
@@ -88,5 +89,15 @@ public class ProductSupport {
                 .orElseThrow(() -> new CustomException(FailureCode.PRODUCT_INFO_NOT_FOUND));
 
         return productRepository.findAllByProductInfo(productInfo);
+    }
+
+    @Transactional(readOnly = true)
+    public List<OptionGroup> getAllProductOptionGroups() {
+        return optionGroupRepository.findAll();
+    }
+
+    @Transactional(readOnly = true)
+    public List<OptionValue> getAllProductOptionValuesByOptionGroupIn(List<OptionGroup> productOptionGroups) {
+        return optionValueRepository.findAllByOptionGroupIn(productOptionGroups);
     }
 }

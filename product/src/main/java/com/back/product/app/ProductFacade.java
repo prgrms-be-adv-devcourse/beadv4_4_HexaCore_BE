@@ -6,6 +6,7 @@ import com.back.product.dto.CategoryDto;
 import com.back.product.dto.ProductDto;
 import com.back.product.dto.request.*;
 import com.back.product.dto.BrandDto;
+import com.back.product.dto.response.OptionResponseDto;
 import com.back.product.dto.response.ProductResponseDto;
 import com.back.product.dto.response.ProductSearchListResponseDto;
 import com.back.product.mapper.ProductInfoMapper;
@@ -103,10 +104,16 @@ public class ProductFacade {
         return productDocumentUseCase.findProductPage(request, page, size);
     }
 
+    @Transactional(readOnly = true)
+    public OptionResponseDto getOptions() {
+        return optionUseCase.findAllOptions();
+    }
+
     private ProductResponseDto buildProductResponseDto(ProductInfo productInfo, List<ProductDto> productDtos) {
         return ProductResponseDto.builder()
                 .productInfo(productInfoMapper.toDto(productInfo))
                 .products(productDtos)
                 .build();
     }
+
 }
