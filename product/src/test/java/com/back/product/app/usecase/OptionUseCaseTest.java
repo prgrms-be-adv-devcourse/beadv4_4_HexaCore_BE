@@ -10,9 +10,11 @@ import com.back.product.dto.OptionDto;
 import com.back.product.dto.request.OptionAppendRequestDto;
 import com.back.product.dto.request.OptionCreateRequestDto;
 import com.back.product.dto.request.OptionGroupModifyRequestDto;
+import com.back.product.dto.request.OptionValueModifyRequestDto;
 import com.back.product.dto.response.OptionGroupModifyResponseDto;
 import com.back.product.dto.response.OptionListResponseDto;
 import com.back.product.dto.response.OptionResponseDto;
+import com.back.product.dto.response.OptionValueModifyResponseDto;
 import com.back.product.mapper.OptionMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -551,6 +553,153 @@ class OptionUseCaseTest {
             );
 
             assertThat(exception.getFailureCode()).isEqualTo(FailureCode.OPTION_GROUP_NOT_FOUND);
+        }
+    }
+
+    @Nested
+    @DisplayName("modifyOptionValue 메서드")
+    class ModifyOptionValueTest {
+
+        @Test
+        @DisplayName("성공: 옵션 값의 이름만 변경한다")
+        void modifyOptionValue_success_onlyName() {
+            // given
+            Long optionValueId = 1L;
+            Long currentGroupId = 10L;
+            String newName = "newvalue";
+
+            // DTO에는 현재 그룹 ID와 새 이름이 포함됨
+            OptionValueModifyRequestDto requestDto = OptionValueModifyRequestDto.builder()
+                    .optionGroupId(currentGroupId)
+                    .name(newName)
+                    .build();
+
+            OptionGroup currentGroup = OptionGroup.builder()
+                    .id(currentGroupId)
+                    .name("color")
+                    .build();
+            OptionValue existingValue = mock(OptionValue.class);
+
+            given(productSupport.getOptionValueById(optionValueId)).willReturn(Optional.of(existingValue));
+            // willChangeGroup이 false를 반환하도록 설정 (그룹 변경 없음)
+            given(existingValue.willChangeGroup(currentGroupId)).willReturn(false);
+
+            // DTO 변환을 위한 getter 스터빙
+            given(existingValue.getId()).willReturn(optionValueId);
+            given(existingValue.getValue()).willReturn(newName);
+            given(existingValue.getOptionGroup()).willReturn(currentGroup);
+            given(existingValue.getLastModifiedAt()).willReturn(LocalDateTime.now());
+
+            // when
+            OptionValueModifyResponseDto result = optionUseCase.modifyOptionValue(optionValueId, requestDto);
+
+            // then
+            // 이름 변경 메서드만 호출되었는지 검증
+            verify(existingValue, times(1)).modifyName(newName);
+            // 그룹 변경 메서드는 호출되지 않았는지 검증
+            verify(existingValue, never()).changeGroup(any(OptionGroup.class));
+            // productSupport에서 다른 그룹을 찾는 로직이 호출되지 않았는지 검증
+            verify(productSupport, never()).getOptionGroupById(anyLong());
+
+            // 응답 DTO 검증
+            assertThat(result).isNotNull();
+            assertThat(result.id()).isEqualTo(optionValueId);
+            assertThat(result.value()).isEqualTo(newName);
+            assertThat(result.optionGroupId()).isEqualTo(currentGroupId);
+        }
+
+        @Test
+        @DisplayName("성공: 옵션 값의 그룹만 변경한다")
+        void modifyOptionValue_success_onlyGroup() {
+            // given
+            Long optionValueId = 1L;
+            Long currentGroupId = 10L;
+            Long newGroupId = 20L;
+            String currentName = "currentvalue";
+
+            OptionValueModifyRequestDto requestDto = OptionValueModifyRequestDto.builder()
+                    .optionGroupId(newGroupId)
+                    .name(currentName)
+                    .build();
+
+            OptionGroup newGroup = OptionGroup.builder()
+                    .id(newGroupId)
+                    .name("size")
+                    .build();
+            OptionValue existingValue = mock(OptionValue.class);
+
+            given(productSupport.getOptionValueById(optionValueId)).willReturn(Optional.of(existingValue));
+            // willChangeGroup이 true를 반환하도록 설정 (그룹 변경 필요)
+            given(existingValue.willChangeGroup(newGroupId)).willReturn(true);
+            // 새로운 그룹을 조회하는 로직 모킹
+            given(productSupport.getOptionGroupById(newGroupId)).willReturn(Optional.of(newGroup));
+
+            // DTO 변환을 위한 getter 스터빙
+            given(existingValue.getId()).willReturn(optionValueId);
+            given(existingValue.getValue()).willReturn(currentName);
+            given(existingValue.getOptionGroup()).willReturn(newGroup); // 변경된 그룹을 반환하도록 설정
+            given(existingValue.getLastModifiedAt()).willReturn(LocalDateTime.now());
+
+            // when
+            OptionValueModifyResponseDto result = optionUseCase.modifyOptionValue(optionValueId, requestDto);
+
+            // then
+            verify(existingValue, times(1)).modifyName(currentName);
+            verify(existingValue, times(1)).changeGroup(newGroup); // 새 그룹으로 변경되었는지 검증
+            verify(productSupport, times(1)).getOptionGroupById(newGroupId); // 새 그룹을 조회했는지 검증
+
+            assertThat(result).isNotNull();
+            assertThat(result.id()).isEqualTo(optionValueId);
+            assertThat(result.value()).isEqualTo(currentName);
+            assertThat(result.optionGroupId()).isEqualTo(newGroupId); // 그룹 ID가 변경되었는지 확인
+        }
+
+        @Test
+        @DisplayName("실패: 수정할 옵션 값을 찾지 못하면 예외를 발생시킨다")
+        void modifyOptionValue_fail_valueNotFound() {
+            // given
+            Long nonExistentValueId = 99L;
+            OptionValueModifyRequestDto requestDto = OptionValueModifyRequestDto.builder()
+                    .optionGroupId(1L)
+                    .name("anyname")
+                    .build();
+
+            given(productSupport.getOptionValueById(nonExistentValueId)).willReturn(Optional.empty());
+
+            // when & then
+            CustomException exception = assertThrows(CustomException.class, () ->
+                    optionUseCase.modifyOptionValue(nonExistentValueId, requestDto)
+            );
+            assertThat(exception.getFailureCode()).isEqualTo(FailureCode.OPTION_VALUE_NOT_FOUND);
+        }
+
+        @Test
+        @DisplayName("실패: 이동할 새로운 옵션 그룹을 찾지 못하면 예외를 발생시킨다")
+        void modifyOptionValue_fail_newGroupNotFound() {
+            // given
+            Long optionValueId = 1L;
+            Long nonExistentGroupId = 99L;
+
+            OptionValueModifyRequestDto requestDto = OptionValueModifyRequestDto.builder()
+                    .optionGroupId(nonExistentGroupId)
+                    .name("anyname")
+                    .build();
+
+            OptionValue existingValue = mock(OptionValue.class);
+
+            given(productSupport.getOptionValueById(optionValueId)).willReturn(Optional.of(existingValue));
+            given(existingValue.willChangeGroup(nonExistentGroupId)).willReturn(true);
+            // 새로운 그룹 조회 시 empty 반환
+            given(productSupport.getOptionGroupById(nonExistentGroupId)).willReturn(Optional.empty());
+
+            // when & then
+            CustomException exception = assertThrows(CustomException.class, () ->
+                    optionUseCase.modifyOptionValue(optionValueId, requestDto)
+            );
+            assertThat(exception.getFailureCode()).isEqualTo(FailureCode.OPTION_GROUP_NOT_FOUND);
+
+            // 그룹 변경 메서드가 호출되지 않았는지 검증
+            verify(existingValue, never()).changeGroup(any(OptionGroup.class));
         }
     }
 }
