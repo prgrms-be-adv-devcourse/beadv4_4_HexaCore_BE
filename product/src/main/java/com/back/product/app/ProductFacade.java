@@ -116,4 +116,8 @@ public class ProductFacade {
                 .build();
     }
 
+    @Transactional
+    public OptionResponseDto createOptions(@Valid OptionCreateRequestDto request) {
+        return optionUseCase.createOptions(request);
+    }
 }

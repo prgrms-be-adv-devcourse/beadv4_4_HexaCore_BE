@@ -100,4 +100,9 @@ public class ProductSupport {
     public List<OptionValue> getAllProductOptionValuesByOptionGroupIn(List<OptionGroup> productOptionGroups) {
         return optionValueRepository.findAllByOptionGroupIn(productOptionGroups);
     }
+
+    @Transactional(readOnly = true)
+    public OptionGroup getOptionGroupByName(String name) {
+        return optionGroupRepository.findByName(name);
+    }
 }

@@ -3,13 +3,13 @@ package com.back.product.adapter.in;
 import com.back.common.code.SuccessCode;
 import com.back.common.response.CommonResponse;
 import com.back.product.app.ProductFacade;
-import com.back.product.dto.request.BrandCreateRequestDto;
+import com.back.product.dto.request.OptionCreateRequestDto;
 import com.back.product.dto.response.OptionResponseDto;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping(path = "/api/v1/products/options", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -25,12 +25,15 @@ public class ApiV1OptionController implements OptionApiController {
     }
 
     @Override
-    public CommonResponse<?> createOptionGroups(BrandCreateRequestDto request) {
-        return null;
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public CommonResponse<OptionResponseDto> createOptions(@Valid @RequestBody OptionCreateRequestDto request) {
+        OptionResponseDto response = productFacade.createOptions(request);
+        return CommonResponse.success(SuccessCode.CREATED, response);
     }
 
     @Override
-    public CommonResponse<?> createOptionValues(BrandCreateRequestDto request) {
+    public CommonResponse<?> appendOptions(OptionCreateRequestDto request) {
         return null;
     }
 }

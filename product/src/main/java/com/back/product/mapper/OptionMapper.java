@@ -9,6 +9,19 @@ import java.util.List;
 
 @Component
 public class OptionMapper {
+    public OptionGroup toGroupEntity(String name) {
+        return OptionGroup.builder().name(name).build();
+    }
+
+    public OptionValue toValueEntity(String group, String value) {
+        OptionGroup groupEntity = toGroupEntity(group);
+        return toValueEntity(groupEntity, value);
+    }
+
+    public OptionValue toValueEntity(OptionGroup group, String value) {
+        return OptionValue.builder().optionGroup(group).value(value).build();
+    }
+
     public OptionDto toDto(OptionGroup group, List<OptionValue> values) {
         OptionDto.GroupDto optionGroup = toDto(group);
         List<OptionDto.ValueDto> optionValues = values.stream().map(this::toDto).toList();
