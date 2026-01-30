@@ -309,4 +309,41 @@ public class ApiV1OptionControllerTest {
                     .andExpect(jsonPath("$.message").value(FailureCode.OPTION_GROUP_IN_USE.getMessage()));
         }
     }
+
+    @Nested
+    @DisplayName("DELETE /api/v1/products/options/values/{optionValueId}")
+    class DeleteOptionValueTest {
+
+        @Test
+        @DisplayName("옵션 값 삭제 컨트롤러 단위 테스트 - 성공")
+        void deleteOptionValue_success() throws Exception {
+            // given
+            Long optionValueId = 1L;
+            doNothing().when(productFacade).deleteOptionValue(anyLong());
+
+            // when & then
+            mockMvc.perform(delete("/api/v1/products/options/values/{optionValueId}", optionValueId))
+                    .andDo(print())
+                    .andExpect(status().isNoContent());
+
+            verify(productFacade).deleteOptionValue(eq(optionValueId));
+        }
+
+        @Test
+        @DisplayName("옵션 값 삭제 컨트롤러 단위 테스트 - 실패 (옵션 값 사용 중)")
+        void deleteValueGroup_fail_optionValueInUse() throws Exception {
+            // given
+            Long optionValueId = 1L;
+            doThrow(new CustomException(FailureCode.OPTION_VALUE_IN_USE))
+                    .when(productFacade)
+                    .deleteOptionValue(anyLong());
+
+            // when & then
+            mockMvc.perform(delete("/api/v1/products/options/values/{optionValueId}", optionValueId))
+                    .andDo(print())
+                    .andExpect(status().isConflict())
+                    .andExpect(jsonPath("$.code").value(FailureCode.OPTION_VALUE_IN_USE.name()))
+                    .andExpect(jsonPath("$.message").value(FailureCode.OPTION_VALUE_IN_USE.getMessage()));
+        }
+    }
 }
