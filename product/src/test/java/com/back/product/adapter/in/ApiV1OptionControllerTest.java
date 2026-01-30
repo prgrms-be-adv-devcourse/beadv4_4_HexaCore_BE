@@ -3,7 +3,9 @@ package com.back.product.adapter.in;
 import com.back.common.code.SuccessCode;
 import com.back.product.app.ProductFacade;
 import com.back.product.dto.OptionDto;
+import com.back.product.dto.request.OptionAppendRequestDto;
 import com.back.product.dto.request.OptionCreateRequestDto;
+import com.back.product.dto.response.OptionListResponseDto;
 import com.back.product.dto.response.OptionResponseDto;
 import com.back.security.jwt.JWTUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -20,6 +22,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -61,7 +65,7 @@ public class ApiV1OptionControllerTest {
                     OptionDto.ValueDto.builder().id(1L).name("L").build(),
                     OptionDto.ValueDto.builder().id(2L).name("M").build()
             );
-            OptionResponseDto response = OptionResponseDto.builder()
+            OptionListResponseDto response = OptionListResponseDto.builder()
                     .options(List.of(
                             OptionDto.builder().group(color).values(colorValues).build(),
                             OptionDto.builder().group(size).values(sizeValues).build()
@@ -112,7 +116,7 @@ public class ApiV1OptionControllerTest {
                     OptionDto.ValueDto.builder().id(201L).name("small").build(),
                     OptionDto.ValueDto.builder().id(202L).name("large").build()
             );
-            OptionResponseDto expectedResponseDto = OptionResponseDto.builder()
+            OptionListResponseDto expectedResponseDto = OptionListResponseDto.builder()
                     .options(List.of(
                             OptionDto.builder().group(responseGroup1).values(responseValues1).build(),
                             OptionDto.builder().group(responseGroup2).values(responseValues2).build()
@@ -202,6 +206,83 @@ public class ApiV1OptionControllerTest {
 
             // ProductFacade의 createOptions 메서드가 호출되지 않았는지 검증
             verify(productFacade, never()).createOptions(any(OptionCreateRequestDto.class));
+        }
+    }
+
+    @Nested
+    @DisplayName("POST /api/v1/products/options/{optionGroupId}")
+    class AppendOptionsTest {
+
+        @Test
+        @DisplayName("상품 옵션 값 추가 컨트롤러 단위 테스트 - 성공")
+        void appendOptions_success() throws Exception {
+            // given
+            Long optionGroupId = 1L;
+            OptionAppendRequestDto requestDto = OptionAppendRequestDto.builder()
+                    .values(List.of("newValue1", "newValue2"))
+                    .build();
+
+            OptionDto.GroupDto responseGroup = OptionDto.GroupDto.builder().id(optionGroupId).name("color").build();
+            List<OptionDto.ValueDto> responseValues = List.of(
+                    OptionDto.ValueDto.builder().id(1L).name("oldValue").build(),
+                    OptionDto.ValueDto.builder().id(2L).name("newValue1").build(),
+                    OptionDto.ValueDto.builder().id(3L).name("newValue2").build()
+            );
+            OptionResponseDto expectedResponseDto = OptionResponseDto.builder()
+                    .option(OptionDto.builder().group(responseGroup).values(responseValues).build())
+                    .build();
+
+            given(productFacade.appendOptions(anyLong(), any(OptionAppendRequestDto.class))).willReturn(expectedResponseDto);
+
+            // when & then
+            mockMvc.perform(post("/api/v1/products/options/{optionGroupId}", optionGroupId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(requestDto)))
+                    .andDo(print())
+                    .andExpect(status().isCreated())
+                    .andExpect(jsonPath("$.code").value(SuccessCode.CREATED.name()))
+                    .andExpect(jsonPath("$.data.option.group.name").value("color"))
+                    .andExpect(jsonPath("$.data.option.values.length()").value(3));
+
+            verify(productFacade).appendOptions(eq(optionGroupId), any(OptionAppendRequestDto.class));
+        }
+
+        @Test
+        @DisplayName("상품 옵션 값 추가 컨트롤러 단위 테스트 - 유효성 검사 실패 (빈 values 리스트)")
+        void appendOptions_validationFailure_emptyList() throws Exception {
+            // given
+            Long optionGroupId = 1L;
+            OptionAppendRequestDto requestDto = OptionAppendRequestDto.builder()
+                    .values(List.of())
+                    .build();
+
+            // when & then
+            mockMvc.perform(post("/api/v1/products/options/{optionGroupId}", optionGroupId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(requestDto)))
+                    .andDo(print())
+                    .andExpect(status().isBadRequest());
+
+            verify(productFacade, never()).appendOptions(anyLong(), any(OptionAppendRequestDto.class));
+        }
+
+        @Test
+        @DisplayName("상품 옵션 값 추가 컨트롤러 단위 테스트 - 유효성 검사 실패 (유효하지 않은 패턴)")
+        void appendOptions_validationFailure_invalidPattern() throws Exception {
+            // given
+            Long optionGroupId = 1L;
+            OptionAppendRequestDto requestDto = OptionAppendRequestDto.builder()
+                    .values(List.of("invalid!value"))
+                    .build();
+
+            // when & then
+            mockMvc.perform(post("/api/v1/products/options/{optionGroupId}", optionGroupId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(requestDto)))
+                    .andDo(print())
+                    .andExpect(status().isBadRequest());
+
+            verify(productFacade, never()).appendOptions(anyLong(), any(OptionAppendRequestDto.class));
         }
     }
 }
