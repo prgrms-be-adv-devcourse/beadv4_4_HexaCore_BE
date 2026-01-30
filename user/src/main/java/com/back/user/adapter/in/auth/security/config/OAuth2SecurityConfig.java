@@ -1,6 +1,7 @@
 package com.back.user.adapter.in.auth.security.config;
 
 
+import com.back.user.adapter.in.auth.security.filter.RedirectUriCookieFilter;
 import com.back.user.adapter.in.auth.security.handler.CustomSuccessHandler;
 import com.back.user.adapter.in.auth.security.oauth.CustomOAuth2UserService;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +11,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestRedirectFilter;
 import org.springframework.security.web.SecurityFilterChain;
 
 import static org.springframework.security.config.Customizer.withDefaults;
@@ -21,6 +23,7 @@ public class OAuth2SecurityConfig {
 
     private final CustomOAuth2UserService customOAuth2UserService;
     private final CustomSuccessHandler customSuccessHandler;
+    private final RedirectUriCookieFilter redirectUriCookieFilter;
 
     @Bean
     @Order(1)
@@ -33,6 +36,7 @@ public class OAuth2SecurityConfig {
 
         http.authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
 
+        http.addFilterBefore(redirectUriCookieFilter, OAuth2AuthorizationRequestRedirectFilter.class);
         http.oauth2Login(oauth2 -> oauth2
                 .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
                 .successHandler(customSuccessHandler)
