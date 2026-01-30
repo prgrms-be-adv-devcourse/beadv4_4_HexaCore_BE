@@ -4,6 +4,7 @@ import com.back.common.market.event.SellBiddingCreatedEvent;
 import com.back.notification.adapter.out.PriceAlertRepository;
 import com.back.notification.domain.NotificationUser;
 import com.back.notification.domain.PriceAlert;
+import com.back.notification.exception.PriceAlertNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,5 +30,10 @@ public class PriceAlertSupport {
                 .map(PriceAlert::getUser)
                 .distinct()
                 .toList();
+    }
+
+    public PriceAlert findById(Long priceAlertId) {
+        return priceAlertRepository.findById(priceAlertId)
+                .orElseThrow(PriceAlertNotFoundException::new);
     }
 }

@@ -31,4 +31,10 @@ public class PriceAlertController {
         List<PriceAlertResponseDto> response = priceAlertFacade.findByUserId(principal.getUserId());
         return CommonResponse.success(SuccessCode.OK, response);
     }
+
+    @DeleteMapping("/{priceAlertId}")
+    public CommonResponse<Void> deletePriceAlert(@PathVariable Long priceAlertId) {
+        priceAlertFacade.delete(priceAlertId);
+        return CommonResponse.success(SuccessCode.OK, null);
+    }
 }

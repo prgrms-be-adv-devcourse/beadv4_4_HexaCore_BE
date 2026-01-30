@@ -15,6 +15,7 @@ import java.util.List;
 public class PriceAlertFacade {
     private final PriceAlertSaveUsecase priceAlertSaveUsecase;
     private final PriceAlertFindUsecase priceAlertFindUsecase;
+    private final PriceAlertDeleteUsecase priceAlertDeleteUsecase;
     private final PriceAlertMapper priceAlertMapper;
 
     public PriceAlertIdDto save(PriceAlertSaveRequestDto dto, Long userId) {
@@ -27,5 +28,9 @@ public class PriceAlertFacade {
         List<PriceAlert> priceAlerts = priceAlertFindUsecase.findByUserId(userId);
 
         return priceAlertMapper.toPriceAlertResponseDtoList(priceAlerts);
+    }
+
+    public void delete(Long priceAlertId) {
+        priceAlertDeleteUsecase.delete(priceAlertId);
     }
 }
