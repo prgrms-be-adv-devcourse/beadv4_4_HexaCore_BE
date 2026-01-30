@@ -67,7 +67,7 @@ public class ApiV1OptionController implements OptionApiController {
     }
 
     @Override
-    @DeleteMapping("/{optionGroupId}")
+    @DeleteMapping("/groups/{optionGroupId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public CommonResponse<?> deleteOptionGroup(@PathVariable Long optionGroupId) {
         productFacade.deleteOptionGroup(optionGroupId);
