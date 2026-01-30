@@ -2,9 +2,12 @@ package com.back.product.app.usecase;
 
 import com.back.common.code.FailureCode;
 import com.back.common.exception.CustomException;
+import com.back.product.adapter.out.OptionGroupRepository;
+import com.back.product.adapter.out.OptionValueRepository;
 import com.back.product.domain.OptionGroup;
 import com.back.product.domain.OptionValue;
 import com.back.product.dto.OptionDto;
+import com.back.product.dto.request.OptionCreateRequestDto;
 import com.back.product.dto.response.OptionResponseDto;
 import com.back.product.mapper.OptionMapper;
 import org.junit.jupiter.api.DisplayName;
@@ -18,12 +21,16 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("OptionUseCase 단위 테스트")
@@ -37,6 +44,12 @@ class OptionUseCaseTest {
 
     @Mock
     private OptionMapper optionMapper;
+
+    @Mock
+    private OptionGroupRepository optionGroupRepository;
+
+    @Mock
+    private OptionValueRepository optionValueRepository;
 
     @Nested
     @DisplayName("findOptionValuesAsMap 메서드")
@@ -164,6 +177,226 @@ class OptionUseCaseTest {
             assertThat(result.options()).hasSize(1);
             assertThat(result.options().get(0).group().name()).isEqualTo("Color");
             assertThat(result.options().get(0).values()).isEmpty();
+        }
+    }
+
+    @Nested
+    @DisplayName("createOptions 메서드")
+    class CreateOptionsTest {
+
+        @Test
+        @DisplayName("성공: 새로운 옵션 그룹과 값들을 생성한다")
+        void createOptions_success_newGroupAndValues() {
+            // given
+            // 1. 요청 DTO 생성
+            OptionCreateRequestDto.OptionDto requestOption1 = new OptionCreateRequestDto.OptionDto("color", List.of("red", "blue"));
+            OptionCreateRequestDto.OptionDto requestOption2 = new OptionCreateRequestDto.OptionDto("size", List.of("small", "large"));
+            OptionCreateRequestDto requestDto = new OptionCreateRequestDto(List.of(requestOption1, requestOption2));
+
+            // 2. Mocking ProductSupport for group lookup (returns null for new groups)
+            given(productSupport.getOptionGroupByName(eq("color"))).willReturn(null);
+            given(productSupport.getOptionGroupByName(eq("size"))).willReturn(null);
+
+            // 3. Mocking OptionMapper for group and value entity conversion
+            OptionGroup newGroup1 = OptionGroup.builder().id(1L).name("color").build();
+            OptionGroup newGroup2 = OptionGroup.builder().id(2L).name("size").build();
+            given(optionMapper.toGroupEntity(eq("color"))).willReturn(newGroup1);
+            given(optionMapper.toGroupEntity(eq("size"))).willReturn(newGroup2);
+
+            OptionValue newValue1_1 = OptionValue.builder().id(101L).optionGroup(newGroup1).value("red").build();
+            OptionValue newValue1_2 = OptionValue.builder().id(102L).optionGroup(newGroup1).value("blue").build();
+            OptionValue newValue2_1 = OptionValue.builder().id(201L).optionGroup(newGroup2).value("small").build();
+            OptionValue newValue2_2 = OptionValue.builder().id(202L).optionGroup(newGroup2).value("large").build();
+
+            given(optionMapper.toValueEntity(eq(newGroup1), eq("red"))).willReturn(newValue1_1);
+            given(optionMapper.toValueEntity(eq(newGroup1), eq("blue"))).willReturn(newValue1_2);
+            given(optionMapper.toValueEntity(eq(newGroup2), eq("small"))).willReturn(newValue2_1);
+            given(optionMapper.toValueEntity(eq(newGroup2), eq("large"))).willReturn(newValue2_2);
+
+            // 4. Mocking OptionGroupRepository save
+            given(optionGroupRepository.save(eq(newGroup1))).willReturn(newGroup1);
+            given(optionGroupRepository.save(eq(newGroup2))).willReturn(newGroup2);
+
+            // 5. Mocking OptionValueRepository saveAll
+            given(optionValueRepository.saveAll(any(List.class))).willAnswer(invocation -> {
+                List<OptionValue> values = invocation.getArgument(0);
+                // Assign IDs or perform other mock operations if needed
+                return values;
+            });
+
+            // 6. Mocking OptionMapper toDto for final response conversion
+            OptionDto.GroupDto responseGroup1 = OptionDto.GroupDto.builder().id(1L).name("color").build();
+            List<OptionDto.ValueDto> responseValues1 = List.of(
+                    OptionDto.ValueDto.builder().id(101L).name("red").build(),
+                    OptionDto.ValueDto.builder().id(102L).name("blue").build()
+            );
+            OptionDto responseOptionDto1 = OptionDto.builder().group(responseGroup1).values(responseValues1).build();
+
+            OptionDto.GroupDto responseGroup2 = OptionDto.GroupDto.builder().id(2L).name("size").build();
+            List<OptionDto.ValueDto> responseValues2 = List.of(
+                    OptionDto.ValueDto.builder().id(201L).name("small").build(),
+                    OptionDto.ValueDto.builder().id(202L).name("large").build()
+            );
+            OptionDto responseOptionDto2 = OptionDto.builder().group(responseGroup2).values(responseValues2).build();
+
+            given(optionMapper.toDto(eq(newGroup1), any(List.class))).willReturn(responseOptionDto1);
+            given(optionMapper.toDto(eq(newGroup2), any(List.class))).willReturn(responseOptionDto2);
+
+
+            // when
+            OptionResponseDto result = optionUseCase.createOptions(requestDto);
+
+            // then
+            assertThat(result).isNotNull();
+            assertThat(result.options()).hasSize(2);
+            assertThat(result.options().get(0).group().name()).isEqualTo("color");
+            assertThat(result.options().get(0).values()).hasSize(2);
+            assertThat(result.options().get(1).group().name()).isEqualTo("size");
+            assertThat(result.options().get(1).values()).hasSize(2);
+
+            // Verify interactions
+            verify(productSupport, times(1)).getOptionGroupByName(eq("color"));
+            verify(productSupport, times(1)).getOptionGroupByName(eq("size"));
+            verify(optionMapper, times(1)).toGroupEntity(eq("color"));
+            verify(optionMapper, times(1)).toGroupEntity(eq("size"));
+            verify(optionGroupRepository, times(1)).save(eq(newGroup1));
+            verify(optionGroupRepository, times(1)).save(eq(newGroup2));
+            verify(optionValueRepository, times(2)).saveAll(any(List.class)); // saveAll is called twice, once for each option
+            verify(optionMapper, times(1)).toDto(eq(newGroup1), any(List.class));
+            verify(optionMapper, times(1)).toDto(eq(newGroup2), any(List.class));
+        }
+
+        @Test
+        @DisplayName("성공: 기존 옵션 그룹을 사용하고 새로운 값들을 생성한다")
+        void createOptions_success_existingGroupAndNewValues() {
+            // given
+            // 1. 요청 DTO 생성
+            OptionCreateRequestDto.OptionDto requestOption1 = new OptionCreateRequestDto.OptionDto("color", List.of("red", "blue"));
+            OptionCreateRequestDto requestDto = new OptionCreateRequestDto(List.of(requestOption1));
+
+            // 2. Mocking ProductSupport for group lookup (returns existing group)
+            OptionGroup existingGroup1 = OptionGroup.builder().id(1L).name("color").build();
+            given(productSupport.getOptionGroupByName(eq("color"))).willReturn(existingGroup1);
+
+            // 3. Mocking OptionMapper for value entity conversion
+            OptionValue newValue1_1 = OptionValue.builder().id(101L).optionGroup(existingGroup1).value("red").build();
+            OptionValue newValue1_2 = OptionValue.builder().id(102L).optionGroup(existingGroup1).value("blue").build();
+
+            given(optionMapper.toValueEntity(eq(existingGroup1), eq("red"))).willReturn(newValue1_1);
+            given(optionMapper.toValueEntity(eq(existingGroup1), eq("blue"))).willReturn(newValue1_2);
+
+            // 4. OptionGroupRepository save should not be called
+            verify(optionGroupRepository, never()).save(any(OptionGroup.class));
+
+            // 5. Mocking OptionValueRepository saveAll
+            given(optionValueRepository.saveAll(any(List.class))).willAnswer(invocation -> {
+                List<OptionValue> values = invocation.getArgument(0);
+                return values;
+            });
+
+            // 6. Mocking OptionMapper toDto for final response conversion
+            OptionDto.GroupDto responseGroup1 = OptionDto.GroupDto.builder().id(1L).name("color").build();
+            List<OptionDto.ValueDto> responseValues1 = List.of(
+                    OptionDto.ValueDto.builder().id(101L).name("red").build(),
+                    OptionDto.ValueDto.builder().id(102L).name("blue").build()
+            );
+            OptionDto responseOptionDto1 = OptionDto.builder().group(responseGroup1).values(responseValues1).build();
+
+            given(optionMapper.toDto(eq(existingGroup1), any(List.class))).willReturn(responseOptionDto1);
+
+            // when
+            OptionResponseDto result = optionUseCase.createOptions(requestDto);
+
+            // then
+            assertThat(result).isNotNull();
+            assertThat(result.options()).hasSize(1);
+            assertThat(result.options().get(0).group().name()).isEqualTo("color");
+            assertThat(result.options().get(0).values()).hasSize(2);
+
+            // Verify interactions
+            verify(productSupport, times(1)).getOptionGroupByName(eq("color"));
+            verify(optionMapper, never()).toGroupEntity(any(String.class)); // Not called for existing group
+            verify(optionGroupRepository, never()).save(any(OptionGroup.class)); // Not called for existing group
+            verify(optionValueRepository, times(1)).saveAll(any(List.class));
+            verify(optionMapper, times(1)).toDto(eq(existingGroup1), any(List.class));
+        }
+
+        @Test
+        @DisplayName("성공: 기존 그룹과 새로운 그룹이 혼합된 경우에도 정상적으로 생성한다")
+        void createOptions_success_mixedGroupsAndValues() {
+            // given
+            // 1. 요청 DTO 생성
+            OptionCreateRequestDto.OptionDto requestOption1 = new OptionCreateRequestDto.OptionDto("color", List.of("red", "blue")); // Existing group
+            OptionCreateRequestDto.OptionDto requestOption2 = new OptionCreateRequestDto.OptionDto("pattern", List.of("stripe", "dot")); // New group
+            OptionCreateRequestDto requestDto = new OptionCreateRequestDto(List.of(requestOption1, requestOption2));
+
+            // 2. Mocking ProductSupport for group lookup
+            OptionGroup existingGroup1 = OptionGroup.builder().id(1L).name("color").build();
+            given(productSupport.getOptionGroupByName(eq("color"))).willReturn(existingGroup1); // Existing
+            given(productSupport.getOptionGroupByName(eq("pattern"))).willReturn(null); // New
+
+            // 3. Mocking OptionMapper for group and value entity conversion
+            OptionGroup newGroup2 = OptionGroup.builder().id(2L).name("pattern").build();
+            given(optionMapper.toGroupEntity(eq("pattern"))).willReturn(newGroup2); // Only for new group
+
+            OptionValue newValue1_1 = OptionValue.builder().id(101L).optionGroup(existingGroup1).value("red").build();
+            OptionValue newValue1_2 = OptionValue.builder().id(102L).optionGroup(existingGroup1).value("blue").build();
+            OptionValue newValue2_1 = OptionValue.builder().id(201L).optionGroup(newGroup2).value("stripe").build();
+            OptionValue newValue2_2 = OptionValue.builder().id(202L).optionGroup(newGroup2).value("dot").build();
+
+            given(optionMapper.toValueEntity(eq(existingGroup1), eq("red"))).willReturn(newValue1_1);
+            given(optionMapper.toValueEntity(eq(existingGroup1), eq("blue"))).willReturn(newValue1_2);
+            given(optionMapper.toValueEntity(eq(newGroup2), eq("stripe"))).willReturn(newValue2_1);
+            given(optionMapper.toValueEntity(eq(newGroup2), eq("dot"))).willReturn(newValue2_2);
+
+            // 4. Mocking OptionGroupRepository save
+            given(optionGroupRepository.save(eq(newGroup2))).willReturn(newGroup2); // Only for new group
+
+            // 5. Mocking OptionValueRepository saveAll
+            given(optionValueRepository.saveAll(any(List.class))).willAnswer(invocation -> {
+                List<OptionValue> values = invocation.getArgument(0);
+                return values;
+            });
+
+            // 6. Mocking OptionMapper toDto for final response conversion
+            OptionDto.GroupDto responseGroup1 = OptionDto.GroupDto.builder().id(1L).name("color").build();
+            List<OptionDto.ValueDto> responseValues1 = List.of(
+                    OptionDto.ValueDto.builder().id(101L).name("red").build(),
+                    OptionDto.ValueDto.builder().id(102L).name("blue").build()
+            );
+            OptionDto responseOptionDto1 = OptionDto.builder().group(responseGroup1).values(responseValues1).build();
+
+            OptionDto.GroupDto responseGroup2 = OptionDto.GroupDto.builder().id(2L).name("pattern").build();
+            List<OptionDto.ValueDto> responseValues2 = List.of(
+                    OptionDto.ValueDto.builder().id(201L).name("stripe").build(),
+                    OptionDto.ValueDto.builder().id(202L).name("dot").build()
+            );
+            OptionDto responseOptionDto2 = OptionDto.builder().group(responseGroup2).values(responseValues2).build();
+
+            given(optionMapper.toDto(eq(existingGroup1), any(List.class))).willReturn(responseOptionDto1);
+            given(optionMapper.toDto(eq(newGroup2), any(List.class))).willReturn(responseOptionDto2);
+
+            // when
+            OptionResponseDto result = optionUseCase.createOptions(requestDto);
+
+            // then
+            assertThat(result).isNotNull();
+            assertThat(result.options()).hasSize(2);
+            assertThat(result.options().get(0).group().name()).isEqualTo("color");
+            assertThat(result.options().get(0).values()).hasSize(2);
+            assertThat(result.options().get(1).group().name()).isEqualTo("pattern");
+            assertThat(result.options().get(1).values()).hasSize(2);
+
+            // Verify interactions
+            verify(productSupport, times(1)).getOptionGroupByName(eq("color"));
+            verify(productSupport, times(1)).getOptionGroupByName(eq("pattern"));
+            verify(optionMapper, never()).toGroupEntity(eq("color")); // Not called for existing group
+            verify(optionMapper, times(1)).toGroupEntity(eq("pattern")); // Called for new group
+            verify(optionGroupRepository, never()).save(eq(existingGroup1)); // Not called for existing group
+            verify(optionGroupRepository, times(1)).save(eq(newGroup2)); // Called for new group
+            verify(optionValueRepository, times(2)).saveAll(any(List.class));
+            verify(optionMapper, times(1)).toDto(eq(existingGroup1), any(List.class));
+            verify(optionMapper, times(1)).toDto(eq(newGroup2), any(List.class));
         }
     }
 }
