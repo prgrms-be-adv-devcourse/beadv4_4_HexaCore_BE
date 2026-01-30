@@ -7,33 +7,22 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
-import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Controller;
 
-@RestController
-@RequestMapping("/api/v1/chat-ws")
+@Controller
 @RequiredArgsConstructor
 public class ChatWsController {
 
     private final ChatFacade chatFacade;
 
-    private static final String ATTR_PRINCIPAL = "AUTH_PRINCIPAL";
-
     @MessageMapping("/message")
     public void sendMessage(
             @Valid @Payload ChatMessageSendRequestDto requestDto,
-            SimpMessageHeaderAccessor headerAccessor
+            Authentication auth
     ) {
-        Object principalObj = headerAccessor.getSessionAttributes().get(ATTR_PRINCIPAL);
+        AuthPrincipal authPrincipal = (AuthPrincipal) auth.getPrincipal();
 
-        if (!(principalObj instanceof AuthPrincipal)) {
-            throw new IllegalStateException("WebSocket 인증 정보(AuthPrincipal)가 없습니다.");
-        }
-
-        AuthPrincipal authPrincipal = (AuthPrincipal) principalObj;
-        Long userId = authPrincipal.getUserId();
-
-        chatFacade.sendMessage(requestDto, userId);
+        chatFacade.sendMessage(requestDto, authPrincipal.getUserId());
     }
 }
