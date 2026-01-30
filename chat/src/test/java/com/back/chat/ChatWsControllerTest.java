@@ -5,30 +5,33 @@ import com.back.chat.app.ChatFacade;
 import com.back.chat.dto.request.ChatMessageSendRequestDto;
 import com.back.security.principal.AuthPrincipal;
 import org.junit.jupiter.api.Test;
-import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
-
-import java.util.HashMap;
-import java.util.Map;
 
 import static org.mockito.Mockito.*;
+
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 
 class ChatWsControllerTest {
 
     @Test
-    void sendMessage_shouldCallFacade_withUserIdFromSession() {
+    void sendMessage_shouldCallFacade_withUserIdFromAuthentication() {
+        // given
         ChatFacade chatFacade = mock(ChatFacade.class);
         ChatWsController controller = new ChatWsController(chatFacade);
 
-        ChatMessageSendRequestDto dto = new ChatMessageSendRequestDto(1L, "hello"); // record면 이렇게
-        // class DTO면 new로 맞게 생성/세팅
+        ChatMessageSendRequestDto dto =
+                new ChatMessageSendRequestDto(1L, "hello");
 
-        SimpMessageHeaderAccessor accessor = SimpMessageHeaderAccessor.create();
-        Map<String, Object> attrs = new HashMap<>();
-        attrs.put("AUTH_PRINCIPAL", new AuthPrincipal(10L, "USER"));
-        accessor.setSessionAttributes(attrs);
+        AuthPrincipal authPrincipal = new AuthPrincipal(10L, "USER");
 
-        controller.sendMessage(dto, accessor);
+        Authentication authentication =
+                new UsernamePasswordAuthenticationToken(authPrincipal, null);
 
-        verify(chatFacade, times(1)).sendMessage(dto, 10L);
+        // when
+        controller.sendMessage(dto, authentication);
+
+        // then
+        verify(chatFacade, times(1))
+                .sendMessage(dto, 10L);
     }
 }
