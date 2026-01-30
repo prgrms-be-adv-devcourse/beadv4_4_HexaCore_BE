@@ -5,10 +5,14 @@ import com.back.product.app.ProductFacade;
 import com.back.product.dto.OptionDto;
 import com.back.product.dto.request.OptionAppendRequestDto;
 import com.back.product.dto.request.OptionCreateRequestDto;
+import com.back.product.dto.request.OptionGroupModifyRequestDto;
+import com.back.product.dto.response.OptionGroupModifyResponseDto;
 import com.back.product.dto.response.OptionListResponseDto;
 import com.back.product.dto.response.OptionResponseDto;
 import com.back.security.jwt.JWTUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -19,6 +23,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -29,6 +34,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -45,8 +51,13 @@ public class ApiV1OptionControllerTest {
 
     @MockitoBean
     private ProductFacade productFacade;
+    
+    ObjectMapper objectMapper = new ObjectMapper();
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    @BeforeEach
+    void setupObjectMapper() {
+        objectMapper.registerModule(new JavaTimeModule());
+    }
 
     @Nested
     @DisplayName("GET /api/v1/products/options")
@@ -267,7 +278,7 @@ public class ApiV1OptionControllerTest {
         }
 
         @Test
-        @DisplayName("상품 옵션 값 추가 컨트롤러 단위 테스트 - 유효성 검사 실패 (유효하지 않은 패턴)")
+        @DisplayName("상품 옵션 값 추가 컨트롤러 단위 테스트 - 유효하지 않은 패턴)")
         void appendOptions_validationFailure_invalidPattern() throws Exception {
             // given
             Long optionGroupId = 1L;
@@ -283,6 +294,81 @@ public class ApiV1OptionControllerTest {
                     .andExpect(status().isBadRequest());
 
             verify(productFacade, never()).appendOptions(anyLong(), any(OptionAppendRequestDto.class));
+        }
+    }
+
+    @Nested
+    @DisplayName("PUT /api/v1/products/options/groups/{optionGroupId}")
+    class ModifyOptionGroupTest {
+
+        @Test
+        @DisplayName("옵션 그룹 이름 수정 컨트롤러 단위 테스트 - 성공")
+        void modifyOptionGroup_success() throws Exception {
+            // given
+            Long optionGroupId = 1L;
+            String newGroupName = "newcolor";
+            OptionGroupModifyRequestDto requestDto = OptionGroupModifyRequestDto.builder()
+                    .name(newGroupName)
+                    .build();
+
+            OptionGroupModifyResponseDto expectedResponseDto = OptionGroupModifyResponseDto.builder()
+                    .id(optionGroupId)
+                    .name(newGroupName)
+                    .updatedAt(LocalDateTime.now())
+                    .build();
+
+            given(productFacade.modifyOptionGroup(eq(optionGroupId), any(OptionGroupModifyRequestDto.class))).willReturn(expectedResponseDto);
+
+            // when & then
+            mockMvc.perform(put("/api/v1/products/options/groups/{optionGroupId}", optionGroupId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(requestDto)))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.code").value(SuccessCode.OK.name()))
+                    .andExpect(jsonPath("$.message").value(SuccessCode.OK.getMessage()))
+                    .andExpect(jsonPath("$.data.id").value(optionGroupId))
+                    .andExpect(jsonPath("$.data.name").value(newGroupName));
+
+            verify(productFacade).modifyOptionGroup(eq(optionGroupId), any(OptionGroupModifyRequestDto.class));
+        }
+
+        @Test
+        @DisplayName("옵션 그룹 이름 수정 컨트롤러 단위 테스트 - 유효성 검사 실패 (공백 이름)")
+        void modifyOptionGroup_validationFailure_blankName() throws Exception {
+            // given
+            Long optionGroupId = 1L;
+            OptionGroupModifyRequestDto requestDto = OptionGroupModifyRequestDto.builder()
+                    .name("  ") // Blank name
+                    .build();
+
+            // when & then
+            mockMvc.perform(put("/api/v1/products/options/groups/{optionGroupId}", optionGroupId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(requestDto)))
+                    .andDo(print())
+                    .andExpect(status().isBadRequest());
+
+            verify(productFacade, never()).modifyOptionGroup(anyLong(), any(OptionGroupModifyRequestDto.class));
+        }
+
+        @Test
+        @DisplayName("옵션 그룹 이름 수정 컨트롤러 단위 테스트 - 유효성 검사 실패 (유효하지 않은 패턴)")
+        void modifyOptionGroup_validationFailure_invalidPattern() throws Exception {
+            // given
+            Long optionGroupId = 1L;
+            OptionGroupModifyRequestDto requestDto = OptionGroupModifyRequestDto.builder()
+                    .name("InvalidName123") // Invalid pattern (uppercase, numbers)
+                    .build();
+
+            // when & then
+            mockMvc.perform(put("/api/v1/products/options/groups/{optionGroupId}", optionGroupId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(requestDto)))
+                    .andDo(print())
+                    .andExpect(status().isBadRequest());
+
+            verify(productFacade, never()).modifyOptionGroup(anyLong(), any(OptionGroupModifyRequestDto.class));
         }
     }
 }
