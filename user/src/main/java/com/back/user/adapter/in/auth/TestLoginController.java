@@ -5,6 +5,7 @@ import com.back.common.response.CommonResponse;
 import com.back.user.app.auth.TestLoginUseCase;
 import com.back.user.dto.request.TestLoginRequestDto;
 import com.back.user.dto.response.TestLoginResponseDto;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpHeaders;
@@ -22,10 +23,8 @@ public class TestLoginController {
     private final TestLoginUseCase testLoginUseCase;
 
     @PostMapping("/test-login")
-    public CommonResponse<TestLoginResponseDto> testLogin(@RequestBody TestLoginRequestDto req) {
+    public CommonResponse<TestLoginResponseDto> testLogin(@RequestBody TestLoginRequestDto req, HttpServletResponse response) {
         TestLoginUseCase.Result r = testLoginUseCase.execute(req.email());
-
-        HttpHeaders headers = new HttpHeaders();
 
         ResponseCookie refreshCookie = ResponseCookie.from("refresh", r.refreshToken())
                 .httpOnly(true)
@@ -35,7 +34,7 @@ public class TestLoginController {
                 .maxAge(r.refreshTtl())
                 .build();
 
-        headers.add(HttpHeaders.SET_COOKIE, refreshCookie.toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
         return CommonResponse.success(SuccessCode.OK, new TestLoginResponseDto(r.accessToken()));
     }
 
