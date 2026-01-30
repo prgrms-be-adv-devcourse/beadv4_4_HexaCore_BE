@@ -13,7 +13,7 @@ public class RefreshCookieSupport {
                 .httpOnly(true)
                 .secure(true)
                 .path("/")
-                .sameSite("Lax")
+                .sameSite("None")
                 .maxAge(ttl)
                 .build()
                 .toString();
@@ -25,7 +25,7 @@ public class RefreshCookieSupport {
                 .httpOnly(true)
                 .secure(true)
                 .path("/")
-                .sameSite("Lax")
+                .sameSite("None")
                 .maxAge(0)
                 .build()
                 .toString();
