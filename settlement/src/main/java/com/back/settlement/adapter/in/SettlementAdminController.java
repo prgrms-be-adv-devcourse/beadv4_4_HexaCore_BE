@@ -13,7 +13,6 @@ import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.batch.core.job.JobExecution;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -71,19 +70,7 @@ public class SettlementAdminController implements SettlementAdminApi {
 
     @PostMapping("/batch/run")
     public CommonResponse<BatchExecutionResponse> runSettlementBatch(@RequestParam("targetMonth") @DateTimeFormat(pattern = "yyyy-MM") YearMonth targetMonth) {
-        JobExecution execution = settlementJobLauncher.run(targetMonth);
-        int processedCount = execution.getStepExecutions().stream()
-                .mapToInt(step -> (int) step.getWriteCount())
-                .sum();
-
-        BatchExecutionResponse response = new BatchExecutionResponse(
-                execution.getId(),
-                execution.getStatus().toString(),
-                targetMonth.toString(),
-                execution.getStartTime(),
-                execution.getEndTime(),
-                processedCount
-        );
+        BatchExecutionResponse response = settlementJobLauncher.run(targetMonth);
         return CommonResponse.success(SuccessCode.OK, response);
     }
 }
