@@ -17,12 +17,12 @@ public record OptionCreateRequestDto(
     @Builder
     public record OptionDto(
             @NotBlank(message = "Option Group Name cannot be blank")
-            @Pattern(regexp = "^[a-z]+$", message = "Option Group Name is permitted only lower case english")
+            @Pattern(regexp = "^[a-z]{1,20}$", message = "Option Group Name is permitted only lower case english")
             String group,
 
             @NotEmpty(message = "Option Values cannot be null")
             @Valid
-            List<@Pattern(regexp = "[a-zA-Z0-9]+$", message = "Option values are permitted only english and number") String> values
+            List<@Pattern(regexp = "[a-zA-Z0-9]{1,20}$", message = "Option values are permitted only english and number") String> values
     ) {
     }
 }
