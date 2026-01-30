@@ -7,8 +7,10 @@ import com.back.product.adapter.out.OptionValueRepository;
 import com.back.product.domain.OptionGroup;
 import com.back.product.domain.OptionValue;
 import com.back.product.dto.OptionDto;
+import com.back.product.dto.request.OptionAppendRequestDto;
 import com.back.product.dto.request.OptionCreateRequestDto;
 import com.back.product.dto.response.OptionListResponseDto;
+import com.back.product.dto.response.OptionResponseDto;
 import com.back.product.mapper.OptionMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -21,6 +23,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -396,6 +399,96 @@ class OptionUseCaseTest {
             verify(optionValueRepository, times(2)).saveAll(any(List.class));
             verify(optionMapper, times(1)).toDto(eq(existingGroup1), any(List.class));
             verify(optionMapper, times(1)).toDto(eq(newGroup2), any(List.class));
+        }
+    }
+
+    @Nested
+    @DisplayName("appendOptions 메서드")
+    class AppendOptionsTest {
+
+        @Test
+        @DisplayName("성공: 기존 옵션 그룹에 새로운 값들을 추가한다")
+        void appendOptions_success() {
+            // given
+            Long optionGroupId = 1L;
+            OptionAppendRequestDto requestDto = OptionAppendRequestDto.builder()
+                    .values(List.of("새로운값1", "새로운값2"))
+                    .build();
+
+            OptionGroup existingGroup = OptionGroup.builder()
+                    .id(optionGroupId)
+                    .name("색상")
+                    .build();
+
+            // Mocking for dependencies
+            given(productSupport.getOptionGroupById(optionGroupId)).willReturn(Optional.of(existingGroup));
+
+            OptionValue newValue1 = OptionValue.builder()
+                    .id(101L)
+                    .optionGroup(existingGroup)
+                    .value("새로운값1")
+                    .build();
+            OptionValue newValue2 = OptionValue.builder()
+                    .id(102L)
+                    .optionGroup(existingGroup)
+                    .value("새로운값2")
+                    .build();
+            List<OptionValue> createdValues = List.of(newValue1, newValue2);
+
+            given(optionMapper.toValueEntity(existingGroup, "새로운값1")).willReturn(newValue1);
+            given(optionMapper.toValueEntity(existingGroup, "새로운값2")).willReturn(newValue2);
+            given(optionValueRepository.saveAll(any(List.class))).willReturn(createdValues);
+
+            OptionDto.GroupDto responseGroupDto = OptionDto.GroupDto.builder()
+                    .id(optionGroupId)
+                    .name("색상")
+                    .build();
+            List<OptionDto.ValueDto> responseValueDtos = List.of(
+                    OptionDto.ValueDto.builder().id(101L).name("새로운값1").build(),
+                    OptionDto.ValueDto.builder().id(102L).name("새로운값2").build()
+            );
+            OptionDto finalOptionDto = OptionDto.builder()
+                    .group(responseGroupDto)
+                    .values(responseValueDtos)
+                    .build();
+
+            given(optionMapper.toDto(existingGroup, createdValues)).willReturn(finalOptionDto);
+
+            // when
+            OptionResponseDto result = optionUseCase.appendOptions(optionGroupId, requestDto);
+
+            // then
+            assertThat(result).isNotNull();
+            assertThat(result.option().group().name()).isEqualTo("색상");
+            assertThat(result.option().values()).hasSize(2);
+            assertThat(result.option().values().get(0).name()).isEqualTo("새로운값1");
+
+            // verify interactions
+            verify(productSupport, times(1)).getOptionGroupById(optionGroupId);
+            verify(optionValueRepository, times(1)).saveAll(any(List.class));
+            verify(optionMapper, times(1)).toDto(any(OptionGroup.class), any(List.class));
+        }
+
+        @Test
+        @DisplayName("실패: 옵션 그룹이 존재하지 않으면 CustomException을 발생시킨다")
+        void appendOptions_fail_groupNotFound() {
+            // given
+            Long nonExistentGroupId = 99L;
+            OptionAppendRequestDto requestDto = OptionAppendRequestDto.builder()
+                    .values(List.of("새로운값"))
+                    .build();
+
+            given(productSupport.getOptionGroupById(nonExistentGroupId)).willReturn(Optional.empty());
+
+            // when & then
+            CustomException exception = assertThrows(CustomException.class, () ->
+                    optionUseCase.appendOptions(nonExistentGroupId, requestDto)
+            );
+
+            assertThat(exception.getFailureCode()).isEqualTo(FailureCode.OPTION_GROUP_NOT_FOUND);
+
+            // verify that no save operation was attempted
+            verify(optionValueRepository, never()).saveAll(any(List.class));
         }
     }
 }
