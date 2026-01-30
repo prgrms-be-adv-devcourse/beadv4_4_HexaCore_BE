@@ -1,6 +1,8 @@
 package com.back.product.adapter.in;
 
+import com.back.common.code.FailureCode;
 import com.back.common.code.SuccessCode;
+import com.back.common.exception.CustomException;
 import com.back.product.app.ProductFacade;
 import com.back.product.dto.OptionDto;
 import com.back.product.dto.request.OptionAppendRequestDto;
@@ -30,11 +32,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -271,6 +270,43 @@ public class ApiV1OptionControllerTest {
                     .andExpect(jsonPath("$.data.value").value(newName));
 
             verify(productFacade).modifyOptionValue(eq(optionValueId), any(OptionValueModifyRequestDto.class));
+        }
+    }
+
+    @Nested
+    @DisplayName("DELETE /api/v1/products/options/{optionGroupId}")
+    class DeleteOptionGroupTest {
+
+        @Test
+        @DisplayName("옵션 그룹 삭제 컨트롤러 단위 테스트 - 성공")
+        void deleteOptionGroup_success() throws Exception {
+            // given
+            Long optionGroupId = 1L;
+            doNothing().when(productFacade).deleteOptionGroup(anyLong());
+
+            // when & then
+            mockMvc.perform(delete("/api/v1/products/options/{optionGroupId}", optionGroupId))
+                    .andDo(print())
+                    .andExpect(status().isNoContent());
+
+            verify(productFacade).deleteOptionGroup(eq(optionGroupId));
+        }
+
+        @Test
+        @DisplayName("옵션 그룹 삭제 컨트롤러 단위 테스트 - 실패 (옵션 그룹 사용 중)")
+        void deleteOptionGroup_fail_optionGroupInUse() throws Exception {
+            // given
+            Long optionGroupId = 1L;
+            doThrow(new CustomException(FailureCode.OPTION_GROUP_IN_USE))
+                    .when(productFacade)
+                    .deleteOptionGroup(anyLong());
+
+            // when & then
+            mockMvc.perform(delete("/api/v1/products/options/{optionGroupId}", optionGroupId))
+                    .andDo(print())
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.code").value(FailureCode.OPTION_GROUP_IN_USE.name()))
+                    .andExpect(jsonPath("$.message").value(FailureCode.OPTION_GROUP_IN_USE.getMessage()));
         }
     }
 }
