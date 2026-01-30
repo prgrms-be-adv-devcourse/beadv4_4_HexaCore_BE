@@ -129,6 +129,11 @@ public class OptionUseCase {
 
         optionGroupRepository.deleteById(optionGroupId);
     }
+
+    @Transactional
+    public void deleteOption(Long optionValueId) {
+        optionValueRepository.deleteById(optionValueId);
+    }
     
     private OptionGroup createOptionGroup(String name) {
         return optionMapper.toGroupEntity(name);

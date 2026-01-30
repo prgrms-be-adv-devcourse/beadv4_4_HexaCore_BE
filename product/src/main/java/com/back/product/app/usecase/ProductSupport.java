@@ -120,4 +120,9 @@ public class ProductSupport {
     public Boolean existsProductByOptionGroupId(Long optionGroupId) {
         return productOptionValuesRepository.existsByOptionValue_OptionGroup_Id(optionGroupId);
     }
+
+    @Transactional(readOnly = true)
+    public Boolean existsProductByOptionValueId(Long optionValueId) {
+        return productOptionValuesRepository.existsByOptionValue_Id(optionValueId);
+    }
 }

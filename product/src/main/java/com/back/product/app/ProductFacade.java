@@ -146,4 +146,15 @@ public class ProductFacade {
 
         optionUseCase.deleteOptions(optionGroupId);
     }
+
+    @Transactional
+    public void deleteOptionValue(Long optionValueId) {
+        Boolean isUsed = productUseCase.isOptionValueInUse(optionValueId);
+
+        if (isUsed) {
+            throw new CustomException(FailureCode.OPTION_VALUE_IN_USE);
+        }
+
+        optionUseCase.deleteOption(optionValueId);
+    }
 }
