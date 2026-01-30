@@ -31,8 +31,6 @@ class ProductFacadeTest {
     @Mock
     private OptionUseCase optionUseCase;
 
-    // 다른 UseCase Mock들은 이 테스트에 필요하지 않으므로 생략합니다.
-
     @Nested
     @DisplayName("deleteOptionGroup 메서드")
     class DeleteOptionGroupTest {
@@ -83,6 +81,45 @@ class ProductFacadeTest {
             verify(productUseCase, times(1)).isOptionGroupInUse(eq(optionGroupId));
             // 2. 옵션이 사용 중이므로, 삭제 메서드는 호출되지 않았는지 검증
             verify(optionUseCase, never()).deleteOptions(anyLong());
+        }
+
+        @Nested
+        @DisplayName("deleteOptionValue 메서드")
+        class DeleteOptionValueTest {
+
+            @Test
+            @DisplayName("성공: 옵션 값이 사용 중이지 않을 때, 삭제 로직을 정상적으로 호출한다")
+            void deleteOptionValue_success_whenNotInUse() {
+                // given
+                Long optionValueId = 1L;
+                given(productUseCase.isOptionValueInUse(anyLong())).willReturn(false);
+
+                // when & then
+                assertDoesNotThrow(() -> productFacade.deleteOptionValue(optionValueId));
+
+                // verify
+                verify(productUseCase, times(1)).isOptionValueInUse(eq(optionValueId));
+                verify(optionUseCase, times(1)).deleteOption(eq(optionValueId));
+            }
+
+            @Test
+            @DisplayName("실패: 옵션 값이 사용 중일 때, CustomException을 발생시킨다")
+            void deleteOptionValue_fail_whenInUse() {
+                // given
+                Long optionValueId = 1L;
+                given(productUseCase.isOptionValueInUse(anyLong())).willReturn(true);
+
+                // when & then
+                CustomException exception = assertThrows(CustomException.class, () ->
+                        productFacade.deleteOptionValue(optionValueId)
+                );
+
+                assertEquals(FailureCode.OPTION_VALUE_IN_USE, exception.getFailureCode());
+
+                // verify
+                verify(productUseCase, times(1)).isOptionValueInUse(eq(optionValueId));
+                verify(optionUseCase, never()).deleteOption(anyLong());
+            }
         }
     }
 }
