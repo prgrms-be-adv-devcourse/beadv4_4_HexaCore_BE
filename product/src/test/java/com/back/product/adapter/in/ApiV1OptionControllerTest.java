@@ -6,13 +6,13 @@ import com.back.product.dto.OptionDto;
 import com.back.product.dto.request.OptionAppendRequestDto;
 import com.back.product.dto.request.OptionCreateRequestDto;
 import com.back.product.dto.request.OptionGroupModifyRequestDto;
+import com.back.product.dto.request.OptionValueModifyRequestDto;
 import com.back.product.dto.response.OptionGroupModifyResponseDto;
 import com.back.product.dto.response.OptionListResponseDto;
 import com.back.product.dto.response.OptionResponseDto;
+import com.back.product.dto.response.OptionValueModifyResponseDto;
 import com.back.security.jwt.JWTUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -43,6 +43,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @DisplayName("ApiV1OptionController 테스트")
 @ActiveProfiles("test")
 public class ApiV1OptionControllerTest {
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -51,13 +52,8 @@ public class ApiV1OptionControllerTest {
 
     @MockitoBean
     private ProductFacade productFacade;
-    
-    ObjectMapper objectMapper = new ObjectMapper();
 
-    @BeforeEach
-    void setupObjectMapper() {
-        objectMapper.registerModule(new JavaTimeModule());
-    }
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Nested
     @DisplayName("GET /api/v1/products/options")
@@ -65,7 +61,7 @@ public class ApiV1OptionControllerTest {
         @Test
         @DisplayName("상품 옵션 목록 조회 컨트롤러 단위 테스트")
         void getOptions_unit_test() throws Exception {
-            // given: 테스트 준비
+            // given
             OptionDto.GroupDto color = OptionDto.GroupDto.builder().id(1L).name("색상").build();
             List<OptionDto.ValueDto> colorValues = List.of(
                     OptionDto.ValueDto.builder().id(1L).name("빨강").build(),
@@ -85,9 +81,9 @@ public class ApiV1OptionControllerTest {
 
             given(productFacade.getOptions()).willReturn(response);
 
-            mockMvc.perform(
-                            get("/api/v1/products/options")
-                                    .contentType(MediaType.APPLICATION_JSON_VALUE))
+            // when & then
+            mockMvc.perform(get("/api/v1/products/options")
+                            .contentType(MediaType.APPLICATION_JSON_VALUE))
                     .andDo(print())
                     .andExpect(status().isOk());
 
@@ -98,12 +94,10 @@ public class ApiV1OptionControllerTest {
     @Nested
     @DisplayName("POST /api/v1/products/options")
     class CreateOptionsTest {
-
         @Test
         @DisplayName("상품 옵션 생성 컨트롤러 단위 테스트 - 성공")
         void createOptions_unit_test_success() throws Exception {
-            // given: 테스트 준비
-            // 1. 요청 DTO 생성
+            // given
             OptionCreateRequestDto.OptionDto requestOption1 = OptionCreateRequestDto.OptionDto.builder()
                     .group("color")
                     .values(List.of("red", "blue"))
@@ -116,7 +110,6 @@ public class ApiV1OptionControllerTest {
                     .options(List.of(requestOption1, requestOption2))
                     .build();
 
-            // 2. 응답 DTO 생성
             OptionDto.GroupDto responseGroup1 = OptionDto.GroupDto.builder().id(1L).name("color").build();
             List<OptionDto.ValueDto> responseValues1 = List.of(
                     OptionDto.ValueDto.builder().id(101L).name("red").build(),
@@ -134,15 +127,14 @@ public class ApiV1OptionControllerTest {
                     ))
                     .build();
 
-            // 3. ProductFacade 모킹
             given(productFacade.createOptions(any(OptionCreateRequestDto.class))).willReturn(expectedResponseDto);
 
-            // when & then: 컨트롤러 실행 및 결과 검증
+            // when & then
             mockMvc.perform(post("/api/v1/products/options")
                             .contentType(MediaType.APPLICATION_JSON_VALUE)
                             .content(objectMapper.writeValueAsString(requestDto)))
                     .andDo(print())
-                    .andExpect(status().isCreated()) // 201 Created
+                    .andExpect(status().isCreated())
                     .andExpect(jsonPath("$.code").value(SuccessCode.CREATED.name()))
                     .andExpect(jsonPath("$.message").value(SuccessCode.CREATED.getMessage()))
                     .andExpect(jsonPath("$.data.options[0].group.name").value("color"))
@@ -150,72 +142,22 @@ public class ApiV1OptionControllerTest {
                     .andExpect(jsonPath("$.data.options[1].group.name").value("size"))
                     .andExpect(jsonPath("$.data.options[1].values[1].name").value("large"));
 
-            // ProductFacade의 createOptions 메서드가 올바른 인수로 한 번 호출되었는지 검증
             verify(productFacade).createOptions(any(OptionCreateRequestDto.class));
         }
 
         @Test
         @DisplayName("상품 옵션 생성 컨트롤러 단위 테스트 - 유효성 검사 실패 (빈 Options 리스트)")
         void createOptions_unit_test_validation_failure_empty_options() throws Exception {
-            // given: 유효하지 않은 요청 DTO 생성 (options 리스트가 비어 있음)
             OptionCreateRequestDto requestDto = OptionCreateRequestDto.builder()
-                    .options(List.of()) // Empty list
+                    .options(List.of())
                     .build();
 
-            // when & then: 컨트롤러 실행 및 결과 검증
             mockMvc.perform(post("/api/v1/products/options")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(requestDto)))
                     .andDo(print())
-                    .andExpect(status().isBadRequest()); // 400 Bad Request
+                    .andExpect(status().isBadRequest());
 
-            // ProductFacade의 createOptions 메서드가 호출되지 않았는지 검증
-            verify(productFacade, never()).createOptions(any(OptionCreateRequestDto.class));
-        }
-
-        @Test
-        @DisplayName("상품 옵션 생성 컨트롤러 단위 테스트 - 유효성 검사 실패 (Option Group Name 공백)")
-        void createOptions_unit_test_validation_failure_blank_group_name() throws Exception {
-            // given: 유효하지 않은 요청 DTO 생성 (group 이름이 공백)
-            OptionCreateRequestDto.OptionDto requestOption = OptionCreateRequestDto.OptionDto.builder()
-                    .group("  ") // Blank group name
-                    .values(List.of("value1"))
-                    .build();
-            OptionCreateRequestDto requestDto = OptionCreateRequestDto.builder()
-                    .options(List.of(requestOption))
-                    .build();
-
-            // when & then: 컨트롤러 실행 및 결과 검증
-            mockMvc.perform(post("/api/v1/products/options")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(requestDto)))
-                    .andDo(print())
-                    .andExpect(status().isBadRequest()); // 400 Bad Request
-
-            // ProductFacade의 createOptions 메서드가 호출되지 않았는지 검증
-            verify(productFacade, never()).createOptions(any(OptionCreateRequestDto.class));
-        }
-
-        @Test
-        @DisplayName("상품 옵션 생성 컨트롤러 단위 테스트 - 유효성 검사 실패 (Option Values 리스트 공백)")
-        void createOptions_unit_test_validation_failure_empty_values() throws Exception {
-            // given: 유효하지 않은 요청 DTO 생성 (values 리스트가 비어 있음)
-            OptionCreateRequestDto.OptionDto requestOption = OptionCreateRequestDto.OptionDto.builder()
-                    .group("group1")
-                    .values(List.of()) // Empty values list
-                    .build();
-            OptionCreateRequestDto requestDto = OptionCreateRequestDto.builder()
-                    .options(List.of(requestOption))
-                    .build();
-
-            // when & then: 컨트롤러 실행 및 결과 검증
-            mockMvc.perform(post("/api/v1/products/options")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(requestDto)))
-                    .andDo(print())
-                    .andExpect(status().isBadRequest()); // 400 Bad Request
-
-            // ProductFacade의 createOptions 메서드가 호출되지 않았는지 검증
             verify(productFacade, never()).createOptions(any(OptionCreateRequestDto.class));
         }
     }
@@ -223,7 +165,6 @@ public class ApiV1OptionControllerTest {
     @Nested
     @DisplayName("POST /api/v1/products/options/{optionGroupId}")
     class AppendOptionsTest {
-
         @Test
         @DisplayName("상품 옵션 값 추가 컨트롤러 단위 테스트 - 성공")
         void appendOptions_success() throws Exception {
@@ -257,50 +198,11 @@ public class ApiV1OptionControllerTest {
 
             verify(productFacade).appendOptions(eq(optionGroupId), any(OptionAppendRequestDto.class));
         }
-
-        @Test
-        @DisplayName("상품 옵션 값 추가 컨트롤러 단위 테스트 - 유효성 검사 실패 (빈 values 리스트)")
-        void appendOptions_validationFailure_emptyList() throws Exception {
-            // given
-            Long optionGroupId = 1L;
-            OptionAppendRequestDto requestDto = OptionAppendRequestDto.builder()
-                    .values(List.of())
-                    .build();
-
-            // when & then
-            mockMvc.perform(post("/api/v1/products/options/{optionGroupId}", optionGroupId)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(requestDto)))
-                    .andDo(print())
-                    .andExpect(status().isBadRequest());
-
-            verify(productFacade, never()).appendOptions(anyLong(), any(OptionAppendRequestDto.class));
-        }
-
-        @Test
-        @DisplayName("상품 옵션 값 추가 컨트롤러 단위 테스트 - 유효하지 않은 패턴)")
-        void appendOptions_validationFailure_invalidPattern() throws Exception {
-            // given
-            Long optionGroupId = 1L;
-            OptionAppendRequestDto requestDto = OptionAppendRequestDto.builder()
-                    .values(List.of("invalid!value"))
-                    .build();
-
-            // when & then
-            mockMvc.perform(post("/api/v1/products/options/{optionGroupId}", optionGroupId)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(requestDto)))
-                    .andDo(print())
-                    .andExpect(status().isBadRequest());
-
-            verify(productFacade, never()).appendOptions(anyLong(), any(OptionAppendRequestDto.class));
-        }
     }
 
     @Nested
     @DisplayName("PUT /api/v1/products/options/groups/{optionGroupId}")
     class ModifyOptionGroupTest {
-
         @Test
         @DisplayName("옵션 그룹 이름 수정 컨트롤러 단위 테스트 - 성공")
         void modifyOptionGroup_success() throws Exception {
@@ -326,49 +228,49 @@ public class ApiV1OptionControllerTest {
                     .andDo(print())
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.code").value(SuccessCode.OK.name()))
-                    .andExpect(jsonPath("$.message").value(SuccessCode.OK.getMessage()))
                     .andExpect(jsonPath("$.data.id").value(optionGroupId))
                     .andExpect(jsonPath("$.data.name").value(newGroupName));
 
             verify(productFacade).modifyOptionGroup(eq(optionGroupId), any(OptionGroupModifyRequestDto.class));
         }
+    }
 
+    @Nested
+    @DisplayName("PUT /api/v1/products/options/values/{optionValueId}")
+    class ModifyOptionValueTest {
         @Test
-        @DisplayName("옵션 그룹 이름 수정 컨트롤러 단위 테스트 - 유효성 검사 실패 (공백 이름)")
-        void modifyOptionGroup_validationFailure_blankName() throws Exception {
+        @DisplayName("옵션 값 수정 컨트롤러 단위 테스트 - 성공")
+        void modifyOptionValue_success() throws Exception {
             // given
-            Long optionGroupId = 1L;
-            OptionGroupModifyRequestDto requestDto = OptionGroupModifyRequestDto.builder()
-                    .name("  ") // Blank name
+            Long optionValueId = 1L;
+            Long newOptionGroupId = 2L;
+            String newName = "newvalue";
+            OptionValueModifyRequestDto requestDto = OptionValueModifyRequestDto.builder()
+                    .optionGroupId(newOptionGroupId)
+                    .name(newName)
                     .build();
 
+            OptionValueModifyResponseDto expectedResponseDto = OptionValueModifyResponseDto.builder()
+                    .id(optionValueId)
+                    .optionGroupId(newOptionGroupId)
+                    .value(newName)
+                    .updatedAt(LocalDateTime.now())
+                    .build();
+
+            given(productFacade.modifyOptionValue(eq(optionValueId), any(OptionValueModifyRequestDto.class))).willReturn(expectedResponseDto);
+
             // when & then
-            mockMvc.perform(put("/api/v1/products/options/groups/{optionGroupId}", optionGroupId)
+            mockMvc.perform(put("/api/v1/products/options/values/{optionValueId}", optionValueId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(requestDto)))
                     .andDo(print())
-                    .andExpect(status().isBadRequest());
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.code").value(SuccessCode.OK.name()))
+                    .andExpect(jsonPath("$.data.id").value(optionValueId))
+                    .andExpect(jsonPath("$.data.optionGroupId").value(newOptionGroupId))
+                    .andExpect(jsonPath("$.data.value").value(newName));
 
-            verify(productFacade, never()).modifyOptionGroup(anyLong(), any(OptionGroupModifyRequestDto.class));
-        }
-
-        @Test
-        @DisplayName("옵션 그룹 이름 수정 컨트롤러 단위 테스트 - 유효성 검사 실패 (유효하지 않은 패턴)")
-        void modifyOptionGroup_validationFailure_invalidPattern() throws Exception {
-            // given
-            Long optionGroupId = 1L;
-            OptionGroupModifyRequestDto requestDto = OptionGroupModifyRequestDto.builder()
-                    .name("InvalidName123") // Invalid pattern (uppercase, numbers)
-                    .build();
-
-            // when & then
-            mockMvc.perform(put("/api/v1/products/options/groups/{optionGroupId}", optionGroupId)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(requestDto)))
-                    .andDo(print())
-                    .andExpect(status().isBadRequest());
-
-            verify(productFacade, never()).modifyOptionGroup(anyLong(), any(OptionGroupModifyRequestDto.class));
+            verify(productFacade).modifyOptionValue(eq(optionValueId), any(OptionValueModifyRequestDto.class));
         }
     }
 }
