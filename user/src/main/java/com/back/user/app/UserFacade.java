@@ -5,6 +5,7 @@ import com.back.common.user.event.fcmTokenChangedEvent;
 import com.back.user.domain.User;
 import com.back.user.dto.request.UpdateFcmTokenRequest;
 import com.back.user.dto.request.UpdateNotificationSettingsRequest;
+import com.back.user.dto.response.NotificationSettingResponse;
 import com.back.user.dto.response.UserIdResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +21,7 @@ public class UserFacade {
     private final UserSupport userSupport;
     private final UserUpdateUsecase userUpdateUsecase;
     private final UserIncrementBlindCountUseCase userIncrementBlindCountUseCase;
+    private final GetNotificationSettingsUseCase getNotificationSettingsUseCase;
     private final KafkaEventPublisher kafkaEventPublisher;
 
     @Transactional
@@ -36,6 +38,12 @@ public class UserFacade {
         return UserIdResponse.of(user);
     }
 
+    @Transactional(readOnly = true)
+    public NotificationSettingResponse getNotificationSettings(Long userId) {
+        return getNotificationSettingsUseCase.execute(userId);
+    }
+
+    @Transactional
     public UserIdResponse updateNotificationSettings(Long userId, UpdateNotificationSettingsRequest request) {
         User user = userSupport.findById(userId);
 
