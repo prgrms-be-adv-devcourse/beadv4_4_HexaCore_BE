@@ -3,13 +3,14 @@ package com.back.user.adapter.in.auth.security.handler;
 import com.back.security.jwt.JWTUtil;
 import com.back.user.adapter.in.auth.security.oauth.principal.CustomOAuth2User;
 import com.back.user.adapter.out.RefreshStore;
+import com.back.user.app.auth.RefreshCookieSupport;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
@@ -23,6 +24,7 @@ import java.time.Duration;
 public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
     private final JWTUtil jwtUtil;
     private final RefreshStore refreshStore;
+    private final RefreshCookieSupport refreshCookieSupport;
 
     @Value("${app.jwt.refresh-ttl}")
     private Duration refreshTtl;
@@ -44,22 +46,11 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         refreshStore.save(userId, refreshToken, refreshTtl);
 
         // 쿠키에 refresh 토큰 저장
-        response.addCookie(createCookie("refresh", refreshToken, refreshTtl));
+        response.addHeader(HttpHeaders.SET_COOKIE, refreshCookieSupport.createRefreshSetCookieHeader(refreshToken, refreshTtl));
 
         // 프론트 경로로 redirect
         response.sendRedirect(frontendCallbackUrl);
     }
 
-    // todo: 환경변수 분리 및 util 클래스로 빼기
-    private Cookie createCookie(String key, String value, Duration ttl) {
-
-        Cookie cookie = new Cookie(key, value);
-        cookie.setMaxAge((int) ttl.getSeconds());
-        cookie.setSecure(true); // 운영 환경 설정
-        cookie.setPath("/");
-        cookie.setHttpOnly(true);
-        cookie.setAttribute("SameSite", "Lax");
-        return cookie;
-    }
 }
 

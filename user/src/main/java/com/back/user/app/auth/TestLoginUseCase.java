@@ -6,6 +6,7 @@ import com.back.security.jwt.JWTUtil;
 import com.back.user.adapter.out.RefreshStore;
 import com.back.user.adapter.out.UserRepository;
 import com.back.user.domain.User;
+import com.back.user.dto.response.TokenResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -27,14 +28,8 @@ public class TestLoginUseCase {
     @Value("${app.jwt.refresh-ttl}")
     private Duration refreshTtl;
 
-    public record Result(
-            String accessToken,
-            String refreshToken,
-            Duration refreshTtl
-    ) {}
-
     @Transactional(readOnly = true)
-    public Result execute(String email) {
+    public TokenResponseDto execute(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new EntityNotFoundException(FailureCode.USER_NOT_FOUND));
 
@@ -45,6 +40,6 @@ public class TestLoginUseCase {
 
         refreshStore.save(user.getId(), refresh, refreshTtl);
 
-        return new Result(access, refresh, refreshTtl);
+        return new TokenResponseDto(access, refresh, refreshTtl);
     }
 }

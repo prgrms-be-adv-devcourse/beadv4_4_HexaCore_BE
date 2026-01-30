@@ -4,8 +4,7 @@ import com.back.common.code.FailureCode;
 import com.back.common.exception.UnauthorizedException;
 import com.back.security.jwt.JWTUtil;
 import com.back.user.adapter.out.RefreshStore;
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletResponse;
+import com.back.user.dto.response.TokenResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -27,42 +26,23 @@ public class ReissueTokenUseCase {
     @Value("${app.jwt.refresh-ttl}")
     private Duration refreshTtl;
 
-    public String reissueAccessToken(String refreshToken, HttpServletResponse response) {
-
-        // refresh 토큰이 없을 경우 예외 발생
-        if (refreshToken == null) {
-            throw new UnauthorizedException(FailureCode.TOKEN_MISSING);
-        }
+    public TokenResponseDto execute(String refreshToken) {
+        requirePresent(refreshToken);
 
         try {
 
-            String category = jwtUtil.getCategory(refreshToken);
-
-            // refresh 토큰이 아닌 경우 예외 발생
-            if (!"refresh".equals(category)) {
+            if (!"refresh".equals(jwtUtil.getCategory(refreshToken))) {
                 throw new UnauthorizedException(FailureCode.TOKEN_CATEGORY_INVALID);
             }
 
-            // refresh 토큰에서 userId, role값 획득
             Long userId = jwtUtil.getUserId(refreshToken);
             String role = jwtUtil.getRole(refreshToken);
 
-            // Redis에 저장된 현재 refresh와 동일한지 확인
             if (!refreshStore.isValid(userId, refreshToken)) {
                 throw new UnauthorizedException(FailureCode.TOKEN_INVALID);
             }
 
-            // 엑세스 토큰 및 refresh 토큰 생성
-            String newAccess = jwtUtil.createJwt("access", userId, role, accessTtl.toMillis());
-            String newRefresh = jwtUtil.createJwt("refresh", userId , role, refreshTtl.toMillis());
-
-            //redis에 refresh 저장
-            refreshStore.rotate(userId, newRefresh, refreshTtl);
-
-            // 응답 쿠키에 refresh 토큰 추가
-            response.addCookie(createCookie("refresh", newRefresh, refreshTtl));
-
-            return newAccess;
+            return reissue(userId, role);
 
         } catch (io.jsonwebtoken.ExpiredJwtException e) {
             throw new UnauthorizedException(FailureCode.TOKEN_EXPIRED);
@@ -72,17 +52,19 @@ public class ReissueTokenUseCase {
         }
     }
 
-    // todo: 환경변수 분리 및 util 클래스로 빼기
-    private Cookie createCookie(String key, String value, Duration ttl) {
-
-        Cookie cookie = new Cookie(key, value);
-        cookie.setMaxAge((int) ttl.getSeconds());
-        cookie.setSecure(true); // 운영 환경 설정
-        cookie.setPath("/");
-        cookie.setHttpOnly(true);
-        cookie.setAttribute("SameSite", "Lax");
-        return cookie;
+    private void requirePresent(String refreshToken) {
+        if (refreshToken == null || refreshToken.isBlank()) {
+            throw new UnauthorizedException(FailureCode.TOKEN_MISSING);
+        }
     }
 
+    private TokenResponseDto reissue(Long userId, String role) {
+        String newAccess = jwtUtil.createJwt("access", userId, role, accessTtl.toMillis());
+        String newRefresh = jwtUtil.createJwt("refresh", userId, role, refreshTtl.toMillis());
+
+        refreshStore.rotate(userId, newRefresh, refreshTtl);
+
+        return new TokenResponseDto(newAccess, newRefresh, refreshTtl);
+    }
 }
 
