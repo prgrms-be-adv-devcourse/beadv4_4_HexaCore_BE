@@ -26,4 +26,6 @@ public interface PriceAlertRepository extends JpaRepository<PriceAlert, Long> {
             @Param("currentPrice") BigDecimal currentPrice,
             @Param("threshold") LocalDateTime threshold
     );
+
+    List<PriceAlert> findByUserId(Long userId);
 }

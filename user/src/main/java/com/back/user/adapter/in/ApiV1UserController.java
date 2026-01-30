@@ -6,14 +6,12 @@ import com.back.security.principal.AuthPrincipal;
 import com.back.user.app.UserFacade;
 import com.back.user.dto.request.UpdateFcmTokenRequest;
 import com.back.user.dto.request.UpdateNotificationSettingsRequest;
+import com.back.user.dto.response.NotificationSettingResponse;
 import com.back.user.dto.response.UserIdResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/users")
@@ -29,10 +27,17 @@ public class ApiV1UserController implements UserApiV1 {
         return CommonResponse.success(SuccessCode.OK, response);
     }
 
-    @PatchMapping("/me/notifications/setting")
     @Override
+    @GetMapping("/me/notifications/setting")
+    public CommonResponse<NotificationSettingResponse> getNotificationSettings(@AuthenticationPrincipal AuthPrincipal authPrincipal) {
+        NotificationSettingResponse response = userFacade.getNotificationSettings(authPrincipal.getUserId());
+        return CommonResponse.success(SuccessCode.OK, response);
+    }
+
+    @Override
+    @PatchMapping("/me/notifications/setting")
     public CommonResponse<UserIdResponse> updateNotificationSettings(@AuthenticationPrincipal AuthPrincipal authPrincipal,
-                                                                     @RequestBody UpdateNotificationSettingsRequest request) {
+                                                                     @Valid @RequestBody UpdateNotificationSettingsRequest request) {
         UserIdResponse response = userFacade.updateNotificationSettings(authPrincipal.getUserId(), request);
         return CommonResponse.success(SuccessCode.OK, response);
     }
