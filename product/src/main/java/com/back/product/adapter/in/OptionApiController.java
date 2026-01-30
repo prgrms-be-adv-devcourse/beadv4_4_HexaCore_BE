@@ -2,6 +2,7 @@ package com.back.product.adapter.in;
 
 import com.back.common.response.CommonResponse;
 import com.back.product.dto.request.BrandCreateRequestDto;
+import com.back.product.dto.request.OptionCreateRequestDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -16,17 +17,17 @@ public interface OptionApiController {
     @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
     CommonResponse<?> getOptions();
 
-    @Operation(summary = "옵션 그룹 생성", description = "새로운 옵션 그룹을 생성합니다.")
+    @Operation(summary = "옵션 생성", description = "새로운 옵션 그룹을 값을 포함하여 생성합니다.")
     @ApiResponse(responseCode = "201", description = "새로운 옵션 그룹 생성 성공")
     @ApiResponse(responseCode = "401", description = "인증 실패", content = @Content)
     @ApiResponse(responseCode = "403", description = "권한 없음", content = @Content)
     @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
-    CommonResponse<?> createOptionGroups(BrandCreateRequestDto request);
+    CommonResponse<?> createOptions(OptionCreateRequestDto request);
 
-    @Operation(summary = "옵션 값 생성", description = "새로운 옵션 값을 생성합니다.")
+    @Operation(summary = "옵션 추가", description = "기존의 옵션 그룹에 값을 추가합니다.")
     @ApiResponse(responseCode = "201", description = "새로운 옵션 값 생성 성공")
     @ApiResponse(responseCode = "401", description = "인증 실패", content = @Content)
     @ApiResponse(responseCode = "403", description = "권한 없음", content = @Content)
     @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
-    CommonResponse<?> createOptionValues(BrandCreateRequestDto request);
+    CommonResponse<?> appendOptions(OptionCreateRequestDto request);
 }
