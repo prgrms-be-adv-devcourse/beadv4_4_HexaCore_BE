@@ -6,7 +6,7 @@ import static com.back.settlement.domain.SettlementPolicy.PLATFORM_FEE_RATE;
 
 import com.back.settlement.adapter.out.SettlementItemRepository;
 import com.back.settlement.adapter.out.SettlementRepository;
-import com.back.settlement.app.dto.internal.SettlementWithItems;
+import com.back.settlement.batch.SettlementWithItems;
 import com.back.settlement.app.dto.request.SettlementRequest;
 import com.back.settlement.app.support.DomainEventPublisher;
 import com.back.settlement.app.support.SettlementSupport;

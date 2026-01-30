@@ -2,7 +2,6 @@ package com.back.settlement.batch;
 
 import static com.back.settlement.domain.SettlementPolicy.CHUNK_SIZE;
 
-import com.back.settlement.app.dto.internal.SettlementWithItems;
 import com.back.settlement.app.support.SettlementSupport;
 import com.back.settlement.app.support.YearMonthUtils;
 import com.back.settlement.app.usecase.SettlementCreateUseCase;
