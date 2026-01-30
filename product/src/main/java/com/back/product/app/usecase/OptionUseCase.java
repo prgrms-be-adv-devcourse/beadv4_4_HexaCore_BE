@@ -7,7 +7,9 @@ import com.back.product.adapter.out.OptionValueRepository;
 import com.back.product.domain.OptionGroup;
 import com.back.product.domain.OptionValue;
 import com.back.product.dto.OptionDto;
+import com.back.product.dto.request.OptionAppendRequestDto;
 import com.back.product.dto.request.OptionCreateRequestDto;
+import com.back.product.dto.response.OptionListResponseDto;
 import com.back.product.dto.response.OptionResponseDto;
 import com.back.product.mapper.OptionMapper;
 import jakarta.validation.Valid;
@@ -19,7 +21,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -42,11 +43,11 @@ public class OptionUseCase {
     }
 
     @Transactional(readOnly = true)
-    public OptionResponseDto findAllOptions() {
+    public OptionListResponseDto findAllOptions() {
         List<OptionGroup> optionGroups = productSupport.getAllProductOptionGroups();
 
         if (optionGroups.isEmpty()) {
-            return OptionResponseDto.builder().build();
+            return OptionListResponseDto.builder().build();
         }
 
         Map<OptionGroup, List<OptionValue>> optionValueAsMap = productSupport.getAllProductOptionValuesByOptionGroupIn(optionGroups)
@@ -56,12 +57,12 @@ public class OptionUseCase {
     }
 
     @Transactional
-    public OptionResponseDto createOptions(@Valid OptionCreateRequestDto request) {
+    public OptionListResponseDto createOptions(@Valid OptionCreateRequestDto request) {
         List<OptionDto> createdOptions = request.options().stream()
                 .map(option -> createOption(option.group(), option.values()))
                 .toList();
 
-        return OptionResponseDto.builder().options(createdOptions).build();
+        return OptionListResponseDto.builder().options(createdOptions).build();
     }
 
     @Transactional
@@ -78,6 +79,18 @@ public class OptionUseCase {
         
         return convertToOptionDto(group, createdValues);
     }
+
+    @Transactional
+    public OptionResponseDto appendOptions(Long optionGroupId, @Valid OptionAppendRequestDto request) {
+        OptionGroup group = productSupport.getOptionGroupById(optionGroupId)
+                .orElseThrow(() -> new CustomException(FailureCode.OPTION_GROUP_NOT_FOUND));
+
+        List<OptionValue> newValues = createOptionValues(group, request.values());
+
+        List<OptionValue> createdValues = optionValueRepository.saveAll(newValues);
+
+        return OptionResponseDto.builder().option(convertToOptionDto(group, createdValues)).build();
+    }
     
     private OptionGroup createOptionGroup(String name) {
         return optionMapper.toGroupEntity(name);
@@ -93,7 +106,7 @@ public class OptionUseCase {
         return optionMapper.toValueEntity(group, valueName);
     }
 
-    private OptionResponseDto convertToOptionResponseDto(List<OptionGroup> optionGroups, Map<OptionGroup, List<OptionValue>> optionValueAsMap) {
+    private OptionListResponseDto convertToOptionResponseDto(List<OptionGroup> optionGroups, Map<OptionGroup, List<OptionValue>> optionValueAsMap) {
         List<OptionDto> optionDtos = optionGroups.stream().map(group -> {
             List<OptionValue> values = optionValueAsMap.get(group);
 
@@ -102,7 +115,7 @@ public class OptionUseCase {
             return convertToOptionDto(group, values);
         }).toList();
 
-        return OptionResponseDto.builder().options(optionDtos).build();
+        return OptionListResponseDto.builder().options(optionDtos).build();
     }
     
     private OptionDto convertToOptionDto(OptionGroup group, List<OptionValue> values) {

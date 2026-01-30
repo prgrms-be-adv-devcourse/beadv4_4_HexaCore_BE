@@ -8,7 +8,7 @@ import com.back.product.domain.OptionGroup;
 import com.back.product.domain.OptionValue;
 import com.back.product.dto.OptionDto;
 import com.back.product.dto.request.OptionCreateRequestDto;
-import com.back.product.dto.response.OptionResponseDto;
+import com.back.product.dto.response.OptionListResponseDto;
 import com.back.product.mapper.OptionMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -21,7 +21,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -129,7 +128,7 @@ class OptionUseCaseTest {
 
 
             // when
-            OptionResponseDto result = optionUseCase.findAllOptions();
+            OptionListResponseDto result = optionUseCase.findAllOptions();
 
             // then
             assertThat(result).isNotNull();
@@ -147,7 +146,7 @@ class OptionUseCaseTest {
             given(productSupport.getAllProductOptionGroups()).willReturn(new ArrayList<>());
 
             // when
-            OptionResponseDto result = optionUseCase.findAllOptions();
+            OptionListResponseDto result = optionUseCase.findAllOptions();
 
             // then
             assertThat(result).isNotNull();
@@ -170,7 +169,7 @@ class OptionUseCaseTest {
             given(optionMapper.toDto(eq(group1), any(List.class))).willReturn(optionDto1);
 
             // when
-            OptionResponseDto result = optionUseCase.findAllOptions();
+            OptionListResponseDto result = optionUseCase.findAllOptions();
 
             // then
             assertThat(result).isNotNull();
@@ -244,7 +243,7 @@ class OptionUseCaseTest {
 
 
             // when
-            OptionResponseDto result = optionUseCase.createOptions(requestDto);
+            OptionListResponseDto result = optionUseCase.createOptions(requestDto);
 
             // then
             assertThat(result).isNotNull();
@@ -305,7 +304,7 @@ class OptionUseCaseTest {
             given(optionMapper.toDto(eq(existingGroup1), any(List.class))).willReturn(responseOptionDto1);
 
             // when
-            OptionResponseDto result = optionUseCase.createOptions(requestDto);
+            OptionListResponseDto result = optionUseCase.createOptions(requestDto);
 
             // then
             assertThat(result).isNotNull();
@@ -377,7 +376,7 @@ class OptionUseCaseTest {
             given(optionMapper.toDto(eq(newGroup2), any(List.class))).willReturn(responseOptionDto2);
 
             // when
-            OptionResponseDto result = optionUseCase.createOptions(requestDto);
+            OptionListResponseDto result = optionUseCase.createOptions(requestDto);
 
             // then
             assertThat(result).isNotNull();

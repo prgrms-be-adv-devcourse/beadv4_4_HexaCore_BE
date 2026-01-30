@@ -105,4 +105,9 @@ public class ProductSupport {
     public OptionGroup getOptionGroupByName(String name) {
         return optionGroupRepository.findByName(name);
     }
+
+    @Transactional(readOnly = true)
+    public Optional<OptionGroup> getOptionGroupById(Long optionGroupId) {
+        return optionGroupRepository.findById(optionGroupId);
+    }
 }

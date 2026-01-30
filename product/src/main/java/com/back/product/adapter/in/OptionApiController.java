@@ -2,6 +2,7 @@ package com.back.product.adapter.in;
 
 import com.back.common.response.CommonResponse;
 import com.back.product.dto.request.BrandCreateRequestDto;
+import com.back.product.dto.request.OptionAppendRequestDto;
 import com.back.product.dto.request.OptionCreateRequestDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -29,5 +30,5 @@ public interface OptionApiController {
     @ApiResponse(responseCode = "401", description = "인증 실패", content = @Content)
     @ApiResponse(responseCode = "403", description = "권한 없음", content = @Content)
     @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
-    CommonResponse<?> appendOptions(OptionCreateRequestDto request);
+    CommonResponse<?> appendOptions(Long optionGroupId, OptionAppendRequestDto request);
 }

@@ -6,6 +6,7 @@ import com.back.product.dto.CategoryDto;
 import com.back.product.dto.ProductDto;
 import com.back.product.dto.request.*;
 import com.back.product.dto.BrandDto;
+import com.back.product.dto.response.OptionListResponseDto;
 import com.back.product.dto.response.OptionResponseDto;
 import com.back.product.dto.response.ProductResponseDto;
 import com.back.product.dto.response.ProductSearchListResponseDto;
@@ -105,7 +106,7 @@ public class ProductFacade {
     }
 
     @Transactional(readOnly = true)
-    public OptionResponseDto getOptions() {
+    public OptionListResponseDto getOptions() {
         return optionUseCase.findAllOptions();
     }
 
@@ -117,7 +118,12 @@ public class ProductFacade {
     }
 
     @Transactional
-    public OptionResponseDto createOptions(@Valid OptionCreateRequestDto request) {
+    public OptionListResponseDto createOptions(@Valid OptionCreateRequestDto request) {
         return optionUseCase.createOptions(request);
+    }
+
+    @Transactional
+    public OptionResponseDto appendOptions(Long optionGroupId, @Valid OptionAppendRequestDto request) {
+        return optionUseCase.appendOptions(optionGroupId, request);
     }
 }
