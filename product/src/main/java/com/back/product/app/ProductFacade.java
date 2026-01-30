@@ -6,10 +6,7 @@ import com.back.product.dto.CategoryDto;
 import com.back.product.dto.ProductDto;
 import com.back.product.dto.request.*;
 import com.back.product.dto.BrandDto;
-import com.back.product.dto.response.OptionListResponseDto;
-import com.back.product.dto.response.OptionResponseDto;
-import com.back.product.dto.response.ProductResponseDto;
-import com.back.product.dto.response.ProductSearchListResponseDto;
+import com.back.product.dto.response.*;
 import com.back.product.mapper.ProductInfoMapper;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -125,5 +122,10 @@ public class ProductFacade {
     @Transactional
     public OptionResponseDto appendOptions(Long optionGroupId, @Valid OptionAppendRequestDto request) {
         return optionUseCase.appendOptions(optionGroupId, request);
+    }
+
+    @Transactional
+    public OptionGroupModifyResponseDto modifyOptionGroup(Long optionGroupId, @Valid OptionGroupModifyRequestDto request) {
+        return optionUseCase.modifyOptionGroup(optionGroupId, request);
     }
 }

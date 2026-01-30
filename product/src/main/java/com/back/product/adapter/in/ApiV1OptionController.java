@@ -5,6 +5,8 @@ import com.back.common.response.CommonResponse;
 import com.back.product.app.ProductFacade;
 import com.back.product.dto.request.OptionAppendRequestDto;
 import com.back.product.dto.request.OptionCreateRequestDto;
+import com.back.product.dto.request.OptionGroupModifyRequestDto;
+import com.back.product.dto.response.OptionGroupModifyResponseDto;
 import com.back.product.dto.response.OptionListResponseDto;
 import com.back.product.dto.response.OptionResponseDto;
 import jakarta.validation.Valid;
@@ -42,5 +44,14 @@ public class ApiV1OptionController implements OptionApiController {
             @Valid @RequestBody OptionAppendRequestDto request) {
         OptionResponseDto response = productFacade.appendOptions(optionGroupId, request);
         return CommonResponse.success(SuccessCode.CREATED, response);
+    }
+
+    @Override
+    @PutMapping("/groups/{optionGroupId}")
+    public CommonResponse<OptionGroupModifyResponseDto> modifyOptionGroup(
+            @PathVariable Long optionGroupId,
+            @Valid @RequestBody OptionGroupModifyRequestDto request) {
+        OptionGroupModifyResponseDto response = productFacade.modifyOptionGroup(optionGroupId, request);
+        return CommonResponse.success(SuccessCode.OK, response);
     }
 }

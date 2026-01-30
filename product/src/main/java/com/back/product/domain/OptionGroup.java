@@ -21,4 +21,8 @@ public class OptionGroup extends BaseTimeEntity {
 
     @Column(nullable = false, length = 20, unique = true)
     private String name;
+
+    public void modifyName(String name) {
+        this.name = name;
+    }
 }

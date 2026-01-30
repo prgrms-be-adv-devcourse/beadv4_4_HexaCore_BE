@@ -9,6 +9,8 @@ import com.back.product.domain.OptionValue;
 import com.back.product.dto.OptionDto;
 import com.back.product.dto.request.OptionAppendRequestDto;
 import com.back.product.dto.request.OptionCreateRequestDto;
+import com.back.product.dto.request.OptionGroupModifyRequestDto;
+import com.back.product.dto.response.OptionGroupModifyResponseDto;
 import com.back.product.dto.response.OptionListResponseDto;
 import com.back.product.dto.response.OptionResponseDto;
 import com.back.product.mapper.OptionMapper;
@@ -91,6 +93,16 @@ public class OptionUseCase {
 
         return OptionResponseDto.builder().option(convertToOptionDto(group, createdValues)).build();
     }
+
+    @Transactional
+    public OptionGroupModifyResponseDto modifyOptionGroup(Long optionGroupId, @Valid OptionGroupModifyRequestDto request) {
+        OptionGroup existsGroup = productSupport.getOptionGroupById(optionGroupId)
+                .orElseThrow(() -> new CustomException(FailureCode.OPTION_GROUP_NOT_FOUND));
+
+        existsGroup.modifyName(request.name());
+
+        return convertToModifyGroupDto(existsGroup);
+    }
     
     private OptionGroup createOptionGroup(String name) {
         return optionMapper.toGroupEntity(name);
@@ -120,5 +132,13 @@ public class OptionUseCase {
     
     private OptionDto convertToOptionDto(OptionGroup group, List<OptionValue> values) {
         return optionMapper.toDto(group, values);
+    }
+
+    private OptionGroupModifyResponseDto convertToModifyGroupDto(OptionGroup group) {
+        return OptionGroupModifyResponseDto.builder()
+                .id(group.getId())
+                .name(group.getName())
+                .updatedAt(group.getLastModifiedAt())
+                .build();
     }
 }
