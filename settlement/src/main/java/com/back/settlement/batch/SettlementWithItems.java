@@ -1,4 +1,4 @@
-package com.back.settlement.app.dto.internal;
+package com.back.settlement.batch;
 
 import com.back.settlement.domain.Settlement;
 import com.back.settlement.domain.SettlementItem;

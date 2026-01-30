@@ -1,5 +1,6 @@
 package com.back.settlement.batch;
 
+import com.back.settlement.app.dto.response.BatchExecutionResponse;
 import java.time.YearMonth;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,19 +21,35 @@ public class SettlementJobLauncher {
     private final JobLauncher jobLauncher;
     private final Job settlementJob;
 
-    public JobExecution run(YearMonth targetMonth) {
+    public BatchExecutionResponse run(YearMonth targetMonth) {
         try {
             JobParameters jobParameters = new JobParametersBuilder()
-                    .addString("targetMonth", targetMonth.toString())  // 정산 대상 월
+                    .addString("targetMonth", targetMonth.toString())
                     .toJobParameters();
             log.info("정산 배치 Job 시작. targetMonth={}", targetMonth);
 
             JobExecution execution = jobLauncher.run(settlementJob, jobParameters);
             log.info("정산 배치 Job 완료. targetMonth={}, status={}", targetMonth, execution.getStatus());
-            return execution;
+
+            return toBatchExecutionResponse(execution, targetMonth);
         } catch (Exception e) {
             log.error("정산 배치 Job 실행 실패. targetMonth={}", targetMonth, e);
             throw new RuntimeException("정산 배치 실행 실패", e);
         }
+    }
+
+    private BatchExecutionResponse toBatchExecutionResponse(JobExecution execution, YearMonth targetMonth) {
+        int processedCount = execution.getStepExecutions().stream()
+                .mapToInt(step -> (int) step.getWriteCount())
+                .sum();
+
+        return new BatchExecutionResponse(
+                execution.getId(),
+                execution.getStatus().toString(),
+                targetMonth.toString(),
+                execution.getStartTime(),
+                execution.getEndTime(),
+                processedCount
+        );
     }
 }

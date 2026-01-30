@@ -26,7 +26,6 @@ public class SettlementCashPayoutEventHandler {
         SettlementPayoutRequest payoutRequest = new SettlementPayoutRequest(
                 event.settlementId(),
                 event.sellerId(),
-                event.sellerName(),
                 event.totalNetAmount(),
                 event.completedAt()
         );
