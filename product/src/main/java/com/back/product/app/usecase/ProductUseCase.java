@@ -212,4 +212,9 @@ public class ProductUseCase {
             )
         ).toList();
     }
+
+    @Transactional
+    public Boolean isOptionGroupInUse(Long optionGroupId) {
+        return productSupport.existsProductByOptionGroupId(optionGroupId);
+    }
 }

@@ -1,5 +1,7 @@
 package com.back.product.app;
 
+import com.back.common.code.FailureCode;
+import com.back.common.exception.CustomException;
 import com.back.product.app.usecase.*;
 import com.back.product.domain.*;
 import com.back.product.dto.CategoryDto;
@@ -132,5 +134,16 @@ public class ProductFacade {
     @Transactional
     public OptionValueModifyResponseDto modifyOptionValue(Long optionValueId, @Valid OptionValueModifyRequestDto request) {
         return optionUseCase.modifyOptionValue(optionValueId, request);
+    }
+
+    @Transactional
+    public void deleteOptionGroup(Long optionGroupId) {
+        Boolean isUsed = productUseCase.isOptionGroupInUse(optionGroupId);
+
+        if (isUsed) {
+            throw new CustomException(FailureCode.OPTION_GROUP_IN_USE);
+        }
+
+        optionUseCase.deleteOptions(optionGroupId);
     }
 }

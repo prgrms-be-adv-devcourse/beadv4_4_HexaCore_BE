@@ -116,4 +116,8 @@ public class ProductSupport {
         return optionValueRepository.findById(optionValueId);
     }
 
+    @Transactional(readOnly = true)
+    public Boolean existsProductByOptionGroupId(Long optionGroupId) {
+        return productOptionValuesRepository.existsByOptionValue_OptionGroup_Id(optionGroupId);
+    }
 }

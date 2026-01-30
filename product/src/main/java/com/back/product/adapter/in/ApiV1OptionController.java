@@ -65,4 +65,12 @@ public class ApiV1OptionController implements OptionApiController {
         OptionValueModifyResponseDto response = productFacade.modifyOptionValue(optionValueId, request);
         return CommonResponse.success(SuccessCode.OK, response);
     }
+
+    @Override
+    @DeleteMapping("/{optionGroupId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public CommonResponse<?> deleteOptionGroup(@PathVariable Long optionGroupId) {
+        productFacade.deleteOptionGroup(optionGroupId);
+        return CommonResponse.success(SuccessCode.NO_CONTENT, null);
+    }
 }

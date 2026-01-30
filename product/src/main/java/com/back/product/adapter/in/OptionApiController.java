@@ -44,5 +44,13 @@ public interface OptionApiController {
     @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
     CommonResponse<?> modifyOptionValue(Long optionValueId, OptionValueModifyRequestDto request);
 
-
+    @Operation(summary = "옵션 그룹 삭제", description = """
+        기존의 옵션 그룹을 삭제합니다.
+        삭제 시, 그룹 내의 값들을 모두 확인해서 사용되는 상품이 있다면, 삭제를 진행하지 않습니다.
+    """)
+    @ApiResponse(responseCode = "204", description = "옵션 값 수정 성공")
+    @ApiResponse(responseCode = "401", description = "인증 실패", content = @Content)
+    @ApiResponse(responseCode = "403", description = "권한 없음", content = @Content)
+    @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
+    CommonResponse<?> deleteOptionGroup(Long optionGroupId);
 }
