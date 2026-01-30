@@ -274,7 +274,7 @@ public class ApiV1OptionControllerTest {
     }
 
     @Nested
-    @DisplayName("DELETE /api/v1/products/options/{optionGroupId}")
+    @DisplayName("DELETE /api/v1/products/options/groups/{optionGroupId}")
     class DeleteOptionGroupTest {
 
         @Test
@@ -285,7 +285,7 @@ public class ApiV1OptionControllerTest {
             doNothing().when(productFacade).deleteOptionGroup(anyLong());
 
             // when & then
-            mockMvc.perform(delete("/api/v1/products/options/{optionGroupId}", optionGroupId))
+            mockMvc.perform(delete("/api/v1/products/options/groups/{optionGroupId}", optionGroupId))
                     .andDo(print())
                     .andExpect(status().isNoContent());
 
@@ -302,9 +302,9 @@ public class ApiV1OptionControllerTest {
                     .deleteOptionGroup(anyLong());
 
             // when & then
-            mockMvc.perform(delete("/api/v1/products/options/{optionGroupId}", optionGroupId))
+            mockMvc.perform(delete("/api/v1/products/options/groups/{optionGroupId}", optionGroupId))
                     .andDo(print())
-                    .andExpect(status().isBadRequest())
+                    .andExpect(status().isConflict())
                     .andExpect(jsonPath("$.code").value(FailureCode.OPTION_GROUP_IN_USE.name()))
                     .andExpect(jsonPath("$.message").value(FailureCode.OPTION_GROUP_IN_USE.getMessage()));
         }
