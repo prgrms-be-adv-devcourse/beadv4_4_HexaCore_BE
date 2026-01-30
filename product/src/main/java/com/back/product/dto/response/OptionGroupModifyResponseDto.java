@@ -6,8 +6,13 @@ import java.time.LocalDateTime;
 
 @Builder
 public record OptionGroupModifyResponseDto(
-        Long id,
-        String name,
-        LocalDateTime updatedAt
+        OptionGroupDto group
 ) {
+    @Builder
+    public record OptionGroupDto(
+            Long id,
+            String name,
+            LocalDateTime updatedAt
+    ) {
+    }
 }

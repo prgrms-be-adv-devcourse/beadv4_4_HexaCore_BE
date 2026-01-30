@@ -167,18 +167,26 @@ public class OptionUseCase {
 
     private OptionGroupModifyResponseDto convertToModifyGroupDto(OptionGroup group) {
         return OptionGroupModifyResponseDto.builder()
-                .id(group.getId())
-                .name(group.getName())
-                .updatedAt(group.getLastModifiedAt())
+                .group(
+                        OptionGroupModifyResponseDto.OptionGroupDto.builder()
+                                .id(group.getId())
+                                .name(group.getName())
+                                .updatedAt(group.getLastModifiedAt())
+                                .build()
+                )
                 .build();
     }
 
     private OptionValueModifyResponseDto convertToModifyValueDto(OptionValue value) {
         return OptionValueModifyResponseDto.builder()
-                .id(value.getId())
-                .optionGroupId(value.getOptionGroup().getId())
-                .value(value.getValue())
-                .updatedAt(value.getLastModifiedAt())
+                .value(
+                        OptionValueModifyResponseDto.OptionValueDto.builder()
+                                .id(value.getId())
+                                .optionGroupId(value.getOptionGroup().getId())
+                                .value(value.getValue())
+                                .updatedAt(value.getLastModifiedAt())
+                                .build()
+                )
                 .build();
     }
 }
