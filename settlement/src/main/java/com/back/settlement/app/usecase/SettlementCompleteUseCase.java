@@ -1,9 +1,6 @@
 package com.back.settlement.app.usecase;
 
-import com.back.common.dto.settlement.SettlementPayoutRequest;
 import com.back.settlement.adapter.out.SettlementRepository;
-import com.back.settlement.adapter.out.feign.cash.CashClient;
-import com.back.settlement.app.dto.internal.SettlementWithPayout;
 import com.back.settlement.app.support.DomainEventPublisher;
 import com.back.settlement.domain.Settlement;
 import java.util.List;
@@ -18,35 +15,20 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class SettlementCompleteUseCase {
     private final SettlementRepository settlementRepository;
-    private final CashClient cashClient;
     private final DomainEventPublisher domainEventPublisher;
 
     @Transactional
-    public SettlementWithPayout completeSettlement(Settlement settlement) {
+    public Settlement completeSettlement(Settlement settlement) {
         settlement.start();
         settlement.complete();
-
-        SettlementPayoutRequest payoutRequest = new SettlementPayoutRequest(
-                settlement.getId(),
-                settlement.getSellerId(),
-                settlement.getSellerName(),
-                settlement.getTotalNetAmount(),
-                settlement.getCompletedAt()
-        );
-
-        return new SettlementWithPayout(settlement, payoutRequest);
+        return settlement;
     }
 
     @Transactional
-    public void saveAndRequestPayout(List<SettlementWithPayout> settlementWithPayouts) {
-        List<SettlementPayoutRequest> payouts = settlementWithPayouts.stream()
-                .map(item -> {
-                    Settlement saved = settlementRepository.save(item.settlement());
-                    domainEventPublisher.publishEvents(saved);
-                    return item.payoutRequest();
-                })
-                .toList();
-        cashClient.requestPayout(payouts);
-        log.info("정산 완료 및 캐시 지급 요청. 건수={}", payouts.size());
+    public void saveAndPublishEvents(List<Settlement> settlements) {
+        settlements.forEach(settlement -> {
+            Settlement saved = settlementRepository.save(settlement);
+            domainEventPublisher.publishEvents(saved);
+        });
     }
 }

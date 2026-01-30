@@ -12,6 +12,8 @@ public record SettlementInternalCompletedEvent(
         SettlementStatus previousStatus,
         BigDecimal totalNetAmount,
         Long sellerId,
+        String sellerName,
+        LocalDateTime completedAt,
         LocalDateTime occurredAt
 ) implements SettlementStatusChangedEvent {
 
@@ -19,8 +21,10 @@ public record SettlementInternalCompletedEvent(
             Long settlementId,
             SettlementStatus previousStatus,
             BigDecimal totalNetAmount,
-            Long sellerId) {
-        this(settlementId, previousStatus, totalNetAmount, sellerId, LocalDateTime.now());
+            Long sellerId,
+            String sellerName,
+            LocalDateTime completedAt) {
+        this(settlementId, previousStatus, totalNetAmount, sellerId, sellerName, completedAt, LocalDateTime.now());
     }
 
     @Override
