@@ -33,8 +33,9 @@ public class PriceAlertController {
     }
 
     @DeleteMapping("/{priceAlertId}")
-    public CommonResponse<Void> deletePriceAlert(@PathVariable Long priceAlertId) {
-        priceAlertFacade.delete(priceAlertId);
+    public CommonResponse<Void> deletePriceAlert(@PathVariable Long priceAlertId,
+                                                  @AuthenticationPrincipal AuthPrincipal principal) {
+        priceAlertFacade.delete(priceAlertId, principal.getUserId());
         return CommonResponse.success(SuccessCode.OK, null);
     }
 }

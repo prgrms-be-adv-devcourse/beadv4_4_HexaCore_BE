@@ -30,7 +30,7 @@ public class PriceAlertFacade {
         return priceAlertMapper.toPriceAlertResponseDtoList(priceAlerts);
     }
 
-    public void delete(Long priceAlertId) {
-        priceAlertDeleteUsecase.delete(priceAlertId);
+    public void delete(Long priceAlertId, Long userId) {
+        priceAlertDeleteUsecase.delete(priceAlertId, userId);
     }
 }

@@ -13,8 +13,9 @@ public class PriceAlertDeleteUsecase {
     private final PriceAlertRepository priceAlertRepository;
     private final PriceAlertSupport priceAlertSupport;
 
-    public void delete(Long priceAlertId) {
+    public void delete(Long priceAlertId, Long userId) {
         PriceAlert priceAlert = priceAlertSupport.findById(priceAlertId);
+        priceAlertSupport.validateOwner(priceAlert, userId);
         priceAlertRepository.delete(priceAlert);
     }
 }
