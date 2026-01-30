@@ -7,6 +7,7 @@ import com.back.user.app.auth.LogoutUseCase;
 import com.back.user.app.auth.RefreshCookieSupport;
 import com.back.user.app.auth.ReissueTokenUseCase;
 import com.back.user.dto.response.ReissueResponse;
+import com.back.user.dto.response.TokenResponseDto;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -28,13 +29,16 @@ public class AuthController {
     @PostMapping("/reissue")
     public CommonResponse<ReissueResponse> reissue(
             @CookieValue(value = "refresh", required = false) String refresh,
-            HttpServletResponse response
-    ) {
+            HttpServletResponse response) {
 
-        String newAccess = reissueTokenUseCase.reissueAccessToken(refresh, response);
+        TokenResponseDto responseDto = reissueTokenUseCase.execute(refresh);
+
+        response.addHeader(HttpHeaders.SET_COOKIE,
+                refreshCookieSupport.createRefreshSetCookieHeader(responseDto.refreshToken(), responseDto.refreshTtl()));
+
         return CommonResponse.success(
                 SuccessCode.OK,
-                new ReissueResponse(newAccess)
+                new ReissueResponse(responseDto.accessToken())
         );
     }
 
@@ -42,7 +46,9 @@ public class AuthController {
     public CommonResponse<Void> logout(@AuthenticationPrincipal AuthPrincipal principal,
                                        HttpServletResponse response) {
         logoutUseCase.logout(principal.getUserId());
+
         response.addHeader(HttpHeaders.SET_COOKIE, refreshCookieSupport.deleteRefreshCookieHeader());
+
         return CommonResponse.success(SuccessCode.OK, null);
     }
 }
