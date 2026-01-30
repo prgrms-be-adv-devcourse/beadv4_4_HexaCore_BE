@@ -128,4 +128,9 @@ public class ProductFacade {
     public OptionGroupModifyResponseDto modifyOptionGroup(Long optionGroupId, @Valid OptionGroupModifyRequestDto request) {
         return optionUseCase.modifyOptionGroup(optionGroupId, request);
     }
+
+    @Transactional
+    public OptionValueModifyResponseDto modifyOptionValue(Long optionValueId, @Valid OptionValueModifyRequestDto request) {
+        return optionUseCase.modifyOptionValue(optionValueId, request);
+    }
 }

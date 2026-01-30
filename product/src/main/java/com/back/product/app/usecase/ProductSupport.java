@@ -110,4 +110,10 @@ public class ProductSupport {
     public Optional<OptionGroup> getOptionGroupById(Long optionGroupId) {
         return optionGroupRepository.findById(optionGroupId);
     }
+
+    @Transactional(readOnly = true)
+    public Optional<OptionValue> getOptionValueById(Long optionValueId) {
+        return optionValueRepository.findById(optionValueId);
+    }
+
 }

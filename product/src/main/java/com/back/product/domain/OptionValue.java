@@ -25,4 +25,16 @@ public class OptionValue extends BaseTimeEntity {
 
     @Column(name="option_value", nullable = false, length = 20, unique = true)
     private String value;
+
+    public void modifyName(String value) {
+        this.value = value;
+    }
+
+    public void changeGroup(OptionGroup optionGroup) {
+        this.optionGroup = optionGroup;
+    }
+
+    public Boolean willChangeGroup(Long changedGroupId) {
+        return !changedGroupId.equals(this.getOptionGroup().getId());
+    }
 }

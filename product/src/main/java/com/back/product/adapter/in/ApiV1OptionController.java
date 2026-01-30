@@ -6,9 +6,11 @@ import com.back.product.app.ProductFacade;
 import com.back.product.dto.request.OptionAppendRequestDto;
 import com.back.product.dto.request.OptionCreateRequestDto;
 import com.back.product.dto.request.OptionGroupModifyRequestDto;
+import com.back.product.dto.request.OptionValueModifyRequestDto;
 import com.back.product.dto.response.OptionGroupModifyResponseDto;
 import com.back.product.dto.response.OptionListResponseDto;
 import com.back.product.dto.response.OptionResponseDto;
+import com.back.product.dto.response.OptionValueModifyResponseDto;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -52,6 +54,15 @@ public class ApiV1OptionController implements OptionApiController {
             @PathVariable Long optionGroupId,
             @Valid @RequestBody OptionGroupModifyRequestDto request) {
         OptionGroupModifyResponseDto response = productFacade.modifyOptionGroup(optionGroupId, request);
+        return CommonResponse.success(SuccessCode.OK, response);
+    }
+
+    @Override
+    @PutMapping("/values/{optionValueId}")
+    public CommonResponse<OptionValueModifyResponseDto> modifyOptionValue(
+            @PathVariable Long optionValueId,
+            @Valid @RequestBody OptionValueModifyRequestDto request) {
+        OptionValueModifyResponseDto response = productFacade.modifyOptionValue(optionValueId, request);
         return CommonResponse.success(SuccessCode.OK, response);
     }
 }

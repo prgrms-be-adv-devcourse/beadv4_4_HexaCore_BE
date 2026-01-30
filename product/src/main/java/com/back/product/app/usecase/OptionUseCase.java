@@ -10,9 +10,11 @@ import com.back.product.dto.OptionDto;
 import com.back.product.dto.request.OptionAppendRequestDto;
 import com.back.product.dto.request.OptionCreateRequestDto;
 import com.back.product.dto.request.OptionGroupModifyRequestDto;
+import com.back.product.dto.request.OptionValueModifyRequestDto;
 import com.back.product.dto.response.OptionGroupModifyResponseDto;
 import com.back.product.dto.response.OptionListResponseDto;
 import com.back.product.dto.response.OptionResponseDto;
+import com.back.product.dto.response.OptionValueModifyResponseDto;
 import com.back.product.mapper.OptionMapper;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -103,6 +105,23 @@ public class OptionUseCase {
 
         return convertToModifyGroupDto(existsGroup);
     }
+
+    @Transactional
+    public OptionValueModifyResponseDto modifyOptionValue(Long optionValueId, @Valid OptionValueModifyRequestDto request) {
+        OptionValue existsValue = productSupport.getOptionValueById(optionValueId)
+                .orElseThrow(() -> new CustomException(FailureCode.OPTION_VALUE_NOT_FOUND));
+
+        existsValue.modifyName(request.name());
+
+        if (existsValue.willChangeGroup(request.optionGroupId())) {
+            OptionGroup changedGroup = productSupport.getOptionGroupById(request.optionGroupId())
+                            .orElseThrow(() -> new CustomException(FailureCode.OPTION_GROUP_NOT_FOUND));
+
+            existsValue.changeGroup(changedGroup);
+        }
+
+        return convertToModifyValueDto(existsValue);
+    }
     
     private OptionGroup createOptionGroup(String name) {
         return optionMapper.toGroupEntity(name);
@@ -139,6 +158,15 @@ public class OptionUseCase {
                 .id(group.getId())
                 .name(group.getName())
                 .updatedAt(group.getLastModifiedAt())
+                .build();
+    }
+
+    private OptionValueModifyResponseDto convertToModifyValueDto(OptionValue value) {
+        return OptionValueModifyResponseDto.builder()
+                .id(value.getId())
+                .optionGroupId(value.getOptionGroup().getId())
+                .value(value.getValue())
+                .updatedAt(value.getLastModifiedAt())
                 .build();
     }
 }
