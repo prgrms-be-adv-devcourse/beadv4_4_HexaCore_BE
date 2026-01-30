@@ -9,6 +9,8 @@ import com.back.product.domain.OptionValue;
 import com.back.product.dto.OptionDto;
 import com.back.product.dto.request.OptionAppendRequestDto;
 import com.back.product.dto.request.OptionCreateRequestDto;
+import com.back.product.dto.request.OptionGroupModifyRequestDto;
+import com.back.product.dto.response.OptionGroupModifyResponseDto;
 import com.back.product.dto.response.OptionListResponseDto;
 import com.back.product.dto.response.OptionResponseDto;
 import com.back.product.mapper.OptionMapper;
@@ -20,6 +22,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -30,9 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("OptionUseCase 단위 테스트")
@@ -489,6 +490,67 @@ class OptionUseCaseTest {
 
             // verify that no save operation was attempted
             verify(optionValueRepository, never()).saveAll(any(List.class));
+        }
+    }
+
+    @Nested
+    @DisplayName("modifyOptionGroup 메서드")
+    class ModifyOptionGroupTest {
+
+        @Test
+        @DisplayName("성공: 옵션 그룹의 이름을 성공적으로 변경한다")
+        void modifyOptionGroup_success() {
+            // given
+            Long optionGroupId = 1L;
+            String newName = "newcolor";
+            OptionGroupModifyRequestDto requestDto = OptionGroupModifyRequestDto.builder()
+                    .name(newName)
+                    .build();
+
+            // Use a real object for the entity to test the actual state change
+            // but since it's a unit test, we can mock it as well to verify interactions.
+            OptionGroup existingGroup = mock(OptionGroup.class);
+
+            given(productSupport.getOptionGroupById(optionGroupId)).willReturn(Optional.of(existingGroup));
+
+            // Stubbing the getters that will be used in convertToModifyGroupDto
+            given(existingGroup.getId()).willReturn(optionGroupId);
+            given(existingGroup.getName()).willReturn(newName); // Assume name is updated
+            given(existingGroup.getLastModifiedAt()).willReturn(LocalDateTime.now());
+
+
+            // when
+            OptionGroupModifyResponseDto result = optionUseCase.modifyOptionGroup(optionGroupId, requestDto);
+
+            // then
+            // Verify that the entity's state-changing method was called
+            verify(existingGroup, times(1)).modifyName(newName);
+
+            // Assert the response DTO
+            assertThat(result).isNotNull();
+            assertThat(result.id()).isEqualTo(optionGroupId);
+            assertThat(result.name()).isEqualTo(newName);
+            assertThat(result.updatedAt()).isNotNull();
+        }
+
+        @Test
+        @DisplayName("실패: 옵션 그룹이 존재하지 않으면 CustomException을 발생시킨다")
+        void modifyOptionGroup_fail_groupNotFound() {
+            // given
+            Long nonExistentGroupId = 99L;
+            String newName = "newcolor";
+            OptionGroupModifyRequestDto requestDto = OptionGroupModifyRequestDto.builder()
+                    .name(newName)
+                    .build();
+
+            given(productSupport.getOptionGroupById(nonExistentGroupId)).willReturn(Optional.empty());
+
+            // when & then
+            CustomException exception = assertThrows(CustomException.class, () ->
+                    optionUseCase.modifyOptionGroup(nonExistentGroupId, requestDto)
+            );
+
+            assertThat(exception.getFailureCode()).isEqualTo(FailureCode.OPTION_GROUP_NOT_FOUND);
         }
     }
 }
