@@ -29,8 +29,7 @@ public class ReissueTokenUseCase {
 
     public String reissueAccessToken(String refreshToken, HttpServletResponse response) {
 
-        // refresh 토큰이 없을 경우 예외 발생
-        if (refreshToken == null) {
+        if (refreshToken == null || refreshToken.isBlank()) {
             throw new UnauthorizedException(FailureCode.TOKEN_MISSING);
         }
 
