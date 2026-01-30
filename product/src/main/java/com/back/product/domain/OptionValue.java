@@ -23,6 +23,6 @@ public class OptionValue extends BaseTimeEntity {
     @JoinColumn(name = "option_group_id", nullable = false)
     private OptionGroup optionGroup;
 
-    @Column(name="option_value", nullable = false, length = 20)
+    @Column(name="option_value", nullable = false, length = 20, unique = true)
     private String value;
 }
