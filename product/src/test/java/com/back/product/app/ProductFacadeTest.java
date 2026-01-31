@@ -2,10 +2,7 @@ package com.back.product.app;
 
 import com.back.common.code.FailureCode;
 import com.back.common.exception.CustomException;
-import com.back.product.app.usecase.BrandUseCase;
-import com.back.product.app.usecase.OptionUseCase;
-import com.back.product.app.usecase.ProductInfoUseCase;
-import com.back.product.app.usecase.ProductUseCase;
+import com.back.product.app.usecase.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -33,6 +30,9 @@ class ProductFacadeTest {
 
     @Mock
     private BrandUseCase brandUseCase;
+
+    @Mock
+    private CategoryUseCase categoryUseCase;
 
     @Nested
     @DisplayName("deleteBrand 메소드")
@@ -75,6 +75,50 @@ class ProductFacadeTest {
             verify(productInfoUseCase).isBrandInUse(BRAND_ID);
             // brandUseCase.deleteBrand는 호출되지 않았는지 검증
             verify(brandUseCase, never()).deleteBrand(BRAND_ID);
+        }
+    }
+
+    @Nested
+    @DisplayName("deleteCategory 메소드")
+    class DeleteCategoryTest {
+
+        private final Long CATEGORY_ID = 1L;
+
+        @Test
+        @DisplayName("카테고리가 사용 중이지 않으면 카테고리 삭제를 성공한다")
+        void deleteCategory_Success() {
+            // given
+            // isCategoryInUse가 false를 반환하도록 설정
+            given(productInfoUseCase.isCategoryInUse(CATEGORY_ID)).willReturn(false);
+            // deleteCategory는 void이므로 아무것도 하지 않도록 설정
+            doNothing().when(categoryUseCase).deleteCategory(CATEGORY_ID);
+
+            // when
+            productFacade.deleteCategory(CATEGORY_ID);
+
+            // then
+            // 각 UseCase의 메소드가 올바른 인자로 호출되었는지 검증
+            verify(productInfoUseCase).isCategoryInUse(CATEGORY_ID);
+            verify(categoryUseCase).deleteCategory(CATEGORY_ID);
+        }
+
+        @Test
+        @DisplayName("카테고리가 사용 중이면 CATEGORY_IN_USE 예외를 발생시킨다")
+        void deleteCategory_Fail_CategoryInUse() {
+            // given
+            // isCategoryInUse가 true를 반환하도록 설정
+            given(productInfoUseCase.isCategoryInUse(CATEGORY_ID)).willReturn(true);
+
+            // when & then
+            // 예외 발생을 검증
+            assertThatThrownBy(() -> productFacade.deleteCategory(CATEGORY_ID))
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("failureCode", FailureCode.CATEGORY_IN_USE);
+
+            // isCategoryInUse는 호출되었는지 검증
+            verify(productInfoUseCase).isCategoryInUse(CATEGORY_ID);
+            // categoryUseCase.deleteCategory는 호출되지 않았는지 검증
+            verify(categoryUseCase, never()).deleteCategory(CATEGORY_ID);
         }
     }
 }
