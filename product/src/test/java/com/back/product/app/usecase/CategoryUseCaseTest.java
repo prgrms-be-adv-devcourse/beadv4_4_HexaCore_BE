@@ -1,9 +1,12 @@
 package com.back.product.app.usecase;
 
+import com.back.common.code.FailureCode;
+import com.back.common.exception.CustomException;
 import com.back.product.adapter.out.CategoryRepository;
 import com.back.product.domain.Category;
 import com.back.product.dto.CategoryDto;
 import com.back.product.dto.request.CategoryCreateRequestDto;
+import com.back.product.dto.request.CategoryModifyRequestDto;
 import com.back.product.mapper.CategoryMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -11,16 +14,19 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("CategoryUseCase 단위 테스트")
@@ -133,6 +139,80 @@ class CategoryUseCaseTest {
             verify(categoryRepository).saveAll(List.of(newEntity));
             verify(categoryMapper, times(1)).toEntity(any(CategoryCreateRequestDto.CategoryDto.class));
             verify(categoryMapper, times(1)).toDto(any(Category.class));
+        }
+    }
+
+    @Nested
+    @DisplayName("modifyCategory 메서드")
+    class ModifyCategoryTest {
+
+        @Spy
+        private Category categoryToModify = Category.builder().id(1L).name("Original Name").imageUrl("original.png").build();
+
+        @Test
+        @DisplayName("카테고리 수정을 성공한다")
+        void modifyCategory_Success() {
+            // given
+            final Long CATEGORY_ID = 1L;
+            CategoryModifyRequestDto requestDto = CategoryModifyRequestDto.builder()
+                    .name("Modified")
+                    .imageUrl("modified.png")
+                    .build();
+
+            given(productSupport.findCategoryById(CATEGORY_ID)).willReturn(Optional.of(categoryToModify));
+            given(productSupport.getAllCategories()).willReturn(List.of(categoryToModify));
+            given(categoryMapper.toDto(categoryToModify)).willReturn(new CategoryDto(CATEGORY_ID, "Modified", "modified.png"));
+
+            // when
+            CategoryDto result = categoryUseCase.modifyCategory(CATEGORY_ID, requestDto);
+
+            // then
+            assertThat(result.name()).isEqualTo("Modified");
+            assertThat(result.imageUrl()).isEqualTo("modified.png");
+            verify(productSupport).findCategoryById(CATEGORY_ID);
+            verify(productSupport).getAllCategories();
+            verify(categoryToModify).modifyName("Modified");
+            verify(categoryToModify).modifyImageUrl("modified.png");
+            verify(categoryMapper).toDto(categoryToModify);
+        }
+
+        @Test
+        @DisplayName("존재하지 않는 카테고리를 수정하려고 하면 예외를 발생시킨다")
+        void modifyCategory_Fail_CategoryNotFound() {
+            // given
+            final Long NON_EXISTENT_ID = 99L;
+            CategoryModifyRequestDto requestDto = CategoryModifyRequestDto.builder().name("any").imageUrl("any.png").build();
+
+            given(productSupport.findCategoryById(NON_EXISTENT_ID)).willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> categoryUseCase.modifyCategory(NON_EXISTENT_ID, requestDto))
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("failureCode", FailureCode.CATEGORY_NOT_FOUND);
+
+            verify(productSupport).findCategoryById(NON_EXISTENT_ID);
+            verify(productSupport, never()).getAllCategories();
+        }
+
+        @Test
+        @DisplayName("다른 카테고리와 이름이 중복되면 예외를 발생시킨다")
+        void modifyCategory_Fail_DuplicateName() {
+            // given
+            final Long CATEGORY_ID = 1L;
+            Category existingCategoryWithSameName = Category.builder().id(2L).name("Existing").imageUrl("existing.png").build();
+            CategoryModifyRequestDto requestDto = CategoryModifyRequestDto.builder().name("Existing").imageUrl("modified.png").build();
+
+            given(productSupport.findCategoryById(CATEGORY_ID)).willReturn(Optional.of(categoryToModify));
+            given(productSupport.getAllCategories()).willReturn(List.of(categoryToModify, existingCategoryWithSameName));
+
+            // when & then
+            assertThatThrownBy(() -> categoryUseCase.modifyCategory(CATEGORY_ID, requestDto))
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("failureCode", FailureCode.CATEGORY_NAME_DUPLICATE);
+
+            verify(productSupport).findCategoryById(CATEGORY_ID);
+            verify(productSupport).getAllCategories();
+            verify(categoryToModify, never()).modifyName(anyString());
         }
     }
 }
