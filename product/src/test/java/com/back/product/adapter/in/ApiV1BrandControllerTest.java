@@ -26,8 +26,7 @@ import java.util.List;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -265,6 +264,52 @@ class ApiV1BrandControllerTest {
                     .andExpect(status().isBadRequest());
 
             verify(productFacade, never()).modifyBrand(eq(BRAND_ID), any(BrandModifyRequestDto.class));
+        }
+    }
+
+    @Nested
+    @DisplayName("DELETE /api/v1/products/brands/{brandId}")
+    class DeleteBrandTest {
+
+        private final Long BRAND_ID = 1L;
+
+        @Test
+        @DisplayName("브랜드 삭제를 성공한다")
+        @WithMockUser
+        void deleteBrand_Success() throws Exception {
+            // given
+            // productFacade.deleteBrand(BRAND_ID)가 호출될 때 아무것도 하지 않도록 설정 (void 메소드)
+            doNothing().when(productFacade).deleteBrand(BRAND_ID);
+
+            // when & then
+            mockMvc.perform(
+                            delete("/api/v1/products/brands/{brandId}", BRAND_ID)
+                                    .contentType(MediaType.APPLICATION_JSON)
+                    ).andDo(print())
+                    .andExpect(status().isNoContent());
+
+            // productFacade.deleteBrand가 올바른 ID로 호출되었는지 검증
+            verify(productFacade).deleteBrand(BRAND_ID);
+        }
+
+        @Test
+        @DisplayName("사용 중인 브랜드를 삭제 시도 시 409 Conflict를 반환한다")
+        @WithMockUser
+        void deleteBrand_Fail_BrandInUse() throws Exception {
+            // given
+            // productFacade.deleteBrand(BRAND_ID)가 호출될 때 BRAND_IN_USE 예외를 던지도록 설정
+            doThrow(new CustomException(FailureCode.BRAND_IN_USE)).when(productFacade).deleteBrand(BRAND_ID);
+
+            // when & then
+            mockMvc.perform(
+                            delete("/api/v1/products/brands/{brandId}", BRAND_ID)
+                                    .contentType(MediaType.APPLICATION_JSON)
+                    ).andDo(print())
+                    .andExpect(status().isConflict())
+                    .andExpect(jsonPath("$.code").value("BRAND_IN_USE"));
+
+            // productFacade.deleteBrand가 올바른 ID로 호출되었는지 검증
+            verify(productFacade).deleteBrand(BRAND_ID);
         }
     }
 }
