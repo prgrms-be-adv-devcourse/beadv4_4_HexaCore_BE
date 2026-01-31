@@ -4,6 +4,7 @@ import com.back.common.code.SuccessCode;
 import com.back.common.response.CommonResponse;
 import com.back.product.app.ProductFacade;
 import com.back.product.dto.request.CategoryCreateRequestDto;
+import com.back.product.dto.request.CategoryModifyRequestDto;
 import com.back.product.dto.response.CategoryListResponseDto;
 import com.back.product.dto.response.CategoryResponseDto;
 import jakarta.validation.Valid;
@@ -33,5 +34,14 @@ public class ApiV1CategoryController implements CategoryApiController {
     public CommonResponse<CategoryListResponseDto> createCategories(@RequestBody @Valid CategoryCreateRequestDto request) {
         CategoryListResponseDto response = productFacade.createCategories(request);
         return CommonResponse.success(SuccessCode.CREATED, response);
+    }
+
+    @Override
+    @PutMapping("/{categoryId}")
+    public CommonResponse<CategoryResponseDto> modifyCategory(
+            @PathVariable Long categoryId,
+            @Valid @RequestBody CategoryModifyRequestDto request) {
+        CategoryResponseDto response = productFacade.modifyCategory(categoryId, request);
+        return CommonResponse.success(SuccessCode.OK, response);
     }
 }

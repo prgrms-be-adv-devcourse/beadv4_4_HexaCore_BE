@@ -57,6 +57,12 @@ public class ProductFacade {
     }
 
     @Transactional
+    public CategoryResponseDto modifyCategory(Long categoryId, @Valid CategoryModifyRequestDto request) {
+        CategoryDto categoryDto = categoryUseCase.modifyCategory(categoryId, request);
+        return CategoryResponseDto.builder().category(categoryDto).build();
+    }
+
+    @Transactional
     public ProductResponseDto createProduct(@Valid ProductCreateRequestDto request) {
         Brand brand = brandUseCase.findBrandExists(request.productInfo().brandId());
 
