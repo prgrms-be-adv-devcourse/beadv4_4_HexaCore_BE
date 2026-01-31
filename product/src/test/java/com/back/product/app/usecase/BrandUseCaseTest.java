@@ -1,9 +1,12 @@
 package com.back.product.app.usecase;
 
+import com.back.common.code.FailureCode;
+import com.back.common.exception.CustomException;
 import com.back.product.adapter.out.BrandRepository;
 import com.back.product.domain.Brand;
 import com.back.product.dto.BrandDto;
 import com.back.product.dto.request.BrandCreateRequestDto;
+import com.back.product.dto.request.BrandModifyRequestDto;
 import com.back.product.mapper.BrandMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -11,16 +14,18 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("BrandUseCase 단위 테스트")
@@ -132,6 +137,80 @@ class BrandUseCaseTest {
             verify(brandRepository).saveAll(List.of(newEntity));
             verify(brandMapper, times(1)).toEntity(any(BrandCreateRequestDto.BrandDto.class));
             verify(brandMapper, times(1)).toDto(any(Brand.class));
+        }
+    }
+
+    @Nested
+    @DisplayName("modifyBrand 메서드")
+    class ModifyBrandTest {
+
+        @Spy
+        private Brand brandToModify = Brand.builder().id(1L).name("Original Name").imageUrl("original.png").build();
+
+        @Test
+        @DisplayName("브랜드 수정을 성공한다")
+        void modifyBrand_Success() {
+            // given
+            final Long BRAND_ID = 1L;
+            BrandModifyRequestDto requestDto = BrandModifyRequestDto.builder()
+                    .name("Modified Name")
+                    .imageUrl("modified.png")
+                    .build();
+
+            given(productSupport.findBrandById(BRAND_ID)).willReturn(Optional.of(brandToModify));
+            given(productSupport.getAllBrands()).willReturn(List.of(brandToModify));
+            given(brandMapper.toDto(brandToModify)).willReturn(new BrandDto(BRAND_ID, "Modified Name", "modified.png"));
+
+            // when
+            BrandDto result = brandUseCase.modifyBrand(BRAND_ID, requestDto);
+
+            // then
+            assertThat(result.name()).isEqualTo("Modified Name");
+            assertThat(result.logoUrl()).isEqualTo("modified.png");
+            verify(productSupport).findBrandById(BRAND_ID);
+            verify(productSupport).getAllBrands();
+            verify(brandToModify).modifyName("Modified Name");
+            verify(brandToModify).modifyImageUrl("modified.png");
+            verify(brandMapper).toDto(brandToModify);
+        }
+
+        @Test
+        @DisplayName("존재하지 않는 브랜드를 수정하려고 하면 예외를 발생시킨다")
+        void modifyBrand_Fail_BrandNotFound() {
+            // given
+            final Long NON_EXISTENT_ID = 99L;
+            BrandModifyRequestDto requestDto = BrandModifyRequestDto.builder().name("any").imageUrl("any.png").build();
+
+            given(productSupport.findBrandById(NON_EXISTENT_ID)).willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> brandUseCase.modifyBrand(NON_EXISTENT_ID, requestDto))
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("failureCode", FailureCode.BRAND_NOT_FOUND);
+
+            verify(productSupport).findBrandById(NON_EXISTENT_ID);
+            verify(productSupport, never()).getAllBrands();
+        }
+
+        @Test
+        @DisplayName("다른 브랜드와 이름이 중복되면 예외를 발생시킨다")
+        void modifyBrand_Fail_DuplicateName() {
+            // given
+            final Long BRAND_ID = 1L;
+            Brand existingBrandWithSameName = Brand.builder().id(2L).name("Existing Name").imageUrl("existing.png").build();
+            BrandModifyRequestDto requestDto = BrandModifyRequestDto.builder().name("Existing Name").imageUrl("modified.png").build();
+
+            given(productSupport.findBrandById(BRAND_ID)).willReturn(Optional.of(brandToModify));
+            given(productSupport.getAllBrands()).willReturn(List.of(brandToModify, existingBrandWithSameName));
+
+            // when & then
+            assertThatThrownBy(() -> brandUseCase.modifyBrand(BRAND_ID, requestDto))
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("failureCode", FailureCode.BRAND_NAME_DUPLICATE);
+
+            verify(productSupport).findBrandById(BRAND_ID);
+            verify(productSupport).getAllBrands();
+            verify(brandToModify, never()).modifyName(anyString());
         }
     }
 }
