@@ -44,4 +44,12 @@ public class ApiV1CategoryController implements CategoryApiController {
         CategoryResponseDto response = productFacade.modifyCategory(categoryId, request);
         return CommonResponse.success(SuccessCode.OK, response);
     }
+
+    @Override
+    @DeleteMapping("/{categoryId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public CommonResponse<?> deleteCategory(@PathVariable Long categoryId) {
+        productFacade.deleteCategory(categoryId);
+        return CommonResponse.success(SuccessCode.NO_CONTENT, null);
+    }
 }

@@ -79,6 +79,11 @@ public class CategoryUseCase {
         return categoryMapper.toDto(categoryToModify);
     }
 
+    @Transactional
+    public void deleteCategory(Long categoryId) {
+        categoryRepository.deleteById(categoryId);
+    }
+
     private String toPlainText(String text) {
         if (text == null) {
             throw new InvalidValueException();

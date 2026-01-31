@@ -8,4 +8,6 @@ public interface ProductInfoRepository extends JpaRepository<ProductInfo, Long> 
     boolean existsProductInfoByBrandAndProductCodeIgnoreCase(Brand brand, String code);
 
     Boolean existsByBrand_Id(Long brandId);
+
+    Boolean existsByCategory_Id(Long categoryId);
 }

@@ -74,4 +74,9 @@ public class ProductInfoUseCase {
     public Boolean isBrandInUse(Long brandId) {
         return productSupport.existsProductInfoByBrand(brandId);
     }
+
+    @Transactional
+    public Boolean isCategoryInUse(Long categoryId) {
+        return productSupport.existsProductInfoByCategory(categoryId);
+    }
 }

@@ -29,4 +29,11 @@ public interface CategoryApiController {
     @ApiResponse(responseCode = "403", description = "권한 없음", content = @Content)
     @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
     CommonResponse<?> modifyCategory(Long categoryId, CategoryModifyRequestDto request);
+
+    @Operation(summary = "카테고리 삭제", description = "기존의 상품 카테고리를 삭제합니다.")
+    @ApiResponse(responseCode = "204", description = "카테고리 삭제 성공")
+    @ApiResponse(responseCode = "401", description = "인증 실패", content = @Content)
+    @ApiResponse(responseCode = "403", description = "권한 없음", content = @Content)
+    @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
+    CommonResponse<?> deleteCategory(Long categoryId);
 }

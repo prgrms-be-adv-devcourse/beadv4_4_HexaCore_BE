@@ -75,6 +75,17 @@ public class ProductFacade {
     }
 
     @Transactional
+    public void deleteCategory(Long categoryId) {
+        Boolean isUsed = productInfoUseCase.isCategoryInUse(categoryId);
+
+        if (isUsed) {
+            throw new CustomException(FailureCode.CATEGORY_IN_USE);
+        }
+
+        categoryUseCase.deleteCategory(categoryId);
+    }
+
+    @Transactional
     public ProductResponseDto createProduct(@Valid ProductCreateRequestDto request) {
         Brand brand = brandUseCase.findBrandExists(request.productInfo().brandId());
 
