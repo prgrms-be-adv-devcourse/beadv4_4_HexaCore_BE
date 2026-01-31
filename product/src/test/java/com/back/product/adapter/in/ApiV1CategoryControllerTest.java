@@ -5,7 +5,9 @@ import com.back.common.exception.CustomException;
 import com.back.product.app.ProductFacade;
 import com.back.product.dto.CategoryDto;
 import com.back.product.dto.request.CategoryCreateRequestDto;
+import com.back.product.dto.request.CategoryModifyRequestDto;
 import com.back.product.dto.response.CategoryListResponseDto;
+import com.back.product.dto.response.CategoryResponseDto;
 import com.back.security.jwt.JWTUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
@@ -22,11 +24,11 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -151,6 +153,114 @@ class ApiV1CategoryControllerTest {
                     .andExpect(status().isBadRequest());
 
             verify(productFacade, never()).createCategories(any(CategoryCreateRequestDto.class));
+        }
+    }
+
+    @Nested
+    @DisplayName("PUT /api/v1/products/categories/{categoryId}")
+    class ModifyCategoryTest {
+
+        private final Long CATEGORY_ID = 1L;
+
+        @Test
+        @DisplayName("카테고리 수정을 성공한다")
+        @WithMockUser
+        void modifyCategory_Success() throws Exception {
+            // given
+            CategoryModifyRequestDto requestDto = CategoryModifyRequestDto.builder()
+                    .name("ModifiedCategory")
+                    .imageUrl("https://example.com/modified_image.png")
+                    .build();
+            CategoryResponseDto responseDto = CategoryResponseDto.builder()
+                    .category(new CategoryDto(CATEGORY_ID, "Modified Category", "https://example.com/modified_image.png"))
+                    .build();
+
+            given(productFacade.modifyCategory(eq(CATEGORY_ID), any(CategoryModifyRequestDto.class))).willReturn(responseDto);
+
+            // when & then
+            mockMvc.perform(
+                            put("/api/v1/products/categories/{categoryId}", CATEGORY_ID)
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content(objectMapper.writeValueAsString(requestDto))
+                    ).andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.code").value("OK"))
+                    .andExpect(jsonPath("$.data.category.categoryId").value(CATEGORY_ID))
+                    .andExpect(jsonPath("$.data.category.name").value("Modified Category"));
+
+            verify(productFacade).modifyCategory(eq(CATEGORY_ID), any(CategoryModifyRequestDto.class));
+        }
+
+        @Test
+        @DisplayName("존재하지 않는 카테고리 수정 시 404 Not Found를 반환한다")
+        @WithMockUser
+        void modifyCategory_Fail_CategoryNotFound() throws Exception {
+            // given
+            CategoryModifyRequestDto requestDto = CategoryModifyRequestDto.builder()
+                    .name("NonExistentCategory")
+                    .imageUrl("https://example.com/non_existent.png")
+                    .build();
+
+            given(productFacade.modifyCategory(eq(CATEGORY_ID), any(CategoryModifyRequestDto.class)))
+                    .willThrow(new CustomException(FailureCode.CATEGORY_NOT_FOUND));
+
+            // when & then
+            mockMvc.perform(
+                            put("/api/v1/products/categories/{categoryId}", CATEGORY_ID)
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content(objectMapper.writeValueAsString(requestDto))
+                    ).andDo(print())
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.code").value("CATEGORY_NOT_FOUND"));
+
+            verify(productFacade).modifyCategory(eq(CATEGORY_ID), any(CategoryModifyRequestDto.class));
+        }
+
+        @Test
+        @DisplayName("중복된 이름으로 카테고리 수정 시 409 Conflict를 반환한다")
+        @WithMockUser
+        void modifyCategory_Fail_DuplicateName() throws Exception {
+            // given
+            CategoryModifyRequestDto requestDto = CategoryModifyRequestDto.builder()
+                    .name("ExistingCategoryName")
+                    .imageUrl("https://example.com/existing.png")
+                    .build();
+
+            given(productFacade.modifyCategory(eq(CATEGORY_ID), any(CategoryModifyRequestDto.class)))
+                    .willThrow(new CustomException(FailureCode.CATEGORY_NAME_DUPLICATE));
+
+            // when & then
+            mockMvc.perform(
+                            put("/api/v1/products/categories/{categoryId}", CATEGORY_ID)
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content(objectMapper.writeValueAsString(requestDto))
+                    ).andDo(print())
+                    .andExpect(status().isConflict())
+                    .andExpect(jsonPath("$.code").value("CATEGORY_NAME_DUPLICATE"));
+
+            verify(productFacade).modifyCategory(eq(CATEGORY_ID), any(CategoryModifyRequestDto.class));
+        }
+
+        @Test
+        @DisplayName("유효하지 않은 요청 값으로 카테고리 수정 시 400 Bad Request를 반환한다")
+        @WithMockUser
+        void modifyCategory_Fail_Validation() throws Exception {
+            // given
+            // Invalid name (blank or non-alphabet) and invalid URL
+            CategoryModifyRequestDto requestDto = CategoryModifyRequestDto.builder()
+                    .name("123") // Fails @Pattern(regexp = "^[a-zA-Z]+$")
+                    .imageUrl("invalid-url")
+                    .build();
+
+            // when & then
+            mockMvc.perform(
+                            put("/api/v1/products/categories/{categoryId}", CATEGORY_ID)
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content(objectMapper.writeValueAsString(requestDto))
+                    ).andDo(print())
+                    .andExpect(status().isBadRequest());
+
+            verify(productFacade, never()).modifyCategory(eq(CATEGORY_ID), any(CategoryModifyRequestDto.class));
         }
     }
 }
