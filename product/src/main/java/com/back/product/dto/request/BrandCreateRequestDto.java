@@ -5,15 +5,18 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import lombok.Builder;
 import org.hibernate.validator.constraints.URL;
 
 import java.util.List;
 
+@Builder
 public record BrandCreateRequestDto(
         @NotEmpty(message = "Brands cannot be null")
         @Valid
         List<BrandDto> brands
 ) {
+    @Builder
     public record BrandDto(
             @NotBlank(message = "브랜드 이름은 필수입니다.")
             @Size(min=1, max=50, message = "브랜드 이름은 1자 이상 50자 이하여야 합니다.")
