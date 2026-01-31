@@ -34,8 +34,9 @@ public class ProductFacade {
     }
 
     @Transactional
-    public BrandDto createBrand(@Valid BrandCreateRequestDto request) {
-        return brandUseCase.createBrand(request);
+    public BrandListResponseDto createBrands(@Valid BrandCreateRequestDto request) {
+        List<BrandDto> brandDtos = brandUseCase.createBrands(request);
+        return BrandListResponseDto.builder().brands(brandDtos).build();
     }
 
     @Transactional(readOnly = true)

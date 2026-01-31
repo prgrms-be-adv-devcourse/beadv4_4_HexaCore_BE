@@ -6,6 +6,7 @@ import com.back.product.adapter.out.BrandRepository;
 import com.back.product.domain.Brand;
 import com.back.product.dto.request.BrandCreateRequestDto;
 import com.back.product.dto.BrandDto;
+import com.back.product.dto.response.BrandListResponseDto;
 import com.back.product.mapper.BrandMapper;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
@@ -14,7 +15,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -29,20 +33,16 @@ public class BrandUseCase {
     }
 
     @Transactional
-    public BrandDto createBrand(@Valid BrandCreateRequestDto request) {
-        validateDuplicateBrandName(request.name());
+    public List<BrandDto> createBrands(@Valid BrandCreateRequestDto request) {
+        Map<String, Brand> existsBrands = productSupport.getAllBrands().stream().collect(Collectors.toMap(Brand::getName, brand -> brand));
 
-        Brand brand = brandMapper.toEntity(request);
+        List<Brand> brandsToCreate = request.brands().stream()
+                .filter(newBrand -> !existsBrands.containsKey(newBrand.name()))
+                .map(brandMapper::toEntity).toList();
 
-        Brand newBrand = brandRepository.save(brand);
+        List<Brand> createdBrands = brandRepository.saveAll(brandsToCreate);
 
-        return brandMapper.toDto(newBrand);
-    }
-
-    private void validateDuplicateBrandName(String name) {
-        if (productSupport.existsBrandByName(name)) {
-            throw new CustomException(FailureCode.BRAND_NAME_DUPLICATE);
-        }
+        return createdBrands.stream().map(brandMapper::toDto).toList();
     }
 
     @Transactional(readOnly = true)
