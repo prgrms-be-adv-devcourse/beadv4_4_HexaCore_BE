@@ -213,9 +213,13 @@ public class ApiV1OptionControllerTest {
                     .build();
 
             OptionGroupModifyResponseDto expectedResponseDto = OptionGroupModifyResponseDto.builder()
-                    .id(optionGroupId)
-                    .name(newGroupName)
-                    .updatedAt(LocalDateTime.now())
+                    .group(
+                            OptionGroupModifyResponseDto.OptionGroupDto.builder()
+                                    .id(optionGroupId)
+                                    .name(newGroupName)
+                                    .updatedAt(LocalDateTime.now())
+                                    .build()
+                    )
                     .build();
 
             given(productFacade.modifyOptionGroup(eq(optionGroupId), any(OptionGroupModifyRequestDto.class))).willReturn(expectedResponseDto);
@@ -227,8 +231,8 @@ public class ApiV1OptionControllerTest {
                     .andDo(print())
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.code").value(SuccessCode.OK.name()))
-                    .andExpect(jsonPath("$.data.id").value(optionGroupId))
-                    .andExpect(jsonPath("$.data.name").value(newGroupName));
+                    .andExpect(jsonPath("$.data.group.id").value(optionGroupId))
+                    .andExpect(jsonPath("$.data.group.name").value(newGroupName));
 
             verify(productFacade).modifyOptionGroup(eq(optionGroupId), any(OptionGroupModifyRequestDto.class));
         }
@@ -250,10 +254,14 @@ public class ApiV1OptionControllerTest {
                     .build();
 
             OptionValueModifyResponseDto expectedResponseDto = OptionValueModifyResponseDto.builder()
-                    .id(optionValueId)
-                    .optionGroupId(newOptionGroupId)
-                    .value(newName)
-                    .updatedAt(LocalDateTime.now())
+                    .value(
+                            OptionValueModifyResponseDto.OptionValueDto.builder()
+                                    .id(optionValueId)
+                                    .optionGroupId(newOptionGroupId)
+                                    .value(newName)
+                                    .updatedAt(LocalDateTime.now())
+                                    .build()
+                    )
                     .build();
 
             given(productFacade.modifyOptionValue(eq(optionValueId), any(OptionValueModifyRequestDto.class))).willReturn(expectedResponseDto);
@@ -265,9 +273,9 @@ public class ApiV1OptionControllerTest {
                     .andDo(print())
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.code").value(SuccessCode.OK.name()))
-                    .andExpect(jsonPath("$.data.id").value(optionValueId))
-                    .andExpect(jsonPath("$.data.optionGroupId").value(newOptionGroupId))
-                    .andExpect(jsonPath("$.data.value").value(newName));
+                    .andExpect(jsonPath("$.data.value.id").value(optionValueId))
+                    .andExpect(jsonPath("$.data.value.optionGroupId").value(newOptionGroupId))
+                    .andExpect(jsonPath("$.data.value.value").value(newName));
 
             verify(productFacade).modifyOptionValue(eq(optionValueId), any(OptionValueModifyRequestDto.class));
         }

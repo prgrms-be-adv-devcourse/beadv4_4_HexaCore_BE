@@ -530,9 +530,9 @@ class OptionUseCaseTest {
 
             // Assert the response DTO
             assertThat(result).isNotNull();
-            assertThat(result.id()).isEqualTo(optionGroupId);
-            assertThat(result.name()).isEqualTo(newName);
-            assertThat(result.updatedAt()).isNotNull();
+            assertThat(result.group().id()).isEqualTo(optionGroupId);
+            assertThat(result.group().name()).isEqualTo(newName);
+            assertThat(result.group().updatedAt()).isNotNull();
         }
 
         @Test
@@ -603,9 +603,9 @@ class OptionUseCaseTest {
 
             // 응답 DTO 검증
             assertThat(result).isNotNull();
-            assertThat(result.id()).isEqualTo(optionValueId);
-            assertThat(result.value()).isEqualTo(newName);
-            assertThat(result.optionGroupId()).isEqualTo(currentGroupId);
+            assertThat(result.value().id()).isEqualTo(optionValueId);
+            assertThat(result.value().value()).isEqualTo(newName);
+            assertThat(result.value().optionGroupId()).isEqualTo(currentGroupId);
         }
 
         @Test
@@ -649,9 +649,9 @@ class OptionUseCaseTest {
             verify(productSupport, times(1)).getOptionGroupById(newGroupId); // 새 그룹을 조회했는지 검증
 
             assertThat(result).isNotNull();
-            assertThat(result.id()).isEqualTo(optionValueId);
-            assertThat(result.value()).isEqualTo(currentName);
-            assertThat(result.optionGroupId()).isEqualTo(newGroupId); // 그룹 ID가 변경되었는지 확인
+            assertThat(result.value().id()).isEqualTo(optionValueId);
+            assertThat(result.value().value()).isEqualTo(currentName);
+            assertThat(result.value().optionGroupId()).isEqualTo(newGroupId); // 그룹 ID가 변경되었는지 확인
         }
 
         @Test
