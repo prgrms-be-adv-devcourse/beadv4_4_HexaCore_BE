@@ -5,7 +5,9 @@ import com.back.common.exception.CustomException;
 import com.back.product.app.ProductFacade;
 import com.back.product.dto.BrandDto;
 import com.back.product.dto.request.BrandCreateRequestDto;
+import com.back.product.dto.request.BrandModifyRequestDto;
 import com.back.product.dto.response.BrandListResponseDto;
+import com.back.product.dto.response.BrandResponseDto;
 import com.back.security.jwt.JWTUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
@@ -18,15 +20,15 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.List;
 import java.util.Collections;
+import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -155,6 +157,114 @@ class ApiV1BrandControllerTest {
                     .andExpect(status().isBadRequest());
 
             verify(productFacade, never()).createBrands(any(BrandCreateRequestDto.class));
+        }
+    }
+
+    @Nested
+    @DisplayName("PUT /api/v1/products/brands/{brandId}")
+    class ModifyBrandTest {
+
+        private final Long BRAND_ID = 1L;
+
+        @Test
+        @DisplayName("브랜드 수정을 성공한다")
+        @WithMockUser
+        void modifyBrand_Success() throws Exception {
+            // given
+            BrandModifyRequestDto requestDto = BrandModifyRequestDto.builder()
+                    .name("Modified Brand")
+                    .imageUrl("https://example.com/modified_logo.png")
+                    .build();
+            BrandResponseDto responseDto = BrandResponseDto.builder()
+                    .brand(new BrandDto(BRAND_ID, "Modified Brand", "https://example.com/modified_logo.png"))
+                    .build();
+
+            given(productFacade.modifyBrand(eq(BRAND_ID), any(BrandModifyRequestDto.class))).willReturn(responseDto);
+
+            // when & then
+            mockMvc.perform(
+                            put("/api/v1/products/brands/{brandId}", BRAND_ID)
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content(objectMapper.writeValueAsString(requestDto))
+                    ).andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.code").value("OK"))
+                    .andExpect(jsonPath("$.data.brand.brandId").value(BRAND_ID))
+                    .andExpect(jsonPath("$.data.brand.name").value("Modified Brand"));
+
+            verify(productFacade).modifyBrand(eq(BRAND_ID), any(BrandModifyRequestDto.class));
+        }
+
+        @Test
+        @DisplayName("존재하지 않는 브랜드 수정 시 404 Not Found를 반환한다")
+        @WithMockUser
+        void modifyBrand_Fail_BrandNotFound() throws Exception {
+            // given
+            BrandModifyRequestDto requestDto = BrandModifyRequestDto.builder()
+                    .name("NonExistent Brand")
+                    .imageUrl("https://example.com/non_existent.png")
+                    .build();
+
+            given(productFacade.modifyBrand(eq(BRAND_ID), any(BrandModifyRequestDto.class)))
+                    .willThrow(new CustomException(FailureCode.BRAND_NOT_FOUND));
+
+            // when & then
+            mockMvc.perform(
+                            put("/api/v1/products/brands/{brandId}", BRAND_ID)
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content(objectMapper.writeValueAsString(requestDto))
+                    ).andDo(print())
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.code").value("BRAND_NOT_FOUND"));
+
+            verify(productFacade).modifyBrand(eq(BRAND_ID), any(BrandModifyRequestDto.class));
+        }
+
+        @Test
+        @DisplayName("중복된 이름으로 브랜드 수정 시 409 Conflict를 반환한다")
+        @WithMockUser
+        void modifyBrand_Fail_DuplicateName() throws Exception {
+            // given
+            BrandModifyRequestDto requestDto = BrandModifyRequestDto.builder()
+                    .name("Existing Brand Name")
+                    .imageUrl("https://example.com/existing.png")
+                    .build();
+
+            given(productFacade.modifyBrand(eq(BRAND_ID), any(BrandModifyRequestDto.class)))
+                    .willThrow(new CustomException(FailureCode.BRAND_NAME_DUPLICATE));
+
+            // when & then
+            mockMvc.perform(
+                            put("/api/v1/products/brands/{brandId}", BRAND_ID)
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content(objectMapper.writeValueAsString(requestDto))
+                    ).andDo(print())
+                    .andExpect(status().isConflict())
+                    .andExpect(jsonPath("$.code").value("BRAND_NAME_DUPLICATE"));
+
+            verify(productFacade).modifyBrand(eq(BRAND_ID), any(BrandModifyRequestDto.class));
+        }
+
+        @Test
+        @DisplayName("유효하지 않은 요청 값으로 브랜드 수정 시 400 Bad Request를 반환한다")
+        @WithMockUser
+        void modifyBrand_Fail_Validation() throws Exception {
+            // given
+            // Invalid name (blank) and invalid URL
+            BrandModifyRequestDto requestDto = BrandModifyRequestDto.builder()
+                    .name(" ")
+                    .imageUrl("invalid-url")
+                    .build();
+
+            // when & then
+            mockMvc.perform(
+                            put("/api/v1/products/brands/{brandId}", BRAND_ID)
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content(objectMapper.writeValueAsString(requestDto))
+                    ).andDo(print())
+                    .andExpect(status().isBadRequest());
+
+            verify(productFacade, never()).modifyBrand(eq(BRAND_ID), any(BrandModifyRequestDto.class));
         }
     }
 }
