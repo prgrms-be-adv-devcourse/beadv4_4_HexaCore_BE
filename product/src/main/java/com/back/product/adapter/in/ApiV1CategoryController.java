@@ -30,10 +30,8 @@ public class ApiV1CategoryController implements CategoryApiController {
     @Override
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public CommonResponse<CategoryResponseDto> createCategory(@RequestBody @Valid CategoryCreateRequestDto request) {
-        CategoryResponseDto response = CategoryResponseDto.builder()
-                .category(productFacade.createCategory(request))
-                .build();
+    public CommonResponse<CategoryListResponseDto> createCategories(@RequestBody @Valid CategoryCreateRequestDto request) {
+        CategoryListResponseDto response = productFacade.createCategories(request);
         return CommonResponse.success(SuccessCode.CREATED, response);
     }
 }

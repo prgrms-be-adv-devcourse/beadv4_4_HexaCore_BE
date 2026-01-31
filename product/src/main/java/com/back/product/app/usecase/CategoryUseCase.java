@@ -15,6 +15,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -29,20 +31,18 @@ public class CategoryUseCase {
     }
 
     @Transactional
-    public CategoryDto createCategory(@Valid CategoryCreateRequestDto request) {
-        isDuplicateCategoryName(request.name());
+    public List<CategoryDto> createCategories(@Valid CategoryCreateRequestDto request) {
+        Map<String, Category> existsCategories = productSupport.getAllCategories().stream()
+                .collect(Collectors.toMap(Category::getName, category -> category));
 
-        Category category = categoryMapper.toEntity(request);
+        List<Category> categoriesToCreate = request.categories().stream()
+                .filter(newCategory -> !existsCategories.containsKey(newCategory.name()))
+                .map(categoryMapper::toEntity)
+                .toList();
 
-        Category newCategory = categoryRepository.save(category);
+        List<Category> newCategories = categoryRepository.saveAll(categoriesToCreate);
 
-        return categoryMapper.toDto(newCategory);
-    }
-
-    private void isDuplicateCategoryName(String name) {
-        if (productSupport.existsCategoryByName(name)) {
-            throw new CustomException(FailureCode.CATEGORY_NAME_DUPLICATE);
-        }
+        return newCategories.stream().map(categoryMapper::toDto).toList();
     }
 
     @Transactional(readOnly = true)

@@ -45,8 +45,9 @@ public class ProductFacade {
     }
 
     @Transactional
-    public CategoryDto createCategory(@Valid CategoryCreateRequestDto request) {
-        return categoryUseCase.createCategory(request);
+    public CategoryListResponseDto createCategories(@Valid CategoryCreateRequestDto request) {
+        List<CategoryDto> categoryDtos =  categoryUseCase.createCategories(request);
+        return CategoryListResponseDto.builder().categories(categoryDtos).build();
     }
 
     @Transactional

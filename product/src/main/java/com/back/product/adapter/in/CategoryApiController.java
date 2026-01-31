@@ -20,5 +20,5 @@ public interface CategoryApiController {
     @ApiResponse(responseCode = "401", description = "인증 실패", content = @Content)
     @ApiResponse(responseCode = "403", description = "권한 없음", content = @Content)
     @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
-    CommonResponse<?> createCategory(CategoryCreateRequestDto request);
+    CommonResponse<?> createCategories(CategoryCreateRequestDto request);
 }
