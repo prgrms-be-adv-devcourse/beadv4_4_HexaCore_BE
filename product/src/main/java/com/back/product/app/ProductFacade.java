@@ -39,6 +39,12 @@ public class ProductFacade {
         return BrandListResponseDto.builder().brands(brandDtos).build();
     }
 
+    @Transactional
+    public BrandResponseDto modifyBrand(Long brandId, @Valid BrandModifyRequestDto request) {
+        BrandDto brandDto = brandUseCase.modifyBrand(brandId, request);
+        return BrandResponseDto.builder().brand(brandDto).build();
+    }
+
     @Transactional(readOnly = true)
     public List<CategoryDto> getCategories() {
         return categoryUseCase.getCategories();

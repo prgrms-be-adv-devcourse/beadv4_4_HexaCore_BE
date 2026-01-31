@@ -4,7 +4,9 @@ import com.back.common.code.SuccessCode;
 import com.back.common.response.CommonResponse;
 import com.back.product.app.ProductFacade;
 import com.back.product.dto.request.BrandCreateRequestDto;
+import com.back.product.dto.request.BrandModifyRequestDto;
 import com.back.product.dto.response.BrandListResponseDto;
+import com.back.product.dto.response.BrandResponseDto;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -32,5 +34,14 @@ public class ApiV1BrandController implements BrandApiController {
     public CommonResponse<BrandListResponseDto> createBrands(@RequestBody @Valid BrandCreateRequestDto request) {
         BrandListResponseDto response = productFacade.createBrands(request);
         return CommonResponse.success(SuccessCode.CREATED, response);
+    }
+
+    @Override
+    @PutMapping("/{brandId}")
+    public CommonResponse<BrandResponseDto> modifyBrand(
+            @PathVariable Long brandId,
+            @Valid @RequestBody BrandModifyRequestDto request) {
+        BrandResponseDto response = productFacade.modifyBrand(brandId, request);
+        return CommonResponse.success(SuccessCode.OK, response);
     }
 }

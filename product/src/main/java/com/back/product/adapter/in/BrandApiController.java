@@ -2,6 +2,7 @@ package com.back.product.adapter.in;
 
 import com.back.common.response.CommonResponse;
 import com.back.product.dto.request.BrandCreateRequestDto;
+import com.back.product.dto.request.BrandModifyRequestDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -22,4 +23,11 @@ public interface BrandApiController {
     @ApiResponse(responseCode = "403", description = "권한 없음", content = @Content)
     @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
     CommonResponse<?> createBrands(BrandCreateRequestDto request);
+
+    @Operation(summary = "브랜드 수정", description = "기존의 브랜드를 수정합니다.")
+    @ApiResponse(responseCode = "200", description = "브랜드 수정 성공")
+    @ApiResponse(responseCode = "401", description = "인증 실패", content = @Content)
+    @ApiResponse(responseCode = "403", description = "권한 없음", content = @Content)
+    @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
+    CommonResponse<?> modifyBrand(Long brandId, BrandModifyRequestDto request);
 }
