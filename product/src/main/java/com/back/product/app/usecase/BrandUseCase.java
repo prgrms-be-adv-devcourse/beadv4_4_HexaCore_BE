@@ -63,8 +63,7 @@ public class BrandUseCase {
 
     @Transactional
     public BrandDto modifyBrand(Long brandId, @Valid BrandModifyRequestDto request) {
-        Brand brandToModify = productSupport.findBrandById(brandId)
-                .orElseThrow(() -> new CustomException(FailureCode.BRAND_NOT_FOUND));
+        Brand brandToModify = findBrandExists(brandId);
 
         String newName = toPlainText(request.name());
 
