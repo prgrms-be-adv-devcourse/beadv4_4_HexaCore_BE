@@ -44,4 +44,12 @@ public class ApiV1BrandController implements BrandApiController {
         BrandResponseDto response = productFacade.modifyBrand(brandId, request);
         return CommonResponse.success(SuccessCode.OK, response);
     }
+
+    @Override
+    @DeleteMapping("/{brandId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public CommonResponse<?> deleteBrand(@PathVariable Long brandId) {
+        productFacade.deleteBrand(brandId);
+        return CommonResponse.success(SuccessCode.NO_CONTENT, null);
+    }
 }

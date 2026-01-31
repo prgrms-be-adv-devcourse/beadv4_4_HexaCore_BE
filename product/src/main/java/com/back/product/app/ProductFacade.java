@@ -45,6 +45,17 @@ public class ProductFacade {
         return BrandResponseDto.builder().brand(brandDto).build();
     }
 
+    @Transactional
+    public void deleteBrand(Long brandId) {
+        Boolean isUsed = productInfoUseCase.isBrandInUse(brandId);
+
+        if (isUsed) {
+            throw new CustomException(FailureCode.BRAND_IN_USE);
+        }
+
+        brandUseCase.deleteBrand(brandId);
+    }
+
     @Transactional(readOnly = true)
     public List<CategoryDto> getCategories() {
         return categoryUseCase.getCategories();

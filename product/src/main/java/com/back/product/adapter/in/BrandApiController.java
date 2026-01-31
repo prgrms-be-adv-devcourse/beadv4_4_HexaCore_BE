@@ -30,4 +30,11 @@ public interface BrandApiController {
     @ApiResponse(responseCode = "403", description = "권한 없음", content = @Content)
     @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
     CommonResponse<?> modifyBrand(Long brandId, BrandModifyRequestDto request);
+
+    @Operation(summary = "브랜드 삭제", description = "기존의 브랜드를 삭제합니다.")
+    @ApiResponse(responseCode = "204", description = "브랜드 삭제 성공")
+    @ApiResponse(responseCode = "401", description = "인증 실패", content = @Content)
+    @ApiResponse(responseCode = "403", description = "권한 없음", content = @Content)
+    @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
+    CommonResponse<?> deleteBrand(Long brandId);
 }

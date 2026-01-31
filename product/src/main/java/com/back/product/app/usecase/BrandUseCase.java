@@ -81,6 +81,11 @@ public class BrandUseCase {
         return brandMapper.toDto(brandToModify);
     }
 
+    @Transactional
+    public void deleteBrand(Long brandId) {
+        brandRepository.deleteById(brandId);
+    }
+
     private String toPlainText(String text) {
         if (text == null) {
             throw new InvalidValueException();

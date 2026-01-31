@@ -6,4 +6,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ProductInfoRepository extends JpaRepository<ProductInfo, Long> {
     boolean existsProductInfoByBrandAndProductCodeIgnoreCase(Brand brand, String code);
+
+    Boolean existsByBrand_Id(Long brandId);
 }
