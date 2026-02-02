@@ -100,4 +100,39 @@ public class ProductSupport {
     public Boolean existsProductInfoByCategory(Long categoryId) {
         return productInfoRepository.existsByCategory_Id(categoryId);
     }
+
+    @Transactional(readOnly = true)
+    public List<OptionGroup> getAllProductOptionGroups() {
+        return optionGroupRepository.findAll();
+    }
+
+    @Transactional(readOnly = true)
+    public List<OptionValue> getAllProductOptionValuesByOptionGroupIn(List<OptionGroup> productOptionGroups) {
+        return optionValueRepository.findAllByOptionGroupIn(productOptionGroups);
+    }
+
+    @Transactional(readOnly = true)
+    public OptionGroup getOptionGroupByName(String name) {
+        return optionGroupRepository.findByName(name);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<OptionGroup> getOptionGroupById(Long optionGroupId) {
+        return optionGroupRepository.findById(optionGroupId);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<OptionValue> getOptionValueById(Long optionValueId) {
+        return optionValueRepository.findById(optionValueId);
+    }
+
+    @Transactional(readOnly = true)
+    public Boolean existsProductByOptionGroupId(Long optionGroupId) {
+        return productOptionValuesRepository.existsByOptionValue_OptionGroup_Id(optionGroupId);
+    }
+
+    @Transactional(readOnly = true)
+    public Boolean existsProductByOptionValueId(Long optionValueId) {
+        return productOptionValuesRepository.existsByOptionValue_Id(optionValueId);
+    }
 }

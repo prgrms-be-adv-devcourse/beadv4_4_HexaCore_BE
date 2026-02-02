@@ -43,8 +43,8 @@ public class ChatSendMessageUseCase {
 
         ChatMessagePayload payload = new ChatMessagePayload(
                 savedMessage.getId(),
-                roomId,
                 userId,
+                roomId,
                 savedMessage.getContent(),
                 savedMessage.isBlinded(),
                 savedMessage.getCreatedAt()
