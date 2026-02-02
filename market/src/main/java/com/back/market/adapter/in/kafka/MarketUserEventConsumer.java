@@ -21,7 +21,7 @@ public class MarketUserEventConsumer {
 
     @Transactional
     @KafkaListener(
-            topics = "${custom.kafka.topic.member-created}",
+            topics = "${custom.kafka.topic.user-created}",
             groupId = "${custom.kafka.consumer.group-id}"
     )
     public void consume(UserCreatedEvent event) {
