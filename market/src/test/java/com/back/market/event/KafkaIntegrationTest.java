@@ -28,7 +28,7 @@ public class KafkaIntegrationTest {
                 "010-1234-5678",
                 "https://dummyimage.com/100x100/000/fff&text=Test2"
         );
-        kafkaTemplate.send("UserCreatedEvent", event);
+        kafkaTemplate.send("${custom.kafka.topic.member-created}", event);
         log.info("Event sent to Kafka topic: UserCreatedEvent (id: {})", testId);
         Thread.sleep(3000);
         boolean exists = marketUserRepository.existsById(testId);
