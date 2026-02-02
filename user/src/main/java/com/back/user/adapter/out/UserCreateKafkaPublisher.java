@@ -19,8 +19,8 @@ public class UserCreateKafkaPublisher {
     public void publish(UserCreatedEvent event) {
         kafkaTemplate.send(TOPIC_USER_CREATED, String.valueOf(event.userId()), event)
                 .whenComplete((res, ex) -> {
-                    if (ex != null) log.error("user replica 생성 이벤트 전송 실패 userId={}", event.userId(), ex);
-                    else log.info("user replica 생성 이벤트 전송 성공 userId={}", event.userId());
+                    if (ex != null) log.error("UserCreated 이벤트 전송 실패 userId={}", event.userId(), ex);
+                    else log.info("UserCreated 이벤트 전송 성공 userId={}", event.userId());
                 });
     }
 }
