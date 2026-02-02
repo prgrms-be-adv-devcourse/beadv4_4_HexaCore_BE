@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
 
 @SpringBootApplication(scanBasePackages = {
+        "com.back.chat",
         "com.back.common",
         "com.back.security"
 })
