@@ -9,7 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.time.YearMonth;
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -28,7 +28,7 @@ public class ApiV1MarketInternalController implements ApiV1MarketInternal {
     }
 
     @Override
-    public List<SettlementTargetOrder> findSettlementTargetOrders(YearMonth targetMonth, int page, int size) {
-        return marketInternalFacade.getSettlementData(targetMonth, page, size);
+    public List<SettlementTargetOrder> findSettlementTargetOrders(LocalDate targetDate, int page, int size) {
+        return marketInternalFacade.getSettlementData(targetDate, page, size);
     }
 }

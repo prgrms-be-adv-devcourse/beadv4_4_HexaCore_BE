@@ -8,7 +8,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.YearMonth;
+import java.time.LocalDate;
 import java.util.List;
 
 @Tag(name = "Market Internal API", description = "내부 통신용 API")
@@ -25,7 +25,7 @@ public interface ApiV1MarketInternal {
     @Operation(summary = "정산 모듈로 주문 데이터 전송")
     @GetMapping("/orders/settlement-target")
     List<SettlementTargetOrder> findSettlementTargetOrders(
-            @RequestParam("targetMonth") @DateTimeFormat(pattern = "yyyy-MM") YearMonth targetMonth,
+            @RequestParam("targetDate") @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate targetDate,
             @RequestParam("page") int page,
             @RequestParam("size") int size
     );

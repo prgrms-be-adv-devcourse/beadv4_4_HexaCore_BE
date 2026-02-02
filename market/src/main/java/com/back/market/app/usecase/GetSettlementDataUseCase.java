@@ -11,9 +11,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.time.YearMonth;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -25,10 +25,10 @@ public class GetSettlementDataUseCase {
     private final OrderRepository orderRepository;
 
     @Transactional(readOnly = true)
-    public List<SettlementTargetOrder> getSettlementData(YearMonth targetMonth, int page, int size) {
+    public List<SettlementTargetOrder> getSettlementData(LocalDate targetDate, int page, int size) {
         // 날짜 범위 계산
-        LocalDateTime startDateTime = targetMonth.atDay(1).atStartOfDay();
-        LocalDateTime endDateTime = targetMonth.atEndOfMonth().atTime(LocalTime.MAX);
+        LocalDateTime startDateTime = targetDate.atStartOfDay();
+        LocalDateTime endDateTime = targetDate.atTime(LocalTime.MAX);
 
         // 페이징
         Pageable pageable = PageRequest.of(page, size, Sort.by("id").ascending());
