@@ -18,6 +18,7 @@ import com.back.market.domain.enums.Role;
 import com.back.common.dto.cash.enums.PayAndHoldStatus;
 import com.back.market.dto.request.BiddingRequestDto;
 import com.back.common.dto.cash.response.PayAndHoldResponseDto;
+import com.back.market.dto.response.MarketPaymentResponseDto;
 import com.back.market.mapper.BiddingMapper;
 import com.back.market.mapper.MarketProductMapper;
 import com.back.market.mapper.MarketUserMapper;
@@ -86,7 +87,7 @@ public class MatchInstantTradeUseCaseV2Tests {
 
         // [When] 구매 실행
         BiddingRequestDto request = new BiddingRequestDto(productId, BigDecimal.valueOf(200000), "270");
-        PayAndHoldResponseDto response = matchInstantTradeUseCase.buyNow(buyer, request);
+        MarketPaymentResponseDto response = matchInstantTradeUseCase.buyNow(buyer, request);
 
         // [Then] seller1(먼저 등록한 사람)의 입찰과 체결되었는지 확인
         Order savedOrder = orderRepository.findById(response.relId()).orElseThrow();
@@ -130,7 +131,7 @@ public class MatchInstantTradeUseCaseV2Tests {
         BiddingRequestDto request = new BiddingRequestDto(productId, BigDecimal.valueOf(200000), "270");
 
         // [When] UseCase 호출 (반환값 DTO로 변경)
-        PayAndHoldResponseDto response = matchInstantTradeUseCase.buyNow(buyerId, request);
+        MarketPaymentResponseDto response = matchInstantTradeUseCase.buyNow(buyerId, request);
 
         // [Then] 1. 응답 상태 검증 (PAID)
         assertThat(response.status()).isEqualTo(PayAndHoldStatus.PAID);
@@ -196,7 +197,7 @@ public class MatchInstantTradeUseCaseV2Tests {
 
         // [When] 구매 실행
         BiddingRequestDto request = new BiddingRequestDto(productId, BigDecimal.valueOf(9000), "270");
-        PayAndHoldResponseDto response = matchInstantTradeUseCase.buyNow(buyerId, request);
+        MarketPaymentResponseDto response = matchInstantTradeUseCase.buyNow(buyerId, request);
 
         // [Then] 응답 검증
         assertThat(response.status()).isEqualTo(PayAndHoldStatus.REQUIRES_PG);
@@ -222,7 +223,7 @@ public class MatchInstantTradeUseCaseV2Tests {
 
         // [When] 즉시 판매 (반환값 변경)
         BiddingRequestDto request = new BiddingRequestDto(productId, BigDecimal.valueOf(150000), "270");
-        PayAndHoldResponseDto response = matchInstantTradeUseCase.sellNow(sellerId, request);
+        MarketPaymentResponseDto response = matchInstantTradeUseCase.sellNow(sellerId, request);
 
         // [Then] 1. 응답 상태 검증 (PAID)
         assertThat(response.status()).isEqualTo(PayAndHoldStatus.PAID);

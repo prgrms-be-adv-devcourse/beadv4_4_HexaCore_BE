@@ -15,6 +15,7 @@ import com.back.market.domain.enums.Role;
 import com.back.common.dto.cash.enums.PayAndHoldStatus;
 import com.back.market.dto.request.BiddingRequestDto;
 import com.back.common.dto.cash.response.PayAndHoldResponseDto;
+import com.back.market.dto.response.MarketPaymentResponseDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -72,7 +73,7 @@ public class RegisterBidUseCaseV2Tests {
         BiddingRequestDto request = BiddingRequestDto.of(PRODUCT_ID, price, "270");
 
         // [When] DTO 반환 확인
-        PayAndHoldResponseDto response = useCase.registerBuyBid(USER_ID, request);
+        MarketPaymentResponseDto response = useCase.registerBuyBid(USER_ID, request);
 
         // [Then] 1. 응답 검증
         assertThat(response.status()).isEqualTo(PayAndHoldStatus.PAID);
@@ -92,7 +93,7 @@ public class RegisterBidUseCaseV2Tests {
         BiddingRequestDto request = BiddingRequestDto.of(PRODUCT_ID, price, "270");
 
         // [When] 예외가 발생하지 않고 응답을 받아야 함
-        PayAndHoldResponseDto response = useCase.registerBuyBid(USER_ID, request);
+        MarketPaymentResponseDto response = useCase.registerBuyBid(USER_ID, request);
 
         // [Then]
         assertThat(response.status()).isEqualTo(PayAndHoldStatus.REQUIRES_PG);
@@ -111,7 +112,7 @@ public class RegisterBidUseCaseV2Tests {
         BiddingRequestDto request = BiddingRequestDto.of(PRODUCT_ID, BigDecimal.valueOf(150000), "270");
 
         // [When]
-        PayAndHoldResponseDto response = useCase.registerSellBid(USER_ID, request);
+        MarketPaymentResponseDto response = useCase.registerSellBid(USER_ID, request);
 
         // [Then]
         assertThat(response.status()).isEqualTo(PayAndHoldStatus.PAID);
