@@ -86,8 +86,8 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                     user.getEmail(),
                     user.getAddress(),
                     user.getPhone(),
-                    user.getProfileImageUrl(),
-                    user.getCreatedAt()));
+                    user.getProfileImageUrl()
+                    ));
             log.info("회원 가입 후 이벤트 발행 완료: userId={}", user.getId());
         }
 
