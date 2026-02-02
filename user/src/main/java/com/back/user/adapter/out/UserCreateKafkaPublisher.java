@@ -14,7 +14,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @Slf4j
 public class UserCreateKafkaPublisher {
 
-    @Value("${custom.kafka.topics.userCreated}")
+    @Value("${custom.kafka.topic.user-created}")
     private String userCreatedTopic;
 
     private final KafkaTemplate<String, UserCreatedEvent> kafkaTemplate;

@@ -16,8 +16,8 @@ public class WalletUserCreatedListener {
     private final CreateWalletUseCase createWalletUseCase;
 
     @KafkaListener(
-            topics = "wallet-create-requests",
-            groupId = "wallet-group"
+            topics = "${custom.kafka.topic.wallet-create-requests}",
+            groupId = "${custom.kafka.consumer.group-id}"
     )
     @Transactional
     public void on(WalletCreateRequestedEvent event) {
