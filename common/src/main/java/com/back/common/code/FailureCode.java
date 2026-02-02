@@ -71,6 +71,7 @@ public enum FailureCode {
     PRODUCT_INFO_NOT_FOUND(HttpStatus.NOT_FOUND, "PRODUCT_INFO_NOT_FOUND", "존재하지 않는 상품 기본 정보입니다."),
     CHAT_MESSAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "CHAT_MESSAGE_NOT_FOUND", "해당 메시지를 찾을 수 없습니다."),
     USER_SETTING_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_SETTING_NOT_FOUND", "해당 유저의 알림 세팅을 찾을 수 없습니다."),
+    OPTION_GROUP_NOT_FOUND(HttpStatus.NOT_FOUND, "OPTION_GROUP_NOT_FOUND", "옵션 그룹이 존재하지 않습니다."),
 
     /**
      * 405 Method Not Allowed
@@ -92,6 +93,7 @@ public enum FailureCode {
     OPTION_VALUE_IN_USE(HttpStatus.CONFLICT, "OPTION_VALUE_IN_USE", "해당 옵션 값을 사용하는 상품이 있어 삭제할 수 없습니다."),
     BRAND_IN_USE(HttpStatus.CONFLICT, "BRAND_IN_USE", "해당 브랜드를 사용하는 상품이 있어 삭제할 수 없습니다."),
     CATEGORY_IN_USE(HttpStatus.CONFLICT, "CATEGORY_IN_USE", "해당 카테고리를 사용하는 상품이 있어 삭제할 수 없습니다."),
+  
     /**
      * 500 Internal Server Error
      */
