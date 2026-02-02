@@ -40,9 +40,9 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage,Long> {
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""
         update ChatMessage m
-        set m.isBlinded = true
+        set m.messageStatus = com.back.chat.domain.MessageStatus.BLINDED
         where m.id = :chatMessageId
-          and m.isBlinded = false
+          and m.messageStatus = com.back.chat.domain.MessageStatus.NORMAL
           and m.reportCount >= :threshold
     """)
     int blindIfReached(@Param("chatMessageId") Long chatMessageId,

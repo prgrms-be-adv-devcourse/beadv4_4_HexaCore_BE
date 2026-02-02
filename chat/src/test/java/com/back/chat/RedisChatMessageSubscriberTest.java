@@ -1,6 +1,7 @@
 package com.back.chat;
 
 import com.back.chat.adapter.out.redis.RedisChatMessageSubscriber;
+import com.back.chat.domain.MessageStatus;
 import com.back.chat.event.ChatEventEnvelope;
 import com.back.chat.event.ChatEventType;
 import com.back.chat.event.payload.ChatMessagePayload;
@@ -44,7 +45,7 @@ class RedisChatMessageSubscriberTest {
                 2L,          // userId
                 roomId,      // roomId
                 "hello",     // content
-                false,       // isBlinded
+                MessageStatus.NORMAL,       // isBlinded
                 LocalDateTime.of(2026, 1, 30, 14, 50, 0) // createdAt
         );
 

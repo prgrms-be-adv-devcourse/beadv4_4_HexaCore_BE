@@ -39,8 +39,8 @@ public class RedisChatMessageSubscriber implements MessageListener {
                     String destination = roomTopic(payload.roomId());
                     messagingTemplate.convertAndSend(destination, payload);
 
-                    log.info("[CHAT][REDIS-SUB] channel={}, type=CHAT_MESSAGE roomId={}, messageId={}, blinded={}, destination={}",
-                            channel, payload.roomId(), payload.messageId(), payload.isBlinded(), destination);
+                    log.info("[CHAT][REDIS-SUB] channel={}, type=CHAT_MESSAGE roomId={}, messageId={}, messageStatus={}, destination={}",
+                            channel, payload.roomId(), payload.messageId(), payload.messageStatus(), destination);
                 }
 
                 case MESSAGE_BLINDED -> {
