@@ -46,4 +46,9 @@ public class ChatController {
                 chatFacade.reportMessage(authPrincipal.getUserId(),requestDto)
         );
     }
+
+    @DeleteMapping("/delete/{messageId}")
+    public void deleteMessage(@AuthenticationPrincipal AuthPrincipal authPrincipal,@PathVariable Long messageId) {
+                chatFacade.deleteMessage(authPrincipal.getUserId(),messageId);
+    }
 }

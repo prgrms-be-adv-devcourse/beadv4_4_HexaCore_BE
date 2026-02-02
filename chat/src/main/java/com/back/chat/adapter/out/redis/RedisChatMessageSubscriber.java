@@ -2,6 +2,7 @@ package com.back.chat.adapter.out.redis;
 
 import com.back.chat.event.ChatEventEnvelope;
 import com.back.chat.event.payload.ChatMessageBlindedPayload;
+import com.back.chat.event.payload.ChatMessageDeletedPayload;
 import com.back.chat.event.payload.ChatMessagePayload;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -52,6 +53,14 @@ public class RedisChatMessageSubscriber implements MessageListener {
 
                     log.info("[CHAT][REDIS-SUB] channel={}, type=MESSAGE_BLINDED roomId={}, messageId={}, destination={}",
                             channel, payload.roomId(), payload.chatMessageId(), destination);
+                }
+
+                case MESSAGE_DELETED -> {
+                    ChatMessageDeletedPayload payload =
+                            objectMapper.treeToValue(envelope.data(), ChatMessageDeletedPayload.class);
+
+                    String destination = roomTopic(payload.roomId());
+                    messagingTemplate.convertAndSend(destination,payload);
                 }
 
                 default -> log.warn("[CHAT][REDIS-SUB][WARN] unknown type. channel={}, rawBody={}", channel, rawBody);

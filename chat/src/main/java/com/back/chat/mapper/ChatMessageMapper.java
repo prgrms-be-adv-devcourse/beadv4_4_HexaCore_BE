@@ -1,7 +1,6 @@
 package com.back.chat.mapper;
 
 import com.back.chat.domain.ChatMessage;
-import com.back.chat.domain.ChatMessageBlindPolicy;
 import com.back.chat.dto.response.ChatMessageHistoryResponseDto;
 import com.back.chat.dto.response.ChatMessageReportResponseDto;
 

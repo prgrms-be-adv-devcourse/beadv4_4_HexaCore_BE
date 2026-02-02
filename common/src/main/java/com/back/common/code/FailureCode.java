@@ -52,6 +52,7 @@ public enum FailureCode {
     SETTLEMENT_ACCESS_DENIED(HttpStatus.FORBIDDEN, "SETTLEMENT_ACCESS_DENIED", "해당 정산 내역에 접근 권한이 없습니다."),
     CHAT_RESTRICTED(HttpStatus.FORBIDDEN, "CHAT_RESTRICTED", "채팅이 제한된 사용자입니다."),
     OWNER_MISMATCH(HttpStatus.FORBIDDEN, "OWNER_MISMATCH", "결제 요청자 정보가 일치하지 않습니다."),
+    CHAT_DELETE_NOT_ALLOWED(HttpStatus.FORBIDDEN,"CHAT_DELETE_NOT_ALLOWED", "이 메시지를 삭제할 권한이 없습니다."),
     /**
      * 404 Not Found
      */

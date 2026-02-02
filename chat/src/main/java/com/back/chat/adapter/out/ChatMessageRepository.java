@@ -48,4 +48,13 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage,Long> {
     int blindIfReached(@Param("chatMessageId") Long chatMessageId,
                        @Param("threshold") int threshold);
 
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+    update ChatMessage m
+       set m.messageStatus = com.back.chat.domain.MessageStatus.DELETED,
+           m.deletedAt = CURRENT_TIMESTAMP
+     where m.id = :messageId
+       and m.messageStatus <> com.back.chat.domain.MessageStatus.DELETED
+""")
+    int deleteIfNotDeleted(@Param("messageId") Long messageId);
 }
