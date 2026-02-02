@@ -1,6 +1,6 @@
 package com.back.market.event;
 
-import com.back.common.market.event.MemberCreatedEvent;
+import com.back.common.market.event.UserCreatedEvent;
 import com.back.market.adapter.out.MarketUserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
@@ -20,17 +20,16 @@ public class KafkaIntegrationTest {
     @Test
     void test1() throws InterruptedException {
         long testId = 101L;
-        MemberCreatedEvent event = new MemberCreatedEvent(
+        UserCreatedEvent event = new UserCreatedEvent(
                 testId,
-                "USER",
                 "테스트유저2",
                 "test2@example.com",
                 "서울시 강남구2",
                 "010-1234-5678",
                 "https://dummyimage.com/100x100/000/fff&text=Test2"
         );
-        kafkaTemplate.send("MemberCreatedEvent", event);
-        log.info("Event sent to Kafka topic: MemberCreatedEvent (id: {})", testId);
+        kafkaTemplate.send("UserCreatedEvent", event);
+        log.info("Event sent to Kafka topic: UserCreatedEvent (id: {})", testId);
         Thread.sleep(3000);
         boolean exists = marketUserRepository.existsById(testId);
         if(exists) {

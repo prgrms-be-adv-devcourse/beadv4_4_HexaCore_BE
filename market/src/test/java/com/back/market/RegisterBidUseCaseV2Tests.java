@@ -11,10 +11,8 @@ import com.back.market.domain.MarketProduct;
 import com.back.market.domain.MarketUser;
 import com.back.market.domain.enums.BiddingPosition;
 import com.back.market.domain.enums.BiddingStatus;
-import com.back.market.domain.enums.Role;
 import com.back.common.dto.cash.enums.PayAndHoldStatus;
 import com.back.market.dto.request.BiddingRequestDto;
-import com.back.common.dto.cash.response.PayAndHoldResponseDto;
 import com.back.market.dto.response.MarketPaymentResponseDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -48,7 +46,6 @@ public class RegisterBidUseCaseV2Tests {
                     .id(USER_ID)
                     .nickname("tester")
                     .email("test@test.com")
-                    .role(Role.USER)
                     .build();
             userRepository.save(user);
         }
@@ -145,7 +142,6 @@ public class RegisterBidUseCaseV2Tests {
                 .id(sellerId)
                 .nickname("seller_user")
                 .email("seller@test.com")
-                .role(Role.USER)
                 .build();
         userRepository.save(seller);
 
@@ -193,7 +189,6 @@ public class RegisterBidUseCaseV2Tests {
                 .id(buyerId)
                 .nickname("buyer_user")
                 .email("seller@test.com")
-                .role(Role.USER)
                 .build();
         userRepository.save(buyer);
 

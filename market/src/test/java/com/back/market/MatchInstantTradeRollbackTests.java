@@ -11,7 +11,6 @@ import com.back.market.domain.MarketProduct;
 import com.back.market.domain.MarketUser;
 import com.back.market.domain.enums.BiddingPosition;
 import com.back.market.domain.enums.BiddingStatus;
-import com.back.market.domain.enums.Role;
 import com.back.market.dto.request.BiddingRequestDto;
 import com.back.market.mapper.BiddingMapper;
 import com.back.market.mapper.MarketProductMapper;
@@ -70,10 +69,10 @@ public class MatchInstantTradeRollbackTests {
 
     // --- Helper Methods (데이터 정리를 위해 메서드 단위 Transactional 고려 가능) ---
     private void setupBaseData(Long productId, Long sellerId, Long buyerId, String buyerAddress) {
-        MarketUser seller = marketUserMapper.toEntity(sellerId, Role.USER, "seller", "s@t.com", "판매자주소", "010-1234-5678", "image");
+        MarketUser seller = marketUserMapper.toEntity(sellerId,"seller", "s@t.com", "판매자주소", "010-1234-5678", "image");
         marketUserRepository.save(seller);
 
-        MarketUser buyer = marketUserMapper.toEntity(buyerId, Role.USER, "buyer", "b@t.com", buyerAddress, "010-1234-5678", "image");
+        MarketUser buyer = marketUserMapper.toEntity(buyerId,"buyer", "b@t.com", buyerAddress, "010-1234-5678", "image");
         marketUserRepository.save(buyer);
 
         if (!marketProductRepository.existsById(productId)) {

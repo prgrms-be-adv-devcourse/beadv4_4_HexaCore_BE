@@ -2,9 +2,8 @@ package com.back.common.market.event;
 
 import com.back.common.event.EventName;
 
-public record MemberCreatedEvent(
+public record UserCreatedEvent(
         Long id,
-        String role,
         String nickname,
         String email,
         String address,

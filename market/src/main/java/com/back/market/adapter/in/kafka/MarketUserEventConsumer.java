@@ -1,9 +1,8 @@
 package com.back.market.adapter.in.kafka;
 
-import com.back.common.market.event.MemberCreatedEvent;
+import com.back.common.market.event.UserCreatedEvent;
 import com.back.market.adapter.out.MarketUserRepository;
 import com.back.market.domain.MarketUser;
-import com.back.market.domain.enums.Role;
 import com.back.market.mapper.MarketUserMapper;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -22,11 +21,11 @@ public class MarketUserEventConsumer {
 
     @Transactional
     @KafkaListener(
-            topics = "MemberCreatedEvent",
+            topics = "UserCreatedEvent",
             groupId = "resello-market-group"
     )
-    public void consume(MemberCreatedEvent event) {
-        log.info("[Market] MemberCreatedEvent 수신: {}", event.id());
+    public void consume(UserCreatedEvent event) {
+        log.info("[Market] UserCreatedEvent 수신: {}", event.id());
 
         if (marketUserRepository.existsById(event.id())) {
             log.info("[Market] 이미 존재하는 회원 데이터: id = {}", event.id());
@@ -35,14 +34,13 @@ public class MarketUserEventConsumer {
         }
 
         if (event.id() == null || event.email() == null) {
-            log.error("MemberCreatedEvent의 id 또는 email이 null입니다. event={}", event);
+            log.error("UserCreatedEvent의 id 또는 email이 null입니다. event={}", event);
             return;
         }
 
         try {
             MarketUser marketUser = marketUserMapper.toEntity(
                     event.id(),
-                    Role.valueOf(event.role()),
                     event.nickname(),
                     event.email(),
                     event.address(),

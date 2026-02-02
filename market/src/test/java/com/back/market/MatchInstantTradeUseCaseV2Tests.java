@@ -14,10 +14,8 @@ import com.back.market.domain.Order;
 import com.back.market.domain.enums.BiddingPosition;
 import com.back.market.domain.enums.BiddingStatus;
 import com.back.market.domain.enums.OrderStatus;
-import com.back.market.domain.enums.Role;
 import com.back.common.dto.cash.enums.PayAndHoldStatus;
 import com.back.market.dto.request.BiddingRequestDto;
-import com.back.common.dto.cash.response.PayAndHoldResponseDto;
 import com.back.market.dto.response.MarketPaymentResponseDto;
 import com.back.market.mapper.BiddingMapper;
 import com.back.market.mapper.MarketProductMapper;
@@ -78,7 +76,7 @@ public class MatchInstantTradeUseCaseV2Tests {
         Long seller2 = 11L;
         Long buyer = 12L;
         setupBaseData(productId, seller1, buyer, "주소");
-        marketUserRepository.save(MarketUser.builder().id(seller2).nickname("s2").email("s2@t.com").role(Role.USER).build());
+        marketUserRepository.save(MarketUser.builder().id(seller2).nickname("s2").email("s2@t.com").build());
 
         // 동일 가격(20만원)으로 시간차를 두고 입찰 등록
         createBidding(productId, seller1, 200000, BiddingPosition.SELL); // 1. 먼저 등록 (Target)
@@ -241,9 +239,9 @@ public class MatchInstantTradeUseCaseV2Tests {
     // --- Helper Methods (기존과 동일) ---
     private void setupBaseData(Long productId, Long sellerId, Long buyerId, String buyerAddress) {
         // ... (기존 코드 그대로)
-        MarketUser seller = marketUserMapper.toEntity(sellerId, Role.USER, "seller", "s@t.com", "판매자주소", "010-1234-5678", "img");
+        MarketUser seller = marketUserMapper.toEntity(sellerId,"seller", "s@t.com", "판매자주소", "010-1234-5678", "img");
         marketUserRepository.save(seller);
-        MarketUser buyer = marketUserMapper.toEntity(buyerId, Role.USER, "buyer", "b@t.com", buyerAddress, "010-1234-5678", "img");
+        MarketUser buyer = marketUserMapper.toEntity(buyerId, "buyer", "b@t.com", buyerAddress, "010-1234-5678", "img");
         marketUserRepository.save(buyer);
         if (!marketProductRepository.existsById(productId)) {
             marketProductRepository.save(marketProductMapper.toEntity(productId, "N", "신발", "N1", "270", 100000L, "S", "img"));
