@@ -35,8 +35,26 @@ public class ProductFacade {
     }
 
     @Transactional
-    public BrandDto createBrand(@Valid BrandCreateRequestDto request) {
-        return brandUseCase.createBrand(request);
+    public BrandListResponseDto createBrands(@Valid BrandCreateRequestDto request) {
+        List<BrandDto> brandDtos = brandUseCase.createBrands(request);
+        return BrandListResponseDto.builder().brands(brandDtos).build();
+    }
+
+    @Transactional
+    public BrandResponseDto modifyBrand(Long brandId, @Valid BrandModifyRequestDto request) {
+        BrandDto brandDto = brandUseCase.modifyBrand(brandId, request);
+        return BrandResponseDto.builder().brand(brandDto).build();
+    }
+
+    @Transactional
+    public void deleteBrand(Long brandId) {
+        Boolean isUsed = productInfoUseCase.isBrandInUse(brandId);
+
+        if (isUsed) {
+            throw new CustomException(FailureCode.BRAND_IN_USE);
+        }
+
+        brandUseCase.deleteBrand(brandId);
     }
 
     @Transactional(readOnly = true)
@@ -45,8 +63,26 @@ public class ProductFacade {
     }
 
     @Transactional
-    public CategoryDto createCategory(@Valid CategoryCreateRequestDto request) {
-        return categoryUseCase.createCategory(request);
+    public CategoryListResponseDto createCategories(@Valid CategoryCreateRequestDto request) {
+        List<CategoryDto> categoryDtos =  categoryUseCase.createCategories(request);
+        return CategoryListResponseDto.builder().categories(categoryDtos).build();
+    }
+
+    @Transactional
+    public CategoryResponseDto modifyCategory(Long categoryId, @Valid CategoryModifyRequestDto request) {
+        CategoryDto categoryDto = categoryUseCase.modifyCategory(categoryId, request);
+        return CategoryResponseDto.builder().category(categoryDto).build();
+    }
+
+    @Transactional
+    public void deleteCategory(Long categoryId) {
+        Boolean isUsed = productInfoUseCase.isCategoryInUse(categoryId);
+
+        if (isUsed) {
+            throw new CustomException(FailureCode.CATEGORY_IN_USE);
+        }
+
+        categoryUseCase.deleteCategory(categoryId);
     }
 
     @Transactional
