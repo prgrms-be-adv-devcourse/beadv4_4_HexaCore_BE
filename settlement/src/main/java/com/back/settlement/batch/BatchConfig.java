@@ -27,4 +27,17 @@ public class BatchConfig {
         initializer.setDatabasePopulator(populator);
         return initializer;
     }
+
+    @Bean
+    @Profile("prod")
+    public DataSourceInitializer prodDataSourceInitializer(DataSource dataSource) {
+        ResourceDatabasePopulator populator = new ResourceDatabasePopulator();
+        populator.addScript(new ClassPathResource("/org/springframework/batch/core/schema-postgresql.sql"));
+        populator.setContinueOnError(true);
+
+        DataSourceInitializer initializer = new DataSourceInitializer();
+        initializer.setDataSource(dataSource);
+        initializer.setDatabasePopulator(populator);
+        return initializer;
+    }
 }
