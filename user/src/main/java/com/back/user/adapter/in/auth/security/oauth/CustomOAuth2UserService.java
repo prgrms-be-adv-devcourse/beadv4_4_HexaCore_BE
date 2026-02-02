@@ -1,5 +1,6 @@
 package com.back.user.adapter.in.auth.security.oauth;
 
+import com.back.common.user.event.UserCreatedEvent;
 import com.back.common.user.event.WalletCreateRequestedEvent;
 import com.back.user.adapter.in.auth.security.oauth.principal.CustomOAuth2User;
 import com.back.user.adapter.in.auth.security.oauth.userinfo.GoogleResponse;
@@ -78,9 +79,16 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 .orElseGet(() -> userSettingRepository.save(UserSetting.of(user)));
 
         if (isNewUser) {
-            WalletCreateRequestedEvent event = new WalletCreateRequestedEvent(user.getId());
-            eventPublisher.publishEvent(event);
-            log.info("UserCreatedEvent 발행 완료: userId={}", user.getId());
+            eventPublisher.publishEvent(new WalletCreateRequestedEvent(user.getId()));
+            eventPublisher.publishEvent(new UserCreatedEvent(
+                    user.getId(),
+                    user.getNickname(),
+                    user.getEmail(),
+                    user.getAddress(),
+                    user.getPhone(),
+                    user.getProfileImageUrl(),
+                    user.getCreatedAt()));
+            log.info("회원 가입 후 이벤트 발행 완료: userId={}", user.getId());
         }
 
         return new CustomOAuth2User(user.getRole(), user.getId(), oAuth2User.getAttributes());

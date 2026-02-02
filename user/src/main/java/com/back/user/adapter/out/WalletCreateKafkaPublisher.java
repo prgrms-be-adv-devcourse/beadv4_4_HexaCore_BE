@@ -11,14 +11,14 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class UserEventKafkaPublisher {
+public class WalletCreateKafkaPublisher {
 
     private final KafkaTemplate<String, WalletCreateRequestedEvent> kafkaTemplate;
-    public static final String TOPIC_WALLET_CREATE = "wallet-create-requests";
+    public static final String TOPIC_WALLET_CREATE_REQUESTS = "wallet-create-requests";
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void publishWalletCreate(WalletCreateRequestedEvent event) {
-        kafkaTemplate.send(TOPIC_WALLET_CREATE, String.valueOf(event.userId()), event)
+        kafkaTemplate.send(TOPIC_WALLET_CREATE_REQUESTS, String.valueOf(event.userId()), event)
                 .whenComplete((res, ex) -> {
                     if (ex != null) log.error("wallet 생성 이벤트 전송 실패 userId={}", event.userId(), ex);
                     else log.info("wallet 생성 이벤트 전송 성공 userId={}", event.userId());
