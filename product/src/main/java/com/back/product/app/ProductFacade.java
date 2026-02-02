@@ -6,6 +6,7 @@ import com.back.product.app.usecase.*;
 import com.back.product.domain.*;
 import com.back.product.dto.CategoryDto;
 import com.back.product.dto.ProductDto;
+import com.back.product.dto.ProductInfoDto;
 import com.back.product.dto.request.*;
 import com.back.product.dto.BrandDto;
 import com.back.product.dto.response.*;
@@ -17,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -83,6 +85,11 @@ public class ProductFacade {
         }
 
         categoryUseCase.deleteCategory(categoryId);
+    }
+
+    @Transactional(readOnly = true)
+    public ProductListResponseDto getProducts(@Valid ProductQueryRequestDto request) {
+        return productUseCase.findMultipleProduct(request.productIds());
     }
 
     @Transactional
