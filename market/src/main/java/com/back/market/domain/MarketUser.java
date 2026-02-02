@@ -1,7 +1,6 @@
 package com.back.market.domain;
 
 import com.back.common.entity.BaseTimeEntity;
-import com.back.market.domain.enums.Role;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -29,10 +28,6 @@ public class MarketUser extends BaseTimeEntity {
     @Id
     @Column(name = "id")
     private Long id;                // Member 모듈의 PK를 그대로 사용
-
-    @Column(name = "role", nullable = false)
-    @Enumerated(EnumType.STRING)
-    private Role role;             // 권한(USER, ADMIN)
 
     @Column(name = "nickname", nullable = false, length = 30)
     private String nickname;        // 닉네임

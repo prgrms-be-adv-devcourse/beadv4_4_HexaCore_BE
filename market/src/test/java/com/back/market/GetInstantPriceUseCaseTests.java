@@ -11,7 +11,6 @@ import com.back.market.domain.MarketProduct;
 import com.back.market.domain.MarketUser;
 import com.back.market.domain.enums.BiddingPosition;
 import com.back.market.domain.enums.BiddingStatus;
-import com.back.market.domain.enums.Role;
 import com.back.market.dto.request.BiddingRequestDto;
 import com.back.market.dto.response.InstantBuyPriceResponseDto;
 import com.back.market.dto.response.InstantSellPriceResponseDto;
@@ -119,7 +118,6 @@ class GetInstantPriceUseCaseTests {
                     .id(userId)
                     .nickname("tester")
                     .email("test@test.com")
-                    .role(Role.USER)
                     .build());
         }
         // 상품 생성

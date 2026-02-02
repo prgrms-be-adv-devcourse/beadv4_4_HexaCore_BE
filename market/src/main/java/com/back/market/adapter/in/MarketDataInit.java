@@ -4,7 +4,6 @@ import com.back.market.adapter.out.MarketProductRepository;
 import com.back.market.adapter.out.MarketUserRepository;
 import com.back.market.domain.MarketProduct;
 import com.back.market.domain.MarketUser;
-import com.back.market.domain.enums.Role;
 import com.back.market.mapper.MarketProductMapper;
 import com.back.market.mapper.MarketUserMapper;
 import lombok.RequiredArgsConstructor;
@@ -43,7 +42,6 @@ public class MarketDataInit implements CommandLineRunner {
         // 유저 1: 판매자 역할 (ID: 1L)
         MarketUser seller = marketUserMapper.toEntity(
                 1L,
-                Role.USER,
                 "나이키매니아",
                 "seller@resello.com",
                 "서울시 강남구 역삼동",
@@ -56,7 +54,6 @@ public class MarketDataInit implements CommandLineRunner {
         // 유저 2: 구매자 역할 (ID: 2L)
         MarketUser buyer = marketUserMapper.toEntity(
                 2L,
-                Role.USER,
                 "신발덕후",
                 "buyer@resello.com",
                 "경기도 성남시 분당구",
