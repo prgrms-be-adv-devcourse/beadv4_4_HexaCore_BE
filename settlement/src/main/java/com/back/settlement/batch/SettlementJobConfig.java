@@ -8,18 +8,21 @@ import org.springframework.batch.core.step.Step;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-/**
- * 월별 정산 배치 Job 설정
-*/
 @Configuration
 @RequiredArgsConstructor
 public class SettlementJobConfig {
+
     @Bean
-    public Job settlementJob(JobRepository jobRepository, Step fetchOrdersAndCreateItemsStep, Step collectItemsAndCalculateSettlementsStep, Step monthSettlementStep) {
-        return new JobBuilder("settlementJob", jobRepository)
-                .start(fetchOrdersAndCreateItemsStep)
-                .next(collectItemsAndCalculateSettlementsStep)
-                .next(monthSettlementStep)
+    public Job dailySettlementJob(JobRepository jobRepository, Step collectOrdersStep) {
+        return new JobBuilder("dailySettlementJob", jobRepository)
+                .start(collectOrdersStep)
+                .build();
+    }
+
+    @Bean
+    public Job monthlySettlementJob(JobRepository jobRepository, Step createSettlementsStep) {
+        return new JobBuilder("monthlySettlementJob", jobRepository)
+                .start(createSettlementsStep)
                 .build();
     }
 }

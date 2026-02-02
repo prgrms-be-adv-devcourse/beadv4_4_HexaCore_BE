@@ -15,7 +15,7 @@ public class CategoryMapper {
                 .build();
     }
 
-    public Category toEntity(CategoryCreateRequestDto request) {
+    public Category toEntity(CategoryCreateRequestDto.CategoryDto request) {
         return Category.builder()
                 .name(request.name())
                 .imageUrl(request.imageUrl())

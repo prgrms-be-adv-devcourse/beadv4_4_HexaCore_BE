@@ -1,13 +1,14 @@
 package com.back.product.app;
 
+import com.back.common.code.FailureCode;
+import com.back.common.exception.CustomException;
 import com.back.product.app.usecase.*;
 import com.back.product.domain.*;
 import com.back.product.dto.CategoryDto;
 import com.back.product.dto.ProductDto;
 import com.back.product.dto.request.*;
 import com.back.product.dto.BrandDto;
-import com.back.product.dto.response.ProductResponseDto;
-import com.back.product.dto.response.ProductSearchListResponseDto;
+import com.back.product.dto.response.*;
 import com.back.product.mapper.ProductInfoMapper;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -34,8 +35,26 @@ public class ProductFacade {
     }
 
     @Transactional
-    public BrandDto createBrand(@Valid BrandCreateRequestDto request) {
-        return brandUseCase.createBrand(request);
+    public BrandListResponseDto createBrands(@Valid BrandCreateRequestDto request) {
+        List<BrandDto> brandDtos = brandUseCase.createBrands(request);
+        return BrandListResponseDto.builder().brands(brandDtos).build();
+    }
+
+    @Transactional
+    public BrandResponseDto modifyBrand(Long brandId, @Valid BrandModifyRequestDto request) {
+        BrandDto brandDto = brandUseCase.modifyBrand(brandId, request);
+        return BrandResponseDto.builder().brand(brandDto).build();
+    }
+
+    @Transactional
+    public void deleteBrand(Long brandId) {
+        Boolean isUsed = productInfoUseCase.isBrandInUse(brandId);
+
+        if (isUsed) {
+            throw new CustomException(FailureCode.BRAND_IN_USE);
+        }
+
+        brandUseCase.deleteBrand(brandId);
     }
 
     @Transactional(readOnly = true)
@@ -44,8 +63,26 @@ public class ProductFacade {
     }
 
     @Transactional
-    public CategoryDto createCategory(@Valid CategoryCreateRequestDto request) {
-        return categoryUseCase.createCategory(request);
+    public CategoryListResponseDto createCategories(@Valid CategoryCreateRequestDto request) {
+        List<CategoryDto> categoryDtos =  categoryUseCase.createCategories(request);
+        return CategoryListResponseDto.builder().categories(categoryDtos).build();
+    }
+
+    @Transactional
+    public CategoryResponseDto modifyCategory(Long categoryId, @Valid CategoryModifyRequestDto request) {
+        CategoryDto categoryDto = categoryUseCase.modifyCategory(categoryId, request);
+        return CategoryResponseDto.builder().category(categoryDto).build();
+    }
+
+    @Transactional
+    public void deleteCategory(Long categoryId) {
+        Boolean isUsed = productInfoUseCase.isCategoryInUse(categoryId);
+
+        if (isUsed) {
+            throw new CustomException(FailureCode.CATEGORY_IN_USE);
+        }
+
+        categoryUseCase.deleteCategory(categoryId);
     }
 
     @Transactional
@@ -103,10 +140,57 @@ public class ProductFacade {
         return productDocumentUseCase.findProductPage(request, page, size);
     }
 
+    @Transactional(readOnly = true)
+    public OptionListResponseDto getOptions() {
+        return optionUseCase.findAllOptions();
+    }
+
     private ProductResponseDto buildProductResponseDto(ProductInfo productInfo, List<ProductDto> productDtos) {
         return ProductResponseDto.builder()
                 .productInfo(productInfoMapper.toDto(productInfo))
                 .products(productDtos)
                 .build();
+    }
+
+    @Transactional
+    public OptionListResponseDto createOptions(@Valid OptionCreateRequestDto request) {
+        return optionUseCase.createOptions(request);
+    }
+
+    @Transactional
+    public OptionResponseDto appendOptions(Long optionGroupId, @Valid OptionAppendRequestDto request) {
+        return optionUseCase.appendOptions(optionGroupId, request);
+    }
+
+    @Transactional
+    public OptionGroupModifyResponseDto modifyOptionGroup(Long optionGroupId, @Valid OptionGroupModifyRequestDto request) {
+        return optionUseCase.modifyOptionGroup(optionGroupId, request);
+    }
+
+    @Transactional
+    public OptionValueModifyResponseDto modifyOptionValue(Long optionValueId, @Valid OptionValueModifyRequestDto request) {
+        return optionUseCase.modifyOptionValue(optionValueId, request);
+    }
+
+    @Transactional
+    public void deleteOptionGroup(Long optionGroupId) {
+        Boolean isUsed = productUseCase.isOptionGroupInUse(optionGroupId);
+
+        if (isUsed) {
+            throw new CustomException(FailureCode.OPTION_GROUP_IN_USE);
+        }
+
+        optionUseCase.deleteOptions(optionGroupId);
+    }
+
+    @Transactional
+    public void deleteOptionValue(Long optionValueId) {
+        Boolean isUsed = productUseCase.isOptionValueInUse(optionValueId);
+
+        if (isUsed) {
+            throw new CustomException(FailureCode.OPTION_VALUE_IN_USE);
+        }
+
+        optionUseCase.deleteOption(optionValueId);
     }
 }
