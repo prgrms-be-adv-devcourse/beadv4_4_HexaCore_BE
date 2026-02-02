@@ -26,12 +26,6 @@ class ProductFacadeTest {
     private ProductFacade productFacade;
 
     @Mock
-    private ProductUseCase productUseCase;
-
-    @Mock
-    private OptionUseCase optionUseCase;
-
-    @Mock
     private ProductInfoUseCase productInfoUseCase;
 
     @Mock
@@ -39,6 +33,12 @@ class ProductFacadeTest {
 
     @Mock
     private CategoryUseCase categoryUseCase;
+
+    @Mock
+    private ProductUseCase productUseCase;
+
+    @Mock
+    private OptionUseCase optionUseCase;
 
     @Nested
     @DisplayName("deleteOptionGroup 메서드")
