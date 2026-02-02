@@ -25,8 +25,8 @@ public class ApiV1ProductQueryController implements ProductQueryApiController {
     }
 
     @Override
-    @GetMapping
-    public CommonResponse<ProductSearchListResponseDto> getProductList(
+    @GetMapping(params = "keyword")
+    public CommonResponse<ProductSearchListResponseDto> searchProducts(
        @ModelAttribute @Valid ProductSearchRequestDto request,
        @RequestParam(defaultValue = "0") Long page,
        @RequestParam(defaultValue = "10") Long size

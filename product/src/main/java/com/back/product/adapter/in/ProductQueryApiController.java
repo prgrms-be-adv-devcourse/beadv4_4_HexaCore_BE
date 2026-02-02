@@ -32,5 +32,5 @@ public interface ProductQueryApiController {
     @ApiResponse(responseCode = "401", description = "인증 실패", content = @Content)
     @ApiResponse(responseCode = "403", description = "권한 없음", content = @Content)
     @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
-    CommonResponse<?> getProductList(ProductSearchRequestDto request, Long page, Long size);
+    CommonResponse<?> searchProducts(ProductSearchRequestDto request, Long page, Long size);
 }
