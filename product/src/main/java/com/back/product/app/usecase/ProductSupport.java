@@ -92,6 +92,16 @@ public class ProductSupport {
     }
 
     @Transactional(readOnly = true)
+    public Boolean existsProductInfoByBrand(Long brandId) {
+        return productInfoRepository.existsByBrand_Id(brandId);
+    }
+
+    @Transactional(readOnly = true)
+    public Boolean existsProductInfoByCategory(Long categoryId) {
+        return productInfoRepository.existsByCategory_Id(categoryId);
+    }
+
+    @Transactional(readOnly = true)
     public List<OptionGroup> getAllProductOptionGroups() {
         return optionGroupRepository.findAll();
     }

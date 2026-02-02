@@ -24,4 +24,12 @@ public class Category extends BaseTimeEntity {
 
     @Column(nullable = false, length = 255)
     private String imageUrl;
+
+    public void modifyName(String name) {
+        this.name = name;
+    }
+
+    public void modifyImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
 }
