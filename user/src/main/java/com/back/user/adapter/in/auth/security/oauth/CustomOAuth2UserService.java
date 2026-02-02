@@ -1,5 +1,6 @@
 package com.back.user.adapter.in.auth.security.oauth;
 
+import com.back.common.user.event.WalletCreateRequestedEvent;
 import com.back.user.adapter.in.auth.security.oauth.principal.CustomOAuth2User;
 import com.back.user.adapter.in.auth.security.oauth.userinfo.GoogleResponse;
 import com.back.user.adapter.in.auth.security.oauth.userinfo.KakaoResponse;
@@ -14,11 +15,14 @@ import com.back.user.domain.enums.Provider;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
+
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +33,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     private final UserRepository userRepository;
     private final GenerateNicknameUseCase generateNicknameUseCase;
     private final UserSettingRepository userSettingRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
@@ -48,21 +53,35 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         Provider authProvider = response.getProvider();
         String providerId = response.getProviderId();
 
-        User user = userRepository.findByProviderAndProviderId(authProvider, providerId)
-                .orElseGet(() -> {
-                    String nickname = generateNicknameUseCase.generateUnique();
-                    return userRepository.save(
-                            User.createSocialUser(
-                                    response.getEmail(),
-                                    nickname,
-                                    authProvider,
-                                    providerId
-                            )
-                    );
-                });
+        User user;
+        boolean isNewUser;
+
+        Optional<User> optionalUser = userRepository.findByProviderAndProviderId(authProvider, providerId);
+
+        if (optionalUser.isPresent()) {
+            user = optionalUser.get();
+            isNewUser = false;
+        } else {
+            String nickname = generateNicknameUseCase.generateUnique();
+            user = userRepository.save(
+                    User.createSocialUser(
+                            response.getEmail(),
+                            nickname,
+                            authProvider,
+                            providerId
+                    ));
+            isNewUser = true;
+        }
+
 
         UserSetting userSetting = userSettingRepository.findByUser(user)
                 .orElseGet(() -> userSettingRepository.save(UserSetting.of(user)));
+
+        if (isNewUser) {
+            WalletCreateRequestedEvent event = new WalletCreateRequestedEvent(user.getId());
+            eventPublisher.publishEvent(event);
+            log.info("UserCreatedEvent 발행 완료: userId={}", user.getId());
+        }
 
         return new CustomOAuth2User(user.getRole(), user.getId(), oAuth2User.getAttributes());
     }
