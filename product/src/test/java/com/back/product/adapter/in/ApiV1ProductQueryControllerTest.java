@@ -99,12 +99,12 @@ class ApiV1ProductQueryControllerTest {
 
     @Nested
     @DisplayName("GET /api/v1/products")
-    class GetProductListTest {
+    class SearchProductsTest {
 
         @Test
         @DisplayName("상품 목록 조회 및 검색을 성공한다")
         @WithMockUser
-        void getProductList_Success() throws Exception {
+        void searchProducts_Success() throws Exception {
             // given
             ProductSearchResponseDto productSearchResponseDto = ProductSearchResponseDto.builder()
                     .productInfoId(1L)
@@ -144,7 +144,7 @@ class ApiV1ProductQueryControllerTest {
         @Test
         @DisplayName("잘못된 정렬 조건으로 조회 시 400 Bad Request를 반환한다")
         @WithMockUser
-        void getProductList_Fail_InvalidSort() throws Exception {
+        void searchProducts_Fail_InvalidSort() throws Exception {
             // when & then
             mockMvc.perform(
                             get("/api/v1/products")
