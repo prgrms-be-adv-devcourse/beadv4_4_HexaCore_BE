@@ -3,6 +3,7 @@ package com.back.chat.adapter.out.redis;
 import com.back.chat.event.ChatEventEnvelope;
 import com.back.chat.event.ChatEventType;
 import com.back.chat.event.payload.ChatMessageBlindedPayload;
+import com.back.chat.event.payload.ChatMessageDeletedPayload;
 import com.back.chat.event.payload.ChatMessagePayload;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -30,6 +31,10 @@ public class RedisChatEventPublisher {
 
     public void publishMessageBlinded(Long roomId, ChatMessageBlindedPayload payload) {
         publish(roomId, ChatEventType.MESSAGE_BLINDED, objectMapper.valueToTree(payload));
+    }
+
+    public void publishMessageDeleted(Long roomId, ChatMessageDeletedPayload payload){
+        publish(roomId, ChatEventType.MESSAGE_DELETED, objectMapper.valueToTree(payload));
     }
 
     private void publish(Long roomId, ChatEventType type, JsonNode data) {

@@ -53,4 +53,7 @@ public class ChatSupport {
     }
 
 
+    public int deleteIfNotDeleted(Long messageId) {
+        return chatMessageRepository.deleteIfNotDeleted(messageId);
+    }
 }
