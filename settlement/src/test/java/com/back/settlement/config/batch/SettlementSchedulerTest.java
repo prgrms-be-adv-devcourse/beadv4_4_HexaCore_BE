@@ -5,6 +5,7 @@ import static org.mockito.Mockito.verify;
 
 import com.back.settlement.batch.SettlementJobLauncher;
 import com.back.settlement.batch.SettlementScheduler;
+import java.time.LocalDate;
 import java.time.YearMonth;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -32,10 +33,23 @@ class SettlementSchedulerTest {
 
         // then
         ArgumentCaptor<YearMonth> captor = ArgumentCaptor.forClass(YearMonth.class);
-        verify(settlementJobLauncher).run(captor.capture());
+        verify(settlementJobLauncher).runMonthly(captor.capture());
 
         YearMonth targetMonth = captor.getValue();
         assertThat(targetMonth).isEqualTo(YearMonth.now().minusMonths(1));
+    }
+
+    @Test
+    @DisplayName("전 일을 대상으로 JobLauncher를 호출한다")
+    void runDailySettlement_LaunchesJobWithPreviousDaily() {
+        // when
+        settlementScheduler.runDailySettlement();
+
+        // then
+        ArgumentCaptor<LocalDate> captor = ArgumentCaptor.forClass(LocalDate.class);
+        verify(settlementJobLauncher).runDaily(captor.capture());
+
+        assertThat(captor.getValue()).isEqualTo(LocalDate.now().minusDays(1));
     }
 
 }

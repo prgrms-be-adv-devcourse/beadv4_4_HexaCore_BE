@@ -1,10 +1,18 @@
 package com.back.settlement.app.support;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 
-public final class YearMonthUtils {
-    public static YearMonth parseOrDefault(String str) {
+public final class LocalDateUtils {
+    public static LocalDate parseOrDefault(String str) {
+        if (str == null) {
+            return LocalDate.now().minusDays(1);
+        }
+        return LocalDate.parse(str);
+    }
+
+    public static YearMonth parseYearMonthOrDefault(String str) {
         if (str == null) {
             return YearMonth.now().minusMonths(1);
         }

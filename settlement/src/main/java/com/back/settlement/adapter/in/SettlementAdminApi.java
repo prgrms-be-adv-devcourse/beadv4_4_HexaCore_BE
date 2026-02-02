@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.List;
@@ -156,8 +157,8 @@ public interface SettlementAdminApi {
     CommonResponse<List<SettlementLogResponse>> getAllLogs();
 
     @Operation(
-            summary = "정산 배치 수동 실행",
-            description = "특정 월의 정산 배치를 수동으로 실행합니다.",
+            summary = "일간 배치 수동 실행",
+            description = "특정 일의 주문 정보 수집 배치를 수동으로 실행합니다.",
             responses = {
                     @ApiResponse(
                             responseCode = "200",
@@ -165,17 +166,57 @@ public interface SettlementAdminApi {
                             content = @Content(
                                     mediaType = "application/json",
                                     examples = @ExampleObject(
-                                            name = "배치 실행 성공 예시",
+                                            name = "일간 배치 실행 성공 예시",
                                             value = """
                                                 {
                                                   "status": 200,
                                                   "message": "OK",
                                                   "data": {
                                                     "jobId": 1,
+                                                    "jobName": "dailySettlementJob",
                                                     "status": "COMPLETED",
-                                                    "targetMonth": "2024-01",
-                                                    "startTime": "2024-01-15T02:00:00",
-                                                    "endTime": "2024-01-15T02:05:30",
+                                                    "targetDate": "2024-01-15",
+                                                    "startTime": "2024-01-16T02:00:00",
+                                                    "endTime": "2024-01-16T02:01:30",
+                                                    "processedCount": 50
+                                                  }
+                                                }
+                                                """
+                                    )
+                            )
+                    ),
+                    @ApiResponse(responseCode = "401", description = "인증 실패", content = @Content),
+                    @ApiResponse(responseCode = "403", description = "권한 없음", content = @Content),
+                    @ApiResponse(responseCode = "500", description = "배치 실행 실패", content = @Content)
+            }
+    )
+    CommonResponse<BatchExecutionResponse> runDailyBatch(
+            @Parameter(description = "주문 수집 대상 일 (yyyy-MM-dd 형식)", example = "2024-01-15")
+            @RequestParam("targetDate") LocalDate targetDate
+    );
+
+    @Operation(
+            summary = "월간 배치 수동 실행",
+            description = "특정 월의 정산서 생성 및 완료 처리 배치를 수동으로 실행합니다.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "배치 실행 완료",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = @ExampleObject(
+                                            name = "월간 배치 실행 성공 예시",
+                                            value = """
+                                                {
+                                                  "status": 200,
+                                                  "message": "OK",
+                                                  "data": {
+                                                    "jobId": 2,
+                                                    "jobName": "monthlySettlementJob",
+                                                    "status": "COMPLETED",
+                                                    "targetDate": "2024-01",
+                                                    "startTime": "2024-02-01T02:00:00",
+                                                    "endTime": "2024-02-01T02:05:30",
                                                     "processedCount": 150
                                                   }
                                                 }
@@ -188,8 +229,59 @@ public interface SettlementAdminApi {
                     @ApiResponse(responseCode = "500", description = "배치 실행 실패", content = @Content)
             }
     )
-    CommonResponse<BatchExecutionResponse> runSettlementBatch(
+    CommonResponse<BatchExecutionResponse> runMonthlyBatch(
             @Parameter(description = "정산 대상 월 (yyyy-MM 형식)", example = "2024-01")
             @RequestParam("targetMonth") YearMonth targetMonth
+    );
+
+    @Operation(
+            summary = "배치 실행 내역 조회",
+            description = "배치 실행 내역을 조회합니다. jobType으로 일간/월간 필터링이 가능합니다.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "조회 성공",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = @ExampleObject(
+                                            name = "배치 내역 조회 성공 예시",
+                                            value = """
+                                                {
+                                                  "status": 200,
+                                                  "message": "OK",
+                                                  "data": [
+                                                    {
+                                                      "jobId": 2,
+                                                      "jobName": "monthlySettlementJob",
+                                                      "status": "COMPLETED",
+                                                      "targetDate": "2024-01",
+                                                      "startTime": "2024-02-01T02:00:00",
+                                                      "endTime": "2024-02-01T02:05:30",
+                                                      "processedCount": 150
+                                                    },
+                                                    {
+                                                      "jobId": 1,
+                                                      "jobName": "dailySettlementJob",
+                                                      "status": "COMPLETED",
+                                                      "targetDate": "2024-01-31",
+                                                      "startTime": "2024-02-01T00:00:00",
+                                                      "endTime": "2024-02-01T00:01:30",
+                                                      "processedCount": 50
+                                                    }
+                                                  ]
+                                                }
+                                                """
+                                    )
+                            )
+                    ),
+                    @ApiResponse(responseCode = "401", description = "인증 실패", content = @Content),
+                    @ApiResponse(responseCode = "403", description = "권한 없음", content = @Content)
+            }
+    )
+    CommonResponse<List<BatchExecutionResponse>> getBatchHistory(
+            @Parameter(description = "배치 타입 (daily, monthly, 미지정시 전체)", example = "daily")
+            @RequestParam(value = "jobType", required = false) String jobType,
+            @Parameter(description = "조회할 내역 수 (기본값: 20)", example = "20")
+            @RequestParam(value = "count", defaultValue = "20") int count
     );
 }

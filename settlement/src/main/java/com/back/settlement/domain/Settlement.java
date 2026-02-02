@@ -5,7 +5,6 @@ import static com.back.common.code.FailureCode.*;
 import com.back.common.entity.BaseTimeEntity;
 import com.back.common.exception.BadRequestException;
 import com.back.settlement.app.dto.request.SettlementRequest;
-import com.back.settlement.domain.event.SettlementCreatedEvent;
 import com.back.settlement.domain.event.SettlementEvent;
 import com.back.settlement.domain.event.SettlementFailedEvent;
 import com.back.settlement.domain.event.SettlementHoldEvent;
@@ -85,26 +84,26 @@ public class Settlement extends BaseTimeEntity {
     @Transient
     private final List<SettlementEvent> domainEvents = new ArrayList<>();
 
-    public static Settlement createSettlement(SettlementRequest request) {
-        Settlement settlement = Settlement.builder()
+    public static Settlement create(SettlementRequest request) {
+        return Settlement.builder()
                 .sellerId(request.sellerId())
                 .sellerName(request.sellerName())
-                .status(SettlementStatus.PENDING)
+                .status(SettlementStatus.COMPLETED)
                 .startAt(request.startAt())
                 .endAt(request.endAt())
                 .expectedAt(calculateExpectedDate(request.endAt()))
-                .completedAt(null)
+                .completedAt(LocalDateTime.now())
                 .totalSalesAmount(request.totalSalesAmount())
                 .totalFeeAmount(request.totalFeeAmount())
                 .totalNetAmount(request.totalNetAmount())
                 .build();
+    }
 
-        settlement.registerEvent(new SettlementCreatedEvent(
-                settlement.getId(),
-                settlement.getSellerId(),
-                settlement.getTotalNetAmount()
+    public void registerCreatedEvent() {
+        registerEvent(new SettlementInternalCompletedEvent(
+                this.id, null, this.totalNetAmount,
+                this.sellerId, this.sellerName, this.completedAt
         ));
-        return settlement;
     }
 
     private static LocalDateTime calculateExpectedDate(LocalDateTime endAt) {
