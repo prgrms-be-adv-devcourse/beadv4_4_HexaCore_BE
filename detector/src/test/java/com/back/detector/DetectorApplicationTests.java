@@ -1,4 +1,4 @@
-package com.detector;
+package com.back.detector;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
