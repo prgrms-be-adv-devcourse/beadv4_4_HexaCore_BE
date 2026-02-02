@@ -15,4 +15,8 @@ public interface ProductOptionValuesRepository extends JpaRepository<ProductOpti
     void deleteAllByProductIn(@Param("products") List<Product> products);
 
     List<ProductOptionValues> findAllByProductIn(List<Product> products);
+
+    Boolean existsByOptionValue_OptionGroup_Id(Long optionGroupId);
+
+    Boolean existsByOptionValue_Id(Long optionValueId);
 }
