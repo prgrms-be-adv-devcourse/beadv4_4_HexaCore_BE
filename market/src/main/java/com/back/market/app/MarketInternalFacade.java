@@ -8,7 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.YearMonth;
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -26,7 +26,7 @@ public class MarketInternalFacade {
         return confirmPaymentUseCase.confirmPayment(requestDto);
     }
 
-    public List<SettlementTargetOrder> getSettlementData(YearMonth targetMonth, int page, int size) {
-        return getSettlementDataUseCase.getSettlementData(targetMonth,  page, size);
+    public List<SettlementTargetOrder> getSettlementData(LocalDate targetDate, int page, int size) {
+        return getSettlementDataUseCase.getSettlementData(targetDate, page, size);
     }
 }

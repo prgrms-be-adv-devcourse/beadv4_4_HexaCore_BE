@@ -6,11 +6,11 @@ import static com.back.settlement.domain.SettlementPolicy.PLATFORM_FEE_RATE;
 
 import com.back.settlement.adapter.out.SettlementItemRepository;
 import com.back.settlement.adapter.out.SettlementRepository;
-import com.back.settlement.batch.SettlementWithItems;
 import com.back.settlement.app.dto.request.SettlementRequest;
 import com.back.settlement.app.support.DomainEventPublisher;
+import com.back.settlement.app.support.LocalDateUtils;
 import com.back.settlement.app.support.SettlementSupport;
-import com.back.settlement.app.support.YearMonthUtils;
+import com.back.settlement.batch.SettlementWithItems;
 import com.back.settlement.domain.Settlement;
 import com.back.settlement.domain.SettlementItem;
 import java.math.BigDecimal;
@@ -36,12 +36,12 @@ public class SettlementCreateUseCase {
     private static final String SYSTEM_NAME = "SYSTEM";
 
     public SettlementWithItems createSettlementForPayee(Long payeeId, YearMonth targetMonth) {
-        LocalDateTime startAt = YearMonthUtils.startOfMonth(targetMonth);
-        LocalDateTime endAt = YearMonthUtils.endOfMonth(targetMonth);
+        LocalDateTime startAt = LocalDateUtils.startOfMonth(targetMonth);
+        LocalDateTime endAt = LocalDateUtils.endOfMonth(targetMonth);
         List<SettlementItem> unsettledItems = findUnsettledItems(payeeId, startAt, endAt);
 
         Settlement settlement = createSettlement(payeeId, unsettledItems, startAt, endAt);
-        log.info("정산 생성 완료. payeeId={}, itemCount={}, netAmount={}", payeeId, unsettledItems.size(), settlement.getTotalNetAmount());
+        log.info("정산 생성 완료. payeeId={}, targetMonth={}, itemCount={}, netAmount={}", payeeId, targetMonth, unsettledItems.size(), settlement.getTotalNetAmount());
 
         return new SettlementWithItems(settlement, unsettledItems);
     }
@@ -66,15 +66,16 @@ public class SettlementCreateUseCase {
                 amounts.totalFeeAmount(),
                 amounts.totalNetAmount()
         );
-        return Settlement.createSettlement(request);
+        return Settlement.create(request);
     }
 
     @Transactional
     public void saveSettlementWithItems(Settlement settlement, List<SettlementItem> items) {
-        Settlement savedSettlement = settlementRepository.save(settlement);
-        items.forEach(item -> item.addSettlement(savedSettlement));
+        Settlement saved = settlementRepository.save(settlement);
+        saved.registerCreatedEvent();
+        items.forEach(item -> item.addSettlement(saved));
         settlementItemRepository.saveAll(items);
-        domainEventPublisher.publishEvents(savedSettlement);
+        domainEventPublisher.publishEvents(saved);
     }
 
     private String extractPayeeName(List<SettlementItem> items) {

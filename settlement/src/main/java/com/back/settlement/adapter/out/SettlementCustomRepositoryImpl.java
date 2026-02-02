@@ -95,7 +95,7 @@ public class SettlementCustomRepositoryImpl implements SettlementCustomRepositor
         return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
     }
 
-    public List<Long> findDistinctUnsettledPayeeIds(LocalDateTime startAt, LocalDateTime endAt) {
+    public List<Long> findDistinctUnsettledSellerIds(LocalDateTime startAt, LocalDateTime endAt, Long systemPayeeId) {
         return queryFactory
                 .select(settlementItem.payeeId)
                 .distinct()
@@ -103,6 +103,7 @@ public class SettlementCustomRepositoryImpl implements SettlementCustomRepositor
                 .where(
                         settlementItem.settlement.isNull(),
                         settlementItem.payeeId.isNotNull(),
+                        settlementItem.payeeId.ne(systemPayeeId),
                         settlementItem.confirmedAt.goe(startAt),
                         settlementItem.confirmedAt.loe(endAt)
                 )
