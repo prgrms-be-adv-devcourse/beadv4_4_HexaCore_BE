@@ -52,12 +52,16 @@ public class ChatOutboxRelay {
 
     @Scheduled(fixedDelayString = "${chat.outbox.relay.fixed-delay-ms:1000}")
     public void tick() {
-        // 1) 오래된 PROCESSING 회수
-        recoverStuckProcessing();
-
-        // 2) claim → publish
+        // claim → publish
         relayOnce();
     }
+
+    @Scheduled(fixedDelayString = "${chat.outbox.relay.recover-delay-ms:60000}")
+    public void recoveryTick() {
+        // 오래된 PROCESSING 회수
+        recoverStuckProcessing();
+    }
+
 
     /**
      * Claim은 짧은 트랜잭션으로 끝내고 싶어서 분리
@@ -138,8 +142,7 @@ public class ChatOutboxRelay {
     }
 
     /**
-     * recovery는 claim/publish랑 분리해도 되고, 같이 돌려도 됨.
-     * - PROCESSING이 너무 오래면 FAILED로 회수해서 nextAttemptAt=now로 재시도 가능하게 만듦
+       PROCESSING이 너무 오래면 FAILED로 회수해서 nextAttemptAt=now로 재시도 가능하게 만듦
      */
     @Transactional
     public void recoverStuckProcessing() {
