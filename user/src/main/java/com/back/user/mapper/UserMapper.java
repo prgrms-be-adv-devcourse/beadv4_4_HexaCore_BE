@@ -7,6 +7,7 @@ public class UserMapper {
     public static UpdateUserProfileResponseDto toUpdateUserProfileResponseDto(User user) {
         return new UpdateUserProfileResponseDto(
                 user.getId(),
+                user.getEmail(),
                 user.getNickname(),
                 user.getName(),
                 user.getPhone(),
