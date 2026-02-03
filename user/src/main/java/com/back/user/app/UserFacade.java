@@ -5,8 +5,11 @@ import com.back.common.user.event.fcmTokenChangedEvent;
 import com.back.user.domain.User;
 import com.back.user.dto.request.UpdateFcmTokenRequest;
 import com.back.user.dto.request.UpdateNotificationSettingsRequest;
+import com.back.user.dto.request.UpdateUserProfileRequestDto;
 import com.back.user.dto.response.NotificationSettingResponse;
+import com.back.user.dto.response.UpdateUserProfileResponseDto;
 import com.back.user.dto.response.UserIdResponse;
+import com.back.user.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -63,4 +66,10 @@ public class UserFacade {
         return user.getChatRestrictedUntil();
     }
 
+    @Transactional
+    public UpdateUserProfileResponseDto updateUserProfile(Long userId, UpdateUserProfileRequestDto request) {
+        User user = userSupport.findById(userId);
+        userUpdateUsecase.updateUserProfile(user, request);
+        return UserMapper.toUpdateUserProfileResponseDto(user);
+    }
 }
