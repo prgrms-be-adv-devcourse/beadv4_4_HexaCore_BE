@@ -9,5 +9,6 @@ include(
         "user",
         "product",
         "settlement",
+        "detector",
         "security"
 )
