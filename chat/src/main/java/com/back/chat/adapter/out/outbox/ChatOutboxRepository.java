@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface ChatOutboxRepository extends JpaRepository<ChatOutbox, Long> {
+public interface ChatOutboxRepository extends JpaRepository<ChatOutbox, Long>, ChatOutboxRepositoryCustom {
     Optional<ChatOutbox> findByEventId(UUID eventId);
 
     @Query(

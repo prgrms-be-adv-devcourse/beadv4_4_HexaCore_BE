@@ -21,6 +21,10 @@ import static jakarta.persistence.GenerationType.*;
                 @Index(
                         name = "idx_chat_outbox_status_next_attempt_id",
                         columnList = "status, next_attempt_at, id"
+                ),
+                @Index(
+                        name = "idx_chat_outbox_processing_started_id",
+                        columnList = "status, processing_started_at, id"
                 )
         }
 )
@@ -58,8 +62,14 @@ public class ChatOutbox {
     @Column(name = "sent_at")
     private LocalDateTime sentAt;
 
+    @Column(name = "dead_at")
+    private LocalDateTime deadAt;
+
     @Column(name = "next_attempt_at", nullable = false)
     private LocalDateTime nextAttemptAt;
+
+    @Column(name = "processing_started_at")
+    private LocalDateTime processingStartedAt;
 
     @Column(name = "retry_count", nullable = false)
     private int retryCount;
@@ -110,14 +120,26 @@ public class ChatOutbox {
         }
     }
 
-    public void markSent(LocalDateTime sentAt) {
+    private void requireProcessing(){
+        if (this.status != OutboxStatus.PROCESSING) {
+            throw new IllegalStateException("Outbox status must be PROCESSING, but was " + this.status);
+        }
+    }
+
+    public void markProcessing(LocalDateTime now) {
         requirePendingOrFailed();
+        this.status = OutboxStatus.PROCESSING;
+        this.processingStartedAt = now;
+    }
+
+    public void markSent(LocalDateTime sentAt) {
+        requireProcessing();
         this.status = OutboxStatus.SENT;
         this.sentAt = sentAt;
     }
 
     public void markFailed(String errorMessage, LocalDateTime now, int baseDelaySeconds, int maxDelaySeconds) {
-        requirePendingOrFailed();
+        requireProcessing();
         this.status = OutboxStatus.FAILED;
         this.retryCount++;
         this.lastError = truncate(errorMessage, 1000);
@@ -126,6 +148,15 @@ public class ChatOutbox {
         delay = Math.min(delay, maxDelaySeconds);
 
         this.nextAttemptAt = now.plusSeconds(delay);
+    }
+
+    public void markDead(String reason, LocalDateTime now) {
+        if (this.status == OutboxStatus.SENT || this.status == OutboxStatus.DEAD) {
+            throw new IllegalStateException("Outbox already final. status=" + this.status);
+        }
+        this.status = OutboxStatus.DEAD;
+        this.lastError = truncate(reason, 1000);
+        this.deadAt = now;
     }
 
     private String truncate(String s, int max) {
