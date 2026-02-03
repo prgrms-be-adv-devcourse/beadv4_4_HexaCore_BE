@@ -8,6 +8,7 @@ import org.springframework.data.mongodb.config.EnableMongoAuditing;
 @EnableMongoAuditing
 @EnableJpaAuditing
 @SpringBootApplication(scanBasePackages = {
+        "com.back.notification",
         "com.back.common",
         "com.back.security"
 })
