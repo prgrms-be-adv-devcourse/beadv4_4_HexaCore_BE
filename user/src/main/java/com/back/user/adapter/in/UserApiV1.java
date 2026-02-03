@@ -4,7 +4,9 @@ import com.back.common.response.CommonResponse;
 import com.back.security.principal.AuthPrincipal;
 import com.back.user.dto.request.UpdateFcmTokenRequest;
 import com.back.user.dto.request.UpdateNotificationSettingsRequest;
+import com.back.user.dto.request.UpdateUserProfileRequestDto;
 import com.back.user.dto.response.NotificationSettingResponse;
+import com.back.user.dto.response.UpdateUserProfileResponseDto;
 import com.back.user.dto.response.UserIdResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -57,5 +59,24 @@ public interface UserApiV1 {
     @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
     CommonResponse<UserIdResponse> updateNotificationSettings(AuthPrincipal authPrincipal,
                                                               UpdateNotificationSettingsRequest request);
+
+    @Operation(
+            summary = "내 프로필 수정",
+            description = """
+                로그인한 사용자의 프로필 정보를 부분 수정합니다.
+                요청에 포함된 필드만 변경되며, null인 필드는 변경하지 않습니다.
+
+                - 닉네임 변경 시 중복 닉네임은 사용할 수 없습니다.
+                - 전화번호는 01로 시작하는 형식만 허용합니다. (예: 01012345678)
+                """
+    )
+    @ApiResponse(responseCode = "200", description = "프로필 수정 성공")
+    @ApiResponse(responseCode = "400", description = "요청값 검증 실패", content = @Content)
+    @ApiResponse(responseCode = "401", description = "인증 실패", content = @Content)
+    @ApiResponse(responseCode = "404", description = "사용자 없음", content = @Content)
+    @ApiResponse(responseCode = "409", description = "닉네임 중복", content = @Content)
+    @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
+    CommonResponse<UpdateUserProfileResponseDto> updateUserProfile(AuthPrincipal authPrincipal,
+                                                                   UpdateUserProfileRequestDto request);
 
 }

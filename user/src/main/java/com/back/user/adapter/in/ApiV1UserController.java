@@ -44,6 +44,7 @@ public class ApiV1UserController implements UserApiV1 {
         return CommonResponse.success(SuccessCode.OK, response);
     }
 
+    @Override
     @PatchMapping("/me/profile")
     public CommonResponse<UpdateUserProfileResponseDto> updateUserProfile(@AuthenticationPrincipal AuthPrincipal authPrincipal, @Valid @RequestBody UpdateUserProfileRequestDto request) {
         UpdateUserProfileResponseDto response = userFacade.updateUserProfile(authPrincipal.getUserId(), request);
