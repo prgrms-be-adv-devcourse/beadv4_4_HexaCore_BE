@@ -18,7 +18,10 @@ import static jakarta.persistence.GenerationType.*;
                 @UniqueConstraint(name="uk_chat_outbox_event_id", columnNames="event_id")
         },
         indexes = {
-                @Index(name = "idx_chat_outbox_status_id", columnList = "status, id")
+                @Index(
+                        name = "idx_chat_outbox_status_next_attempt_id",
+                        columnList = "status, next_attempt_at, id"
+                )
         }
 )
 @Getter
@@ -55,6 +58,9 @@ public class ChatOutbox {
     @Column(name = "sent_at")
     private LocalDateTime sentAt;
 
+    @Column(name = "next_attempt_at", nullable = false)
+    private LocalDateTime nextAttemptAt;
+
     @Column(name = "retry_count", nullable = false)
     private int retryCount;
 
@@ -74,7 +80,7 @@ public class ChatOutbox {
         this.aggregateId = aggregateId;
         this.eventType = eventType;
         this.payload = payload;
-
+        this.nextAttemptAt = createdAt;
         this.status = OutboxStatus.PENDING;
         this.createdAt = createdAt;
         this.retryCount = 0;
@@ -98,24 +104,30 @@ public class ChatOutbox {
         );
     }
 
-    private void requirePending() {
-        if (this.status != OutboxStatus.PENDING) {
-            throw new IllegalStateException("Outbox is not PENDING: " + this.status);
+    private void requirePendingOrFailed() {
+        if (this.status != OutboxStatus.PENDING && this.status != OutboxStatus.FAILED) {
+            throw new IllegalStateException("Outbox status must be PENDING or FAILED, but was " + this.status);
         }
     }
 
-    public void markSent() {
-        requirePending();
+    public void markSent(LocalDateTime sentAt) {
+        requirePendingOrFailed();
         this.status = OutboxStatus.SENT;
-        this.sentAt = LocalDateTime.now();
+        this.sentAt = sentAt;
     }
 
-    public void markFailed(String errorMessage) {
-        requirePending();
+    public void markFailed(String errorMessage, LocalDateTime now, int baseDelaySeconds, int maxDelaySeconds) {
+        requirePendingOrFailed();
         this.status = OutboxStatus.FAILED;
         this.retryCount++;
         this.lastError = truncate(errorMessage, 1000);
+
+        long delay = (long) baseDelaySeconds << Math.max(0, this.retryCount - 1);
+        delay = Math.min(delay, maxDelaySeconds);
+
+        this.nextAttemptAt = now.plusSeconds(delay);
     }
+
     private String truncate(String s, int max) {
         if (s == null) return null;
         return s.length() <= max ? s : s.substring(0, max);
