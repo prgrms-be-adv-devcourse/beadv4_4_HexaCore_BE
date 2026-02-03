@@ -27,7 +27,7 @@ public class ApiV1ProductQueryController implements ProductQueryApiController {
     }
 
     @Override
-    @GetMapping(params = "keyword")
+    @GetMapping
     public CommonResponse<ProductSearchListResponseDto> searchProducts(
        @ModelAttribute @Valid ProductSearchRequestDto request,
        @RequestParam(defaultValue = "0") Long page,
@@ -38,7 +38,7 @@ public class ApiV1ProductQueryController implements ProductQueryApiController {
     }
 
     @Override
-    @GetMapping(params = "productIds")
+    @GetMapping("/variants")
     public CommonResponse<ProductListResponseDto> getProducts(@Valid @ModelAttribute ProductQueryRequestDto request) {
         ProductListResponseDto response = productFacade.getProducts(request);
         return CommonResponse.success(SuccessCode.OK, response);
