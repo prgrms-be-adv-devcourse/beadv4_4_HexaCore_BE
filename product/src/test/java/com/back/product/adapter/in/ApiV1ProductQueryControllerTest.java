@@ -4,7 +4,9 @@ import com.back.common.code.FailureCode;
 import com.back.common.exception.CustomException;
 import com.back.product.app.ProductFacade;
 import com.back.product.dto.enums.ProductSortType;
+import com.back.product.dto.request.ProductQueryRequestDto;
 import com.back.product.dto.request.ProductSearchRequestDto;
+import com.back.product.dto.response.ProductListResponseDto;
 import com.back.product.dto.response.ProductResponseDto;
 import com.back.product.dto.response.ProductSearchListResponseDto;
 import com.back.product.dto.response.ProductSearchResponseDto;
@@ -18,11 +20,16 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.mockito.BDDMockito.*;
@@ -30,8 +37,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(ApiV1ProductQueryController.class)
 @DisplayName("ApiV1ProductQueryController 테스트")
@@ -155,6 +161,123 @@ class ApiV1ProductQueryControllerTest {
                     .andExpect(status().isBadRequest());
 
             verify(productFacade, never()).findProductPage(any(), anyLong(), anyLong());
+        }
+    }
+
+    @Nested
+    @DisplayName("GET /api/v1/products/variants")
+    class GetProductsTest {
+
+        @Test
+        @DisplayName("유효한 상품 ID 리스트로 상품 목록 조회를 성공한다")
+        void getProducts_Success() throws Exception {
+            // given
+            List<ProductResponseDto> products = Arrays.asList(
+                    ProductResponseDto.builder()
+                            .productInfo(com.back.product.dto.ProductInfoDto.builder()
+                                    .productInfoId(1L)
+                                    .name("Test Product 1")
+                                    .brand(com.back.product.dto.BrandDto.builder().name("Brand 1").build())
+                                    .category(com.back.product.dto.CategoryDto.builder().name("category1").build())
+                                    .releasePrice(BigDecimal.valueOf(10000))
+                                    .build())
+                            .products(List.of(com.back.product.dto.ProductDto.builder()
+                                    .productId(1L)
+                                    .inventory(10L)
+                                    .imageUrls(List.of("image1.jpg"))
+                                    .options(List.of(
+                                            com.back.product.dto.ProductOptionDto.builder().groupName("size").value("M").build(),
+                                            com.back.product.dto.ProductOptionDto.builder().groupName("color").value("red").build()
+                                    ))
+                                    .build()))
+                            .build(),
+                    ProductResponseDto.builder()
+                            .productInfo(com.back.product.dto.ProductInfoDto.builder()
+                                    .productInfoId(2L)
+                                    .name("Test Product 2")
+                                    .brand(com.back.product.dto.BrandDto.builder().name("Brand 2").build())
+                                    .category(com.back.product.dto.CategoryDto.builder().name("category2").build())
+                                    .releasePrice(BigDecimal.valueOf(20000))
+                                    .build())
+                            .products(List.of(com.back.product.dto.ProductDto.builder()
+                                    .productId(2L)
+                                    .inventory(20L)
+                                    .imageUrls(List.of("image2.jpg"))
+                                    .options(List.of(
+                                            com.back.product.dto.ProductOptionDto.builder().groupName("size").value("L").build(),
+                                            com.back.product.dto.ProductOptionDto.builder().groupName("color").value("blue").build()
+                                    ))
+                                    .build()))
+                            .build(),
+                    ProductResponseDto.builder()
+                            .productInfo(com.back.product.dto.ProductInfoDto.builder()
+                                    .productInfoId(3L)
+                                    .name("Test Product 3")
+                                    .brand(com.back.product.dto.BrandDto.builder().name("Brand 3").build())
+                                    .category(com.back.product.dto.CategoryDto.builder().name("category3").build())
+                                    .releasePrice(BigDecimal.valueOf(30000))
+                                    .build())
+                            .products(List.of(com.back.product.dto.ProductDto.builder()
+                                    .productId(3L)
+                                    .inventory(30L)
+                                    .imageUrls(List.of("image3.jpg"))
+                                    .options(List.of(
+                                            com.back.product.dto.ProductOptionDto.builder().groupName("size").value("S").build(),
+                                            com.back.product.dto.ProductOptionDto.builder().groupName("color").value("green").build()
+                                    ))
+                                    .build()))
+                            .build()
+            );
+            ProductListResponseDto responseDto = ProductListResponseDto.builder().products(products).build();
+
+            given(productFacade.getProducts(any(ProductQueryRequestDto.class))).willReturn(responseDto);
+
+            // when & then
+            mockMvc.perform(get("/api/v1/products/variants")
+                            .param("productIds", "1")
+                            .param("productIds", "2")
+                            .param("productIds", "3")
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.code").value("OK"))
+                    .andExpect(jsonPath("$.data.products.length()").value(products.size()))
+                    .andExpect(jsonPath("$.data.products[0].products[0].productId").value(1L))
+                    .andExpect(jsonPath("$.data.products[0].productInfo.name").value("Test Product 1"))
+                    .andDo(print());
+
+            verify(productFacade).getProducts(any(ProductQueryRequestDto.class));
+        }
+
+        @Test
+        @DisplayName("상품 ID 리스트가 비어있을 때 Bad Request을 반환한다")
+        void getProducts_Failed_Enable_Values() throws Exception {
+            // given & when & then
+            mockMvc.perform(get("/api/v1/products/variants")
+                            .param("productIds", "")
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isBadRequest())
+                    .andDo(print());
+
+            verify(productFacade, never()).getProducts(any(ProductQueryRequestDto.class));
+        }
+
+        @Test
+        @DisplayName("상품 ID 리스트 중 하나라도 값을 찾지 못하면 PRODUCT_NOT_FOUND 에러를 반환한다.")
+        void getProducts_Failed_Not_Found_Product() throws Exception {
+            // given
+            given(productFacade.getProducts(any(ProductQueryRequestDto.class)))
+                    .willThrow(new CustomException(FailureCode.ENTITY_NOT_FOUND));
+
+            // when & then
+            mockMvc.perform(get("/api/v1/products/variants")
+                            .param("productIds", "1", "999") // 999 is a non-existent product ID
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.code").value(FailureCode.ENTITY_NOT_FOUND.name()))
+                    .andDo(print());
+
+            verify(productFacade).getProducts(any(ProductQueryRequestDto.class));
         }
     }
 }
