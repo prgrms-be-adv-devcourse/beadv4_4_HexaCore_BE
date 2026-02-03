@@ -1,6 +1,6 @@
 package com.back.market.event;
 
-import com.back.common.market.event.UserCreatedEvent;
+import com.back.common.user.event.UserCreatedEvent;
 import com.back.market.adapter.out.MarketUserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;

@@ -1,6 +1,6 @@
 package com.back.market.adapter.in.kafka;
 
-import com.back.common.market.event.UserCreatedEvent;
+import com.back.common.user.event.UserCreatedEvent;
 import com.back.market.adapter.out.MarketUserRepository;
 import com.back.market.domain.MarketUser;
 import com.back.market.mapper.MarketUserMapper;
