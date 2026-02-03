@@ -6,7 +6,9 @@ import com.back.security.principal.AuthPrincipal;
 import com.back.user.app.UserFacade;
 import com.back.user.dto.request.UpdateFcmTokenRequest;
 import com.back.user.dto.request.UpdateNotificationSettingsRequest;
+import com.back.user.dto.request.UpdateUserProfileRequestDto;
 import com.back.user.dto.response.NotificationSettingResponse;
+import com.back.user.dto.response.UpdateUserProfileResponseDto;
 import com.back.user.dto.response.UserIdResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -42,4 +44,9 @@ public class ApiV1UserController implements UserApiV1 {
         return CommonResponse.success(SuccessCode.OK, response);
     }
 
+    @PatchMapping("/me/profile")
+    public CommonResponse<UpdateUserProfileResponseDto> updateUserProfile(@AuthenticationPrincipal AuthPrincipal authPrincipal, @Valid @RequestBody UpdateUserProfileRequestDto request) {
+        UpdateUserProfileResponseDto response = userFacade.updateUserProfile(authPrincipal.getUserId(), request);
+        return CommonResponse.success(SuccessCode.OK, response);
+    }
 }
