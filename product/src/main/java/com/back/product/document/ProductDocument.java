@@ -14,6 +14,7 @@ import java.util.List;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Document(indexName = "products")
+@Setting(settingPath = "elasticsearch-settings.json")
 public class ProductDocument extends BaseDocument<String> {
 
     @Field(type = FieldType.Long)
