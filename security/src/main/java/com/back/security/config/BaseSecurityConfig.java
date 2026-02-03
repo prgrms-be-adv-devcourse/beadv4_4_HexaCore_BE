@@ -49,7 +49,9 @@ public class BaseSecurityConfig {
                         "/v3/api-docs/**",
                         "/swagger-ui/**",
                         "/swagger-ui.html",
-                        "/ws/**"
+                        "/ws/**",
+                        // --- Actuator (Prometheus 메트릭) ---
+                        "/actuator/**"
                 ).permitAll()
                 .anyRequest().authenticated()
         );
