@@ -234,7 +234,7 @@ public class ProductUseCase {
         List<Product> products = productSupport.findMultipleProductByIds(productIds);
 
         if (!isSameSize(products, productIds)) {
-            throw new CustomException(FailureCode.PRODUCT_NOT_FOUND);
+            throw new CustomException(FailureCode.ENTITY_NOT_FOUND);
         }
 
         List<ProductImage> productImages = productSupport.getAllProductImagesByProductsIn(products);
