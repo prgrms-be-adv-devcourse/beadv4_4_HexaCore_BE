@@ -1,5 +1,7 @@
 package com.back.chat.dto.response;
 
+import com.back.chat.domain.MessageStatus;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -13,7 +15,7 @@ public record ChatMessageHistoryResponseDto(
             Long messageId,
             Long userId,
             String content,
-            boolean isBlinded,
+            MessageStatus messageStatus,
             LocalDateTime createdAt
     ) {}
 }

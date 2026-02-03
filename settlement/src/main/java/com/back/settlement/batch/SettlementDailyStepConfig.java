@@ -4,9 +4,9 @@ import static com.back.settlement.domain.SettlementPolicy.CHUNK_SIZE;
 
 import com.back.common.dto.settlement.SettlementTargetOrder;
 import com.back.settlement.adapter.out.feign.market.OrderClient;
-import com.back.settlement.app.support.YearMonthUtils;
+import com.back.settlement.app.support.LocalDateUtils;
 import com.back.settlement.app.usecase.SettlementItemAddUseCase;
-import java.time.YearMonth;
+import java.time.LocalDate;
 import java.util.Iterator;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -26,26 +26,32 @@ import org.springframework.transaction.PlatformTransactionManager;
 @Slf4j
 @Configuration
 @RequiredArgsConstructor
-public class SettlementFetchOrdersStepConfig {
+public class SettlementDailyStepConfig {
     private final OrderClient orderClient;
     private final SettlementItemAddUseCase settlementItemAddUseCase;
 
     @Bean
-    public Step fetchOrdersAndCreateItemsStep(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
-        return new StepBuilder("fetchOrdersAndCreateItemsStep", jobRepository)
+    public Step collectOrdersStep(
+            JobRepository jobRepository,
+            PlatformTransactionManager transactionManager,
+            ItemReader<SettlementTargetOrder> orderReader,
+            ItemProcessor<SettlementTargetOrder, SettlementTargetOrder> orderProcessor,
+            ItemWriter<SettlementTargetOrder> orderWriter
+    ) {
+        return new StepBuilder("collectOrdersStep", jobRepository)
                 .<SettlementTargetOrder, SettlementTargetOrder>chunk(CHUNK_SIZE, transactionManager)
-                .reader(orderItemReader(null))
-                .processor(orderItemProcessor())
-                .writer(orderItemWriter())
+                .reader(orderReader)
+                .processor(orderProcessor)
+                .writer(orderWriter)
                 .build();
     }
 
     @Bean
     @StepScope
-    public ItemReader<SettlementTargetOrder> orderItemReader(@Value("#{jobParameters['targetMonth']}") String targetMonthStr) {
+    public ItemReader<SettlementTargetOrder> orderReader(@Value("#{jobParameters['targetDate']}") String targetDateStr) {
         return new ItemReader<>() {
             private int page = 0;
-            private Iterator<SettlementTargetOrder> currentPageIterator;
+            private Iterator<SettlementTargetOrder> iterator;
             private boolean exhausted = false;
 
             @Override
@@ -53,40 +59,40 @@ public class SettlementFetchOrdersStepConfig {
                 if (exhausted) {
                     return null;
                 }
-                if (currentPageIterator != null && currentPageIterator.hasNext()) {
-                    return currentPageIterator.next();
+                if (iterator != null && iterator.hasNext()) {
+                    return iterator.next();
                 }
 
-                YearMonth targetMonth = YearMonthUtils.parseOrDefault(targetMonthStr);
-                List<SettlementTargetOrder> pageData = orderClient.findSettlementTargetOrders(targetMonth, page++, CHUNK_SIZE);
+                LocalDate targetDate = LocalDateUtils.parseOrDefault(targetDateStr);
+                List<SettlementTargetOrder> pageData = orderClient.findSettlementTargetOrders(targetDate, page++, CHUNK_SIZE);
 
                 if (pageData.isEmpty()) {
                     exhausted = true;
-                    log.info("Order API에서 모든 데이터를 읽었습니다. 총 페이지 수: {}", page - 1);
+                    log.info("주문 수집 완료. 총 페이지: {}", page - 1);
                     return null;
                 }
-                log.info("Order API 페이지 조회. page={}, size={}", page - 1, pageData.size());
-                currentPageIterator = pageData.iterator();
-                return currentPageIterator.next();
+                log.info("주문 조회. page={}, size={}", page - 1, pageData.size());
+                iterator = pageData.iterator();
+                return iterator.next();
             }
         };
     }
 
     @Bean
-    public ItemProcessor<SettlementTargetOrder, SettlementTargetOrder> orderItemProcessor() {
-        return request -> {
-            log.debug("주문 처리 중. orderId={}", request.orderId());
-            return request;
+    public ItemProcessor<SettlementTargetOrder, SettlementTargetOrder> orderProcessor() {
+        return order -> {
+            log.debug("주문 처리. orderId={}", order.orderId());
+            return order;
         };
     }
 
     @Bean
-    public ItemWriter<SettlementTargetOrder> orderItemWriter() {
+    public ItemWriter<SettlementTargetOrder> orderWriter() {
         return chunk -> {
-            for (SettlementTargetOrder request : chunk) {
-                settlementItemAddUseCase.add(request);
+            for (SettlementTargetOrder order : chunk) {
+                settlementItemAddUseCase.add(order);
             }
-            log.info("SettlementItem 생성 완료. 처리 건수: {}", chunk.size());
+            log.info("정산 항목 생성 완료. 건수={}", chunk.size());
         };
     }
 }

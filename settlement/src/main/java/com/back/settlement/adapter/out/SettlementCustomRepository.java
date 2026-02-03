@@ -28,7 +28,7 @@ public interface SettlementCustomRepository {
             Pageable pageable
     );
 
-    List<Long> findDistinctUnsettledPayeeIds(LocalDateTime startAt, LocalDateTime endAt);
+    List<Long> findDistinctUnsettledSellerIds(LocalDateTime startAt, LocalDateTime endAt, Long systemPayeeId);
 
     List<SettlementItem> findUnsettledItemsByPayeeId(Long payeeId, LocalDateTime startAt, LocalDateTime endAt);
 }

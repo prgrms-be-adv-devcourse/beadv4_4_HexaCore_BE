@@ -69,4 +69,14 @@ public class ProductInfoUseCase {
         return productSupport.findProductInfoById(productInfoId)
                 .orElseThrow(() -> new CustomException(FailureCode.PRODUCT_INFO_NOT_FOUND));
     }
+
+    @Transactional
+    public Boolean isBrandInUse(Long brandId) {
+        return productSupport.existsProductInfoByBrand(brandId);
+    }
+
+    @Transactional
+    public Boolean isCategoryInUse(Long categoryId) {
+        return productSupport.existsProductInfoByCategory(categoryId);
+    }
 }

@@ -22,14 +22,14 @@ public class SettlementCashPayoutEventHandler {
     @TransactionalEventListener(phase = AFTER_COMMIT)
     public void handleSettlementCompleted(SettlementInternalCompletedEvent event) {
         log.debug("정산 완료 이벤트 수신. settlementId={}, sellerId={}", event.settlementId(), event.sellerId());
+        requestPayout(event.settlementId(), event.sellerId(), event.totalNetAmount(), event.completedAt());
+    }
 
+    private void requestPayout(Long settlementId, Long sellerId, java.math.BigDecimal amount, java.time.LocalDateTime completedAt) {
         SettlementPayoutRequest payoutRequest = new SettlementPayoutRequest(
-                event.settlementId(),
-                event.sellerId(),
-                event.totalNetAmount(),
-                event.completedAt()
+                settlementId, sellerId, amount, completedAt
         );
         cashClient.requestPayout(List.of(payoutRequest));
-        log.info("캐시 지급 요청 완료. settlementId={}, amount={}", event.settlementId(), event.totalNetAmount());
+        log.info("캐시 지급 요청 완료. settlementId={}, amount={}", settlementId, amount);
     }
 }

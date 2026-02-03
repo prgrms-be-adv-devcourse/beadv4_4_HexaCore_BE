@@ -52,6 +52,7 @@ public enum FailureCode {
     SETTLEMENT_ACCESS_DENIED(HttpStatus.FORBIDDEN, "SETTLEMENT_ACCESS_DENIED", "해당 정산 내역에 접근 권한이 없습니다."),
     CHAT_RESTRICTED(HttpStatus.FORBIDDEN, "CHAT_RESTRICTED", "채팅이 제한된 사용자입니다."),
     OWNER_MISMATCH(HttpStatus.FORBIDDEN, "OWNER_MISMATCH", "결제 요청자 정보가 일치하지 않습니다."),
+    CHAT_DELETE_NOT_ALLOWED(HttpStatus.FORBIDDEN,"CHAT_DELETE_NOT_ALLOWED", "이 메시지를 삭제할 권한이 없습니다."),
     /**
      * 404 Not Found
      */
@@ -89,15 +90,20 @@ public enum FailureCode {
     DUPLICATE_PRODUCT_INFO(HttpStatus.CONFLICT, "DUPLICATE_PRODUCT_INFO", "이미 존재하는 상품 정보입니다."),
     REPORT_DUPLICATE(HttpStatus.CONFLICT, "REPORT_DUPLICATE", "이미 신고한 메시지입니다."),
     PAYMENT_ALREADY_RELEASED(HttpStatus.CONFLICT, "PAYMENT_ALREADY_RELEASED", "이미 환급된 결제입니다."),
+    SETTLEMENT_ALREADY_PROCESSED_DAILY(HttpStatus.CONFLICT, "SETTLEMENT_ALREADY_PROCESSED_DAILY", "해당 날짜는 이미 정산 처리되었습니다."),
+    SETTLEMENT_ALREADY_PROCESSED_MONTHLY(HttpStatus.CONFLICT, "SETTLEMENT_ALREADY_PROCESSED_MONTHLY", "해당 월은 이미 정산 처리되었습니다."),
     OPTION_GROUP_IN_USE(HttpStatus.CONFLICT, "OPTION_GROUP_IN_USE", "해당 옵션 그룹을 사용하는 상품이 있어 삭제할 수 없습니다."),
     OPTION_VALUE_IN_USE(HttpStatus.CONFLICT, "OPTION_VALUE_IN_USE", "해당 옵션 값을 사용하는 상품이 있어 삭제할 수 없습니다."),
+    BRAND_IN_USE(HttpStatus.CONFLICT, "BRAND_IN_USE", "해당 브랜드를 사용하는 상품이 있어 삭제할 수 없습니다."),
+    CATEGORY_IN_USE(HttpStatus.CONFLICT, "CATEGORY_IN_USE", "해당 카테고리를 사용하는 상품이 있어 삭제할 수 없습니다."),
     /**
      * 500 Internal Server Error
      */
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR", "서버 내부 오류가 발생했습니다."),
     CASH_MODULE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "CASH_MODULE_ERROR", "CASH 모듈과의 통신 중 오류가 발생했습니다."),
     PAYMENT_TOTAL_AMOUNT_MISSING(HttpStatus.INTERNAL_SERVER_ERROR, "PAYMENT_TOTAL_AMOUNT_MISSING","결제 데이터에 totalAmount가 없습니다."),
-    PAYMENT_STATE_INCONSISTENT(HttpStatus.INTERNAL_SERVER_ERROR, "PAYMENT_STATE_INCONSISTENT", "결제 상태가 일관되지 않습니다.");
+    PAYMENT_STATE_INCONSISTENT(HttpStatus.INTERNAL_SERVER_ERROR, "PAYMENT_STATE_INCONSISTENT", "결제 상태가 일관되지 않습니다."),
+    BATCH_EXECUTION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "BATCH_EXECUTION_FAILED", "배치 실행에 실패했습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

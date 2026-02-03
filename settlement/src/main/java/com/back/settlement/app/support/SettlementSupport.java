@@ -41,16 +41,12 @@ public class SettlementSupport {
         return settlementItemRepository.existsByOrderId(orderId);
     }
 
-    public List<Long> findUnsettledPayeeIds(LocalDateTime startAt, LocalDateTime endAt) {
-        return settlementCustomRepository.findDistinctUnsettledPayeeIds(startAt, endAt);
+    public List<Long> findUnsettledSellerIds(LocalDateTime startAt, LocalDateTime endAt, Long systemPayeeId) {
+        return settlementCustomRepository.findDistinctUnsettledSellerIds(startAt, endAt, systemPayeeId);
     }
 
     public List<SettlementItem> findUnsettledItemsByPayeeId(Long payeeId, LocalDateTime startAt, LocalDateTime endAt) {
         return settlementCustomRepository.findUnsettledItemsByPayeeId(payeeId, startAt, endAt);
-    }
-
-    public List<Settlement> findPendingSettlements(Pageable pageable) {
-        return settlementRepository.findByStatus(SettlementStatus.PENDING, pageable);
     }
 
     public Settlement findById(Long settlementId) {

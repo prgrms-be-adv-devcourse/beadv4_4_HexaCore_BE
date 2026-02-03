@@ -7,8 +7,10 @@ import com.back.settlement.app.dto.response.SettlementDashboardResponse;
 import com.back.settlement.app.dto.response.SettlementLogResponse;
 import com.back.settlement.app.dto.response.SettlementResponse;
 import com.back.settlement.app.facade.SettlementFacade;
+import com.back.settlement.batch.SettlementJobHistoryLauncher;
 import com.back.settlement.batch.SettlementJobLauncher;
 import com.back.settlement.domain.SettlementStatus;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.List;
@@ -17,6 +19,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -31,6 +34,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class SettlementAdminController implements SettlementAdminApi {
     private final SettlementFacade settlementFacade;
     private final SettlementJobLauncher settlementJobLauncher;
+    private final SettlementJobHistoryLauncher settlementJobHistoryLauncher;
 
     @GetMapping("/dashboard")
     public CommonResponse<SettlementDashboardResponse> getDashboard() {
@@ -68,9 +72,30 @@ public class SettlementAdminController implements SettlementAdminApi {
         return CommonResponse.success(SuccessCode.OK, logs);
     }
 
-    @PostMapping("/batch/run")
-    public CommonResponse<BatchExecutionResponse> runSettlementBatch(@RequestParam("targetMonth") @DateTimeFormat(pattern = "yyyy-MM") YearMonth targetMonth) {
-        BatchExecutionResponse response = settlementJobLauncher.run(targetMonth);
+    @Override
+    @PostMapping("/batch/daily")
+    public CommonResponse<BatchExecutionResponse> runDailyBatch(
+            @RequestParam("targetDate") @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate targetDate) {
+        BatchExecutionResponse response = settlementJobLauncher.runDaily(targetDate);
         return CommonResponse.success(SuccessCode.OK, response);
+    }
+
+    @Override
+    @PostMapping("/batch/monthly")
+    public CommonResponse<BatchExecutionResponse> runMonthlyBatch(
+            @RequestParam("targetMonth") @DateTimeFormat(pattern = "yyyy-MM") YearMonth targetMonth) {
+        BatchExecutionResponse response = settlementJobLauncher.runMonthly(targetMonth);
+        return CommonResponse.success(SuccessCode.OK, response);
+    }
+
+    @Override
+    @GetMapping("/batch/history")
+    public CommonResponse<List<BatchExecutionResponse>> getBatchHistory(
+            @RequestParam(value = "jobType", required = false) String jobType,
+            @RequestParam(value = "count", defaultValue = "20") int count) {
+        List<BatchExecutionResponse> history = StringUtils.hasText(jobType)
+                ? settlementJobHistoryLauncher.getHistory(jobType, count)
+                : settlementJobHistoryLauncher.getAllHistory(count);
+        return CommonResponse.success(SuccessCode.OK, history);
     }
 }

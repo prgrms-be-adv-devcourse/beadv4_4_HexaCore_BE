@@ -21,11 +21,11 @@ public class ChatController {
     private final ChatFacade chatFacade;
 
     @PostMapping("/enter")
-    public CommonResponse<ChatRoomEnterResponseDto> enter(@RequestParam("brandId") Long brandId){
+    public CommonResponse<ChatRoomEnterResponseDto> enter(@AuthenticationPrincipal AuthPrincipal authPrincipal, @RequestParam("brandId") Long brandId){
         return CommonResponse.success(
                         HttpStatus.OK,
                 "채팅방 입장 성공",
-                chatFacade.enterChatRoom(brandId)
+                chatFacade.enterChatRoom(brandId,authPrincipal.getUserId())
         );
     }
 
@@ -45,5 +45,10 @@ public class ChatController {
                 "채팅 메시지 신고 성공",
                 chatFacade.reportMessage(authPrincipal.getUserId(),requestDto)
         );
+    }
+
+    @DeleteMapping("/delete/{messageId}")
+    public void deleteMessage(@AuthenticationPrincipal AuthPrincipal authPrincipal,@PathVariable Long messageId) {
+                chatFacade.deleteMessage(authPrincipal.getUserId(),messageId);
     }
 }

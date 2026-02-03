@@ -46,7 +46,7 @@ public class ChatSendMessageUseCase {
                 userId,
                 roomId,
                 savedMessage.getContent(),
-                savedMessage.isBlinded(),
+                savedMessage.getMessageStatus(),
                 savedMessage.getCreatedAt()
         );
 

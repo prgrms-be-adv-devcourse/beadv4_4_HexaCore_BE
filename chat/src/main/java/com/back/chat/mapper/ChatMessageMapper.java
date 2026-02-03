@@ -1,7 +1,6 @@
 package com.back.chat.mapper;
 
 import com.back.chat.domain.ChatMessage;
-import com.back.chat.domain.ChatMessageBlindPolicy;
 import com.back.chat.dto.response.ChatMessageHistoryResponseDto;
 import com.back.chat.dto.response.ChatMessageReportResponseDto;
 
@@ -23,7 +22,7 @@ public class ChatMessageMapper {
                 m.getId(),
                 m.getUserId(),
                 m.getContent(),
-                m.isBlinded(),
+                m.getMessageStatus(),
                 m.getCreatedAt()
         );
     }
@@ -31,7 +30,7 @@ public class ChatMessageMapper {
     public static ChatMessageReportResponseDto toReportResponseDto (ChatMessage m){
         return new ChatMessageReportResponseDto(
                 m.getId(),
-                m.isBlinded(),
+                m.getMessageStatus(),
                 m.getReportCount()
         );
     }

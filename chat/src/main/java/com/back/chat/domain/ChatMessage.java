@@ -25,8 +25,9 @@ public class ChatMessage extends BaseTimeEntity {
     @Column(name = "content", nullable = false, length = 1000)
     private String content;
 
-    @Column(name = "is_blinded", nullable = false)
-    private boolean isBlinded = false;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "message_status", nullable = false)
+    private MessageStatus messageStatus = MessageStatus.NORMAL;
 
     @Column(name = "report_count", nullable = false)
     private int reportCount = 0;
@@ -39,7 +40,7 @@ public class ChatMessage extends BaseTimeEntity {
         this.roomId = roomId;
         this.userId = userId;
         this.content = content;
-        this.isBlinded = false;
+        this.messageStatus = MessageStatus.NORMAL;
     }
 
     public static ChatMessage create(
