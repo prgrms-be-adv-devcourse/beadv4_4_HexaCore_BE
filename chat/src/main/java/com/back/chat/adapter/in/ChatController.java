@@ -21,11 +21,11 @@ public class ChatController {
     private final ChatFacade chatFacade;
 
     @PostMapping("/enter")
-    public CommonResponse<ChatRoomEnterResponseDto> enter(@RequestParam("brandId") Long brandId){
+    public CommonResponse<ChatRoomEnterResponseDto> enter(@AuthenticationPrincipal AuthPrincipal authPrincipal, @RequestParam("brandId") Long brandId){
         return CommonResponse.success(
                         HttpStatus.OK,
                 "채팅방 입장 성공",
-                chatFacade.enterChatRoom(brandId)
+                chatFacade.enterChatRoom(brandId,authPrincipal.getUserId())
         );
     }
 

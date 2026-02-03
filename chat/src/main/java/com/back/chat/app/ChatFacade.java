@@ -21,8 +21,8 @@ public class ChatFacade {
     private final ChatDeleteMessageUseCase chatDeleteMessageUseCase;
 
     @Transactional
-    public ChatRoomEnterResponseDto enterChatRoom(Long brandId){
-        return chatEnterChatRoomUseCase.enterChatRoom(brandId);
+    public ChatRoomEnterResponseDto enterChatRoom(Long brandId, Long userId){
+        return chatEnterChatRoomUseCase.enterChatRoom(brandId, userId);
     }
 
     @Transactional
