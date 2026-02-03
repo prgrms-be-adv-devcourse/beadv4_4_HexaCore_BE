@@ -12,4 +12,8 @@ public class KafkaEventPublisher {
     public void publish(EventName event) {
         kafkaTemplate.send(event.getEventName(), event);
     }
+
+    public void publish(String topic, EventName event) {
+        kafkaTemplate.send(topic, event);
+    }
 }

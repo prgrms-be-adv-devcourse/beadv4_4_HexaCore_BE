@@ -54,4 +54,11 @@ public interface ApiV1Market {
             @AuthenticationPrincipal AuthPrincipal principal,
             @PathVariable Long biddingId
     );
+
+    @Operation(summary = "구매 확정", description = "배송 완료된 주문에 대해 구매 확정을 진행하고 정산 이벤트를 발행한다.")
+    @PatchMapping("/orders/{orderId}/complete")
+    CommonResponse<Void> completeOrder(
+            @AuthenticationPrincipal AuthPrincipal principal,
+             @PathVariable Long orderId
+    );
 }
