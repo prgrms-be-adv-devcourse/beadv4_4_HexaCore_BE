@@ -7,4 +7,10 @@ dependencies {
 
     // Redis
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+    // AOP
+    implementation 'org.springframework.boot:spring-boot-starter-aop:4.0.0-M2'
+
+    // Spring security
+    implementation 'org.springframework.boot:spring-boot-starter-security'
 }
