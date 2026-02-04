@@ -50,7 +50,7 @@ public class ChatOutboxRelay {
     @Value("${chat.outbox.relay.processing-timeout-seconds:300}")
     private long processingTimeoutSeconds;
 
-    @Scheduled(fixedDelayString = "${chat.outbox.relay.fixed-delay-ms:1000}")
+    @Scheduled(fixedDelayString = "${chat.outbox.relay.fixed-delay-ms:2000}")
     public void tick() {
         // claim → publish
         relayOnce();
