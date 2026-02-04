@@ -7,7 +7,7 @@ import com.back.common.market.event.BiddingCompletedEvent;
 import com.back.market.adapter.out.BiddingRepository;
 import com.back.market.adapter.out.MarketUserRepository;
 import com.back.market.adapter.out.OrderRepository;
-import com.back.market.app.MarketSupport;
+import com.back.market.adapter.out.cash.MarketCashAdapter;
 import com.back.market.domain.Bidding;
 import com.back.market.domain.MarketUser;
 import com.back.market.domain.Order;
@@ -40,7 +40,7 @@ public class MatchInstantTradeUseCase {
     private final MarketUserRepository marketUserRepository;
     private final BiddingMapper biddingMapper;
     private final CashRequestMapper cashRequestMapper;
-    private final MarketSupport marketSupport;
+    private final MarketCashAdapter marketCashAdapter;
     private final KafkaEventPublisher kafkaEventPublisher;
 
     /**
@@ -125,7 +125,7 @@ public class MatchInstantTradeUseCase {
         if(myPosition == BiddingPosition.BUY) {
             // Cash 호출
             PayAndHoldRequestDto paymentReq = cashRequestMapper.toPayAndHoldRequestForOrder(savedOrder);
-            PayAndHoldResponseDto resultData = marketSupport.getPayAndHoldResult(paymentReq);
+            PayAndHoldResponseDto resultData = marketCashAdapter.getPayAndHoldResult(paymentReq);
 
             // 6. 결과 상태에 따른 주문 상태 업데이트
             if (resultData.status() == PayAndHoldStatus.PAID) {

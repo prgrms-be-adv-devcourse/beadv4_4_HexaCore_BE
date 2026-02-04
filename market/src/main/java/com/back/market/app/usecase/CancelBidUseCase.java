@@ -3,7 +3,7 @@ package com.back.market.app.usecase;
 import com.back.common.code.FailureCode;
 import com.back.common.exception.BadRequestException;
 import com.back.market.adapter.out.BiddingRepository;
-import com.back.market.app.MarketSupport;
+import com.back.market.adapter.out.cash.MarketCashAdapter;
 import com.back.market.domain.Bidding;
 import com.back.market.domain.enums.BiddingPosition;
 import com.back.market.domain.enums.BiddingStatus;
@@ -22,7 +22,7 @@ import java.math.BigDecimal;
 @RequiredArgsConstructor
 public class CancelBidUseCase {
     private final BiddingRepository biddingRepository;
-    private final MarketSupport marketSupport;
+    private final MarketCashAdapter marketCashAdapter;
 
     @Transactional
     public PaymentCancelResponseDto cancelBid(Long userId, Long biddingId) {
@@ -53,7 +53,7 @@ public class CancelBidUseCase {
                     bidding.getPrice() //예치금 전액 환불
             );
             //MarketSupport -> cashclient -> 결과반환
-            return marketSupport.refundBidPayment(refundRequest);
+            return marketCashAdapter.refundBidPayment(refundRequest);
         } else {
             //판매입찰인 경우 환불금액 0원
             return PaymentCancelResponseDto.of(userId, BigDecimal.ZERO);

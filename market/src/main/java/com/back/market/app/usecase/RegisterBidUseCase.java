@@ -5,7 +5,7 @@ import com.back.common.exception.BadRequestException;
 import com.back.market.adapter.out.BiddingRepository;
 import com.back.market.adapter.out.MarketProductRepository;
 import com.back.market.adapter.out.MarketUserRepository;
-import com.back.market.app.MarketSupport;
+import com.back.market.adapter.out.cash.MarketCashAdapter;
 import com.back.market.domain.Bidding;
 import com.back.market.domain.MarketProduct;
 import com.back.market.domain.MarketUser;
@@ -38,7 +38,7 @@ public class RegisterBidUseCase {
     private final MarketProductRepository marketProductRepository;
     private final BiddingMapper biddingMapper;
     private final CashRequestMapper cashRequestMapper;
-    private final MarketSupport marketSupport;
+    private final MarketCashAdapter marketCashAdapter;
 
     /**
      * MARKET-010: 구매 입찰 등록
@@ -71,7 +71,7 @@ public class RegisterBidUseCase {
                 requestDto.price(),
                 savedBidding.getId()
         );
-        PayAndHoldResponseDto responseData = marketSupport.getPayAndHoldResult(cashRequest);
+        PayAndHoldResponseDto responseData = marketCashAdapter.getPayAndHoldResult(cashRequest);
 
         if (responseData.status() == PayAndHoldStatus.PAID) {
             savedBidding.changeStatus(BiddingStatus.PROCESS);
