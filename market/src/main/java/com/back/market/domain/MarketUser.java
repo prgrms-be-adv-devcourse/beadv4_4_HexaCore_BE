@@ -29,7 +29,7 @@ public class MarketUser extends BaseTimeEntity {
     @Column(name = "id")
     private Long id;                // Member 모듈의 PK를 그대로 사용
 
-    @Column(name = "name", nullable = false, length = 30)
+    @Column(name = "name", length = 30)
     private String name;        // 사용자 이름(실명)
 
     @Column(name = "email", nullable = false)
