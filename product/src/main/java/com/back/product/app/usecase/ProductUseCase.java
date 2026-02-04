@@ -7,23 +7,29 @@ import com.back.product.adapter.out.ProductOptionValuesRepository;
 import com.back.product.adapter.out.ProductRepository;
 import com.back.product.domain.*;
 import com.back.product.dto.ProductDto;
+import com.back.product.dto.ProductInfoDto;
 import com.back.product.dto.request.ProductVariantCreateRequestDto;
 import com.back.product.dto.request.ProductVariantUpdateRequestDto;
-import com.back.product.mapper.ProductImageMapper;
-import com.back.product.mapper.ProductMapper;
-import com.back.product.mapper.ProductOptionValuesMapper;
+import com.back.product.dto.response.ProductListResponseDto;
+import com.back.product.dto.response.ProductResponseDto;
+import com.back.product.mapper.*;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
 public class ProductUseCase {
     private final ProductMapper productMapper;
     private final ProductImageMapper productImageMapper;
+    private final ProductInfoMapper productInfoMapper;
     private final ProductOptionValuesMapper productOptionValuesMapper;
     private final ProductRepository productRepository;
     private final ProductOptionValuesRepository productOptionValuesRepository;
@@ -55,7 +61,7 @@ public class ProductUseCase {
         List<ProductOptionValues> newProductOptionValues = productOptionValuesRepository.saveAll(createdProductOptionValues);
         List<ProductImage> newProductImages = productImageRepository.saveAll(createdImages);
 
-        return convertToDto(newProducts, newProductOptionValues, newProductImages);
+        return buildProductDto(newProducts, newProductOptionValues, newProductImages);
     }
 
     @Transactional
@@ -91,7 +97,7 @@ public class ProductUseCase {
         List<ProductOptionValues> productOptionValues = productSupport.getAllProductOptionValuesByProductsIn(products);
         List<ProductImage> productImages = productSupport.getAllProductImagesByProductsIn(products);
 
-        return convertToDto(products, productOptionValues, productImages);
+        return buildProductDto(products, productOptionValues, productImages);
     }
 
     private void handleCreations(ProductInfo productInfo, List<ProductVariantUpdateRequestDto> variantsToCreate, Map<Long, OptionValue> optionValueMap) {
@@ -194,7 +200,7 @@ public class ProductUseCase {
         ).toList();
     }
 
-    private List<ProductDto> convertToDto(
+    private List<ProductDto> buildProductDto(
             List<Product> products,
             List<ProductOptionValues> productOptionValues,
             List<ProductImage> productImages
@@ -221,5 +227,48 @@ public class ProductUseCase {
     @Transactional
     public Boolean isOptionValueInUse(Long optionValueId) {
         return productSupport.existsProductByOptionValueId(optionValueId);
+    }
+
+    @Transactional(readOnly = true)
+    public ProductListResponseDto findMultipleProduct(List<Long> productIds) {
+        List<Product> products = productSupport.findMultipleProductByIds(productIds);
+
+        if (!isSameSize(products, productIds)) {
+            throw new CustomException(FailureCode.ENTITY_NOT_FOUND);
+        }
+
+        List<ProductImage> productImages = productSupport.getAllProductImagesByProductsIn(products);
+        List<ProductOptionValues> productOptions = productSupport.getAllProductOptionValuesByProductsIn(products);
+
+        return buildProductResponseDto(products, productOptions, productImages);
+    }
+
+    private ProductListResponseDto buildProductResponseDto(List<Product> products, List<ProductOptionValues> options, List<ProductImage> images) {
+        Map<Product, List<ProductImage>> imagesByProduct = images.stream()
+                .collect(Collectors.groupingBy(ProductImage::getProduct));
+
+        Map<Product, List<ProductOptionValues>> optionsByProduct = options.stream()
+                .collect(Collectors.groupingBy(ProductOptionValues::getProduct));;
+
+        Map<ProductInfo, List<Product>> productsByInfo = products.stream()
+                .collect(Collectors.groupingBy(Product::getProductInfo));
+
+        List<ProductResponseDto> productResponseDtos = productsByInfo.entrySet().stream().map(entry -> {
+            ProductInfoDto productInfoDto = productInfoMapper.toDto(entry.getKey());
+
+            List<ProductDto> productDtos = entry.getValue().stream().map(product -> productMapper.toDto(
+                    product,
+                    optionsByProduct.getOrDefault(product, Collections.emptyList()),
+                    imagesByProduct.getOrDefault(product, Collections.emptyList())
+            )).toList();
+
+            return ProductResponseDto.builder().productInfo(productInfoDto).products(productDtos).build();
+        }).toList();
+
+        return ProductListResponseDto.builder().products(productResponseDtos).build();
+    }
+
+    private Boolean isSameSize(List<?> list1, List<?> list2) {
+        return list1.size() == list2.size();
     }
 }
