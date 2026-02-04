@@ -6,7 +6,7 @@ import com.back.user.dto.request.UpdateFcmTokenRequest;
 import com.back.user.dto.request.UpdateNotificationSettingsRequest;
 import com.back.user.dto.request.UpdateUserProfileRequestDto;
 import com.back.user.dto.response.NotificationSettingResponse;
-import com.back.user.dto.response.UpdateUserProfileResponseDto;
+import com.back.user.dto.response.UserProfileResponseDto;
 import com.back.user.dto.response.UserIdResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -76,7 +76,7 @@ public interface UserApiV1 {
     @ApiResponse(responseCode = "404", description = "사용자 없음", content = @Content)
     @ApiResponse(responseCode = "409", description = "닉네임 중복", content = @Content)
     @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
-    CommonResponse<UpdateUserProfileResponseDto> updateUserProfile(AuthPrincipal authPrincipal,
-                                                                   UpdateUserProfileRequestDto request);
+    CommonResponse<UserProfileResponseDto> updateUserProfile(AuthPrincipal authPrincipal,
+                                                             UpdateUserProfileRequestDto request);
 
 }

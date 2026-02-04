@@ -7,7 +7,7 @@ import com.back.user.dto.request.UpdateFcmTokenRequest;
 import com.back.user.dto.request.UpdateNotificationSettingsRequest;
 import com.back.user.dto.request.UpdateUserProfileRequestDto;
 import com.back.user.dto.response.NotificationSettingResponse;
-import com.back.user.dto.response.UpdateUserProfileResponseDto;
+import com.back.user.dto.response.UserProfileResponseDto;
 import com.back.user.dto.response.UserIdResponse;
 import com.back.user.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
@@ -67,7 +67,7 @@ public class UserFacade {
     }
 
     @Transactional
-    public UpdateUserProfileResponseDto updateUserProfile(Long userId, UpdateUserProfileRequestDto request) {
+    public UserProfileResponseDto updateUserProfile(Long userId, UpdateUserProfileRequestDto request) {
         User user = userSupport.findById(userId);
         userUpdateUsecase.updateUserProfile(user, request);
         return UserMapper.toUpdateUserProfileResponseDto(user);
