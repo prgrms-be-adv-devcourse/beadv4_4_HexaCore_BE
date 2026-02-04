@@ -4,7 +4,7 @@ import com.back.user.domain.User;
 import com.back.user.domain.UserSetting;
 import com.back.user.dto.request.UpdateFcmTokenRequest;
 import com.back.user.dto.request.UpdateNotificationSettingsRequest;
-import com.back.user.dto.request.UpdateUserProfileRequestDto;
+import com.back.user.dto.request.UserProfileRequestDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -33,7 +33,7 @@ public class UserUpdateUsecase {
         }
     }
 
-    public void updateUserProfile(User user, UpdateUserProfileRequestDto request) {
+    public void updateUserProfile(User user, UserProfileRequestDto request) {
         userSupport.validateNicknameAvailable(request.nickname(), user.getNickname());
         user.updateProfile(request);
     }

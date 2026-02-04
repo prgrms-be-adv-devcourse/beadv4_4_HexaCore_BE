@@ -3,7 +3,7 @@ package com.back.user.dto.request;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
-public record UpdateUserProfileRequestDto(
+public record UserProfileRequestDto(
         @Size(min = 2, max = 20, message = "닉네임은 2~20자 사이여야 합니다.")
         String nickname,
         @Size(min = 2, max = 20)
@@ -13,7 +13,7 @@ public record UpdateUserProfileRequestDto(
         String phone,
         @Size(min = 1, max = 250, message = "주소가 너무 짧거나 깁니다.")
         String address) {
-    public UpdateUserProfileRequestDto {
+    public UserProfileRequestDto {
         if (nickname != null) nickname = nickname.trim();
         if (name != null) name = name.trim();
         if (phone != null) phone = phone.trim();
