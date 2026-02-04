@@ -83,6 +83,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             eventPublisher.publishEvent(new UserCreatedEvent(
                     user.getId(),
                     user.getNickname(),
+                    user.getName(),
                     user.getEmail(),
                     user.getAddress(),
                     user.getPhone(),
