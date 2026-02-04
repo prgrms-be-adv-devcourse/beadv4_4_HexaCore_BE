@@ -135,60 +135,67 @@ public class ChatOutboxRelay {
                     break;
                 }
             }
-        }
+            if (!claimed.isEmpty()) {
+                chatOutboxRepository.saveAll(claimed);
+                chatOutboxRepository.flush();
 
-        log.info("[OUTBOX][BATCH] claimed={}, success={}, failed={}, dead={}",
-                claimed.size(), success, failed, dead);
-    }
+            }
 
-    /**
-       PROCESSING이 너무 오래면 FAILED로 회수해서 nextAttemptAt=now로 재시도 가능하게 만듦
-     */
-    @Transactional
-    public void recoverStuckProcessing() {
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime cutoff = now.minusSeconds(processingTimeoutSeconds);
-
-        int recovered = chatOutboxRepository.recoverStuckProcessing(cutoff, now);
-        if (recovered > 0) {
-            log.warn("[OUTBOX][RECOVER] recovered={} cutoff={}", recovered, cutoff);
+            log.info("[OUTBOX][BATCH] claimed={}, success={}, failed={}, dead={}",
+                    claimed.size(), success, failed, dead);
         }
     }
 
-    private void sendKafka(String topic, String key, String value) throws Exception {
-        kafkaTemplate.send(topic, key, value)
-                .get(sendTimeoutMs, TimeUnit.MILLISECONDS);
-    }
 
-    private String resolveTopic(ChatEventType eventType) {
-        return switch (eventType) {
-            case MESSAGE_BLINDED -> messageBlindedTopic;
-            default -> throw new IllegalArgumentException("Unsupported event type: " + eventType);
-        };
-    }
+        /**
+         PROCESSING이 너무 오래면 FAILED로 회수해서 nextAttemptAt=now로 재시도 가능하게 만듦
+         */
+        @Transactional
+        public void recoverStuckProcessing () {
+            LocalDateTime now = LocalDateTime.now();
+            LocalDateTime cutoff = now.minusSeconds(processingTimeoutSeconds);
 
-    private String resolveDltTopic(ChatEventType eventType) {
-        return switch (eventType) {
-            case MESSAGE_BLINDED -> messageBlindedDltTopic;
-            default -> throw new IllegalArgumentException("Unsupported event type: " + eventType);
-        };
-    }
+            int recovered = chatOutboxRepository.recoverStuckProcessing(cutoff, now);
+            if (recovered > 0) {
+                log.warn("[OUTBOX][RECOVER] recovered={} cutoff={}", recovered, cutoff);
+            }
+        }
 
-    private String safeMsg(Exception e) {
-        String msg = e.getMessage();
-        if (msg == null) return e.getClass().getSimpleName();
-        return msg.length() <= 200 ? msg : msg.substring(0, 200);
-    }
+        private void sendKafka (String topic, String key, String value) throws Exception {
+            kafkaTemplate.send(topic, key, value)
+                    .get(sendTimeoutMs, TimeUnit.MILLISECONDS);
+        }
 
-    public record DeadLetterPayload(
-            String source,
-            String eventType,
-            String eventId,
-            Long outboxId,
-            int retryCount,
-            String lastError,
-            LocalDateTime deadAt,
-            String originalPayload
-    ) {}
-}
+        private String resolveTopic (ChatEventType eventType){
+            return switch (eventType) {
+                case MESSAGE_BLINDED -> messageBlindedTopic;
+                default -> throw new IllegalArgumentException("Unsupported event type: " + eventType);
+            };
+        }
+
+        private String resolveDltTopic (ChatEventType eventType){
+            return switch (eventType) {
+                case MESSAGE_BLINDED -> messageBlindedDltTopic;
+                default -> throw new IllegalArgumentException("Unsupported event type: " + eventType);
+            };
+        }
+
+        private String safeMsg (Exception e){
+            String msg = e.getMessage();
+            if (msg == null) return e.getClass().getSimpleName();
+            return msg.length() <= 200 ? msg : msg.substring(0, 200);
+        }
+
+        public record DeadLetterPayload(
+                String source,
+                String eventType,
+                String eventId,
+                Long outboxId,
+                int retryCount,
+                String lastError,
+                LocalDateTime deadAt,
+                String originalPayload
+        ) {
+        }
+    }
 
