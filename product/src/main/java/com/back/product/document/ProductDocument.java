@@ -106,41 +106,41 @@ public class ProductDocument extends BaseDocument<String> {
 
         @Field(type = FieldType.Object)
         private OptionValue value;
-    }
 
-    @Getter
-    @Builder
-    @NoArgsConstructor(access = AccessLevel.PROTECTED)
-    @AllArgsConstructor(access = AccessLevel.PRIVATE)
-    public static class OptionGroup {
-        @Field(type = FieldType.Long)
-        private Long groupId;
+        @Getter
+        @Builder
+        @NoArgsConstructor(access = AccessLevel.PROTECTED)
+        @AllArgsConstructor(access = AccessLevel.PRIVATE)
+        public static class OptionGroup {
+            @Field(type = FieldType.Long)
+            private Long groupId;
 
-        @MultiField(
-                mainField = @Field(type = FieldType.Text, analyzer = "standard"),
-                otherFields = {
-                        @InnerField(suffix = "nori", type = FieldType.Text, analyzer = "my_nori_analyzer"),
-                        @InnerField(suffix = "keyword", type = FieldType.Keyword)
-                }
-        )
-        private String groupName;
-    }
+            @MultiField(
+                    mainField = @Field(type = FieldType.Text, analyzer = "standard"),
+                    otherFields = {
+                            @InnerField(suffix = "nori", type = FieldType.Text, analyzer = "my_nori_analyzer"),
+                            @InnerField(suffix = "keyword", type = FieldType.Keyword)
+                    }
+            )
+            private String groupName;
+        }
 
-    @Getter
-    @Builder
-    @NoArgsConstructor(access = AccessLevel.PROTECTED)
-    @AllArgsConstructor(access = AccessLevel.PRIVATE)
-    public static class OptionValue {
-        @Field(type = FieldType.Long)
-        private Long valueId;
+        @Getter
+        @Builder
+        @NoArgsConstructor(access = AccessLevel.PROTECTED)
+        @AllArgsConstructor(access = AccessLevel.PRIVATE)
+        public static class OptionValue {
+            @Field(type = FieldType.Long)
+            private Long valueId;
 
-        @MultiField(
-                mainField = @Field(type = FieldType.Text, analyzer = "standard"),
-                otherFields = {
-                        @InnerField(suffix = "nori", type = FieldType.Text, analyzer = "my_nori_analyzer"),
-                        @InnerField(suffix = "keyword", type = FieldType.Keyword)
-                }
-        )
-        private String valueName;
+            @MultiField(
+                    mainField = @Field(type = FieldType.Text, analyzer = "standard"),
+                    otherFields = {
+                            @InnerField(suffix = "nori", type = FieldType.Text, analyzer = "my_nori_analyzer"),
+                            @InnerField(suffix = "keyword", type = FieldType.Keyword)
+                    }
+            )
+            private String valueName;
+        }
     }
 }
