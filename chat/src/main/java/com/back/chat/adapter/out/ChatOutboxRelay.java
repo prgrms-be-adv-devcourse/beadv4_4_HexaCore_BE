@@ -94,7 +94,7 @@ public class ChatOutboxRelay {
                 outbox.markFailed(safeMsg(e), now, retryBaseDelaySeconds, retryMaxDelaySeconds);
 
                 // maxRetry 도달/초과면 DLT로 이동 시도
-                if (outbox.getRetryCount() >= maxRetry) {
+                if (outbox.getRetryCount() > maxRetry) {
                     try {
                         DeadLetterPayload dlt = new DeadLetterPayload(
                                 "chat-outbox-relay",

@@ -25,7 +25,7 @@ public class ChatOutboxRepositoryImpl implements ChatOutboxRepositoryCustom{
                 select id
                 from chat_outbox
                 where status in ('PENDING','FAILED')
-                  and retry_count < :maxRetry
+                  and retry_count <= :maxRetry
                   and next_attempt_at <= :now
                 order by id
                 limit :batchSize
