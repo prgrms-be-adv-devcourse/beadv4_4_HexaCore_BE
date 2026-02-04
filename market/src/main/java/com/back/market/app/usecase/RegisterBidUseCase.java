@@ -83,7 +83,7 @@ public class RegisterBidUseCase {
         return MarketPaymentResponseDto.from(
                 responseData, // cash에서 보낸 정보
                 product.getName(),
-                user.getNickname(),
+                user.getName(),
                 user.getEmail()
         );
     }
@@ -127,7 +127,7 @@ public class RegisterBidUseCase {
         return MarketPaymentResponseDto.from(
                 cashResponse,
                 product.getName(),
-                user.getNickname(),
+                user.getName(),
                 user.getEmail()
         );
     }

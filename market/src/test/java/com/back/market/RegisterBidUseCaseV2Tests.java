@@ -44,7 +44,7 @@ public class RegisterBidUseCaseV2Tests {
         if (!userRepository.existsById(USER_ID)) {
             MarketUser user = MarketUser.builder()
                     .id(USER_ID)
-                    .nickname("tester")
+                    .name("tester")
                     .email("test@test.com")
                     .build();
             userRepository.save(user);
@@ -140,7 +140,7 @@ public class RegisterBidUseCaseV2Tests {
         Long sellerId = 20L;
         MarketUser seller = MarketUser.builder()
                 .id(sellerId)
-                .nickname("seller_user")
+                .name("seller_user")
                 .email("seller@test.com")
                 .build();
         userRepository.save(seller);
@@ -187,7 +187,7 @@ public class RegisterBidUseCaseV2Tests {
         Long buyerId = 30L;
         MarketUser buyer = MarketUser.builder()
                 .id(buyerId)
-                .nickname("buyer_user")
+                .name("buyer_user")
                 .email("seller@test.com")
                 .build();
         userRepository.save(buyer);

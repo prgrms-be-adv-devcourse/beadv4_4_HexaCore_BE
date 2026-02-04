@@ -70,7 +70,7 @@ public class OrderCompleteEventTest {
                         .marketUser(com.back.market.domain.MarketUser.builder().id(buyerId).build())
                         .build())
                 .sellBidding(com.back.market.domain.Bidding.builder()
-                        .marketUser(com.back.market.domain.MarketUser.builder().id(999L).nickname("판매자").build())
+                        .marketUser(com.back.market.domain.MarketUser.builder().id(999L).name("판매자").build())
                         .marketProduct(com.back.market.domain.MarketProduct.builder().id(500L).build())
                         .build())
                 .build();
