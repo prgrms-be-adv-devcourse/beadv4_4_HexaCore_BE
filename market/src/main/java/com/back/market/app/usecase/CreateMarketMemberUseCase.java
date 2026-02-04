@@ -1,5 +1,7 @@
 package com.back.market.app.usecase;
 
+import com.back.common.code.FailureCode;
+import com.back.common.exception.CustomException;
 import com.back.common.user.event.UserCreatedEvent;
 import com.back.market.adapter.out.MarketUserRepository;
 import com.back.market.domain.MarketUser;
@@ -44,10 +46,10 @@ public class CreateMarketMemberUseCase {
         } catch (DataIntegrityViolationException e) {
             // DB 제약조건 위반 시
             log.error("[CreateMarketMemberUseCase] DB 제약 조건 위반으로 복제 실패: id = {}, message = {}", event.id(), e.getMessage());
-            throw e;
+            throw new CustomException(FailureCode.CONSTRAINT_VIOLATION);
         } catch (Exception e) {
             log.error("[CreateMarketMemberUseCase] 회원 복제 중 알 수 없는 오류 발생: id = {}, error = {}", event.id(), e.getClass().getSimpleName());
-            throw e;
+            throw new CustomException(FailureCode.INTERNAL_SERVER_ERROR);
         }
 
     }

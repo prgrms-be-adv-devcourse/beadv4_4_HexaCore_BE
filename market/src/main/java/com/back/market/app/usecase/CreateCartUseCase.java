@@ -1,5 +1,7 @@
 package com.back.market.app.usecase;
 
+import com.back.common.code.FailureCode;
+import com.back.common.exception.CustomException;
 import com.back.market.adapter.out.CartRepository;
 import com.back.market.domain.Cart;
 import com.back.market.domain.MarketUser;
@@ -32,7 +34,7 @@ public class CreateCartUseCase {
 
         } catch (Exception e) {
             log.error("[Market] 장바구니 생성 중 오류 발생: userId = {}, error = {}", user.getId(), e.getMessage());
-            throw e;
+            throw new CustomException(FailureCode.INTERNAL_SERVER_ERROR);
         }
     }
 }
