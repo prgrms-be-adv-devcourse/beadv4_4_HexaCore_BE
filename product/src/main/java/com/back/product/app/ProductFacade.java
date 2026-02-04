@@ -4,9 +4,7 @@ import com.back.common.code.FailureCode;
 import com.back.common.exception.CustomException;
 import com.back.product.app.usecase.*;
 import com.back.product.domain.*;
-import com.back.product.dto.CategoryDto;
-import com.back.product.dto.ProductDto;
-import com.back.product.dto.ProductInfoDto;
+import com.back.product.dto.*;
 import com.back.product.dto.request.*;
 import com.back.product.dto.BrandDto;
 import com.back.product.dto.response.*;
@@ -17,8 +15,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -100,11 +96,11 @@ public class ProductFacade {
 
         List<Long> optionValueIds = request.variants().stream()
                 .flatMap(variant -> variant.optionValueIds().stream()).distinct().toList();
-        Map<Long, OptionValue> optionValueMap = optionUseCase.findOptionValuesAsMap(optionValueIds);
+        List<OptionValue> optionValues = optionUseCase.findOptionValues(optionValueIds);
 
         ProductInfo productInfo = productInfoUseCase.createProductInfo(brand, category, request.productInfo());
 
-        List<ProductDto> productDtos = productUseCase.createMultipleProduct(productInfo, request.variants(), optionValueMap);
+        List<ProductDto> productDtos = productUseCase.createMultipleProduct(productInfo, request.variants(), optionValues);
 
         return buildProductResponseDto(productInfo, productDtos);
     }
@@ -117,11 +113,11 @@ public class ProductFacade {
 
         List<Long> optionValueIds = request.variants().stream()
                 .flatMap(variant -> variant.optionValueIds().stream()).distinct().toList();
-        Map<Long, OptionValue> optionValueMap = optionUseCase.findOptionValuesAsMap(optionValueIds);
+        List<OptionValue> optionValues = optionUseCase.findOptionValues(optionValueIds);
 
         ProductInfo productInfo = productInfoUseCase.updateProductInfo(productInfoId, brand, category, request.productInfo());
 
-        List<ProductDto> productDtos = productUseCase.updateMultipleProduct(productInfo, request.variants(), optionValueMap);
+        List<ProductDto> productDtos = productUseCase.updateMultipleProduct(productInfo, request.variants(), optionValues);
 
         return buildProductResponseDto(productInfo, productDtos);
     }

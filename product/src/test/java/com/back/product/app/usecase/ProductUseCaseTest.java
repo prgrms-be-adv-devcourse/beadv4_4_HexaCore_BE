@@ -83,7 +83,7 @@ class ProductUseCaseTest {
             ProductVariantCreateRequestDto variantDto1 = new ProductVariantCreateRequestDto(List.of(10L, 20L), 100L, List.of("img1.jpg"));
             ProductVariantCreateRequestDto variantDto2 = new ProductVariantCreateRequestDto(List.of(10L), 50L, List.of("img2.jpg"));
             List<ProductVariantCreateRequestDto> variants = List.of(variantDto1, variantDto2);
-            Map<Long, OptionValue> optionValueMap = Map.of(10L, optionValue1, 20L, optionValue2);
+            List<OptionValue> optionValues = List.of(optionValue1, optionValue2);
 
             Product product1 = Product.builder().id(1L).inventory(100L).build();
             Product product2 = Product.builder().id(2L).inventory(50L).build();
@@ -118,7 +118,7 @@ class ProductUseCaseTest {
 
 
             // when
-            List<ProductDto> resultDtos = productUseCase.createMultipleProduct(productInfo, variants, optionValueMap);
+            List<ProductDto> resultDtos = productUseCase.createMultipleProduct(productInfo, variants, optionValues);
 
             // then
             // Verify mappers were called correctly
@@ -161,7 +161,7 @@ class ProductUseCaseTest {
             ProductVariantUpdateRequestDto createDto = new ProductVariantUpdateRequestDto(null, List.of(20L), 300L, List.of("new.jpg"));
             List<ProductVariantUpdateRequestDto> variants = List.of(updateDto, createDto);
 
-            Map<Long, OptionValue> optionValueMap = Map.of(10L, optionValue1, 20L, optionValue2);
+            List<OptionValue> optionValues = List.of(optionValue1, optionValue2);
             Product newProduct = Product.builder().inventory(300L).productInfo(productInfo).build();
 
             // Mocking for the first part of the method
@@ -189,7 +189,7 @@ class ProductUseCaseTest {
 
 
             // when
-            productUseCase.updateMultipleProduct(productInfo, variants, optionValueMap);
+            productUseCase.updateMultipleProduct(productInfo, variants, optionValues);
 
             // then
             // 1. Verify deletions
