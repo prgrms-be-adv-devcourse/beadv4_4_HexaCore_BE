@@ -5,7 +5,7 @@ import com.back.common.user.event.fcmTokenChangedEvent;
 import com.back.user.domain.User;
 import com.back.user.dto.request.UpdateFcmTokenRequest;
 import com.back.user.dto.request.UpdateNotificationSettingsRequest;
-import com.back.user.dto.request.UserProfileRequestDto;
+import com.back.user.dto.request.UpdateUserProfileRequestDto;
 import com.back.user.dto.response.NotificationSettingResponse;
 import com.back.user.dto.response.UpdateUserProfileResponseDto;
 import com.back.user.dto.response.UserIdResponse;
@@ -67,7 +67,7 @@ public class UserFacade {
     }
 
     @Transactional
-    public UpdateUserProfileResponseDto updateUserProfile(Long userId, UserProfileRequestDto request) {
+    public UpdateUserProfileResponseDto updateUserProfile(Long userId, UpdateUserProfileRequestDto request) {
         User user = userSupport.findById(userId);
         userUpdateUsecase.updateUserProfile(user, request);
         return UserMapper.toUpdateUserProfileResponseDto(user);

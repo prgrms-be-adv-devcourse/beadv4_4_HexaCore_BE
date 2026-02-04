@@ -3,7 +3,7 @@ package com.back.user.domain;
 import com.back.common.entity.BaseTimeEntity;
 import com.back.user.domain.enums.Provider;
 import com.back.user.domain.enums.Role;
-import com.back.user.dto.request.UserProfileRequestDto;
+import com.back.user.dto.request.UpdateUserProfileRequestDto;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -83,7 +83,7 @@ public class User extends BaseTimeEntity {
         this.blindCount=0;
     }
 
-    public void updateProfile(UserProfileRequestDto req) {
+    public void updateProfile(UpdateUserProfileRequestDto req) {
         if (req.nickname() != null) this.nickname = req.nickname();
         if (req.name() != null) this.name = req.name();
         if (req.phone() != null) this.phone = req.phone();

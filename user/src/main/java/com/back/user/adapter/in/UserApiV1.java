@@ -4,7 +4,7 @@ import com.back.common.response.CommonResponse;
 import com.back.security.principal.AuthPrincipal;
 import com.back.user.dto.request.UpdateFcmTokenRequest;
 import com.back.user.dto.request.UpdateNotificationSettingsRequest;
-import com.back.user.dto.request.UserProfileRequestDto;
+import com.back.user.dto.request.UpdateUserProfileRequestDto;
 import com.back.user.dto.response.NotificationSettingResponse;
 import com.back.user.dto.response.UpdateUserProfileResponseDto;
 import com.back.user.dto.response.UserIdResponse;
@@ -77,6 +77,6 @@ public interface UserApiV1 {
     @ApiResponse(responseCode = "409", description = "닉네임 중복", content = @Content)
     @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
     CommonResponse<UpdateUserProfileResponseDto> updateUserProfile(AuthPrincipal authPrincipal,
-                                                                   UserProfileRequestDto request);
+                                                                   UpdateUserProfileRequestDto request);
 
 }
