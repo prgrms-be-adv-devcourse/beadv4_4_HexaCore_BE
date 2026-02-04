@@ -50,7 +50,7 @@ public class CashPayoutUseCase {
 
         try {
             // 지갑 입금
-            Wallet wallet = walletRepository.findByUserId(req.payeeId())
+            Wallet wallet = walletRepository.findLockByUserId(req.payeeId())
                     .orElseThrow(() -> new EntityNotFoundException(FailureCode.WALLET_NOT_FOUND));
             wallet.deposit(req.amount());
 
