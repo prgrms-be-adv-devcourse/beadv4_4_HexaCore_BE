@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.ColumnTransformer;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -49,7 +50,8 @@ public class ChatOutbox {
     @Column(name = "event_type", nullable = false, length = 50)
     private ChatEventType eventType;
 
-    @Column(name = "payload", nullable = false, columnDefinition = "jsonb")
+    @Column(columnDefinition = "jsonb", nullable = false)
+    @ColumnTransformer(write = "?::jsonb")
     private String payload;
 
     @Enumerated(EnumType.STRING)
