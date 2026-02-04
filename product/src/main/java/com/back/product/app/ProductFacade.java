@@ -2,6 +2,7 @@ package com.back.product.app;
 
 import com.back.common.code.FailureCode;
 import com.back.common.exception.CustomException;
+import com.back.detector.annotation.CheckCrawling;
 import com.back.product.app.usecase.*;
 import com.back.product.domain.*;
 import com.back.product.dto.CategoryDto;
@@ -126,6 +127,7 @@ public class ProductFacade {
         productInfoUseCase.deleteProductInfo(productInfoId);
     }
 
+    @CheckCrawling
     @Transactional(readOnly = true)
     public ProductResponseDto getProductDetail(Long productInfoId) {
         ProductInfo productInfo = productInfoUseCase.findProductInfo(productInfoId);
@@ -135,6 +137,7 @@ public class ProductFacade {
         return buildProductResponseDto(productInfo, productDtos);
     }
 
+    @CheckCrawling
     @Transactional(readOnly = true)
     public ProductSearchListResponseDto findProductPage(@Valid ProductSearchRequestDto request, Long page, Long size) {
         return productDocumentUseCase.findProductPage(request, page, size);

@@ -6,7 +6,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication(scanBasePackages = {
         "com.back.product",
         "com.back.common",
-        "com.back.security"
+        "com.back.security",
+        "com.back.detector"
 })
 public class ProductApplication {
 
