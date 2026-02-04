@@ -1,5 +1,6 @@
 package com.back.product.mapper;
 
+import com.back.common.product.event.payload.CategoryPayload;
 import com.back.product.domain.Category;
 import com.back.product.dto.CategoryDto;
 import com.back.product.dto.request.CategoryCreateRequestDto;
@@ -19,6 +20,13 @@ public class CategoryMapper {
         return Category.builder()
                 .name(request.name())
                 .imageUrl(request.imageUrl())
+                .build();
+    }
+
+    public CategoryDto toDto(CategoryPayload payload) {
+        return CategoryDto.builder()
+                .categoryId(payload.categoryId())
+                .name(payload.name())
                 .build();
     }
 }

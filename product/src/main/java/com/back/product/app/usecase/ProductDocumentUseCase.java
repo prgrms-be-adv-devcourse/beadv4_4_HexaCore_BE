@@ -3,7 +3,10 @@ package com.back.product.app.usecase;
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.query_dsl.*;
 import co.elastic.clients.json.JsonData;
+import com.back.product.adapter.out.ProductDocumentRepository;
 import com.back.product.document.ProductDocument;
+import com.back.product.dto.OptionDto;
+import com.back.product.dto.ProductInfoDto;
 import com.back.product.dto.request.ProductSearchRequestDto;
 import com.back.product.dto.response.ProductSearchListResponseDto;
 import com.back.product.dto.response.ProductSearchResponseDto;
@@ -26,6 +29,16 @@ import java.util.List;
 public class ProductDocumentUseCase {
     private final ProductDocumentSupport productDocumentSupport;
     private final ProductDocumentMapper productDocumentMapper;
+    private final ProductDocumentRepository productDocumentRepository;
+
+    @Transactional
+    public void createProduct(ProductInfoDto productInfoDto, List<OptionDto> optionDtos, String thumbnailUrl) {
+        ProductDocument newDocument = productDocumentMapper.toDocument(productInfoDto, optionDtos, thumbnailUrl);
+
+        newDocument.assignId(productInfoDto.productInfoId().toString());
+
+        productDocumentRepository.save(newDocument);
+    }
 
     @Transactional(readOnly = true)
     public ProductSearchListResponseDto findProductPage(@Valid ProductSearchRequestDto request, Long page, Long size) {
