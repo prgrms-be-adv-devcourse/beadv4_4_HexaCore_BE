@@ -2,6 +2,7 @@ package com.back.cash.app.usecase;
 
 import com.back.cash.adapter.out.WalletRepository;
 import com.back.cash.domain.Wallet;
+import com.back.cash.domain.enums.WalletType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -28,6 +29,7 @@ public class CreateWalletUseCase {
         try {
             Wallet wallet = Wallet.builder()
                     .userId(userId)
+                    .walletType(WalletType.USER)
                     .balance(BigDecimal.ZERO)
                     .build();
 
