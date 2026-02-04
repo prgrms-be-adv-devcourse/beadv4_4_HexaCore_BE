@@ -5,9 +5,12 @@ import com.back.chat.adapter.out.outbox.ChatOutbox;
 import com.back.chat.adapter.out.outbox.ChatOutboxRepository;
 import com.back.chat.adapter.out.outbox.OutboxStatus;
 import com.back.chat.event.ChatEventType;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -30,7 +33,7 @@ import static org.mockito.Mockito.*;
 @SpringBootTest
 @ActiveProfiles("test")
 @TestPropertySource(properties = {
-        "chat.outbox.relay.max-retry=1",  // 여기서 핵심: 1회 실패 후 다음 시도에 바로 DEAD 처리되게
+        "chat.outbox.relay.max-retry=1",
         "chat.outbox.relay.retry-base-delay-seconds=1",
         "chat.outbox.relay.retry-max-delay-seconds=1",
         "chat.kafka.topics.message-blinded=chat.message.blinded.v1",
@@ -38,17 +41,14 @@ import static org.mockito.Mockito.*;
 })
 class OutboxRelayDeadLetterTest {
 
-    @Autowired
-    ChatOutboxRepository chatOutboxRepository;
-    @Autowired
-    ChatOutboxRelay chatOutboxRelay;
-    @Autowired
-    TransactionTemplate tx;
-    @Autowired
-    EntityManager em;
+    @Autowired ChatOutboxRepository chatOutboxRepository;
+    @Autowired ChatOutboxRelay chatOutboxRelay;
+    @Autowired TransactionTemplate tx;
+    @Autowired EntityManager em;
 
-    @MockitoBean
-    KafkaTemplate<String, String> kafkaTemplate;
+    @MockitoBean KafkaTemplate<String, String> kafkaTemplate;
+
+    private final ObjectMapper om = new ObjectMapper();
 
     @BeforeEach
     void setUp() {
@@ -61,7 +61,7 @@ class OutboxRelayDeadLetterTest {
     }
 
     @Test
-    void relay_exceedMaxRetry_shouldPublishDlt_andBeDead() {
+    void relay_exceedMaxRetry_shouldPublishDlt_andBeDead() throws Exception {
         Long outboxId = tx.execute(status -> {
             ChatOutbox saved = chatOutboxRepository.save(
                     ChatOutbox.pending(
@@ -77,19 +77,20 @@ class OutboxRelayDeadLetterTest {
             return saved.getId();
         });
 
-        // send는 계속 실패하도록
+        // ✅ 정상 토픽은 실패, DLT 토픽은 성공
         CompletableFuture<SendResult<String, String>> fail = new CompletableFuture<>();
         fail.completeExceptionally(new RuntimeException("boom"));
+        CompletableFuture<SendResult<String, String>> ok = CompletableFuture.completedFuture(null);
+
         when(kafkaTemplate.send(anyString(), anyString(), anyString()))
-                .thenReturn(fail);
+                .thenAnswer(inv -> {
+                    String topic = inv.getArgument(0, String.class);
+                    if (topic.endsWith(".dlt")) return ok;
+                    return fail;
+                });
 
-        // 1) 첫 relay: 실패 -> FAILED(retryCount=1)
+        // 1) 첫 relay: 정상 발행 실패 -> FAILED(retry=1)
         chatOutboxRelay.relayOnce();
-
-        Awaitility.await().atMost(Duration.ofSeconds(2)).untilAsserted(() -> tx.executeWithoutResult(s -> {
-            ChatOutbox r = chatOutboxRepository.findById(outboxId).orElseThrow();
-            System.out.println("status=" + r.getStatus() + ", retry=" + r.getRetryCount() + ", next=" + r.getNextAttemptAt());
-        }));
 
         Awaitility.await().atMost(Duration.ofSeconds(2)).untilAsserted(() -> tx.executeWithoutResult(s -> {
             ChatOutbox r = chatOutboxRepository.findById(outboxId).orElseThrow();
@@ -100,25 +101,34 @@ class OutboxRelayDeadLetterTest {
         // 2) 재시도 가능하게 nextAttemptAt 과거로
         forceNextAttemptAtPast(outboxId);
 
-        // 3) 두번째 relay: maxRetry 초과 처리 -> DLT + DEAD (네 구현 기준)
+        // 3) 두번째 relay: 정상 발행 실패 -> retry=2 -> DLT 발행 성공 -> DEAD
         chatOutboxRelay.relayOnce();
 
         Awaitility.await().atMost(Duration.ofSeconds(2)).untilAsserted(() -> tx.executeWithoutResult(s -> {
             ChatOutbox r = chatOutboxRepository.findById(outboxId).orElseThrow();
-            System.out.println("status=" + r.getStatus() + ", retry=" + r.getRetryCount() + ", next=" + r.getNextAttemptAt());
-        }));
-
-        Awaitility.await().atMost(Duration.ofSeconds(2)).untilAsserted(() -> tx.executeWithoutResult(s -> {
-            ChatOutbox r = chatOutboxRepository.findById(outboxId).orElseThrow();
             assertThat(r.getStatus()).isEqualTo(OutboxStatus.DEAD);
+            assertThat(r.getRetryCount()).isEqualTo(2);
         }));
 
-        // DLT 발행 검증 (구현이 "DEAD 처리 시점에 DLT 발행"이면 여기서 잡힘)
+        // ✅ DLT 발행 payload를 캡처해서 JSON 파싱 후 messageId=100 검증
+        ArgumentCaptor<String> dltJsonCaptor = ArgumentCaptor.forClass(String.class);
+
         verify(kafkaTemplate, atLeastOnce()).send(
                 eq("chat.message.blinded.v1.dlt"),
                 anyString(),
-                contains("\"messageId\":100")
+                dltJsonCaptor.capture()
         );
+
+        String dltJson = dltJsonCaptor.getValue();
+        JsonNode root = om.readTree(dltJson);
+
+        // originalPayload는 "문자열로 된 JSON"이라 한 번 더 파싱
+        String originalPayload = root.get("originalPayload").asText();
+        JsonNode original = om.readTree(originalPayload);
+
+        assertThat(original.get("messageId").asLong()).isEqualTo(100L);
+        assertThat(root.get("eventType").asText()).isEqualTo("MESSAGE_BLINDED");
+        assertThat(root.get("retryCount").asInt()).isEqualTo(2);
     }
 
     private void forceNextAttemptAtPast(Long id) {
@@ -136,3 +146,5 @@ class OutboxRelayDeadLetterTest {
         });
     }
 }
+
+
