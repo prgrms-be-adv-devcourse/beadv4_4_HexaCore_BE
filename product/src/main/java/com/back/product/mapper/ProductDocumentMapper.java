@@ -8,12 +8,12 @@ import org.springframework.stereotype.Component;
 public class ProductDocumentMapper {
     public ProductSearchResponseDto toDto(ProductDocument document) {
         return ProductSearchResponseDto.builder()
-                .productInfoId(document.getProductInfoId())
-                .productName(document.getProductName())
+                .productInfoId(document.getProductInfo().getProductInfoId())
+                .productName(document.getProductInfo().getProductName())
                 .thumbnailUrl(document.getThumbnailUrl())
-                .brandName(document.getBrandName())
-                .categoryName(document.getCategoryName())
-                .releasePrice(document.getReleasePrice())
+                .brandName(document.getProductInfo().getBrand().getBrandName())
+                .categoryName(document.getProductInfo().getCategory().getCategoryName())
+                .releasePrice(document.getProductInfo().getReleasePrice())
                 .build();
     }
 }

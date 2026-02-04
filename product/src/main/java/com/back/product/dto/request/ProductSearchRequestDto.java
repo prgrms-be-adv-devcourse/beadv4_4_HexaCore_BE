@@ -28,11 +28,7 @@ public record ProductSearchRequestDto(
         @DecimalMin(value = "0.00", message = "Maximum Price cannot be Negative Integer")
         BigDecimal maxPrice,
 
-        // 4. 상태 필터링
-        @NotNull(message = "Must decide to check Sold Out")
-        Boolean excludeSoldOut,
-
-        // 5. 정렬 조건
+        // 4. 정렬 조건
         @NotNull(message = "Sort cannot be null")
         ProductSortType sort
 ) {

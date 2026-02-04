@@ -16,60 +16,131 @@ import java.util.List;
 @Document(indexName = "products")
 @Setting(settingPath = "elasticsearch-settings.json")
 public class ProductDocument extends BaseDocument<String> {
-
-    @Field(type = FieldType.Long)
-    private Long productInfoId;
-
-    // 👇 [수정 핵심] MultiField 적용 (productName)
-    @MultiField(
-        mainField = @Field(type = FieldType.Text, analyzer = "standard"),
-        otherFields = {
-            @InnerField(suffix = "nori", type = FieldType.Text, analyzer = "my_nori_analyzer"),
-            @InnerField(suffix = "ngram", type = FieldType.Text, analyzer = "my_ngram_analyzer")
-        }
-    )
-    private String productName;
+    @Field(type = FieldType.Object)
+    private ProductInfo productInfo;
 
     @Field(type = FieldType.Keyword)
     private String thumbnailUrl;
 
-    @Field(type = FieldType.Long)
-    private Long brandId;
+    @Field(type = FieldType.Nested)
+    private List<Option> totalOptions;
 
-    @MultiField(
-        mainField = @Field(type = FieldType.Text, analyzer = "standard"),
-        otherFields = {
-            @InnerField(suffix = "nori", type = FieldType.Text, analyzer = "my_nori_analyzer"),
-            @InnerField(suffix = "ngram", type = FieldType.Text, analyzer = "my_ngram_analyzer")
-        }
-    )
-    private String brandName;
+    @Getter
+    @Builder
+    @NoArgsConstructor(access = AccessLevel.PROTECTED)
+    @AllArgsConstructor(access = AccessLevel.PRIVATE)
+    public static class ProductInfo {
 
-    @Field(type = FieldType.Long)
-    private Long categoryId;
+        @Field(type = FieldType.Long)
+        private Long productInfoId;
 
-    @MultiField(
-        mainField = @Field(type = FieldType.Text, analyzer = "standard"),
-        otherFields = {
-            @InnerField(suffix = "nori", type = FieldType.Text, analyzer = "my_nori_analyzer")
-        }
-    )
-    private String categoryName;
+        @MultiField(
+                mainField = @Field(type = FieldType.Text, analyzer = "standard"),
+                otherFields = {
+                        @InnerField(suffix = "nori", type = FieldType.Text, analyzer = "my_nori_analyzer"),
+                        @InnerField(suffix = "ngram", type = FieldType.Text, analyzer = "my_ngram_analyzer")
+                }
+        )
+        private String productName;
 
-    @Field(type = FieldType.Double)
-    private BigDecimal releasePrice;
+        @Field(type = FieldType.Keyword)
+        private String productCode;
 
-    @Field(type = FieldType.Long)
-    private Long totalInventory;
+        @Field(type = FieldType.Object)
+        private Brand brand;
 
-    @MultiField(
-        mainField = @Field(type = FieldType.Text, analyzer = "standard"),
-        otherFields = {
-            @InnerField(suffix = "nori", type = FieldType.Text, analyzer = "my_nori_analyzer")
-        }
-    )
-    private List<String> totalOptions;
+        @Field(type = FieldType.Object)
+        private Category category;
 
-    @Field(type = FieldType.Date, format = DateFormat.date_hour_minute_second_millis)
-    private LocalDateTime releasedDate;
+        @Field(type = FieldType.Double)
+        private BigDecimal releasePrice;
+
+        @Field(type = FieldType.Date, format = DateFormat.date_hour_minute_second_millis)
+        private LocalDateTime releasedDate;
+    }
+
+    @Getter
+    @Builder
+    @NoArgsConstructor(access = AccessLevel.PROTECTED)
+    @AllArgsConstructor(access = AccessLevel.PRIVATE)
+    public static class Brand {
+
+        @Field(type = FieldType.Long)
+        private Long brandId;
+
+        @MultiField(
+                mainField = @Field(type = FieldType.Text, analyzer = "standard"),
+                otherFields = {
+                        @InnerField(suffix = "nori", type = FieldType.Text, analyzer = "my_nori_analyzer"),
+                        @InnerField(suffix = "ngram", type = FieldType.Text, analyzer = "my_ngram_analyzer")
+                }
+        )
+        private String brandName;
+    }
+
+    @Getter
+    @Builder
+    @NoArgsConstructor(access = AccessLevel.PROTECTED)
+    @AllArgsConstructor(access = AccessLevel.PRIVATE)
+    public static class Category {
+
+        @Field(type = FieldType.Long)
+        private Long categoryId;
+
+        @MultiField(
+                mainField = @Field(type = FieldType.Text, analyzer = "standard"),
+                otherFields = {
+                        @InnerField(suffix = "nori", type = FieldType.Text, analyzer = "my_nori_analyzer")
+                }
+        )
+        private String categoryName;
+    }
+
+    @Getter
+    @Builder
+    @NoArgsConstructor(access = AccessLevel.PROTECTED)
+    @AllArgsConstructor(access = AccessLevel.PRIVATE)
+    public static class Option {
+        @Field(type = FieldType.Object)
+        private OptionGroup group;
+
+        @Field(type = FieldType.Object)
+        private OptionValue value;
+    }
+
+    @Getter
+    @Builder
+    @NoArgsConstructor(access = AccessLevel.PROTECTED)
+    @AllArgsConstructor(access = AccessLevel.PRIVATE)
+    public static class OptionGroup {
+        @Field(type = FieldType.Long)
+        private Long groupId;
+
+        @MultiField(
+                mainField = @Field(type = FieldType.Text, analyzer = "standard"),
+                otherFields = {
+                        @InnerField(suffix = "nori", type = FieldType.Text, analyzer = "my_nori_analyzer"),
+                        @InnerField(suffix = "keyword", type = FieldType.Keyword)
+                }
+        )
+        private String groupName;
+    }
+
+    @Getter
+    @Builder
+    @NoArgsConstructor(access = AccessLevel.PROTECTED)
+    @AllArgsConstructor(access = AccessLevel.PRIVATE)
+    public static class OptionValue {
+        @Field(type = FieldType.Long)
+        private Long valueId;
+
+        @MultiField(
+                mainField = @Field(type = FieldType.Text, analyzer = "standard"),
+                otherFields = {
+                        @InnerField(suffix = "nori", type = FieldType.Text, analyzer = "my_nori_analyzer"),
+                        @InnerField(suffix = "keyword", type = FieldType.Keyword)
+                }
+        )
+        private String valueName;
+    }
 }

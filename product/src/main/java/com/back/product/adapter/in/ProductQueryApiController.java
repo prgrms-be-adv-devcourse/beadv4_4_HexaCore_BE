@@ -25,9 +25,8 @@ public interface ProductQueryApiController {
             1. 검색어 (전문 검색) : keyword
             2. 필터링 조건 (다중 선택 가능) (OR 조건) : brandIds, categoryIds
             3. 범위 필터링 (가격) : minPrice, maxPrice
-            4. 상태 필터링 : excludeSoldOut (품절 상품 제외 여부)
-            5. 정렬 조건 : sort (ENUM ProductSortType)
-            6. 페이징 : page (페이지 번호), size (항목 개수)
+            4. 정렬 조건 : sort (ENUM ProductSortType)
+            5. 페이징 : page (페이지 번호), size (항목 개수)
     """)
     @ApiResponse(responseCode = "200", description = "상품 목록 조회 성공")
     @ApiResponse(responseCode = "401", description = "인증 실패", content = @Content)
