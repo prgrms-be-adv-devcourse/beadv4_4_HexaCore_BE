@@ -18,11 +18,21 @@ public class CreateCartUseCase {
 
     @Transactional
     public void createCart(MarketUser user) {
+        // 장바구니 존재하는지 확인
         if (cartRepository.existsByMarketUser(user)) {
+            log.info("[Market] 이미 장바구니가 존재하는 사용자입니다. id = {}", user.getId());
             return;
         }
 
-        Cart cart = cartMapper.toEntity(user);
-        cartRepository.save(cart);
+        // 장바구니 생성
+        try {
+            Cart cart = cartMapper.toEntity(user);
+            cartRepository.save(cart);
+            log.info("[Market] 장바구니 생성 완료: userId = {}", user.getId());
+
+        } catch (Exception e) {
+            log.error("[Market] 장바구니 생성 중 오류 발생: userId = {}, error = {}", user.getId(), e.getMessage());
+            throw e;
+        }
     }
 }
