@@ -22,7 +22,8 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class UserFacade {
     private final UserSupport userSupport;
-    private final UserUpdateUsecase userUpdateUsecase;
+    private final UserUpdateUseCase userUpdateUsecase;
+    private final UserGetProfileUseCase userGetProfileUseCase;
     private final UserIncrementBlindCountUseCase userIncrementBlindCountUseCase;
     private final GetNotificationSettingsUseCase getNotificationSettingsUseCase;
     private final KafkaEventPublisher kafkaEventPublisher;
@@ -70,6 +71,12 @@ public class UserFacade {
     public UserProfileResponseDto updateUserProfile(Long userId, UpdateUserProfileRequestDto request) {
         User user = userSupport.findById(userId);
         userUpdateUsecase.updateUserProfile(user, request);
-        return UserMapper.toUpdateUserProfileResponseDto(user);
+        return UserMapper.toUserProfileResponseDto(user);
+    }
+
+    @Transactional(readOnly = true)
+    public UserProfileResponseDto getUserProfile(Long userId) {
+        User user = userGetProfileUseCase.getUserProfile(userId);
+        return UserMapper.toUserProfileResponseDto(user);
     }
 }

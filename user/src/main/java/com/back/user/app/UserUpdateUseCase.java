@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class UserUpdateUsecase {
+public class UserUpdateUseCase {
     private final UserSupport userSupport;
 
     public void updateFcmToken(User user, UpdateFcmTokenRequest request) {

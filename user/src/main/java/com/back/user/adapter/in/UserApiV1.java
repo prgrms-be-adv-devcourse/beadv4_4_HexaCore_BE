@@ -79,4 +79,17 @@ public interface UserApiV1 {
     CommonResponse<UserProfileResponseDto> updateUserProfile(AuthPrincipal authPrincipal,
                                                              UpdateUserProfileRequestDto request);
 
+    @Operation(
+            summary = "내 프로필 조회",
+            description = """
+                로그인한 사용자의 프로필 정보를 조회합니다.
+                
+                - email, name, nickname, phone, address의 정보를 조회할 수 있습니다.
+                """
+    )
+    @ApiResponse(responseCode = "200", description = "프로필 조회 성공")
+    @ApiResponse(responseCode = "401", description = "인증 실패", content = @Content)
+    @ApiResponse(responseCode = "404", description = "사용자 없음", content = @Content)
+    @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
+    CommonResponse<UserProfileResponseDto> getUserProfile(AuthPrincipal authPrincipal);
 }

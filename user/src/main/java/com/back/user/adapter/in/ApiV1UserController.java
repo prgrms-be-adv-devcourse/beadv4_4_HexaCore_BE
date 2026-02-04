@@ -51,4 +51,10 @@ public class ApiV1UserController implements UserApiV1 {
         return CommonResponse.success(SuccessCode.OK, response);
     }
 
+    @Override
+    @GetMapping("/me")
+    public CommonResponse<UserProfileResponseDto> getUserProfile(@AuthenticationPrincipal AuthPrincipal authPrincipal) {
+        UserProfileResponseDto response = userFacade.getUserProfile(authPrincipal.getUserId());
+        return CommonResponse.success(SuccessCode.OK, response);
+    }
 }
