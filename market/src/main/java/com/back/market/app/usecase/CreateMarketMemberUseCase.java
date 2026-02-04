@@ -19,7 +19,6 @@ public class CreateMarketMemberUseCase {
     private final MarketUserRepository marketUserRepository;
     private final MarketUserMapper marketUserMapper;
 
-    @Transactional
     public MarketUser createMarketMember(UserCreatedEvent event) {
         // 기존 회원 존재 여부 확인
         MarketUser existingUser = marketUserRepository.findById(event.id()).orElse(null);

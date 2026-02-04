@@ -18,7 +18,6 @@ public class CreateCartUseCase {
     private final CartRepository cartRepository;
     private final CartMapper cartMapper;
 
-    @Transactional
     public void createCart(MarketUser user) {
         // 장바구니 존재하는지 확인
         if (cartRepository.existsByMarketUser(user)) {
