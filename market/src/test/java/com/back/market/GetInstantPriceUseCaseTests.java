@@ -116,7 +116,7 @@ class GetInstantPriceUseCaseTests {
         if (!marketUserRepository.existsById(userId)) {
             marketUserRepository.save(MarketUser.builder()
                     .id(userId)
-                    .nickname("tester")
+                    .name("tester")
                     .email("test@test.com")
                     .build());
         }

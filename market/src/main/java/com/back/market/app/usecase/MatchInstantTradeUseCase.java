@@ -143,7 +143,7 @@ public class MatchInstantTradeUseCase {
             return MarketPaymentResponseDto.from(
                     resultData,
                     targetBid.getMarketProduct().getName(), // 상품명
-                    me.getNickname(),                       // 구매자 이름
+                    me.getName(),                       // 구매자 이름
                     me.getEmail()                           // 구매자 이메일
             );
         } else {
@@ -166,7 +166,7 @@ public class MatchInstantTradeUseCase {
             return MarketPaymentResponseDto.from(
                     cashResponse,
                     targetBid.getMarketProduct().getName(),
-                    me.getNickname(),
+                    me.getName(),
                     me.getEmail()
             );
         }
