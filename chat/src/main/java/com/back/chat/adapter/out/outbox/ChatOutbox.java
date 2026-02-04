@@ -165,4 +165,8 @@ public class ChatOutbox {
         if (s == null) return null;
         return s.length() <= max ? s : s.substring(0, max);
     }
+
+    public void setNextAttemptAt(LocalDateTime time) {
+        this.nextAttemptAt = time;
+    }
 }

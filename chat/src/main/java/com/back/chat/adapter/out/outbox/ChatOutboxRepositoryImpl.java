@@ -82,9 +82,13 @@ public class ChatOutboxRepositoryImpl implements ChatOutboxRepositoryCustom{
               and processing_started_at < :cutoff
         """;
 
-            return em.createNativeQuery(sql)
+            int updated = em.createNativeQuery(sql)
                     .setParameter("now", now)
                     .setParameter("cutoff", cutoff)
                     .executeUpdate();
+
+            em.clear();
+
+            return updated;
         }
     }
