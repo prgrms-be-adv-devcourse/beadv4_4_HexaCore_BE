@@ -96,6 +96,7 @@ public enum FailureCode {
     OPTION_VALUE_IN_USE(HttpStatus.CONFLICT, "OPTION_VALUE_IN_USE", "해당 옵션 값을 사용하는 상품이 있어 삭제할 수 없습니다."),
     BRAND_IN_USE(HttpStatus.CONFLICT, "BRAND_IN_USE", "해당 브랜드를 사용하는 상품이 있어 삭제할 수 없습니다."),
     CATEGORY_IN_USE(HttpStatus.CONFLICT, "CATEGORY_IN_USE", "해당 카테고리를 사용하는 상품이 있어 삭제할 수 없습니다."),
+    NICKNAME_ALREADY_EXISTS(HttpStatus.CONFLICT, "NICKNAME_ALREADY_EXISTS","닉네임이 이미 존재합니다." ),
     /**
      * 500 Internal Server Error
      */
