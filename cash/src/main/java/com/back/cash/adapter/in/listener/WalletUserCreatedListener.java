@@ -1,4 +1,4 @@
-package com.back.cash.adapter.in;
+package com.back.cash.adapter.in.listener;
 
 import com.back.cash.app.usecase.CreateWalletUseCase;
 import com.back.common.user.event.WalletCreateRequestedEvent;
