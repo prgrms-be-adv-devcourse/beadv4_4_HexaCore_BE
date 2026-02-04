@@ -133,7 +133,7 @@ public class MatchInstantTradeUseCase {
                 log.info("[MatchInstantTrade] 결제 완료 (PAID) - OrderId: {}", savedOrder.getId());
                 savedOrder.changeStatus(OrderStatus.PAID);
                 
-                // 즉시 구매 완료 이벤트 발행
+                // TODO 즉시 구매 완료 이벤트 발행
                 publishBiddingCompletedEvent(myBid, targetBid, BiddingPosition.BUY);
             } else if (resultData.status() == PayAndHoldStatus.REQUIRES_PG) {
                 // PG 결제 필요 -> 주문은 대기 상태 유지 (HOLD)
@@ -151,7 +151,7 @@ public class MatchInstantTradeUseCase {
             log.info("[MatchTrade] 즉시 판매 체결 (결제 불필요) - OrderId: {}", savedOrder.getId());
             savedOrder.changeStatus(OrderStatus.PAID);
             
-            // 즉시 판매 완료 이벤트 발행
+            // TODO 즉시 판매 완료 이벤트 발행
             publishBiddingCompletedEvent(targetBid, myBid, BiddingPosition.SELL);
 
             PayAndHoldResponseDto cashResponse = PayAndHoldResponseDto.of(
@@ -172,7 +172,7 @@ public class MatchInstantTradeUseCase {
         }
     }
 
-    /**
+    /** TODO 시현님이 만들어 둔 부분 어떻게 옮길지 생각해보기
      * 입찰 체결 완료 이벤트 발행
      * @param buyBid 구매 입찰
      * @param sellBid 판매 입찰
