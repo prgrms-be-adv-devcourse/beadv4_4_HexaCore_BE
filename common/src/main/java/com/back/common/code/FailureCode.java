@@ -97,6 +97,11 @@ public enum FailureCode {
     BRAND_IN_USE(HttpStatus.CONFLICT, "BRAND_IN_USE", "해당 브랜드를 사용하는 상품이 있어 삭제할 수 없습니다."),
     CATEGORY_IN_USE(HttpStatus.CONFLICT, "CATEGORY_IN_USE", "해당 카테고리를 사용하는 상품이 있어 삭제할 수 없습니다."),
     /**
+     * 429 Too Many Requests
+     */
+    TOO_MANY_REQUESTS(HttpStatus.TOO_MANY_REQUESTS, "TOO_MANY_REQUESTS", "요청이 너무 많습니다. 잠시 후 다시 시도해주세요."),
+
+    /**
      * 500 Internal Server Error
      */
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR", "서버 내부 오류가 발생했습니다."),

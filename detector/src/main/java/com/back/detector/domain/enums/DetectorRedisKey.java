@@ -7,12 +7,17 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum DetectorRedisKey {
     BID_COUNT("bid:count:"),
-    VIEW_COUNT("view:count:"),
+    CRAWLING_COUNT("crawl:count:"),
+    CRAWLING_BAN("crawl:ban:"),
     USER_IP("ip:");
 
     private final String prefix;
 
     public String getKey(Long userId) {
         return prefix + userId;
+    }
+
+    public String getKey(String ip) {
+        return prefix + ip;
     }
 }
