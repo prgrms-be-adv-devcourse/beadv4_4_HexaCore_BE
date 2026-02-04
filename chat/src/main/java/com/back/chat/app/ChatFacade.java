@@ -18,10 +18,11 @@ public class ChatFacade {
     private final ChatSendMessageUseCase chatSendMessageUseCase;
     private final ChatGetHistoryUseCase chatGetHistoryUseCase;
     private final ChatReportMessageUseCase chatReportMessageUseCase;
+    private final ChatDeleteMessageUseCase chatDeleteMessageUseCase;
 
     @Transactional
-    public ChatRoomEnterResponseDto enterChatRoom(Long brandId){
-        return chatEnterChatRoomUseCase.enterChatRoom(brandId);
+    public ChatRoomEnterResponseDto enterChatRoom(Long brandId, Long userId){
+        return chatEnterChatRoomUseCase.enterChatRoom(brandId, userId);
     }
 
     @Transactional
@@ -37,5 +38,10 @@ public class ChatFacade {
     @Transactional
     public ChatMessageReportResponseDto reportMessage(Long reporterUserId, ChatMessageReportRequestDto requestDto) {
         return chatReportMessageUseCase.reportMessage(reporterUserId, requestDto);
+    }
+
+    @Transactional
+    public void deleteMessage(Long userId, Long messageId) {
+        chatDeleteMessageUseCase.deleteMessage(userId, messageId);
     }
 }

@@ -1,6 +1,7 @@
 package com.back.user.app;
 
 import com.back.common.code.FailureCode;
+import com.back.common.exception.CustomException;
 import com.back.common.exception.EntityNotFoundException;
 import com.back.user.adapter.out.UserRepository;
 import com.back.user.adapter.out.UserSettingRepository;
@@ -25,4 +26,11 @@ public class UserSupport {
                 .orElseThrow(() -> new EntityNotFoundException(FailureCode.USER_SETTING_NOT_FOUND));
     }
 
+    public void validateNicknameAvailable(String nickname, String userNickname) {
+        if ( nickname != null && !nickname.equals(userNickname)) {
+            if (userRepository.existsByNickname(nickname)) {
+                throw new CustomException(FailureCode.NICKNAME_ALREADY_EXISTS);
+            }
+        }
+    }
 }

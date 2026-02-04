@@ -8,6 +8,7 @@ import com.back.chat.adapter.out.ChatReportRepository;
 import com.back.chat.app.ChatReportMessageUseCase;
 import com.back.chat.domain.ChatMessage;
 import com.back.chat.domain.ChatReportReason;
+import com.back.chat.domain.MessageStatus;
 import com.back.chat.dto.request.ChatMessageReportRequestDto;
 import com.back.common.exception.BadRequestException;
 import com.back.common.exception.ConflictException;
@@ -65,7 +66,7 @@ class ChatReportMessageUseCaseTest {
 
         ChatMessage after2 = chatMessageRepository.findById(messageId).orElseThrow();
         assertThat(after2.getReportCount()).isEqualTo(2);
-        assertThat(after2.isBlinded()).isFalse();
+        assertThat(after2.getMessageStatus()).isEqualTo(MessageStatus.NORMAL);
 
         // when: 3rd report -> should blind
         chatReportMessageUseCase.reportMessage(reporter3, dto);
@@ -73,7 +74,7 @@ class ChatReportMessageUseCaseTest {
         // then
         ChatMessage after3 = chatMessageRepository.findById(messageId).orElseThrow();
         assertThat(after3.getReportCount()).isEqualTo(3);
-        assertThat(after3.isBlinded()).isTrue();
+        assertThat(after3.getMessageStatus()).isEqualTo(MessageStatus.BLINDED);
     }
 
     @Test

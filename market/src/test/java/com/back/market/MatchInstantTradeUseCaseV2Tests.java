@@ -14,10 +14,9 @@ import com.back.market.domain.Order;
 import com.back.market.domain.enums.BiddingPosition;
 import com.back.market.domain.enums.BiddingStatus;
 import com.back.market.domain.enums.OrderStatus;
-import com.back.market.domain.enums.Role;
 import com.back.common.dto.cash.enums.PayAndHoldStatus;
 import com.back.market.dto.request.BiddingRequestDto;
-import com.back.common.dto.cash.response.PayAndHoldResponseDto;
+import com.back.market.dto.response.MarketPaymentResponseDto;
 import com.back.market.mapper.BiddingMapper;
 import com.back.market.mapper.MarketProductMapper;
 import com.back.market.mapper.MarketUserMapper;
@@ -77,7 +76,7 @@ public class MatchInstantTradeUseCaseV2Tests {
         Long seller2 = 11L;
         Long buyer = 12L;
         setupBaseData(productId, seller1, buyer, "주소");
-        marketUserRepository.save(MarketUser.builder().id(seller2).nickname("s2").email("s2@t.com").role(Role.USER).build());
+        marketUserRepository.save(MarketUser.builder().id(seller2).nickname("s2").email("s2@t.com").build());
 
         // 동일 가격(20만원)으로 시간차를 두고 입찰 등록
         createBidding(productId, seller1, 200000, BiddingPosition.SELL); // 1. 먼저 등록 (Target)
@@ -86,7 +85,7 @@ public class MatchInstantTradeUseCaseV2Tests {
 
         // [When] 구매 실행
         BiddingRequestDto request = new BiddingRequestDto(productId, BigDecimal.valueOf(200000), "270");
-        PayAndHoldResponseDto response = matchInstantTradeUseCase.buyNow(buyer, request);
+        MarketPaymentResponseDto response = matchInstantTradeUseCase.buyNow(buyer, request);
 
         // [Then] seller1(먼저 등록한 사람)의 입찰과 체결되었는지 확인
         Order savedOrder = orderRepository.findById(response.relId()).orElseThrow();
@@ -130,7 +129,7 @@ public class MatchInstantTradeUseCaseV2Tests {
         BiddingRequestDto request = new BiddingRequestDto(productId, BigDecimal.valueOf(200000), "270");
 
         // [When] UseCase 호출 (반환값 DTO로 변경)
-        PayAndHoldResponseDto response = matchInstantTradeUseCase.buyNow(buyerId, request);
+        MarketPaymentResponseDto response = matchInstantTradeUseCase.buyNow(buyerId, request);
 
         // [Then] 1. 응답 상태 검증 (PAID)
         assertThat(response.status()).isEqualTo(PayAndHoldStatus.PAID);
@@ -196,7 +195,7 @@ public class MatchInstantTradeUseCaseV2Tests {
 
         // [When] 구매 실행
         BiddingRequestDto request = new BiddingRequestDto(productId, BigDecimal.valueOf(9000), "270");
-        PayAndHoldResponseDto response = matchInstantTradeUseCase.buyNow(buyerId, request);
+        MarketPaymentResponseDto response = matchInstantTradeUseCase.buyNow(buyerId, request);
 
         // [Then] 응답 검증
         assertThat(response.status()).isEqualTo(PayAndHoldStatus.REQUIRES_PG);
@@ -222,7 +221,7 @@ public class MatchInstantTradeUseCaseV2Tests {
 
         // [When] 즉시 판매 (반환값 변경)
         BiddingRequestDto request = new BiddingRequestDto(productId, BigDecimal.valueOf(150000), "270");
-        PayAndHoldResponseDto response = matchInstantTradeUseCase.sellNow(sellerId, request);
+        MarketPaymentResponseDto response = matchInstantTradeUseCase.sellNow(sellerId, request);
 
         // [Then] 1. 응답 상태 검증 (PAID)
         assertThat(response.status()).isEqualTo(PayAndHoldStatus.PAID);
@@ -240,9 +239,9 @@ public class MatchInstantTradeUseCaseV2Tests {
     // --- Helper Methods (기존과 동일) ---
     private void setupBaseData(Long productId, Long sellerId, Long buyerId, String buyerAddress) {
         // ... (기존 코드 그대로)
-        MarketUser seller = marketUserMapper.toEntity(sellerId, Role.USER, "seller", "s@t.com", "판매자주소", "010-1234-5678", "img");
+        MarketUser seller = marketUserMapper.toEntity(sellerId,"seller", "s@t.com", "판매자주소", "010-1234-5678", "img");
         marketUserRepository.save(seller);
-        MarketUser buyer = marketUserMapper.toEntity(buyerId, Role.USER, "buyer", "b@t.com", buyerAddress, "010-1234-5678", "img");
+        MarketUser buyer = marketUserMapper.toEntity(buyerId, "buyer", "b@t.com", buyerAddress, "010-1234-5678", "img");
         marketUserRepository.save(buyer);
         if (!marketProductRepository.existsById(productId)) {
             marketProductRepository.save(marketProductMapper.toEntity(productId, "N", "신발", "N1", "270", 100000L, "S", "img"));

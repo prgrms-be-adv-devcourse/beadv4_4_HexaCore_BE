@@ -7,7 +7,11 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
 
-@SpringBootApplication(scanBasePackages = "com.back")
+@SpringBootApplication(scanBasePackages = {
+        "com.back.chat",
+        "com.back.common",
+        "com.back.security"
+})
 @EnableFeignClients
 @EnableJpaAuditing
 public class ChatApplication {

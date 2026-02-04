@@ -90,5 +90,15 @@ public class ApiV1MarketController implements ApiV1Market{
         return CommonResponse.success(SuccessCode.OK, result);
     }
 
+    @Override
+    public CommonResponse<Void> completeOrder(
+            @AuthenticationPrincipal AuthPrincipal principal,
+            @PathVariable Long orderId
+    ) {
+        Long userId = principal.getUserId();
+        marketFacade.completeOrder(userId, orderId);
+        return CommonResponse.success(SuccessCode.OK, null);
+    }
+
 
 }

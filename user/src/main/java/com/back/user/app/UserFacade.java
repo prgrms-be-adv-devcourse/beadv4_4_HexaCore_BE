@@ -5,8 +5,11 @@ import com.back.common.user.event.fcmTokenChangedEvent;
 import com.back.user.domain.User;
 import com.back.user.dto.request.UpdateFcmTokenRequest;
 import com.back.user.dto.request.UpdateNotificationSettingsRequest;
+import com.back.user.dto.request.UpdateUserProfileRequestDto;
 import com.back.user.dto.response.NotificationSettingResponse;
+import com.back.user.dto.response.UserProfileResponseDto;
 import com.back.user.dto.response.UserIdResponse;
+import com.back.user.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -19,7 +22,8 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class UserFacade {
     private final UserSupport userSupport;
-    private final UserUpdateUsecase userUpdateUsecase;
+    private final UserUpdateUseCase userUpdateUsecase;
+    private final UserGetProfileUseCase userGetProfileUseCase;
     private final UserIncrementBlindCountUseCase userIncrementBlindCountUseCase;
     private final GetNotificationSettingsUseCase getNotificationSettingsUseCase;
     private final KafkaEventPublisher kafkaEventPublisher;
@@ -63,4 +67,16 @@ public class UserFacade {
         return user.getChatRestrictedUntil();
     }
 
+    @Transactional
+    public UserProfileResponseDto updateUserProfile(Long userId, UpdateUserProfileRequestDto request) {
+        User user = userSupport.findById(userId);
+        userUpdateUsecase.updateUserProfile(user, request);
+        return UserMapper.toUserProfileResponseDto(user);
+    }
+
+    @Transactional(readOnly = true)
+    public UserProfileResponseDto getUserProfile(Long userId) {
+        User user = userGetProfileUseCase.getUserProfile(userId);
+        return UserMapper.toUserProfileResponseDto(user);
+    }
 }

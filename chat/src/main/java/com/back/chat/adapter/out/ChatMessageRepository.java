@@ -40,12 +40,21 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage,Long> {
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""
         update ChatMessage m
-        set m.isBlinded = true
+        set m.messageStatus = com.back.chat.domain.MessageStatus.BLINDED
         where m.id = :chatMessageId
-          and m.isBlinded = false
+          and m.messageStatus = com.back.chat.domain.MessageStatus.NORMAL
           and m.reportCount >= :threshold
     """)
     int blindIfReached(@Param("chatMessageId") Long chatMessageId,
                        @Param("threshold") int threshold);
 
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+    update ChatMessage m
+       set m.messageStatus = com.back.chat.domain.MessageStatus.DELETED,
+           m.deletedAt = CURRENT_TIMESTAMP
+     where m.id = :messageId
+       and m.messageStatus <> com.back.chat.domain.MessageStatus.DELETED
+""")
+    int deleteIfNotDeleted(@Param("messageId") Long messageId);
 }

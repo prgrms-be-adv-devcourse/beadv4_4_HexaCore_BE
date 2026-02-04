@@ -1,5 +1,7 @@
 package com.back.chat.event.payload;
 
+import com.back.chat.domain.MessageStatus;
+
 import java.time.LocalDateTime;
 
 public record ChatMessagePayload(
@@ -7,7 +9,7 @@ public record ChatMessagePayload(
         Long userId,
         Long roomId,
         String content,
-        boolean isBlinded,
+        MessageStatus messageStatus,
         LocalDateTime createdAt
 ){
 }

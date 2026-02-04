@@ -14,8 +14,8 @@ public class ChatEnterChatRoomUseCase {
     private final ChatSupport chatSupport;
 
 
-    public ChatRoomEnterResponseDto enterChatRoom(Long brandId) {
+    public ChatRoomEnterResponseDto enterChatRoom(Long brandId, Long userId) {
         ChatRoom chatRoom = chatSupport.findRoomByBrandId(brandId).orElseThrow(()-> new BadRequestException(FailureCode.CHAT_ROOM_NOT_FOUND));
-        return ChatRoomMapper.toEnterResponseDto(chatRoom);
+        return ChatRoomMapper.toEnterResponseDto(chatRoom, userId);
     }
 }

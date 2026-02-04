@@ -1,6 +1,7 @@
 dependencies {
     implementation project(':common')
     implementation project(':security')
+    implementation project(':detector')
 
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
