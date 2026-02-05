@@ -25,4 +25,10 @@ public class WalletSupport {
         return walletRepository.findByWalletType(WalletType.SYSTEM)
                 .orElseThrow(() -> new CustomException(FailureCode.INTERNAL_SERVER_ERROR));
     }
+
+    public Wallet getUserWalletByUserId(Long userId) {
+        return walletRepository.findByUserId(userId)
+                .orElseThrow(() -> new EntityNotFoundException(FailureCode.WALLET_NOT_FOUND));
+    }
+
 }

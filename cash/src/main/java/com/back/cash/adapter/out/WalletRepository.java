@@ -17,6 +17,8 @@ public interface WalletRepository extends JpaRepository<Wallet, Long> {
     Optional<Wallet> findByWalletType(WalletType walletType);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
+    Optional<Wallet> findLockByUserId(Long userId);
+
     Optional<Wallet> findByUserId(Long userId);
 
     boolean existsByUserId(Long userId);
