@@ -44,7 +44,7 @@ public class ConfirmPaymentUseCase {
      */
     private boolean processOrderPayment(PaymentCompletedRequestDto requestDto) {
         // 1. 주문 조회
-        Order order = marketSupport.findOrderById(requestDto.relId()).orElseThrow(() -> new BadRequestException(FailureCode.ORDER_NOT_FOUND));
+        Order order = marketSupport.findOrderById(requestDto.relId());
 
         // 2. 금액 검증 (DB가격 & totalAmount)
         if (order.getPrice().compareTo(requestDto.totalAmount()) != 0) {
@@ -73,8 +73,7 @@ public class ConfirmPaymentUseCase {
      */
     private boolean processBiddingPayment(PaymentCompletedRequestDto requestDto) {
         // 1. 입찰 조회
-        Bidding bidding = marketSupport.findBiddingById(requestDto.relId())
-                .orElseThrow(() -> new BadRequestException(FailureCode.BIDDING_NOT_FOUND));
+        Bidding bidding = marketSupport.findBiddingById(requestDto.relId());
 
         // 2. 금액 검증 (입찰희망가 vs 결제된 금액)
         if (bidding.getPrice().compareTo(requestDto.totalAmount()) != 0) {

@@ -53,7 +53,8 @@ public class MatchInstantTradeUseCase {
     @Transactional
     public MarketPaymentResponseDto buyNow(Long buyerId, BiddingRequestDto requestDto) {
         // 즉시 구매가 조회(최저가 판매 입찰 조회)
-        Bidding targetSellBid = marketSupport.findInstantBuyPrice(requestDto.productId(), BiddingPosition.SELL, BiddingStatus.PROCESS).orElseThrow(() -> new BadRequestException(FailureCode.BIDDING_NOT_FOUND));
+        Bidding targetSellBid = marketSupport.findInstantBuyPrice(requestDto.productId(), BiddingPosition.SELL, BiddingStatus.PROCESS)
+                .orElseThrow(() -> new BadRequestException(FailureCode.BIDDING_NOT_FOUND));
 
         // 정합성 검사 추가: 사용자가 화면에서 본 가격과 실제 조회된 가격이 다르면 예외 처리
         validatePriceMatch(targetSellBid, requestDto.price());
@@ -105,7 +106,7 @@ public class MatchInstantTradeUseCase {
 
         // 2. 입찰 생성 및 상태 변경
         // 사용자 조회
-        MarketUser me = marketSupport.findMarketUserById(userId).orElseThrow(() -> new BadRequestException(FailureCode.USER_NOT_FOUND));
+        MarketUser me = marketSupport.findMarketUserById(userId);
 
         Bidding myBid = biddingMapper.toEntity(requestDto, me, targetBid.getMarketProduct(), myPosition);
         myBid.changeStatus(BiddingStatus.MATCHED);

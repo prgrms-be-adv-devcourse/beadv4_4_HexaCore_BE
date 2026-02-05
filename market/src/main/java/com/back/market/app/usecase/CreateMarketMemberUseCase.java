@@ -22,7 +22,7 @@ public class CreateMarketMemberUseCase {
 
     public MarketUser createMarketMember(UserCreatedEvent event) {
         // 기존 회원 존재 여부 확인
-        MarketUser existingUser = marketSupport.findMarketUserById(event.id()).orElse(null);
+        MarketUser existingUser = marketSupport.findMarketUserByIdOptional(event.id()).orElse(null);
 
         if (existingUser != null) {
             log.info("[CreateMarketMemberUseCase] 이미 존재하는 회원: id = {}", event.id());

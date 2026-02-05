@@ -190,10 +190,8 @@ public class RegisterBidUseCase {
      * @return UserProduct 객체
      */
     private UserProduct getVerifiedUserAndProduct(Long userId, Long productId) {
-        MarketUser user = marketSupport.findMarketUserById(userId)
-                .orElseThrow(() -> new BadRequestException(FailureCode.USER_NOT_FOUND));
-        MarketProduct product = marketSupport.findMarketProductById(productId)
-                .orElseThrow(() -> new BadRequestException(FailureCode.PRODUCT_NOT_FOUND));
+        MarketUser user = marketSupport.findMarketUserById(userId);
+        MarketProduct product = marketSupport.findMarketProductById(productId);
         return new UserProduct(user, product);
     }
 

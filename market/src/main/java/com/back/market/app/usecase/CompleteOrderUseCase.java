@@ -15,7 +15,7 @@ public class CompleteOrderUseCase {
 
     @Transactional
     public Order completeOrder(Long userId, Long orderId) {
-        Order order = marketSupport.findOrderById(orderId).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 주문입니다."));
+        Order order = marketSupport.findOrderById(orderId);
 
         if (!order.getBuyBidding().getMarketUser().getId().equals(userId)) {
             throw new IllegalStateException("구매 확정 권한이 없습니다.");

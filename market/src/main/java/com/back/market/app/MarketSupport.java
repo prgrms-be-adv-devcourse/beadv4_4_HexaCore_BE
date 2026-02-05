@@ -1,5 +1,7 @@
 package com.back.market.app;
 
+import com.back.common.code.FailureCode;
+import com.back.common.exception.BadRequestException;
 import com.back.market.adapter.out.*;
 import com.back.market.domain.Bidding;
 import com.back.market.domain.MarketProduct;
@@ -32,8 +34,9 @@ public class MarketSupport {
      * @param biddingId PK
      * @return Bidding
      */
-    public Optional<Bidding> findBiddingById(Long biddingId) {
-        return biddingRepository.findById(biddingId);
+    public Bidding findBiddingById(Long biddingId) {
+        return biddingRepository.findById(biddingId)
+                .orElseThrow(() -> new BadRequestException(FailureCode.BIDDING_NOT_FOUND));
     }
 
     /**
@@ -41,8 +44,9 @@ public class MarketSupport {
      * @param orderId PK
      * @return Order
      */
-    public Optional<Order> findOrderById(Long orderId) {
-        return orderRepository.findById(orderId);
+    public Order findOrderById(Long orderId) {
+        return orderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 주문입니다."));
     }
 
     /**
@@ -59,7 +63,16 @@ public class MarketSupport {
      * @param userId PK
      * @return MarketUser
      */
-    public Optional<MarketUser> findMarketUserById(Long userId) {
+    public MarketUser findMarketUserById(Long userId) {
+        return marketUserRepository.findById(userId).orElseThrow(() -> new BadRequestException(FailureCode.USER_NOT_FOUND));
+    }
+
+    /**
+     * MarketUser 엔티티 조회(Optional)
+     * @param userId PK
+     * @return MarketUser
+     */
+    public Optional<MarketUser> findMarketUserByIdOptional(Long userId) {
         return marketUserRepository.findById(userId);
     }
 
@@ -77,8 +90,9 @@ public class MarketSupport {
      * @param productId PK
      * @return MarketProduct
      */
-    public Optional<MarketProduct> findMarketProductById(Long productId) {
-        return marketProductRepository.findById(productId);
+    public MarketProduct findMarketProductById(Long productId) {
+        return marketProductRepository.findById(productId)
+                .orElseThrow(() -> new BadRequestException(FailureCode.PRODUCT_NOT_FOUND));
     }
 
     /**
@@ -104,7 +118,7 @@ public class MarketSupport {
     }
 
     /**
-     * 즉시 판매가 조회
+     * 즉시 판매가 조회(최고가 구매 입찰 조회)
      * @param productId 상품 PK
      * @param position 구매/판매
      * @param status 구매 상태

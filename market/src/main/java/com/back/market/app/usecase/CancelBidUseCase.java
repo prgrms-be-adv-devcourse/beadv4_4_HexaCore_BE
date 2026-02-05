@@ -28,7 +28,7 @@ public class CancelBidUseCase {
     @Transactional
     public PaymentCancelResponseDto cancelBid(Long userId, Long biddingId) {
         //입찰 조회
-        Bidding bidding = marketSupport.findBiddingById(biddingId).orElseThrow(() -> new BadRequestException(FailureCode.BIDDING_NOT_FOUND));
+        Bidding bidding = marketSupport.findBiddingById(biddingId);
 
         //권한 검증: 본인 입찰 아니면 에러
         if(!bidding.getMarketUser().getId().equals(userId)){
