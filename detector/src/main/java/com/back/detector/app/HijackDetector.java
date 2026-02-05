@@ -185,6 +185,6 @@ public class HijackDetector {
     private void blockUser(Long userId) {
         String blockKey = DetectorRedisKey.USER_BLOCKED.getKey(userId);
         detectorRedisTemplate.opsForValue().set(blockKey, "true", BAN_IP_DAYS, TimeUnit.DAYS);
-        log.error("[계정 차단] 사용자 ID: {} (24시간 차단)", userId);
+        log.error("[계정 차단] 사용자 ID: {} (1일 차단)", userId);
     }
 }
