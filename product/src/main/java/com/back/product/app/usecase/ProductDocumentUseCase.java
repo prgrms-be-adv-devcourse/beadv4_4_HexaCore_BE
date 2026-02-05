@@ -40,6 +40,11 @@ public class ProductDocumentUseCase {
         productDocumentRepository.save(documentToSync);
     }
 
+    @Transactional
+    public void deleteProduct(Long productInfoId) {
+        productDocumentRepository.deleteById(productInfoId.toString());
+    }
+
     @Transactional(readOnly = true)
     public ProductSearchListResponseDto findProductPage(@Valid ProductSearchRequestDto request, Long page, Long size) {
         Query query = buildSearchQuery(

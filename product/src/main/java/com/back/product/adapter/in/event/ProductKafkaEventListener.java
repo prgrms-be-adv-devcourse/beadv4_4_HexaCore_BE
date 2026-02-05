@@ -1,6 +1,7 @@
 package com.back.product.adapter.in.event;
 
 import com.back.common.product.event.ProductCreatedEvent;
+import com.back.common.product.event.ProductDeletedEvent;
 import com.back.common.product.event.ProductUpdatedEvent;
 import com.back.product.app.usecase.ProductDocumentUseCase;
 import com.back.product.dto.OptionDto;
@@ -53,5 +54,16 @@ public class ProductKafkaEventListener {
         String thumbnailUrl = event.thumbnailUrl();
 
         productDocumentUseCase.syncProduct(productInfoDto, optionDtos, thumbnailUrl);
+    }
+
+    @KafkaListener(
+            topics = "${custom.kafka.topic.product-deleted}",
+            groupId = "${custom.kafka.consumer.group-id}"
+    )
+    @Transactional
+    public void handleProductDelete(ProductDeletedEvent event) {
+        Long productInfoId = event.productInfoId();
+
+        productDocumentUseCase.deleteProduct(productInfoId);
     }
 }

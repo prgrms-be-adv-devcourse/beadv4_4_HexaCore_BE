@@ -2,6 +2,7 @@ package com.back.product.adapter.in.event;
 
 import com.back.product.adapter.out.event.ProductKafkaEventPublisher;
 import com.back.product.global.event.ProductCreationCompletedEvent;
+import com.back.product.global.event.ProductDeletionCompletedEvent;
 import com.back.product.global.event.ProductUpdateCompletedEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,5 +22,10 @@ public class ProductSpringEventListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleProductUpdate(ProductUpdateCompletedEvent event) {
         eventPublisher.sendModifiedEvent(event.productInfoDto(), event.optionDtos(), event.thumbnailUrl());
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleProductDelete(ProductDeletionCompletedEvent event) {
+        eventPublisher.sendDeletedEvent(event.productInfoId());
     }
 }

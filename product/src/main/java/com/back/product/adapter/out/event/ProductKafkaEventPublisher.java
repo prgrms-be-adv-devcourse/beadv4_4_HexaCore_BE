@@ -2,6 +2,7 @@ package com.back.product.adapter.out.event;
 
 import com.back.common.event.KafkaEventPublisher;
 import com.back.common.product.event.ProductCreatedEvent;
+import com.back.common.product.event.ProductDeletedEvent;
 import com.back.common.product.event.ProductUpdatedEvent;
 import com.back.common.product.event.payload.BrandPayload;
 import com.back.common.product.event.payload.CategoryPayload;
@@ -26,6 +27,9 @@ public class ProductKafkaEventPublisher {
     @Value("${custom.kafka.topic.product-updated}")
     private String productUpdatedTopic;
 
+    @Value("${custom.kafka.topic.product-deleted}")
+    private String productDeletedTopic;
+
     public void sendCreatedEvent(ProductInfoDto productInfoDto, List<OptionDto> optionDtos, String thumbnailUrl) {
         ProductCreatedEvent event = new ProductCreatedEvent(
                 toProductInfoPayload(productInfoDto),
@@ -44,6 +48,12 @@ public class ProductKafkaEventPublisher {
         );
 
         kafkaEventPublisher.publish(productUpdatedTopic, event);
+    }
+
+    public void sendDeletedEvent(Long productInfoId) {
+        ProductDeletedEvent event = new ProductDeletedEvent(productInfoId);
+
+        kafkaEventPublisher.publish(productDeletedTopic, event);
     }
 
     private ProductInfoPayload toProductInfoPayload(ProductInfoDto productInfoDto) {

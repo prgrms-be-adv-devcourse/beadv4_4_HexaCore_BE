@@ -8,6 +8,7 @@ import com.back.product.dto.*;
 import com.back.product.dto.request.*;
 import com.back.product.dto.response.*;
 import com.back.product.global.event.ProductCreationCompletedEvent;
+import com.back.product.global.event.ProductDeletionCompletedEvent;
 import com.back.product.global.event.ProductUpdateCompletedEvent;
 import com.back.product.mapper.OptionMapper;
 import com.back.product.mapper.ProductInfoMapper;
@@ -145,6 +146,8 @@ public class ProductFacade {
         productUseCase.deleteMultipleProduct(productInfoId);
 
         productInfoUseCase.deleteProductInfo(productInfoId);
+
+        publishProductDeletionCompletedEvent(productInfoId);
     }
 
     @Transactional(readOnly = true)
@@ -235,6 +238,12 @@ public class ProductFacade {
         ProductUpdateCompletedEvent event = new ProductUpdateCompletedEvent(
                 productInfoDto, optionDtos, thumbnailUrl
         );
+
+        applicationEventPublisher.publishEvent(event);
+    }
+
+    private void publishProductDeletionCompletedEvent(Long productInfoId) {
+        ProductDeletionCompletedEvent event = new ProductDeletionCompletedEvent(productInfoId);
 
         applicationEventPublisher.publishEvent(event);
     }
