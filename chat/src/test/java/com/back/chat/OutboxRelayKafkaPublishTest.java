@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
-import com.back.chat.adapter.out.ChatOutboxRelay;
+import com.back.chat.adapter.out.outbox.ChatOutboxRelay;
 import com.back.chat.adapter.out.outbox.ChatOutbox;
 import com.back.chat.adapter.out.outbox.ChatOutboxRepository;
 import com.back.chat.adapter.out.outbox.OutboxStatus;

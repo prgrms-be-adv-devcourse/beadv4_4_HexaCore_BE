@@ -116,15 +116,12 @@ public class ChatOutbox {
         );
     }
 
+
+
+    // 테스트용
     private void requirePendingOrFailed() {
         if (this.status != OutboxStatus.PENDING && this.status != OutboxStatus.FAILED) {
             throw new IllegalStateException("Outbox status must be PENDING or FAILED, but was " + this.status);
-        }
-    }
-
-    private void requireProcessing(){
-        if (this.status != OutboxStatus.PROCESSING) {
-            throw new IllegalStateException("Outbox status must be PROCESSING, but was " + this.status);
         }
     }
 
@@ -132,38 +129,6 @@ public class ChatOutbox {
         requirePendingOrFailed();
         this.status = OutboxStatus.PROCESSING;
         this.processingStartedAt = now;
-    }
-
-    public void markSent(LocalDateTime sentAt) {
-        requireProcessing();
-        this.status = OutboxStatus.SENT;
-        this.sentAt = sentAt;
-    }
-
-    public void markFailed(String errorMessage, LocalDateTime now, int baseDelaySeconds, int maxDelaySeconds) {
-        requireProcessing();
-        this.status = OutboxStatus.FAILED;
-        this.retryCount++;
-        this.lastError = truncate(errorMessage, 1000);
-
-        long delay = (long) baseDelaySeconds << Math.max(0, this.retryCount - 1);
-        delay = Math.min(delay, maxDelaySeconds);
-
-        this.nextAttemptAt = now.plusSeconds(delay);
-    }
-
-    public void markDead(String reason, LocalDateTime now) {
-        if (this.status == OutboxStatus.SENT || this.status == OutboxStatus.DEAD) {
-            throw new IllegalStateException("Outbox already final. status=" + this.status);
-        }
-        this.status = OutboxStatus.DEAD;
-        this.lastError = truncate(reason, 1000);
-        this.deadAt = now;
-    }
-
-    private String truncate(String s, int max) {
-        if (s == null) return null;
-        return s.length() <= max ? s : s.substring(0, max);
     }
 
     public void setNextAttemptAt(LocalDateTime time) {

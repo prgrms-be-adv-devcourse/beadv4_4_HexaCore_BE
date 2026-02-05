@@ -6,7 +6,5 @@ import java.util.List;
 public interface ChatOutboxRepositoryCustom {
     List<ChatOutbox> claimBatch(LocalDateTime now,int batchSize, int maxRetry);
 
-    List<ChatOutbox> findProcessingBatch(int batchSize);
-
     int recoverStuckProcessing(LocalDateTime cutoff, LocalDateTime now);
 }

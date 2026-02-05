@@ -25,7 +25,7 @@ public class ChatOutboxRepositoryImpl implements ChatOutboxRepositoryCustom{
                 select id
                 from chat_outbox
                 where status in ('PENDING','FAILED')
-                  and retry_count <= :maxRetry
+                  and retry_count < :maxRetry
                   and next_attempt_at <= :now
                 order by id
                 limit :batchSize
@@ -48,24 +48,6 @@ public class ChatOutboxRepositoryImpl implements ChatOutboxRepositoryCustom{
 
         return claimed;
     }
-
-        @Override
-        public List<ChatOutbox> findProcessingBatch(int batchSize) {
-            String sql = """
-            select *
-            from chat_outbox
-            where status = 'PROCESSING'
-            order by id
-            limit :batchSize
-        """;
-
-            @SuppressWarnings("unchecked")
-            List<ChatOutbox> list = em.createNativeQuery(sql, ChatOutbox.class)
-                    .setParameter("batchSize", batchSize)
-                    .getResultList();
-
-            return list;
-        }
 
         @Override
         @Transactional
