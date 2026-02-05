@@ -356,7 +356,7 @@ class ProductUseCaseTest {
             verify(productSupport).findMultipleProductByIds(productIds);
             verify(productSupport, never()).getAllProductImagesByProductsIn(any());
             verify(productSupport, never()).getAllProductOptionValuesByProductsIn(any());
-            verify(productInfoMapper, never()).toDto(any());
+            verify(productInfoMapper, never()).toDto((ProductInfo) any());
             verify(productMapper, never()).toDto(any(), any(), any());
         }
     }
