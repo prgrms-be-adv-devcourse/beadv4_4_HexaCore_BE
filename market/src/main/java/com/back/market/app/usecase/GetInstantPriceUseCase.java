@@ -2,8 +2,7 @@ package com.back.market.app.usecase;
 
 import com.back.common.code.FailureCode;
 import com.back.common.exception.BadRequestException;
-import com.back.market.adapter.out.BiddingRepository;
-import com.back.market.adapter.out.MarketProductRepository;
+import com.back.market.app.MarketSupport;
 import com.back.market.domain.Bidding;
 import com.back.market.domain.enums.BiddingPosition;
 import com.back.market.domain.enums.BiddingStatus;
@@ -22,8 +21,7 @@ import java.math.BigDecimal;
 @RequiredArgsConstructor
 public class GetInstantPriceUseCase {
 
-    private final BiddingRepository biddingRepository;
-    private final MarketProductRepository marketProductRepository;
+    private final MarketSupport marketSupport;
 
     /**
      * 즉시 구매가 조회
@@ -33,9 +31,9 @@ public class GetInstantPriceUseCase {
     @Transactional(readOnly = true)
     public InstantBuyPriceResponseDto getBuyNowPrice(Long productId) {
         // 상품 존재 여부 검증
-        validateProductExists(productId);
+        verifyProductExists(productId);
         
-        BigDecimal price = biddingRepository.findFirstByMarketProductIdAndPositionAndStatusOrderByPriceAsc(
+        BigDecimal price = marketSupport.findInstantBuyPrice(
                 productId,
                 BiddingPosition.SELL,
                 BiddingStatus.PROCESS
@@ -52,8 +50,8 @@ public class GetInstantPriceUseCase {
     @Transactional(readOnly = true)
     public InstantSellPriceResponseDto getSellNowPrice(Long productId) {
         //상품 존재 여부 검증
-        validateProductExists(productId);
-        BigDecimal price = biddingRepository.findFirstByMarketProductIdAndPositionAndStatusOrderByPriceDesc(
+        verifyProductExists(productId);
+        BigDecimal price = marketSupport.findInstantSellPrice(
                 productId,
                 BiddingPosition.BUY,
                 BiddingStatus.PROCESS
@@ -62,8 +60,8 @@ public class GetInstantPriceUseCase {
         return InstantSellPriceResponseDto.of(productId, price);
     }
 
-    private void validateProductExists(Long productId) {
-        if(!marketProductRepository.existsById(productId)) {
+    private void verifyProductExists(Long productId) {
+        if (!marketSupport.existsByMarketProduct(productId)) {
             throw new BadRequestException(FailureCode.PRODUCT_NOT_FOUND);
         }
     }
