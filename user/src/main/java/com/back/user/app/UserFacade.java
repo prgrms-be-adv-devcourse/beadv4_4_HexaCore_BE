@@ -1,7 +1,7 @@
 package com.back.user.app;
 
 import com.back.common.event.KafkaEventPublisher;
-import com.back.common.user.event.fcmTokenChangedEvent;
+import com.back.common.user.event.FcmTokenChangedEvent;
 import com.back.user.domain.User;
 import com.back.user.dto.request.UpdateFcmTokenRequest;
 import com.back.user.dto.request.UpdateNotificationSettingsRequest;
@@ -35,7 +35,7 @@ public class UserFacade {
         userUpdateUsecase.updateFcmToken(user, request);
 
         // FCM 토큰 변경 이벤트 발행
-        fcmTokenChangedEvent event = new fcmTokenChangedEvent(userId, request.fcmToken());
+        FcmTokenChangedEvent event = new FcmTokenChangedEvent(userId, request.fcmToken());
         kafkaEventPublisher.publish(event);
         log.info("[UserFacade] FCM 토큰 변경 이벤트 발행 - UserId: {}", userId);
 
