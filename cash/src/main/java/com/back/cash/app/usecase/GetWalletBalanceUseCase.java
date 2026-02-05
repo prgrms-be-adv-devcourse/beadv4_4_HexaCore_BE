@@ -1,6 +1,5 @@
 package com.back.cash.app.usecase;
 
-
 import com.back.cash.app.WalletSupport;
 import com.back.cash.domain.Wallet;
 import com.back.cash.dto.response.WalletBalanceResponseDto;
