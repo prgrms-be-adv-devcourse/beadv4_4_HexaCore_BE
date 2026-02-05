@@ -21,7 +21,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
-import org.springframework.transaction.TransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 @SpringBootTest
@@ -32,8 +31,6 @@ class Report3TimesOutboxWriteTest {
     ChatReportMessageUseCase chatReportMessageUseCase;
     @Autowired
     ChatOutboxRepository chatOutboxRepository;
-    @Autowired
-    TransactionTemplate transactionTemplate;
     @Autowired
     ChatRoomRepository chatRoomRepository;           // ✅ 추가
     @Autowired

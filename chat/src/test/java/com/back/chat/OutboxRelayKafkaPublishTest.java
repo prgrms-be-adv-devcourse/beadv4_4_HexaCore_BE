@@ -14,7 +14,6 @@ import com.back.chat.adapter.out.outbox.ChatOutbox;
 import com.back.chat.adapter.out.outbox.ChatOutboxRepository;
 import com.back.chat.adapter.out.outbox.OutboxStatus;
 import com.back.chat.event.ChatEventType;
-import jakarta.persistence.EntityManager;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Test;
 
