@@ -3,24 +3,25 @@ package com.back.market.app.usecase;
 import com.back.common.code.FailureCode;
 import com.back.common.exception.CustomException;
 import com.back.market.adapter.out.CartRepository;
+import com.back.market.app.MarketSupport;
 import com.back.market.domain.Cart;
 import com.back.market.domain.MarketUser;
 import com.back.market.mapper.CartMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class CreateCartUseCase {
+    private final MarketSupport marketSupport;
     private final CartRepository cartRepository;
     private final CartMapper cartMapper;
 
     public void createCart(MarketUser user) {
         // 장바구니 존재하는지 확인
-        if (cartRepository.existsByMarketUser(user)) {
+        if (marketSupport.existsCartByMarketUser(user)) {
             log.info("[Market] 이미 장바구니가 존재하는 사용자입니다. id = {}", user.getId());
             return;
         }

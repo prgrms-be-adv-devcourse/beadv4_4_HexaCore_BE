@@ -5,9 +5,9 @@ import com.back.common.event.KafkaEventPublisher;
 import com.back.common.exception.BadRequestException;
 import com.back.common.market.event.BiddingCompletedEvent;
 import com.back.market.adapter.out.BiddingRepository;
-import com.back.market.adapter.out.MarketUserRepository;
 import com.back.market.adapter.out.OrderRepository;
 import com.back.market.adapter.out.cash.MarketCashAdapter;
+import com.back.market.app.MarketSupport;
 import com.back.market.domain.Bidding;
 import com.back.market.domain.MarketUser;
 import com.back.market.domain.Order;
@@ -37,11 +37,11 @@ public class MatchInstantTradeUseCase {
     private final BiddingRepository biddingRepository;
     private final OrderRepository orderRepository;
     private final OrderMapper orderMapper;
-    private final MarketUserRepository marketUserRepository;
     private final BiddingMapper biddingMapper;
     private final CashRequestMapper cashRequestMapper;
     private final MarketCashAdapter marketCashAdapter;
     private final KafkaEventPublisher kafkaEventPublisher;
+    private final MarketSupport marketSupport;
 
     /**
      * MARKET-009 즉시 구매 실행
@@ -52,7 +52,8 @@ public class MatchInstantTradeUseCase {
      */
     @Transactional
     public MarketPaymentResponseDto buyNow(Long buyerId, BiddingRequestDto requestDto) {
-        Bidding targetSellBid = biddingRepository.findFirstByMarketProductIdAndPositionAndStatusOrderByPriceAsc(requestDto.productId(), BiddingPosition.SELL, BiddingStatus.PROCESS).orElseThrow(() -> new BadRequestException(FailureCode.BIDDING_NOT_FOUND));
+        // 즉시 구매가 조회(최저가 판매 입찰 조회)
+        Bidding targetSellBid = marketSupport.findInstantBuyPrice(requestDto.productId(), BiddingPosition.SELL, BiddingStatus.PROCESS).orElseThrow(() -> new BadRequestException(FailureCode.BIDDING_NOT_FOUND));
 
         // 정합성 검사 추가: 사용자가 화면에서 본 가격과 실제 조회된 가격이 다르면 예외 처리
         validatePriceMatch(targetSellBid, requestDto.price());
@@ -69,7 +70,8 @@ public class MatchInstantTradeUseCase {
      */
     @Transactional
     public MarketPaymentResponseDto sellNow(Long sellerId, BiddingRequestDto requestDto) {
-        Bidding targetBuyBid = biddingRepository.findFirstByMarketProductIdAndPositionAndStatusOrderByPriceDesc(
+        // 즉시 판매가 조회(최고가 구매 입찰 조회)
+        Bidding targetBuyBid = marketSupport.findInstantSellPrice(
                         requestDto.productId(), BiddingPosition.BUY, BiddingStatus.PROCESS)
                 .orElseThrow(() -> new BadRequestException(FailureCode.BIDDING_NOT_FOUND));
 
@@ -102,7 +104,8 @@ public class MatchInstantTradeUseCase {
         }
 
         // 2. 입찰 생성 및 상태 변경
-        MarketUser me = marketUserRepository.findById(userId).orElseThrow(() -> new BadRequestException(FailureCode.USER_NOT_FOUND));
+        // 사용자 조회
+        MarketUser me = marketSupport.findMarketUserById(userId).orElseThrow(() -> new BadRequestException(FailureCode.USER_NOT_FOUND));
 
         Bidding myBid = biddingMapper.toEntity(requestDto, me, targetBid.getMarketProduct(), myPosition);
         myBid.changeStatus(BiddingStatus.MATCHED);
@@ -194,6 +197,5 @@ public class MatchInstantTradeUseCase {
         
         kafkaEventPublisher.publish(event);
     }
-
 
 }

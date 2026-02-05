@@ -2,8 +2,8 @@ package com.back.market.app.usecase;
 
 import com.back.common.code.FailureCode;
 import com.back.common.exception.BadRequestException;
-import com.back.market.adapter.out.BiddingRepository;
 import com.back.market.adapter.out.cash.MarketCashAdapter;
+import com.back.market.app.MarketSupport;
 import com.back.market.domain.Bidding;
 import com.back.market.domain.enums.BiddingPosition;
 import com.back.market.domain.enums.BiddingStatus;
@@ -21,14 +21,14 @@ import java.math.BigDecimal;
 @Service
 @RequiredArgsConstructor
 public class CancelBidUseCase {
-    private final BiddingRepository biddingRepository;
+
     private final MarketCashAdapter marketCashAdapter;
+    private final MarketSupport marketSupport;
 
     @Transactional
     public PaymentCancelResponseDto cancelBid(Long userId, Long biddingId) {
         //입찰 조회
-        Bidding bidding = biddingRepository.findById(biddingId)
-                .orElseThrow(() -> new BadRequestException(FailureCode.BIDDING_NOT_FOUND));
+        Bidding bidding = marketSupport.findBiddingById(biddingId).orElseThrow(() -> new BadRequestException(FailureCode.BIDDING_NOT_FOUND));
 
         //권한 검증: 본인 입찰 아니면 에러
         if(!bidding.getMarketUser().getId().equals(userId)){

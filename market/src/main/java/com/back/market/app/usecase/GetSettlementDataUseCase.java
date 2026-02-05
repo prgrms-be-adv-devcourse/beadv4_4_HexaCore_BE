@@ -1,7 +1,7 @@
 package com.back.market.app.usecase;
 
 import com.back.common.dto.settlement.SettlementTargetOrder;
-import com.back.market.adapter.out.OrderRepository;
+import com.back.market.app.MarketSupport;
 import com.back.market.domain.Order;
 import com.back.market.mapper.OrderMapper;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 public class GetSettlementDataUseCase {
 
     private final OrderMapper orderMapper;
-    private final OrderRepository orderRepository;
+    private final MarketSupport marketSupport;
 
     @Transactional(readOnly = true)
     public List<SettlementTargetOrder> getSettlementData(LocalDate targetDate, int page, int size) {
@@ -34,7 +34,7 @@ public class GetSettlementDataUseCase {
         Pageable pageable = PageRequest.of(page, size, Sort.by("id").ascending());
 
         // DB 조회
-        List<Order> orders = orderRepository.findSettlementTargetOrders(startDateTime, endDateTime, pageable);
+        List<Order> orders = marketSupport.findSettlementTargetOrders(startDateTime, endDateTime, pageable);
 
         return orders.stream()
                 .map(orderMapper::toSettlementTargetOrder)

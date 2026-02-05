@@ -1,65 +1,116 @@
 package com.back.market.app;
 
-import com.back.common.code.FailureCode;
-import com.back.common.code.SuccessCode;
-import com.back.common.exception.BadRequestException;
-import com.back.common.response.CommonResponse;
-import com.back.market.adapter.out.cash.CashClient;
-import com.back.common.dto.cash.request.PayAndHoldRequestDto;
-import com.back.common.dto.cash.request.PaymentCancelRequestDto;
-import com.back.common.dto.cash.response.PayAndHoldResponseDto;
-import com.back.common.dto.cash.response.PaymentCancelResponseDto;
+import com.back.market.adapter.out.*;
+import com.back.market.domain.Bidding;
+import com.back.market.domain.MarketProduct;
+import com.back.market.domain.MarketUser;
+import com.back.market.domain.Order;
+import com.back.market.domain.enums.BiddingPosition;
+import com.back.market.domain.enums.BiddingStatus;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
-@Slf4j
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * repository에 있는 조회 메서드들을 관리하는 클래스
+ */
 @Component
 @RequiredArgsConstructor
 public class MarketSupport {
-    private final CashClient cashClient;
+    private final MarketUserRepository marketUserRepository;
+    private final BiddingRepository biddingRepository;
+    private final OrderRepository orderRepository;
+    private final CartRepository cartRepository;
+    private final MarketProductRepository marketProductRepository;
 
-    public PayAndHoldResponseDto getPayAndHoldResult(PayAndHoldRequestDto paymentReq) {
-        CommonResponse<PayAndHoldResponseDto> response = cashClient.requestBidHold(paymentReq);
-
-        boolean isSuccess = response != null && SuccessCode.OK.getCode().equals(response.getCode());
-
-        if (!isSuccess) {
-            // 응답이 아예 없거나 실패한 경우
-            if (response != null) {
-
-                if (FailureCode.WALLET_CHARGE_FAILED.getCode().equals(response.getCode())) {
-                    throw new BadRequestException(FailureCode.WALLET_CHARGE_FAILED);
-                }
-                // 그 외 실패 사유
-                log.error("[MarketSupport] Cash 모듈 에러 - Code: {}, Msg: {}", response.getCode(), response.getMessage());
-            } else {
-                log.error("[MarketSupport] Cash 모듈 응답 없음 (Null)");
-            }
-            // 공통 에러 던지기
-            throw new BadRequestException(FailureCode.CASH_MODULE_ERROR);
-        }
-        return response.getData();
+    /**
+     * Bidding 엔티티 조회
+     * @param biddingId PK
+     * @return Bidding
+     */
+    public Optional<Bidding> findBiddingById(Long biddingId) {
+        return biddingRepository.findById(biddingId);
     }
 
-    public PaymentCancelResponseDto refundBidPayment(PaymentCancelRequestDto refundRequest) {
-        // 1. 요청 전송
-        CommonResponse<PaymentCancelResponseDto> response = cashClient.refundBidHold(refundRequest);
+    /**
+     * Order 엔티티 조회
+     * @param orderId PK
+     * @return Order
+     */
+    public Optional<Order> findOrderById(Long orderId) {
+        return orderRepository.findById(orderId);
+    }
 
-        // 2. 응답 검증
-        boolean isSuccess = response != null && SuccessCode.OK.getCode().equals(response.getCode());
+    /**
+     * MarketUser의 Cart 존재 여부 확인
+     * @param user MarketUser
+     * @return boolean
+     */
+    public boolean existsCartByMarketUser(MarketUser user) {
+        return cartRepository.existsByMarketUser(user);
+    }
 
-        if (!isSuccess) {
-            String msg = (response != null) ? response.getMessage() : "No Response";
-            log.error("[MarketSupport] 환불 요청 실패 - User: {}, Reason: {}", refundRequest.userId(), msg);
+    /**
+     * MarketUser 엔티티 조회
+     * @param userId PK
+     * @return MarketUser
+     */
+    public Optional<MarketUser> findMarketUserById(Long userId) {
+        return marketUserRepository.findById(userId);
+    }
 
-            // 환불 실패 시 예외를 던져 트랜잭션 롤백 유도
-            throw new BadRequestException(FailureCode.WALLET_REFUND_FAILED);
-        }
+    /**
+     * MarketProduct 존재 여부 확인
+     * @param productId PK
+     * @return boolean
+     */
+    public boolean existsByMarketProduct(Long productId) {
+        return marketProductRepository.existsById(productId);
+    }
 
-        log.info("[MarketSupport] 환불 성공: {}, RelId: {}", (response.getMessage() != null ? response.getMessage() : "OK"), refundRequest.relId());
+    /**
+     * MarketProduct 엔티티 조회
+     * @param productId PK
+     * @return MarketProduct
+     */
+    public Optional<MarketProduct> findMarketProductById(Long productId) {
+        return marketProductRepository.findById(productId);
+    }
 
-        // 3. 데이터 반환 (.getData() 사용)
-        return response.getData();
+    /**
+     * Settlement 대상 주문 조회
+     * @param startDateTime 시작 날짜
+     * @param endDateTime 종료 날짜
+     * @param pageable 페이지
+     * @return List<Order>
+     */
+    public List<Order> findSettlementTargetOrders(LocalDateTime startDateTime, LocalDateTime endDateTime, Pageable pageable) {
+        return orderRepository.findSettlementTargetOrders(startDateTime, endDateTime, pageable);
+    }
+
+    /**
+     * 즉시 구매가 조회(최저가 판매 입찰 조회)
+     * @param productId 상품 PK
+     * @param position 구매/판매
+     * @param status 구매 상태
+     * @return Optional<Bidding>
+     */
+    public Optional<Bidding> findInstantBuyPrice(Long productId, BiddingPosition position, BiddingStatus status) {
+        return biddingRepository.findFirstByMarketProductIdAndPositionAndStatusOrderByPriceAsc(productId, position, status);
+    }
+
+    /**
+     * 즉시 판매가 조회
+     * @param productId 상품 PK
+     * @param position 구매/판매
+     * @param status 구매 상태
+     * @return Optional<Bidding>
+     */
+    public Optional<Bidding> findInstantSellPrice(Long productId, BiddingPosition position, BiddingStatus status) {
+        return biddingRepository.findFirstByMarketProductIdAndPositionAndStatusOrderByPriceDesc(productId, position, status);
     }
 }
