@@ -88,11 +88,11 @@ public class Settlement extends BaseTimeEntity {
         return Settlement.builder()
                 .sellerId(request.sellerId())
                 .sellerName(request.sellerName())
-                .status(SettlementStatus.COMPLETED)
+                .status(SettlementStatus.IN_PROGRESS)
                 .startAt(request.startAt())
                 .endAt(request.endAt())
                 .expectedAt(calculateExpectedDate(request.endAt()))
-                .completedAt(LocalDateTime.now())
+                .completedAt(null)
                 .totalSalesAmount(request.totalSalesAmount())
                 .totalFeeAmount(request.totalFeeAmount())
                 .totalNetAmount(request.totalNetAmount())
@@ -100,9 +100,9 @@ public class Settlement extends BaseTimeEntity {
     }
 
     public void registerCreatedEvent() {
-        registerEvent(new SettlementInternalCompletedEvent(
-                this.id, null, this.totalNetAmount,
-                this.sellerId, this.sellerName, this.completedAt
+        registerEvent(new SettlementStartedEvent(
+                this.id, null,
+                this.sellerId, this.totalSalesAmount, this.totalNetAmount, this.totalFeeAmount
         ));
     }
 
