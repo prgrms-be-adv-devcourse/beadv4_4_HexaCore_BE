@@ -85,12 +85,12 @@ class ProductSyncEventPublishTest {
         // --- 3. Assert (결과 검증) ---
         // Kafka 리스너는 비동기적으로 동작하므로, Awaitility를 사용해 최대 5초간 대기하며 검증을 시도
         await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
-            // ProductDocumentUseCase의 createProduct 메소드가 1번 호출되었는지 검증
+            // ProductDocumentUseCase의 syncProduct 메소드가 1번 호출되었는지 검증
             ArgumentCaptor<ProductInfoDto> infoDtoCaptor = ArgumentCaptor.forClass(ProductInfoDto.class);
             ArgumentCaptor<List<OptionDto>> optionsCaptor = ArgumentCaptor.forClass(List.class);
             ArgumentCaptor<String> urlCaptor = ArgumentCaptor.forClass(String.class);
 
-            verify(productDocumentUseCase, times(1)).createProduct(
+            verify(productDocumentUseCase, times(1)).syncProduct(
                     infoDtoCaptor.capture(),
                     optionsCaptor.capture(),
                     urlCaptor.capture()
