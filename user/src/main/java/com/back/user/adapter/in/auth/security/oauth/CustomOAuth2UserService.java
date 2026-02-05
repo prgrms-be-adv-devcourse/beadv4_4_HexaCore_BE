@@ -81,11 +81,9 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         UserSetting userSetting = userSettingRepository.findByUser(user)
                 .orElseGet(() -> userSettingRepository.save(UserSetting.of(user)));
 
-        System.out.println("새로운 : "+ isNewUser);
         if (isNewUser) {
             // 회원가입 IP 등록
             String clientIp = getClientIp();
-            System.out.println("새로운 : "+ clientIp);
             if (clientIp != null) {
                 log.info("[OAuth2 회원가입 IP 등록] userId: {}, IP: {}", user.getId(), clientIp);
             } else {
@@ -101,7 +99,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                     user.getPhone(),
                     user.getProfileImageUrl(),
                     clientIp,
-                    System.currentTimeMillis()
+                    user.getCreatedAt()
                     ));
         }
 
