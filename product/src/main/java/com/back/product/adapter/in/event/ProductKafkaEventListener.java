@@ -35,6 +35,6 @@ public class ProductKafkaEventListener {
 
         String thumbnailUrl = event.thumbnailUrl();
 
-        productDocumentUseCase.createProduct(productInfoDto, optionDtos, thumbnailUrl);
+        productDocumentUseCase.syncProduct(productInfoDto, optionDtos, thumbnailUrl);
     }
 }

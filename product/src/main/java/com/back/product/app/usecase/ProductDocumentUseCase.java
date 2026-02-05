@@ -32,12 +32,12 @@ public class ProductDocumentUseCase {
     private final ProductDocumentRepository productDocumentRepository;
 
     @Transactional
-    public void createProduct(ProductInfoDto productInfoDto, List<OptionDto> optionDtos, String thumbnailUrl) {
-        ProductDocument newDocument = productDocumentMapper.toDocument(productInfoDto, optionDtos, thumbnailUrl);
+    public void syncProduct(ProductInfoDto productInfoDto, List<OptionDto> optionDtos, String thumbnailUrl) {
+        ProductDocument documentToSync = productDocumentMapper.toDocument(productInfoDto, optionDtos, thumbnailUrl);
 
-        newDocument.assignId(productInfoDto.productInfoId().toString());
+        documentToSync.assignId(productInfoDto.productInfoId().toString());
 
-        productDocumentRepository.save(newDocument);
+        productDocumentRepository.save(documentToSync);
     }
 
     @Transactional(readOnly = true)
