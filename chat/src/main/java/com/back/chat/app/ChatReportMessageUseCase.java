@@ -9,8 +9,8 @@ import com.back.chat.dto.request.ChatMessageReportRequestDto;
 import com.back.chat.dto.response.ChatMessageReportResponseDto;
 import com.back.chat.event.ChatEventType;
 import com.back.chat.event.ChatMessageBlindedEvent;
-import com.back.chat.event.payload.ChatMessageBlindedOutboxPayload;
 import com.back.chat.mapper.ChatMessageMapper;
+import com.back.common.chat.ChatMessageBlindedKafkaEvent;
 import com.back.common.code.FailureCode;
 import com.back.common.exception.BadRequestException;
 import com.back.common.exception.ConflictException;
@@ -62,11 +62,9 @@ public class ChatReportMessageUseCase {
         boolean blindedNow = chatSupport.blindIfReached(messageId, ChatMessageBlindPolicy.MESSAGE_BLIND_THRESHOLD) == 1;
 
         if (blindedNow) {
-            ChatMessageBlindedOutboxPayload payload =
-                    new ChatMessageBlindedOutboxPayload(
-                            UUID.randomUUID(),
-                            message.getId(),
-                            message.getRoomId(),
+            ChatMessageBlindedKafkaEvent payload =
+                    new ChatMessageBlindedKafkaEvent(
+                            UUID.randomUUID().toString(),
                             message.getUserId(),
                             LocalDateTime.now()
                     );
@@ -80,7 +78,7 @@ public class ChatReportMessageUseCase {
 
             chatOutboxRepository.save(
                     ChatOutbox.pending(
-                            payload.eventId(),
+                            UUID.fromString(payload.eventId()),
                             "CHAT_MESSAGE",
                             message.getId(),
                             ChatEventType.MESSAGE_BLINDED,
