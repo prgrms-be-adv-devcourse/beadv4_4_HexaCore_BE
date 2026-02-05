@@ -115,23 +115,4 @@ public class ChatOutbox {
                 createdAt
         );
     }
-
-
-
-    // 테스트용
-    private void requirePendingOrFailed() {
-        if (this.status != OutboxStatus.PENDING && this.status != OutboxStatus.FAILED) {
-            throw new IllegalStateException("Outbox status must be PENDING or FAILED, but was " + this.status);
-        }
-    }
-
-    public void markProcessing(LocalDateTime now) {
-        requirePendingOrFailed();
-        this.status = OutboxStatus.PROCESSING;
-        this.processingStartedAt = now;
-    }
-
-    public void setNextAttemptAt(LocalDateTime time) {
-        this.nextAttemptAt = time;
-    }
 }
