@@ -45,8 +45,7 @@ public class MarketDataInit implements CommandLineRunner {
                 "나이키매니아",
                 "seller@resello.com",
                 "서울시 강남구 역삼동",
-                "010-1234-5678",
-                "https://dummyimage.com/100x100/000/fff&text=Seller"
+                "010-1234-5678"
         );
 
         MarketUser savedSeller = marketUserRepository.save(seller);
@@ -57,8 +56,7 @@ public class MarketDataInit implements CommandLineRunner {
                 "신발덕후",
                 "buyer@resello.com",
                 "경기도 성남시 분당구",
-                "010-9876-5432",
-                null
+                "010-9876-5432"
         );
         MarketUser savedBuyer = marketUserRepository.save(buyer);
 
