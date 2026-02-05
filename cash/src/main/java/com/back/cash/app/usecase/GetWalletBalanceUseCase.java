@@ -16,7 +16,7 @@ public class GetWalletBalanceUseCase {
 
     @Transactional(readOnly = true)
     public WalletBalanceResponseDto getWalletBalance(Long userId) {
-        Wallet wallet = walletSupport.findByUserId(userId);
+        Wallet wallet = walletSupport.getUserWalletByUserId(userId);
         return WalletMapper.toWalletBalanceResponseDto(wallet);
     }
 }

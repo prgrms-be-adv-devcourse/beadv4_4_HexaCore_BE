@@ -38,7 +38,7 @@ class GetWalletBalanceUseCaseTest {
                 .balance(BigDecimal.valueOf(5000))
                 .build();
 
-        when(walletSupport.findByUserId(userId)).thenReturn(mockWallet);
+        when(walletSupport.getUserWalletByUserId(userId)).thenReturn(mockWallet);
 
         // when
         WalletBalanceResponseDto response = getWalletBalanceUseCase.getWalletBalance(userId);
@@ -46,7 +46,7 @@ class GetWalletBalanceUseCaseTest {
         // then
         assertThat(response.walletId()).isEqualTo(100L);
         assertThat(response.balance()).isEqualTo(BigDecimal.valueOf(5000));
-        verify(walletSupport, times(1)).findByUserId(userId);
+        verify(walletSupport, times(1)).getUserWalletByUserId(userId);
     }
 
     @Test
@@ -54,7 +54,7 @@ class GetWalletBalanceUseCaseTest {
     void getWalletBalance_Fail_NotFound() {
         // given
         Long userId = 999L;
-        when(walletSupport.findByUserId(userId))
+        when(walletSupport.getUserWalletByUserId(userId))
                 .thenThrow(new EntityNotFoundException(FailureCode.WALLET_NOT_FOUND));
 
         // when & then
@@ -62,6 +62,6 @@ class GetWalletBalanceUseCaseTest {
             getWalletBalanceUseCase.getWalletBalance(userId);
         });
 
-        verify(walletSupport, times(1)).findByUserId(userId);
+        verify(walletSupport, times(1)).getUserWalletByUserId(userId);
     }
 }
