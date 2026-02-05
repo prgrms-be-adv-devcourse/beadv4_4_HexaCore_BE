@@ -6,6 +6,7 @@ import com.back.product.dto.CategoryDto;
 import com.back.product.dto.OptionDto;
 import com.back.product.dto.ProductInfoDto;
 import com.back.product.global.event.ProductCreationCompletedEvent;
+import com.back.product.global.event.ProductUpdateCompletedEvent;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -30,16 +31,13 @@ import static org.mockito.Mockito.verify;
 
 @SpringBootTest
 @DirtiesContext // 테스트 간 컨텍스트를 분리하여 Kafka 브로커 충돌 방지
-@EmbeddedKafka(partitions = 1, topics = { "${custom.kafka.topic.product-created:product-created}" })
+@EmbeddedKafka(partitions = 1)
 @TestPropertySource(properties = {
         "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}",
-        "custom.kafka.topic.product-created=" + ProductSyncEventPublishTest.TEST_TOPIC,
         "spring.kafka.consumer.properties.spring.json.trusted.packages=*",
         "spring.kafka.consumer.auto-offset-reset=earliest"
 })
 class ProductSyncEventPublishTest {
-    public static final String TEST_TOPIC = "test-product-created";
-
     @Autowired
     private ApplicationEventPublisher applicationEventPublisher;
 
@@ -101,6 +99,58 @@ class ProductSyncEventPublishTest {
             assertThat(infoDtoCaptor.getValue().name()).isEqualTo("Test Product");
             assertThat(optionsCaptor.getValue()).hasSize(1);
             assertThat(urlCaptor.getValue()).isEqualTo("http://test.com/image.jpg");
+        });
+    }
+
+    @Test
+    @DisplayName("ProductUpdateCompletedEvent 발행 시, Kafka를 거쳐 최종적으로 ES 동기화 로직이 호출된다")
+    void testProductUpdateEventFlow() {
+        // --- 1. Arrange (테스트 준비) ---
+        // 테스트용 이벤트 객체 생성 (업데이트용)
+        ProductInfoDto productInfoDto = new ProductInfoDto(
+                2L, // 업데이트될 상품 ID
+                new BrandDto(1L, "Updated Brand", "logo.png"),
+                new CategoryDto(1L, "Updated Category", "image.png"),
+                "Updated Product",
+                "P002",
+                BigDecimal.valueOf(20),
+                LocalDateTime.now().plusHours(1)
+        );
+
+        List<OptionDto> optionDtos = List.of(new OptionDto(
+                new OptionDto.GroupDto(2L, "Size"),
+                List.of(new OptionDto.ValueDto(2L, "Large"))
+        ));
+
+        String thumbnailUrl = "http://test.com/updated_image.jpg";
+        ProductUpdateCompletedEvent event = new ProductUpdateCompletedEvent(productInfoDto, optionDtos, thumbnailUrl);
+
+        // --- 2. Act (이벤트 발행) ---
+        // transactionTemplate을 사용하여 명시적으로 COMMIT을 발생시킴
+        transactionTemplate.execute(status -> {
+            applicationEventPublisher.publishEvent(event);
+            return null;
+        });
+
+        // --- 3. Assert (결과 검증) ---
+        // Kafka 컨슈머는 비동기로 동작하므로 awaitility를 사용하여 대기 및 검증
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            ArgumentCaptor<ProductInfoDto> infoDtoCaptor = ArgumentCaptor.forClass(ProductInfoDto.class);
+            ArgumentCaptor<List<OptionDto>> optionsCaptor = ArgumentCaptor.forClass(List.class);
+            ArgumentCaptor<String> urlCaptor = ArgumentCaptor.forClass(String.class);
+
+            // ProductDocumentUseCase의 syncProduct 메소드가 1번 호출되었는지 검증
+            verify(productDocumentUseCase, times(1)).syncProduct(
+                    infoDtoCaptor.capture(),
+                    optionsCaptor.capture(),
+                    urlCaptor.capture()
+            );
+
+            // 최종적으로 전달된 데이터가 발행했던 데이터와 일치하는지 검증
+            assertThat(infoDtoCaptor.getValue().productInfoId()).isEqualTo(2L);
+            assertThat(infoDtoCaptor.getValue().name()).isEqualTo("Updated Product");
+            assertThat(optionsCaptor.getValue()).hasSize(1);
+            assertThat(urlCaptor.getValue()).isEqualTo("http://test.com/updated_image.jpg");
         });
     }
 }
