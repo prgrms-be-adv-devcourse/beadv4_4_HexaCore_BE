@@ -9,11 +9,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -31,10 +29,10 @@ public class ChatOutboxRelay {
 
     private final ObjectMapper objectMapper;
 
-    @Value("${chat.kafka.topics.message-blinded:chat.message.blinded.v1}")
+    @Value("${custom.kafka.topic.chat-blind-requested: chat.blind.requested}")
     private String messageBlindedTopic;
 
-    @Value("${chat.kafka.topics.message-blinded-dlt:chat.message.blinded.v1.dlt}")
+    @Value("${custom.kafka.topic.chat-blind-dlt-requested: chat.blind.dlt.requested}")
     private String messageBlindedDltTopic;
 
     @Value("${chat.outbox.relay.batch-size:100}")
