@@ -1,6 +1,6 @@
 package com.back.notification.mapper;
 
-import com.back.common.Settlement.event.SettlementCompletedEvent;
+import com.back.common.settlement.event.SettlementCompletedEvent;
 import com.back.common.market.event.BiddingFailedEvent;
 import com.back.common.market.event.SellBiddingCreatedEvent;
 import com.back.common.market.event.PurchaseCanceledEvent;

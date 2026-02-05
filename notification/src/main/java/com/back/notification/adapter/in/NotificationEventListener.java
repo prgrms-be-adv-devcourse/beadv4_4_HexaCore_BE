@@ -1,12 +1,12 @@
 package com.back.notification.adapter.in;
 
-import com.back.common.Settlement.event.SettlementCompletedEvent;
+import com.back.common.settlement.event.SettlementCompletedEvent;
 import com.back.common.market.event.BiddingFailedEvent;
 import com.back.common.market.event.SellBiddingCreatedEvent;
 import com.back.common.market.event.PurchaseCanceledEvent;
 import com.back.common.market.event.BiddingCompletedEvent;
 import com.back.common.product.event.InspectionCompletedEvent;
-import com.back.common.user.event.fcmTokenChangedEvent;
+import com.back.common.user.event.FcmTokenChangedEvent;
 import com.back.notification.app.NotificationFacade;
 import com.back.notification.app.NotificationUserUsecase;
 import com.back.notification.domain.enums.Type;
@@ -53,7 +53,7 @@ public class NotificationEventListener {
     }
 
     @KafkaListener(topics = "fcmTokenChangedEvent", groupId = "PostEventListener__handle__6")
-    public void handle(fcmTokenChangedEvent event) {
+    public void handle(FcmTokenChangedEvent event) {
         notificationUserUsecase.updateFcmToken(event.userId(), event.fcmToken());
     }
 }
