@@ -13,6 +13,7 @@ import com.back.user.app.auth.GenerateNicknameUseCase;
 import com.back.user.domain.User;
 import com.back.user.domain.UserSetting;
 import com.back.user.domain.enums.Provider;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +23,8 @@ import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.util.Optional;
 
@@ -78,7 +81,17 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         UserSetting userSetting = userSettingRepository.findByUser(user)
                 .orElseGet(() -> userSettingRepository.save(UserSetting.of(user)));
 
+        System.out.println("새로운 : "+ isNewUser);
         if (isNewUser) {
+            // 회원가입 IP 등록
+            String clientIp = getClientIp();
+            System.out.println("새로운 : "+ clientIp);
+            if (clientIp != null) {
+                log.info("[OAuth2 회원가입 IP 등록] userId: {}, IP: {}", user.getId(), clientIp);
+            } else {
+                log.warn("[OAuth2 회원가입 IP 추출 실패] userId: {}", user.getId());
+            }
+
             eventPublisher.publishEvent(new WalletCreateRequestedEvent(user.getId()));
             eventPublisher.publishEvent(new UserCreatedEvent(
                     user.getId(),
@@ -86,12 +99,56 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                     user.getEmail(),
                     user.getAddress(),
                     user.getPhone(),
-                    user.getProfileImageUrl()
+                    user.getProfileImageUrl(),
+                    clientIp,
+                    System.currentTimeMillis()
                     ));
-            log.info("회원 가입 후 이벤트 발행 완료: userId={}", user.getId());
         }
 
         return new CustomOAuth2User(user.getRole(), user.getId(), oAuth2User.getAttributes());
+    }
+
+    /**
+     * 클라이언트 IP 추출
+     * RequestContextHolder를 사용하여 현재 HTTP 요청에서 IP 가져오기
+     */
+    private String getClientIp() {
+        try {
+            ServletRequestAttributes attributes = 
+                (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+            
+            if (attributes == null) {
+                return null;
+            }
+            
+            HttpServletRequest request = attributes.getRequest();
+            
+            // 프록시를 거쳤을 경우를 고려한 IP 추출
+            String ip = request.getHeader("X-Forwarded-For");
+            
+            if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+                ip = request.getHeader("Proxy-Client-IP");
+            }
+            if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+                ip = request.getHeader("WL-Proxy-Client-IP");
+            }
+            if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+                ip = request.getHeader("HTTP_X_FORWARDED_FOR");
+            }
+            if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+                ip = request.getRemoteAddr();
+            }
+            
+            // X-Forwarded-For에 여러 IP가 있을 경우 첫 번째가 실제 클라이언트 IP
+            if (ip != null && ip.contains(",")) {
+                ip = ip.split(",")[0].trim();
+            }
+            
+            return ip;
+        } catch (Exception e) {
+            log.error("IP 추출 중 오류 발생", e);
+            return null;
+        }
     }
 }
 

@@ -8,6 +8,8 @@ public record UserCreatedEvent(
         String email,
         String address,
         String phone,
-        String profileImageUrl
+        String profileImageUrl,
+        String ipAddress,
+        Long createdTime
 ) implements EventName {
 }
