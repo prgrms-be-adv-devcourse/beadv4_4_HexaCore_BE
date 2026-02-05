@@ -1,5 +1,6 @@
 package com.back.product.mapper;
 
+import com.back.common.product.event.payload.BrandPayload;
 import com.back.product.domain.Brand;
 import com.back.product.dto.request.BrandCreateRequestDto;
 import com.back.product.dto.BrandDto;
@@ -19,6 +20,13 @@ public class BrandMapper {
         return Brand.builder()
                 .name(request.name())
                 .imageUrl(request.logoUrl())
+                .build();
+    }
+
+    public BrandDto toDto(BrandPayload payload) {
+        return BrandDto.builder()
+                .brandId(payload.brandId())
+                .name(payload.name())
                 .build();
     }
 }

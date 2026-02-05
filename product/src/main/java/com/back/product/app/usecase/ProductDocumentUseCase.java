@@ -1,22 +1,27 @@
 package com.back.product.app.usecase;
 
+import co.elastic.clients.elasticsearch._types.FieldValue;
+import co.elastic.clients.elasticsearch._types.query_dsl.*;
+import co.elastic.clients.json.JsonData;
+import com.back.product.adapter.out.ProductDocumentRepository;
 import com.back.product.document.ProductDocument;
-import com.back.product.dto.response.ProductSearchResponseDto;
+import com.back.product.dto.OptionDto;
+import com.back.product.dto.ProductInfoDto;
 import com.back.product.dto.request.ProductSearchRequestDto;
 import com.back.product.dto.response.ProductSearchListResponseDto;
+import com.back.product.dto.response.ProductSearchResponseDto;
 import com.back.product.mapper.ProductDocumentMapper;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.elasticsearch.core.query.Criteria;
-import org.springframework.data.elasticsearch.core.query.CriteriaQuery;
+import org.springframework.data.elasticsearch.client.elc.NativeQuery;
 import org.springframework.data.elasticsearch.core.query.Query;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -24,6 +29,21 @@ import java.util.List;
 public class ProductDocumentUseCase {
     private final ProductDocumentSupport productDocumentSupport;
     private final ProductDocumentMapper productDocumentMapper;
+    private final ProductDocumentRepository productDocumentRepository;
+
+    @Transactional
+    public void syncProduct(ProductInfoDto productInfoDto, List<OptionDto> optionDtos, String thumbnailUrl) {
+        ProductDocument documentToSync = productDocumentMapper.toDocument(productInfoDto, optionDtos, thumbnailUrl);
+
+        documentToSync.assignId(productInfoDto.productInfoId().toString());
+
+        productDocumentRepository.save(documentToSync);
+    }
+
+    @Transactional
+    public void deleteProduct(Long productInfoId) {
+        productDocumentRepository.deleteById(productInfoId.toString());
+    }
 
     @Transactional(readOnly = true)
     public ProductSearchListResponseDto findProductPage(@Valid ProductSearchRequestDto request, Long page, Long size) {
@@ -32,8 +52,7 @@ public class ProductDocumentUseCase {
                 request.brandIds(),
                 request.categoryIds(),
                 request.minPrice(),
-                request.maxPrice(),
-                request.excludeSoldOut()
+                request.maxPrice()
         );
 
         PageImpl<ProductDocument> productPage = productDocumentSupport.findProductPage(query, request.sort(), page, size);
@@ -46,50 +65,76 @@ public class ProductDocumentUseCase {
         );
     }
 
-    private Query buildSearchQuery(String keyword, List<Long> brands, List<Long> categories, BigDecimal minPrice, BigDecimal maxPrice, Boolean excludeSoldOut) {
-        Criteria criteria = new Criteria();
+    private Query buildSearchQuery(
+            String keyword,
+            List<Long> brands,
+            List<Long> categories,
+            BigDecimal minPrice,
+            BigDecimal maxPrice
+    ) {
+        var boolQuery = new BoolQuery.Builder();
 
+        // 1. 키워드 검색 (should: 점수 기반 검색)
         if (StringUtils.hasText(keyword)) {
-            Criteria keywordCriteria = new Criteria();
-            keywordCriteria = keywordCriteria
-                    .or("productName").matches(keyword)
-                    .or("productName.nori").matches(keyword)
-                    .or("productName.ngram").matches(keyword)
+            // (1) 일반 및 MultiField 검색 경로
+            boolQuery.should(m -> m.match(mt -> mt.field("productInfo.productName").query(keyword)));
+            boolQuery.should(m -> m.match(mt -> mt.field("productInfo.productName.nori").query(keyword)));
+            boolQuery.should(m -> m.match(mt -> mt.field("productInfo.productName.ngram").query(keyword)));
 
-                    .or("brandName").matches(keyword)
-                    .or("brandName.nori").matches(keyword)
-                    .or("brandName.ngram").matches(keyword)
+            boolQuery.should(m -> m.match(mt -> mt.field("productInfo.brand.brandName").query(keyword)));
+            boolQuery.should(m -> m.match(mt -> mt.field("productInfo.brand.brandName.nori").query(keyword)));
 
-                    .or("categoryName").matches(keyword)
-                    .or("categoryName.nori").matches(keyword)
+            boolQuery.should(m -> m.match(mt -> mt.field("productInfo.category.categoryName").query(keyword)));
+            boolQuery.should(m -> m.match(mt -> mt.field("productInfo.category.categoryName.nori").query(keyword)));
 
-                    .or("totalOptions").matches(keyword);
+            // (2) Nested 필드 검색 (totalOptions)
+            // totalOptions 내의 groupName과 valueName 검색
+            boolQuery.should(s -> s.nested(n -> n
+                    .path("totalOptions")
+                    .query(q -> q.bool(b -> b
+                            .should(m -> m.match(mt -> mt.field("totalOptions.group.groupName").query(keyword)))
+                            .should(m -> m.match(mt -> mt.field("totalOptions.group.groupName.nori").query(keyword)))
+                            .should(m -> m.match(mt -> mt.field("totalOptions.value.valueName").query(keyword)))
+                            .should(m -> m.match(mt -> mt.field("totalOptions.value.valueName.nori").query(keyword)))
+                    ))
+            ));
 
-            criteria = criteria.subCriteria(keywordCriteria);
+            boolQuery.minimumShouldMatch("1");
         }
 
-        // 필터링 조건 (다중 선택 가능)
+        // 2. 필터링 조건 (filter: 정확한 매칭, 캐싱 가능)
+
+        // 브랜드 ID 필터
         if (brands != null && !brands.isEmpty()) {
-            criteria = criteria.and("brandId").in(brands);
-        }
-        if (categories != null && !categories.isEmpty()) {
-            criteria = criteria.and("categoryId").in(categories);
+            boolQuery.filter(f -> f.terms(t -> t
+                    .field("productInfo.brand.brandId")
+                    .terms(v -> v.value(brands.stream().map(FieldValue::of).toList()))
+            ));
         }
 
-        // 범위 필터링 (가격)
+        // 카테고리 ID 필터
+        if (categories != null && !categories.isEmpty()) {
+            boolQuery.filter(f -> f.terms(t -> t
+                    .field("productInfo.category.categoryId")
+                    .terms(v -> v.value(categories.stream().map(FieldValue::of).toList()))
+            ));
+        }
+
+        // 3. 가격 범위 필터 (컴파일 에러 해결 지점)
         if (minPrice != null) {
-            criteria = criteria.and("releasePrice").greaterThanEqual(minPrice);
+            boolQuery.filter(f -> f.range(r -> r
+                    .number(n -> n.field("productInfo.releasePrice").gte(minPrice.doubleValue()))
+            ));
         }
         if (maxPrice != null) {
-            criteria = criteria.and("releasePrice").lessThanEqual(maxPrice);
+            boolQuery.filter(f -> f.range(r -> r
+                    .number(n -> n.field("productInfo.releasePrice").lte(maxPrice.doubleValue()))
+            ));
         }
 
-        // 상태 필터링 (품절 상품 제외 여부)
-        if (excludeSoldOut != null && excludeSoldOut) {
-            criteria = criteria.and("totalInventory").greaterThan(0);
-        }
-
-        return new CriteriaQuery(criteria);
+        return NativeQuery.builder()
+                .withQuery(boolQuery.build()._toQuery())
+                .build();
     }
 
     private ProductSearchListResponseDto convertToDto(List<ProductDocument> productList, Long totalPages, Long totalElements, Long currentPage) {

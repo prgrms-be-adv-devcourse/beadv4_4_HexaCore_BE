@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -72,7 +73,8 @@ class OptionUseCaseTest {
             given(productSupport.getAllOptionValues(ids)).willReturn(values);
 
             // when
-            Map<Long, OptionValue> result = optionUseCase.findOptionValuesAsMap(ids);
+            Map<Long, OptionValue> result = optionUseCase.findOptionValues(ids).stream()
+                    .collect(Collectors.toMap(OptionValue::getId, option -> option));
 
             // then
             assertThat(result).hasSize(2);
@@ -93,7 +95,7 @@ class OptionUseCaseTest {
 
             // when & then
             CustomException exception = assertThrows(CustomException.class, () ->
-                    optionUseCase.findOptionValuesAsMap(ids)
+                    optionUseCase.findOptionValues(ids)
             );
             assertThat(exception.getFailureCode()).isEqualTo(FailureCode.OPTION_VALUE_NOT_FOUND);
         }

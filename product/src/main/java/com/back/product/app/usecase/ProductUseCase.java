@@ -40,8 +40,11 @@ public class ProductUseCase {
     public List<ProductDto> createMultipleProduct(
             ProductInfo productInfo,
             List<ProductVariantCreateRequestDto> variants,
-            Map<Long, OptionValue> optionValueMap
+            List<OptionValue> optionValues
     ) {
+        Map<Long, OptionValue> optionValueMap = optionValues.stream()
+                .collect(Collectors.toMap(OptionValue::getId, value -> value));
+
         List<Product> createdProducts = new ArrayList<>();
         List<ProductOptionValues> createdProductOptionValues = new ArrayList<>();
         List<ProductImage> createdImages = new ArrayList<>();
@@ -65,8 +68,11 @@ public class ProductUseCase {
     }
 
     @Transactional
-    public List<ProductDto> updateMultipleProduct(ProductInfo productInfo, List<ProductVariantUpdateRequestDto> variants, Map<Long, OptionValue> optionValueMap) {
+    public List<ProductDto> updateMultipleProduct(ProductInfo productInfo, List<ProductVariantUpdateRequestDto> variants, List<OptionValue> optionValues) {
         List<Product> existProducts = productSupport.getAllProductsByProductInfo(productInfo);
+
+        Map<Long, OptionValue> optionValueMap = optionValues.stream()
+                .collect(Collectors.toMap(OptionValue::getId, value -> value));
 
         Map<Boolean, List<ProductVariantUpdateRequestDto>> categorizedVariants = variants.stream()
                 .collect(Collectors.partitioningBy(variant -> variant.productId() != null));

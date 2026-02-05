@@ -8,10 +8,9 @@ import org.springframework.data.domain.Sort;
 @Getter
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public enum ProductSortType {
-    LATEST("releasedDate", Sort.Direction.DESC),     // 최신순 (기본값)
-    PRICE_LOW("releasePrice", Sort.Direction.ASC),   // 낮은 가격순
-    PRICE_HIGH("releasePrice", Sort.Direction.DESC), // 높은 가격순
-    POPULAR("totalInventory", Sort.Direction.ASC);   // 인기순 (예시)
+    LATEST("productInfo.releasedDate", Sort.Direction.DESC),     // 최신순 (기본값)
+    PRICE_LOW("productInfo.releasePrice", Sort.Direction.ASC),   // 낮은 가격순
+    PRICE_HIGH("productInfo.releasePrice", Sort.Direction.DESC); // 높은 가격순
 
     private final String fieldName;
     private final Sort.Direction direction;
