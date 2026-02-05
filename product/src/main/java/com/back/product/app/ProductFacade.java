@@ -8,6 +8,7 @@ import com.back.product.dto.*;
 import com.back.product.dto.request.*;
 import com.back.product.dto.response.*;
 import com.back.product.global.event.ProductCreationCompletedEvent;
+import com.back.product.global.event.ProductUpdateCompletedEvent;
 import com.back.product.mapper.OptionMapper;
 import com.back.product.mapper.ProductInfoMapper;
 import jakarta.validation.Valid;
@@ -130,6 +131,12 @@ public class ProductFacade {
 
         List<ProductDto> productDtos = productUseCase.updateMultipleProduct(productInfo, request.variants(), optionValues);
 
+        publishProductUpdateCompletedEvent(
+                productInfo,
+                optionValues,
+                productDtos.getFirst().imageUrls().getFirst()
+        );
+
         return buildProductResponseDto(productInfo, productDtos);
     }
 
@@ -211,18 +218,34 @@ public class ProductFacade {
     private void publishProductCreationCompletedEvent(ProductInfo productInfo, List<OptionValue> optionValues, String thumbnailUrl) {
         ProductInfoDto productInfoDto = productInfoMapper.toDto(productInfo);
 
-        List<OptionDto> optionDtos = optionValues.stream()
-                .collect(Collectors.groupingBy(OptionValue::getOptionGroup))
-                .entrySet().stream().map(entry -> {
-                    OptionGroup group = entry.getKey();
-                    List<OptionValue> values = entry.getValue();
-                    return optionMapper.toDto(group, values);
-                }).toList();
+        List<OptionDto> optionDtos = buildMultipleOptionDto(optionValues);
 
         ProductCreationCompletedEvent event = new ProductCreationCompletedEvent(
                 productInfoDto, optionDtos, thumbnailUrl
         );
 
         applicationEventPublisher.publishEvent(event);
+    }
+
+    private void publishProductUpdateCompletedEvent(ProductInfo productInfo, List<OptionValue> optionValues, String thumbnailUrl) {
+        ProductInfoDto productInfoDto = productInfoMapper.toDto(productInfo);
+
+        List<OptionDto> optionDtos = buildMultipleOptionDto(optionValues);
+
+        ProductUpdateCompletedEvent event = new ProductUpdateCompletedEvent(
+                productInfoDto, optionDtos, thumbnailUrl
+        );
+
+        applicationEventPublisher.publishEvent(event);
+    }
+
+    private List<OptionDto> buildMultipleOptionDto(List<OptionValue> optionValues) {
+        return optionValues.stream()
+                .collect(Collectors.groupingBy(OptionValue::getOptionGroup))
+                .entrySet().stream().map(entry -> {
+                    OptionGroup group = entry.getKey();
+                    List<OptionValue> values = entry.getValue();
+                    return optionMapper.toDto(group, values);
+                }).toList();
     }
 }
