@@ -46,7 +46,7 @@ public class MarketSupport {
      */
     public Order findOrderById(Long orderId) {
         return orderRepository.findById(orderId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 주문입니다."));
+                .orElseThrow(() -> new BadRequestException(FailureCode.ORDER_NOT_FOUND));
     }
 
     /**
