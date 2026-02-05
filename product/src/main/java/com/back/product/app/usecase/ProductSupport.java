@@ -135,4 +135,9 @@ public class ProductSupport {
     public Boolean existsProductByOptionValueId(Long optionValueId) {
         return productOptionValuesRepository.existsByOptionValue_Id(optionValueId);
     }
+
+    @Transactional(readOnly = true)
+    public List<Product> findMultipleProductByIds(List<Long> productIds) {
+        return productRepository.findAllById(productIds);
+    }
 }

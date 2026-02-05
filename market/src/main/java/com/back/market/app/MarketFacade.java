@@ -124,7 +124,7 @@ public class MarketFacade {
                 order.getSellBidding().getMarketProduct().getId(),
                 order.getBuyBidding().getMarketUser().getId(),
                 order.getSellBidding().getMarketUser().getId(),
-                order.getSellBidding().getMarketUser().getNickname(),
+                order.getSellBidding().getMarketUser().getName(),
                 order.getPrice(),
                 LocalDateTime.now()
         );

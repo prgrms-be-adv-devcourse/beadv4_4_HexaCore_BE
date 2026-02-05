@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/cash/payments")
 @RequiredArgsConstructor
 @Slf4j
-public class ApiV1CashController {
+public class ApiV1CashPaymentController {
     private final CashFacade cashFacade;
 
     @PostMapping("/confirm/toss")

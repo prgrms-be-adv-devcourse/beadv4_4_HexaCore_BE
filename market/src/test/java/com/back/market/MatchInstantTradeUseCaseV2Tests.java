@@ -76,7 +76,7 @@ public class MatchInstantTradeUseCaseV2Tests {
         Long seller2 = 11L;
         Long buyer = 12L;
         setupBaseData(productId, seller1, buyer, "주소");
-        marketUserRepository.save(MarketUser.builder().id(seller2).nickname("s2").email("s2@t.com").build());
+        marketUserRepository.save(MarketUser.builder().id(seller2).name("s2").email("s2@t.com").build());
 
         // 동일 가격(20만원)으로 시간차를 두고 입찰 등록
         createBidding(productId, seller1, 200000, BiddingPosition.SELL); // 1. 먼저 등록 (Target)

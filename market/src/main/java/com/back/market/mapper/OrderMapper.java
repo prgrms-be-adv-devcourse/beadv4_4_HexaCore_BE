@@ -29,7 +29,7 @@ public class OrderMapper {
                 sellBid.getMarketProduct().getId(),     // 상품 ID(판매입찰 기준)
                 buyBid.getMarketUser().getId(),         // 구매자 ID
                 sellBid.getMarketUser().getId(),        // 판매자 ID
-                sellBid.getMarketUser().getNickname(),  // 판매자 이름(닉네임)
+                sellBid.getMarketUser().getName(),      // 판매자 이름
                 order.getPrice(),                       // 주문 가격
                 order.getLastModifiedAt()               // 구매 확정 일시(마지막으로 수정된 날짜)
         );

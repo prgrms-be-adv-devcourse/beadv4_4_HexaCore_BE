@@ -6,8 +6,6 @@ import com.back.product.domain.ProductInfo;
 import com.back.product.domain.ProductOptionValues;
 import com.back.product.dto.ProductDto;
 import com.back.product.dto.ProductOptionDto;
-import com.back.product.dto.request.ProductVariantCreateRequestDto;
-import com.back.product.dto.request.ProductVariantUpdateRequestDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
