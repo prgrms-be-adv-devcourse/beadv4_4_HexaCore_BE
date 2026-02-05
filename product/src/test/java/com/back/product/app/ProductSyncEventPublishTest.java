@@ -7,6 +7,7 @@ import com.back.product.dto.OptionDto;
 import com.back.product.dto.ProductInfoDto;
 import com.back.product.global.event.ProductCreationCompletedEvent;
 import com.back.product.global.event.ProductUpdateCompletedEvent;
+import com.back.product.global.event.ProductDeletionCompletedEvent;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -151,6 +152,31 @@ class ProductSyncEventPublishTest {
             assertThat(infoDtoCaptor.getValue().name()).isEqualTo("Updated Product");
             assertThat(optionsCaptor.getValue()).hasSize(1);
             assertThat(urlCaptor.getValue()).isEqualTo("http://test.com/updated_image.jpg");
+        });
+    }
+
+    @Test
+    @DisplayName("ProductDeletionCompletedEvent 발행 시, Kafka를 거쳐 최종적으로 ES 삭제 로직이 호출된다")
+    void testProductDeletionEventFlow() {
+        // --- 1. Arrange (테스트 준비) ---
+        Long productInfoIdToDelete = 3L; // 삭제할 상품의 ID
+        ProductDeletionCompletedEvent event = new ProductDeletionCompletedEvent(productInfoIdToDelete);
+
+        // --- 2. Act (이벤트 발행) ---
+        transactionTemplate.execute(status -> {
+            applicationEventPublisher.publishEvent(event);
+            return null;
+        });
+
+        // --- 3. Assert (결과 검증) ---
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            ArgumentCaptor<Long> idCaptor = ArgumentCaptor.forClass(Long.class);
+
+            // ProductDocumentUseCase의 deleteProduct 메소드가 1번 호출되었는지 검증
+            verify(productDocumentUseCase, times(1)).deleteProduct(idCaptor.capture());
+
+            // 최종적으로 전달된 productInfoId가 발행했던 데이터와 일치하는지 검증
+            assertThat(idCaptor.getValue()).isEqualTo(productInfoIdToDelete);
         });
     }
 }
