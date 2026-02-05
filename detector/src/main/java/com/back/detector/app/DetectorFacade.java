@@ -2,6 +2,7 @@ package com.back.detector.app;
 
 import com.back.detector.exception.BidSpamException;
 import com.back.detector.exception.CrawlingDetectedException;
+import com.back.detector.exception.HijackDetectedException;
 import com.back.security.util.SecurityHelper;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 public class DetectorFacade {
     private final BidSpamDetector bidSpamDetector;
     private final CrawlingDetector crawlingDetector;
+    private final HijackDetector hijackDetector;
 
     @Around("@annotation(com.back.detector.annotation.CheckBidSpam)")
     public Object detectBidSpam(ProceedingJoinPoint joinPoint) {
@@ -51,6 +53,37 @@ public class DetectorFacade {
         }
     }
 
+    @Around("@annotation(com.back.detector.annotation.CheckHijack)")
+    public Object detectHijack(ProceedingJoinPoint joinPoint) {
+        try {
+            Long userId = getCurrentUserId();
+            String ip = getCurrentIp();
+
+            Long transactionAmount = extractTransactionAmount(joinPoint.getArgs());
+            
+            hijackDetector.checkHijack(userId, ip, transactionAmount);
+            return joinPoint.proceed();
+        } catch (HijackDetectedException e) {
+            log.warn("계정 탈취 감지 - 사용자ID: {}, IP: {}", getCurrentUserIdSafe(), getCurrentIpSafe());
+            throw e;
+        } catch (Throwable e) {
+            log.error("메서드 실행 중 오류 발생", e);
+            throw new RuntimeException("거래 처리 실패", e);
+        }
+    }
+
+    /**
+     * 메서드 파라미터에서 거래금액 추출
+     */
+    private Long extractTransactionAmount(Object[] args) {
+        for (Object arg : args) {
+            if (arg instanceof Long) {
+                return (Long) arg;
+            }
+        }
+        return 0L; // 금액을 찾지 못하면 0원으로 처리 (검사 통과)
+    }
+
     private Long getCurrentUserId() {
         return SecurityHelper.getCurrentUserId();
     }
@@ -71,13 +104,24 @@ public class DetectorFacade {
     }
 
     /**
-     * 예외 로깅용 — getCurrentIp()가 실패해도 로그는 남기려는 용도
+     * 예외 로깅용 : getCurrentIp()가 실패해도 로그는 남기려는 용도
      */
     private String getCurrentIpSafe() {
         try {
             return getCurrentIp();
         } catch (Exception e) {
             return "unknown";
+        }
+    }
+
+    /**
+     * 예외 로깅용 : getCurrentUserId()가 실패해도 로그는 남기려는 용도
+     */
+    private Long getCurrentUserIdSafe() {
+        try {
+            return getCurrentUserId();
+        } catch (Exception e) {
+            return null;
         }
     }
 }
