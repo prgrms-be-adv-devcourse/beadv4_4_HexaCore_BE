@@ -10,7 +10,8 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 @SpringBootApplication(scanBasePackages = {
         "com.back.common",
         "com.back.security",
-        "com.back.market"
+        "com.back.market",
+        "com.back.detector"
 }) // common 모듈 스캔을 위해 추가
 public class MarketApplication {
 
