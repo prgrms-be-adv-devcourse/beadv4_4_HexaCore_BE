@@ -7,8 +7,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 @SpringBootApplication(scanBasePackages = {
         "com.back.user",
         "com.back.common",
-        "com.back.security",
-        "com.back.detector"
+        "com.back.security"
 })
 @EnableJpaAuditing
 public class UserApplication {
