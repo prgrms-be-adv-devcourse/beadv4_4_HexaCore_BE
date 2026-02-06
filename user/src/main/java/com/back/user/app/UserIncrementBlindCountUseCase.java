@@ -17,7 +17,7 @@ public class UserIncrementBlindCountUseCase {
         user.incrementBlindCount();
 
         if(user.getBlindCount()>= ChatRestrictionPolicy.BLIND_THRESHOLD){
-            user.restrictChatForDays(ChatRestrictionPolicy.RESTRICT_DAYS);
+            // user.restrictChatForDays(ChatRestrictionPolicy.RESTRICT_DAYS);
             user.resetBlindCount();
         }
     }
