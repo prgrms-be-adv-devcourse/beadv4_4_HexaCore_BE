@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -17,7 +18,7 @@ public class HijackDetector {
 
     private final RedisTemplate<String, String> detectorRedisTemplate;
 
-    private static final long NEW_IP_TRANSACTION_LIMIT = 200_000L;
+    private static final BigDecimal NEW_IP_TRANSACTION_LIMIT = new BigDecimal("200000");
     private static final int IP_HISTORY_DAYS = 90;
     private static final int NEW_IP_COOLDOWN_HOURS = 24;
     private static final int MAX_IP_COUNT = 10;
@@ -48,7 +49,7 @@ public class HijackDetector {
      * - 새 IP: 24시간 동안 총 20만원까지만 허용
      * - 신뢰 IP: 제한 없음
      */
-    public void checkHijack(Long userId, String currentIp, Long transactionAmount) {
+    public void checkHijack(Long userId, String currentIp, BigDecimal transactionAmount) {
         if (isUserBlocked(userId)) {
             throw new HijackDetectedException();
         }
@@ -61,9 +62,9 @@ public class HijackDetector {
         Boolean isKnownIp = detectorRedisTemplate.opsForSet().isMember(trustedIpSetKey, currentIp);
 
         // 1. 완전히 새로운 IP
-        if (Boolean.FALSE.equals(isKnownIp)) {
+        if (!Boolean.TRUE.equals(isKnownIp)) {
             // 첫 거래 한도 체크
-            if (transactionAmount > NEW_IP_TRANSACTION_LIMIT) {
+            if (transactionAmount.compareTo(NEW_IP_TRANSACTION_LIMIT) > 0) {
                 blockUser(userId);
                 notifyAdmin(userId, getAllIps(userId), currentIp, transactionAmount,
                         NEW_IP_TRANSACTION_LIMIT, null, null);
@@ -84,14 +85,14 @@ public class HijackDetector {
             // 쿨다운 시작: 24시간 누적 금액 초기화
             detectorRedisTemplate.opsForValue().set(
                     accumulatedAmountKey,
-                    String.valueOf(transactionAmount),
+                    transactionAmount.toString(),
                     NEW_IP_COOLDOWN_HOURS,
                     TimeUnit.HOURS
             );
 
+            BigDecimal remaining = NEW_IP_TRANSACTION_LIMIT.subtract(transactionAmount);
             log.info("[새 IP 등록] userId: {}, IP: {}, 첫 거래: {}원, 잔여: {}원",
-                    userId, currentIp, transactionAmount,
-                    NEW_IP_TRANSACTION_LIMIT - transactionAmount);
+                    userId, currentIp, transactionAmount, remaining);
             return;
         }
 
@@ -100,28 +101,37 @@ public class HijackDetector {
 
         // 2-1. 쿨다운 기간 중 (타임스탬프 키 존재 = 24시간 이내)
         if (timestamp != null) {
-            // 누적 한도
-            Long newTotal = detectorRedisTemplate.opsForValue().increment(accumulatedAmountKey, transactionAmount);
+            // 기존 누적 금액 조회
+            String currentAccumulatedStr = detectorRedisTemplate.opsForValue().get(accumulatedAmountKey);
+            BigDecimal currentAccumulated = currentAccumulatedStr != null 
+                    ? new BigDecimal(currentAccumulatedStr) 
+                    : BigDecimal.ZERO;
 
-            if (newTotal == null) {
-                log.error("[누적 금액 키 없음] userId: {}, IP: {}", userId, currentIp);
-                newTotal = transactionAmount;
-            }
+            // 새로운 누적 금액 계산
+            BigDecimal newTotal = currentAccumulated.add(transactionAmount);
+
+            // 누적 금액 업데이트
+            detectorRedisTemplate.opsForValue().set(
+                    accumulatedAmountKey,
+                    newTotal.toString(),
+                    NEW_IP_COOLDOWN_HOURS,
+                    TimeUnit.HOURS
+            );
 
             // 누적 한도 체크
-            if (newTotal > NEW_IP_TRANSACTION_LIMIT) {
+            if (newTotal.compareTo(NEW_IP_TRANSACTION_LIMIT) > 0) {
                 long registeredTime = Long.parseLong(timestamp);
                 long hoursPassed = (System.currentTimeMillis() - registeredTime) / (1000 * 60 * 60);
 
                 blockUser(userId);
                 notifyAdmin(userId, getAllIps(userId), currentIp, transactionAmount,
-                        NEW_IP_TRANSACTION_LIMIT, newTotal - transactionAmount, hoursPassed);
+                        NEW_IP_TRANSACTION_LIMIT, currentAccumulated, hoursPassed);
                 throw new HijackDetectedException();
             }
 
+            BigDecimal remaining = NEW_IP_TRANSACTION_LIMIT.subtract(newTotal);
             log.info("[쿨다운 중 거래] userId: {}, IP: {}, 현재: {}원, 누적: {}원, 잔여: {}원",
-                    userId, currentIp, transactionAmount, newTotal,
-                    NEW_IP_TRANSACTION_LIMIT - newTotal);
+                    userId, currentIp, transactionAmount, newTotal, remaining);
             return;
         }
 
@@ -159,17 +169,19 @@ public class HijackDetector {
         return ips == null || ips.isEmpty() ? "없음" : String.join(", ", ips);
     }
 
-    private void notifyAdmin(Long userId, String existingIps, String currentIp, Long currentAmount,
-                             Long limit, Long previousAmount, Long hoursPassed) {
+    private void notifyAdmin(Long userId, String existingIps, String currentIp, BigDecimal currentAmount,
+                             BigDecimal limit, BigDecimal previousAmount, Long hoursPassed) {
         String reason;
 
         if (previousAmount == null) {
             // 새 IP 첫 거래 한도 초과
-            reason = String.format("새 IP 첫 거래 한도 초과 (한도: %,d원)", limit);
+            reason = String.format("새 IP 첫 거래 한도 초과 (한도: %,d원)", limit.longValue());
         } else {
             // 새 IP 누적 금액 초과
+            BigDecimal total = previousAmount.add(currentAmount);
             reason = String.format("새 IP 누적 금액 초과 (기존: %,d원 + 현재: %,d원 = %,d원, 한도: %,d원, 등록 후 %d시간)",
-                    previousAmount, currentAmount, previousAmount + currentAmount, limit, hoursPassed);
+                    previousAmount.longValue(), currentAmount.longValue(), 
+                    total.longValue(), limit.longValue(), hoursPassed);
         }
 
         log.warn("""

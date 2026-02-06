@@ -1,8 +1,6 @@
 package com.back.detector.app;
 
-import com.back.detector.exception.BidSpamException;
-import com.back.detector.exception.CrawlingDetectedException;
-import com.back.detector.exception.HijackDetectedException;
+import com.back.common.util.IpAddressExtractor;
 import com.back.security.util.SecurityHelper;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +12,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
+import java.math.BigDecimal;
+
 @Aspect
 @Service
 @RequiredArgsConstructor
@@ -24,64 +24,58 @@ public class DetectorFacade {
     private final HijackDetector hijackDetector;
 
     @Around("@annotation(com.back.detector.annotation.CheckBidSpam)")
-    public Object detectBidSpam(ProceedingJoinPoint joinPoint) {
-        try {
-            Long userId = getCurrentUserId();
-            bidSpamDetector.checkBidSpam(userId);
-            return joinPoint.proceed();
-        } catch (BidSpamException e) {
-            log.warn("입찰 스팸 감지 - {}", e.getMessage());
-            throw e;
-        } catch (Throwable e) {
-            log.error("메서드 실행 중 오류 발생", e);
-            throw new RuntimeException("입찰 처리 실패", e);
-        }
+    public Object detectBidSpam(ProceedingJoinPoint joinPoint) throws Throwable {
+        Long userId = getCurrentUserId();
+        bidSpamDetector.checkBidSpam(userId);
+        return joinPoint.proceed();
     }
 
     @Around("@annotation(com.back.detector.annotation.CheckCrawling)")
-    public Object detectCrawling(ProceedingJoinPoint joinPoint) {
-        try {
-            String ip = getCurrentIp();
-            crawlingDetector.checkCrawling(ip);
-            return joinPoint.proceed();
-        } catch (CrawlingDetectedException e) {
-            log.warn("크롤링 봇 감지 - IP: {}", getCurrentIpSafe());
-            throw e;
-        } catch (Throwable e) {
-            log.error("메서드 실행 중 오류 발생", e);
-            throw new RuntimeException("상품 조회 처리 실패", e);
-        }
+    public Object detectCrawling(ProceedingJoinPoint joinPoint) throws Throwable {
+        String ip = getCurrentIp();
+        crawlingDetector.checkCrawling(ip);
+        return joinPoint.proceed();
     }
 
     @Around("@annotation(com.back.detector.annotation.CheckHijack)")
-    public Object detectHijack(ProceedingJoinPoint joinPoint) {
-        try {
-            Long userId = getCurrentUserId();
-            String ip = getCurrentIp();
+    public Object detectHijack(ProceedingJoinPoint joinPoint) throws Throwable {
+        Long userId = getCurrentUserId();
+        String ip = getCurrentIp();
 
-            Long transactionAmount = extractTransactionAmount(joinPoint.getArgs());
-            
-            hijackDetector.checkHijack(userId, ip, transactionAmount);
-            return joinPoint.proceed();
-        } catch (HijackDetectedException e) {
-            log.warn("계정 탈취 감지 - 사용자ID: {}, IP: {}", getCurrentUserIdSafe(), getCurrentIpSafe());
-            throw e;
-        } catch (Throwable e) {
-            log.error("메서드 실행 중 오류 발생", e);
-            throw new RuntimeException("거래 처리 실패", e);
-        }
+        BigDecimal transactionAmount = extractTransactionAmount(joinPoint.getArgs());
+        
+        hijackDetector.checkHijack(userId, ip, transactionAmount);
+        return joinPoint.proceed();
     }
 
     /**
      * 메서드 파라미터에서 거래금액 추출
      */
-    private Long extractTransactionAmount(Object[] args) {
+    private BigDecimal extractTransactionAmount(Object[] args) {
         for (Object arg : args) {
-            if (arg instanceof Long) {
-                return (Long) arg;
+            // BigDecimal 타입 직접 체크
+            if (arg instanceof BigDecimal) {
+                return (BigDecimal) arg;
+            }
+            
+            // BiddingRequestDto에서 가격 추출
+            if (arg != null && arg.getClass().getSimpleName().equals("BiddingRequestDto")) {
+                try {
+                    // record의 price() 메서드 호출
+                    var method = arg.getClass().getMethod("price");
+                    Object price = method.invoke(arg);
+                    if (price instanceof BigDecimal) {
+                        return (BigDecimal) price;
+                    }
+                } catch (Exception e) {
+                    log.warn("BiddingRequestDto에서 가격 추출 실패", e);
+                }
             }
         }
-        return 0L; // 금액을 찾지 못하면 0원으로 처리 (검사 통과)
+        
+        // 금액을 찾지 못하면 예외 발생
+        log.error("거래 금액을 찾을 수 없습니다. args: {}", (Object) args);
+        throw new IllegalStateException("거래 금액을 찾을 수 없습니다");
     }
 
     private Long getCurrentUserId() {
