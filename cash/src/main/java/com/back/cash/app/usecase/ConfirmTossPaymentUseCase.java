@@ -9,18 +9,20 @@ import com.back.cash.domain.Wallet;
 import com.back.cash.domain.enums.PaymentStatus;
 import com.back.cash.dto.request.TossConfirmRequest;
 import com.back.cash.dto.response.ConfirmResultResponseDto;
+import com.back.cash.mapper.PaymentMapper;
 import com.back.common.code.FailureCode;
-import com.back.common.dto.cash.request.PaymentCompletedRequestDto;
-import com.back.common.dto.cash.request.PaymentFailedRequestDto;
 import com.back.common.exception.BadRequestException;
 import com.back.common.exception.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ConfirmTossPaymentUseCase {
 
     private final PaymentRepository paymentRepository;
@@ -28,14 +30,43 @@ public class ConfirmTossPaymentUseCase {
     private final CashLogSupport cashLogSupport;
     private final TossPaymentsClient tossPaymentsClient;
 
+    /**
+     * 토스 결제 확인
+     */
     public ConfirmResultResponseDto execute(TossConfirmRequest req) {
+        // 검증 (이미 DONE이면 바로 반환)
+        ConfirmResultResponseDto alreadyDone = validatePayment(req);
+        if (alreadyDone != null) {
+            return alreadyDone;
+        }
 
+        // 토스 confirm 호출
+        boolean tossSuccess = callTossConfirm(req);
+
+        // 결과 반영
+        if (tossSuccess) {
+            return applySuccess(req.orderId(), req.paymentKey());
+        } else {
+            return applyFailure(req.orderId());
+        }
+    }
+
+    /**
+     * Payment 조회 및 검증 (트랜잭션)
+     */
+    @Transactional
+    public ConfirmResultResponseDto validatePayment(TossConfirmRequest req) {
         Payment payment = paymentRepository.findWithLockByTossOrderId(req.orderId())
                 .orElseThrow(() -> new EntityNotFoundException(FailureCode.PAYMENT_NOT_FOUND));
 
-        // 이미 DONE이면 종료
+        // 이미 DONE이면 바로 성공 응답 반환
         if (payment.getStatus() == PaymentStatus.DONE) {
-            return ConfirmResultResponseDto.success(toCompletedDto(payment));
+            return ConfirmResultResponseDto.success(PaymentMapper.toCompletedDto(payment));
+        }
+
+        // FAIL이나 CANCELED면 처리 불가
+        if (payment.getStatus() == PaymentStatus.FAIL || payment.getStatus() == PaymentStatus.CANCELED) {
+            throw new BadRequestException(FailureCode.INVALID_CONFIRM);
         }
 
         // PG 대상/금액 검증
@@ -46,37 +77,69 @@ public class ConfirmTossPaymentUseCase {
             throw new BadRequestException(FailureCode.AMOUNT_MISMATCH);
         }
 
-        // 토스 confirm 호출
+        return null;
+    }
+
+    /**
+     * 토스 confirm API 호출
+     */
+    private boolean callTossConfirm(TossConfirmRequest req) {
         try {
             tossPaymentsClient.confirm(req.paymentKey(), req.orderId(), req.amount());
+            log.info("[TOSS_CONFIRM_SUCCESS] orderId={}, paymentKey={}, amount={}",
+                    req.orderId(), req.paymentKey(), req.amount());
+            return true;
         } catch (Exception e) {
-            // confirm 실패: FAIL + 선홀딩(walletUsedAmount) 되돌림(RELEASE)
-            handleConfirmFail(payment);
-            return ConfirmResultResponseDto.fail(toFailedDto(payment));
+            log.error("[TOSS_CONFIRM_FAIL] orderId={}, paymentKey={}, amount={}, error={}",
+                    req.orderId(), req.paymentKey(), req.amount(), e.getMessage(), e);
+            return false;
+        }
+    }
+
+    /**
+     * 토스 성공 시 DB 반영 (트랜잭션)
+     */
+    @Transactional
+    public ConfirmResultResponseDto applySuccess(String orderId, String paymentKey) {
+        Payment payment = paymentRepository.findWithLockByTossOrderId(orderId)
+                .orElseThrow(() -> new EntityNotFoundException(FailureCode.PAYMENT_NOT_FOUND));
+
+        // 멱등성: 이미 DONE이면 성공 응답
+        if (payment.getStatus() == PaymentStatus.DONE) {
+            return ConfirmResultResponseDto.success(PaymentMapper.toCompletedDto(payment));
         }
 
-        // confirm 성공: PG 금액을 유저에 충전됐다가 즉시 홀딩으로 이동
+        // PG 금액 충전 후 즉시 홀딩
         applyPgTopUpThenHold(payment);
 
-        payment.setPaymentKeyIfAbsent(req.paymentKey());
+        payment.setPaymentKeyIfAbsent(paymentKey);
         payment.markAsDone();
 
-        return ConfirmResultResponseDto.success(toCompletedDto(payment));
+        log.info("[PAYMENT_DONE] orderId={}, paymentKey={}, totalAmount={}",
+                orderId, paymentKey, payment.getTotalAmount());
+
+        return ConfirmResultResponseDto.success(PaymentMapper.toCompletedDto(payment));
     }
 
-    private PaymentCompletedRequestDto toCompletedDto(Payment payment) {
-        return new PaymentCompletedRequestDto(
-                payment.getRelType(),
-                payment.getRelId(),
-                payment.getTotalAmount()
-        );
-    }
+    /**
+     * 토스 실패 시 DB 반영 (트랜잭션)
+     */
+    @Transactional
+    public ConfirmResultResponseDto applyFailure(String orderId) {
+        Payment payment = paymentRepository.findWithLockByTossOrderId(orderId)
+                .orElseThrow(() -> new EntityNotFoundException(FailureCode.PAYMENT_NOT_FOUND));
 
-    private PaymentFailedRequestDto toFailedDto(Payment payment) {
-        return new PaymentFailedRequestDto(
-                payment.getRelType(),
-                payment.getRelId()
-        );
+        // 멱등성: 이미 처리된 상태면 그에 맞게 응답
+        if (payment.getStatus() == PaymentStatus.DONE) {
+            return ConfirmResultResponseDto.success(PaymentMapper.toCompletedDto(payment));
+        }
+        if (payment.getStatus() == PaymentStatus.FAIL) {
+            return ConfirmResultResponseDto.fail(PaymentMapper.toFailedDto(payment));
+        }
+
+        handleConfirmFail(payment);
+
+        return ConfirmResultResponseDto.fail(PaymentMapper.toFailedDto(payment));
     }
 
     private void applyPgTopUpThenHold(Payment payment) {
@@ -98,7 +161,7 @@ public class ConfirmTossPaymentUseCase {
     private void handleConfirmFail(Payment payment) {
         payment.markAsFail();
 
-        BigDecimal held = payment.getWalletUsedAmount(); // payAndHold에서 이미 홀딩된 예치금
+        BigDecimal held = payment.getWalletUsedAmount();
         if (held == null || held.signum() <= 0) return;
 
         if (payment.isReleased()) return;
@@ -113,5 +176,8 @@ public class ConfirmTossPaymentUseCase {
         cashLogSupport.recordReleaseOnPaymentFail(buyerWallet, systemWallet, held, payment.getRelType(), payment.getRelId());
 
         payment.markReleased();
+
+        log.info("[PAYMENT_FAIL_RELEASED] orderId={}, releasedAmount={}",
+                payment.getTossOrderId(), held);
     }
 }
