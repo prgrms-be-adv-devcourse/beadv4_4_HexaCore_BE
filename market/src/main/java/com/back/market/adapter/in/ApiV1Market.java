@@ -68,14 +68,14 @@ public interface ApiV1Market {
     @GetMapping("/orders/buying")
     CommonResponse<Page<OrderListResponseDto>> getBuyingList(
             @AuthenticationPrincipal AuthPrincipal principal,
-            @PageableDefault(size=10, sort = "paymentDate", direction = Sort.Direction.DESC) Pageable pageable
+            @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     );
 
     @Operation(summary = "판매 내역 조회", description = "특정 사용자의 판매 내역을 조회한다.")
     @GetMapping("/orders/selling")
     CommonResponse<Page<OrderListResponseDto>> getSellingList(
             @AuthenticationPrincipal AuthPrincipal principal,
-            @PageableDefault(size=10, sort = "paymentDate", direction = Sort.Direction.DESC) Pageable pageable
+            @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     );
 
     @Operation(summary = "구매/판매 상세 내역 조회", description = "특정 사용자의 구매 내역을 조회한다.")

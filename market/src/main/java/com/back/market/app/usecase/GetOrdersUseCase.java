@@ -48,13 +48,7 @@ public class GetOrdersUseCase {
      */
     public OrderDetailResponseDto getOrderDetail(Long userId, Long orderId) {
 
-        Order order = marketSupport.findOrderWithDetails(orderId);
-        Long buyerId = order.getBuyBidding().getMarketUser().getId();
-        Long sellerId = order.getSellBidding().getMarketUser().getId();
-
-        if (!userId.equals(buyerId) && !userId.equals(sellerId)) {
-            throw new BadRequestException(FailureCode.ORDER_ACCESS_DENIED);
-        }
+        Order order = marketSupport.findOrderWithDetails(userId, orderId);
         return orderMapper.toOrderDetailResponseDto(order);
     }
 

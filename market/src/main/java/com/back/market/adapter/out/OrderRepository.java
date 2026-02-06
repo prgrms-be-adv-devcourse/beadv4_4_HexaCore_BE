@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-public interface OrderRepository extends JpaRepository<Order, Long> {
+public interface OrderRepository extends JpaRepository<Order, Long>, OrderRepositoryCustom {
     @Query("SELECT o FROM Order o JOIN FETCH o.sellBidding sb JOIN FETCH sb.marketUser s JOIN FETCH o.buyBidding bb WHERE o.lastModifiedAt BETWEEN :startDate and :endDate")
     List<Order> findSettlementTargetOrders(
             @Param("startDate") LocalDateTime startDateTime,
