@@ -20,6 +20,7 @@ public class TossPaymentsClient {
 
     public TossPaymentsClient(
             @Value("${toss.secret-key}") String secretKey,
+            @Value("${toss.base-url:https://api.tosspayments.com}") String baseUrl,
             @Value("${toss.connect-timeout:5000}") int connectTimeout,
             @Value("${toss.read-timeout:30000}") int readTimeout) {
         this.secretKey = secretKey;
@@ -29,7 +30,7 @@ public class TossPaymentsClient {
         factory.setReadTimeout(Duration.ofMillis(readTimeout));
 
         this.restClient = RestClient.builder()
-                .baseUrl("https://api.tosspayments.com")
+                .baseUrl(baseUrl)
                 .requestFactory(factory)
                 .build();
     }
