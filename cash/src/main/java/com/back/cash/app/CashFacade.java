@@ -42,8 +42,10 @@ public class CashFacade {
     public ConfirmResultResponseDto confirmTossPayment(TossConfirmRequest req) {
         ConfirmResultResponseDto result = confirmTossPaymentUseCase.execute(req);
 
-        notifyMarket(result);
-
+        if (!result.isPending()) {
+            notifyMarket(result);
+        }
+        // todo: pending인 경우 마켓에게 응답 안하는데 처리 필요
         return result;
     }
 
