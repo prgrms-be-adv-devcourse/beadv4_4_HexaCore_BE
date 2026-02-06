@@ -11,8 +11,7 @@ public enum DetectorRedisKey {
     CRAWLING_BAN("crawl:ban:"),
     TRUSTED_IP("trusted:ips:"),
     NEW_IP_TIMESTAMP("new:ip:timestamp:"),
-    NEW_IP_AMOUNT("new:ip:amount:"),
-    USER_BLOCKED("user:blocked:");
+    NEW_IP_AMOUNT("new:ip:amount:");
 
     private final String prefix;
 

@@ -37,45 +37,15 @@ public class DetectorFacade {
         return joinPoint.proceed();
     }
 
-    @Around("@annotation(com.back.detector.annotation.CheckHijack)")
-    public Object detectHijack(ProceedingJoinPoint joinPoint) throws Throwable {
-        Long userId = getCurrentUserId();
-        String ip = getCurrentIp();
-
-        BigDecimal transactionAmount = extractTransactionAmount(joinPoint.getArgs());
-        
-        hijackDetector.checkHijack(userId, ip, transactionAmount);
-        return joinPoint.proceed();
-    }
-
     /**
-     * 메서드 파라미터에서 거래금액 추출
+     * 계정 탈취 감지 (마켓 컨트롤러에서 직접 호출)
+     * @param userId 사용자 ID
+     * @param userEmail 사용자 이메일
+     * @param ip 현재 요청 IP 주소
+     * @param transactionAmount 거래 금액
      */
-    private BigDecimal extractTransactionAmount(Object[] args) {
-        for (Object arg : args) {
-            // BigDecimal 타입 직접 체크
-            if (arg instanceof BigDecimal) {
-                return (BigDecimal) arg;
-            }
-            
-            // BiddingRequestDto에서 가격 추출
-            if (arg != null && arg.getClass().getSimpleName().equals("BiddingRequestDto")) {
-                try {
-                    // record의 price() 메서드 호출
-                    var method = arg.getClass().getMethod("price");
-                    Object price = method.invoke(arg);
-                    if (price instanceof BigDecimal) {
-                        return (BigDecimal) price;
-                    }
-                } catch (Exception e) {
-                    log.warn("BiddingRequestDto에서 가격 추출 실패", e);
-                }
-            }
-        }
-        
-        // 금액을 찾지 못하면 예외 발생
-        log.error("거래 금액을 찾을 수 없습니다. args: {}", (Object) args);
-        throw new IllegalStateException("거래 금액을 찾을 수 없습니다");
+    public void detectHijack(Long userId, String userEmail, String ip, BigDecimal transactionAmount) {
+        hijackDetector.checkHijack(userId, userEmail, ip, transactionAmount);
     }
 
     private Long getCurrentUserId() {

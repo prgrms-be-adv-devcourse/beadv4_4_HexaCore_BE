@@ -1,9 +1,11 @@
 package com.back.detector.app;
 
+import com.back.common.event.KafkaEventPublisher;
 import com.back.detector.domain.enums.DetectorRedisKey;
-import com.back.detector.exception.HijackDetectedException;
+import com.back.detector.event.HijackSuspectedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -17,12 +19,11 @@ import java.util.concurrent.TimeUnit;
 public class HijackDetector {
 
     private final RedisTemplate<String, String> detectorRedisTemplate;
+    private final KafkaEventPublisher eventPublisher;
 
     private static final BigDecimal NEW_IP_TRANSACTION_LIMIT = new BigDecimal("200000");
     private static final int IP_HISTORY_DAYS = 90;
     private static final int NEW_IP_COOLDOWN_HOURS = 24;
-    private static final int MAX_IP_COUNT = 10;
-    private static final int BAN_IP_DAYS = 1;
 
 
     /**
@@ -46,32 +47,31 @@ public class HijackDetector {
      * - new:ip:amount:{userId}:{ip}: 새 IP 누적 거래 금액 (String, TTL: 24시간)
      * 
      * 규칙:
-     * - 새 IP: 24시간 동안 총 20만원까지만 허용
+     * - 새 IP 첫 거래가 20만원 이하일 때만 IP 등록
+     * - 새 IP: 24시간 동안 총 20만원 초과 시 이메일 알림 발송
      * - 신뢰 IP: 제한 없음
+     * - 모든 거래는 항상 허용됨 (차단 없음)
      */
-    public void checkHijack(Long userId, String currentIp, BigDecimal transactionAmount) {
-        if (isUserBlocked(userId)) {
-            throw new HijackDetectedException();
-        }
-
+    public void checkHijack(Long userId, String userEmail, String currentIp, BigDecimal transactionAmount) {
         String trustedIpSetKey = DetectorRedisKey.TRUSTED_IP.getKey(userId);
         String ipTimestampKey = DetectorRedisKey.NEW_IP_TIMESTAMP.getKey(userId, currentIp);
         String accumulatedAmountKey = DetectorRedisKey.NEW_IP_AMOUNT.getKey(userId, currentIp);
 
-        // trusted:ips:{userId}에서 현재 IP 확인
         Boolean isKnownIp = detectorRedisTemplate.opsForSet().isMember(trustedIpSetKey, currentIp);
 
         // 1. 완전히 새로운 IP
         if (!Boolean.TRUE.equals(isKnownIp)) {
-            // 첫 거래 한도 체크
+            // 첫 거래가 한도 초과하면 IP 등록하지 않고 메일만 발송
             if (transactionAmount.compareTo(NEW_IP_TRANSACTION_LIMIT) > 0) {
-                blockUser(userId);
-                notifyAdmin(userId, getAllIps(userId), currentIp, transactionAmount,
-                        NEW_IP_TRANSACTION_LIMIT, null, null);
-                throw new HijackDetectedException();
+                sendEmailNotification(userId, userEmail, getAllIps(userId), currentIp, 
+                        transactionAmount, NEW_IP_TRANSACTION_LIMIT, null, null);
+                
+                log.warn("[새 IP 거부] userId: {}, IP: {}, 첫 거래: {}원 (한도 {}원 초과로 IP 등록 안함)",
+                        userId, currentIp, transactionAmount, NEW_IP_TRANSACTION_LIMIT);
+                return;
             }
 
-            // IP를 신뢰 목록에 추가 (최대 10개까지만)
+            // 첫 거래가 한도 이하일 때만 IP 신뢰 목록에 등록
             addIpToHistory(userId, currentIp, trustedIpSetKey);
 
             // 쿨다운 시작: 24시간 타임스탬프 저장
@@ -92,7 +92,7 @@ public class HijackDetector {
 
             BigDecimal remaining = NEW_IP_TRANSACTION_LIMIT.subtract(transactionAmount);
             log.info("[새 IP 등록] userId: {}, IP: {}, 첫 거래: {}원, 잔여: {}원",
-                    userId, currentIp, transactionAmount, remaining);
+                    userId, currentIp, transactionAmount, remaining.max(BigDecimal.ZERO));
             return;
         }
 
@@ -107,31 +107,26 @@ public class HijackDetector {
                     ? new BigDecimal(currentAccumulatedStr) 
                     : BigDecimal.ZERO;
 
-            // 새로운 누적 금액 계산
-            BigDecimal newTotal = currentAccumulated.add(transactionAmount);
+            // 거래 금액만큼 누적 (increment 사용 - TTL은 최초 등록 시점 기준 유지)
+            Long incrementedValue = detectorRedisTemplate.opsForValue()
+                    .increment(accumulatedAmountKey, transactionAmount.longValue());
+            
+            BigDecimal newTotal = incrementedValue != null 
+                    ? new BigDecimal(incrementedValue) 
+                    : currentAccumulated.add(transactionAmount);
 
-            // 누적 금액 업데이트
-            detectorRedisTemplate.opsForValue().set(
-                    accumulatedAmountKey,
-                    newTotal.toString(),
-                    NEW_IP_COOLDOWN_HOURS,
-                    TimeUnit.HOURS
-            );
-
-            // 누적 한도 체크
+            // 누적 한도 초과하면 메일 발송
             if (newTotal.compareTo(NEW_IP_TRANSACTION_LIMIT) > 0) {
                 long registeredTime = Long.parseLong(timestamp);
                 long hoursPassed = (System.currentTimeMillis() - registeredTime) / (1000 * 60 * 60);
 
-                blockUser(userId);
-                notifyAdmin(userId, getAllIps(userId), currentIp, transactionAmount,
-                        NEW_IP_TRANSACTION_LIMIT, currentAccumulated, hoursPassed);
-                throw new HijackDetectedException();
+                sendEmailNotification(userId, userEmail, getAllIps(userId), currentIp, 
+                        transactionAmount, NEW_IP_TRANSACTION_LIMIT, currentAccumulated, hoursPassed);
             }
 
             BigDecimal remaining = NEW_IP_TRANSACTION_LIMIT.subtract(newTotal);
             log.info("[쿨다운 중 거래] userId: {}, IP: {}, 현재: {}원, 누적: {}원, 잔여: {}원",
-                    userId, currentIp, transactionAmount, newTotal, remaining);
+                    userId, currentIp, transactionAmount, newTotal, remaining.max(BigDecimal.ZERO));
             return;
         }
 
@@ -140,42 +135,35 @@ public class HijackDetector {
                 userId, currentIp, transactionAmount);
     }
 
-    private boolean isUserBlocked(Long userId) {
-        String blockKey = DetectorRedisKey.USER_BLOCKED.getKey(userId);
-        String blocked = detectorRedisTemplate.opsForValue().get(blockKey);
-        return "true".equals(blocked);
-    }
-
     /**
-     * IP를 신뢰 목록에 추가 (최대 10개 제한)
+     * IP를 신뢰 목록에 추가
      */
     private void addIpToHistory(Long userId, String currentIp, String ipSetKey) {
-        Long ipCount = detectorRedisTemplate.opsForSet().size(ipSetKey);
-
-        // 최대 IP 개수 초과 시 차단 (탈취 의심)
-        if (ipCount != null && ipCount >= MAX_IP_COUNT) {
-            log.warn("[IP 개수 제한 초과] userId: {}, 현재 개수: {}, 최대: {}",
-                    userId, ipCount, MAX_IP_COUNT);
-            throw new HijackDetectedException();
-        }
-
         detectorRedisTemplate.opsForSet().add(ipSetKey, currentIp);
         detectorRedisTemplate.expire(ipSetKey, IP_HISTORY_DAYS, TimeUnit.DAYS);
     }
 
+    /**
+     * 사용자의 모든 IP 목록 조회
+     */
     private String getAllIps(Long userId) {
         String ipSetKey = DetectorRedisKey.TRUSTED_IP.getKey(userId);
         Set<String> ips = detectorRedisTemplate.opsForSet().members(ipSetKey);
         return ips == null || ips.isEmpty() ? "없음" : String.join(", ", ips);
     }
 
-    private void notifyAdmin(Long userId, String existingIps, String currentIp, BigDecimal currentAmount,
-                             BigDecimal limit, BigDecimal previousAmount, Long hoursPassed) {
+    /**
+     * 이메일 알림 발송
+     */
+    private void sendEmailNotification(Long userId, String userEmail, String existingIps, 
+                                      String currentIp, BigDecimal currentAmount,
+                                      BigDecimal limit, BigDecimal previousAmount, Long hoursPassed) {
         String reason;
 
         if (previousAmount == null) {
             // 새 IP 첫 거래 한도 초과
-            reason = String.format("새 IP 첫 거래 한도 초과 (한도: %,d원)", limit.longValue());
+            reason = String.format("새 IP 첫 거래 한도 초과 (한도: %,d원, 거래: %,d원)", 
+                    limit.longValue(), currentAmount.longValue());
         } else {
             // 새 IP 누적 금액 초과
             BigDecimal total = previousAmount.add(currentAmount);
@@ -185,18 +173,24 @@ public class HijackDetector {
         }
 
         log.warn("""
-            [관리자 알림] 계정 탈취 의심
+            [이메일 알림] 계정 탈취 의심
             - 사용자ID: {}
+            - 이메일: {}
             - 기존IP 목록: {}
             - 현재IP: {}
             - 거래금액: {}원
-            - 차단사유: {}
-            """, userId, existingIps, currentIp, currentAmount, reason);
-    }
+            - 알림사유: {}
+            """, userId, userEmail, existingIps, currentIp, currentAmount, reason);
 
-    private void blockUser(Long userId) {
-        String blockKey = DetectorRedisKey.USER_BLOCKED.getKey(userId);
-        detectorRedisTemplate.opsForValue().set(blockKey, "true", BAN_IP_DAYS, TimeUnit.DAYS);
-        log.error("[계정 차단] 사용자 ID: {} (1일 차단)", userId);
+        // 이벤트 발행
+        HijackSuspectedEvent event = new HijackSuspectedEvent(
+                userId,
+                userEmail,
+                existingIps,
+                currentIp,
+                currentAmount,
+                reason
+        );
+        eventPublisher.publish(event);
     }
 }
