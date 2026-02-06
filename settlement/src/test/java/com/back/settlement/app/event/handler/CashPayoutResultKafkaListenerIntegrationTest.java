@@ -13,7 +13,6 @@ import com.back.settlement.adapter.out.SettlementRepository;
 import com.back.settlement.app.dto.request.SettlementRequest;
 import com.back.settlement.app.event.payload.PayoutResultPayload;
 import com.back.settlement.app.support.DomainEventPublisher;
-import com.back.settlement.config.EmbeddedKafkaTestConfig;
 import com.back.settlement.domain.Settlement;
 import com.back.settlement.domain.SettlementStatus;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -45,7 +44,7 @@ import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @Slf4j
-@SpringJUnitConfig(EmbeddedKafkaTestConfig.class)
+@SpringJUnitConfig({KafkaTestConsumerConfig.class})
 @EmbeddedKafka(
         partitions = 1,
         topics = CashPayoutResultKafkaListenerIntegrationTest.TOPIC

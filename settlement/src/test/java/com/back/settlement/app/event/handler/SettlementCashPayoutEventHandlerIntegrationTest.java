@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.back.common.event.Envelope;
 import com.back.settlement.app.event.payload.PayoutRequestPayload;
-import com.back.settlement.config.EmbeddedKafkaTestConfig;
 import com.back.settlement.domain.SettlementStatus;
 import com.back.settlement.domain.event.SettlementStartedEvent;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -30,7 +29,7 @@ import org.springframework.kafka.test.utils.KafkaTestUtils;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 @Slf4j
-@SpringJUnitConfig(EmbeddedKafkaTestConfig.class)
+@SpringJUnitConfig({KafkaTestProducerConfig.class, KafkaTestConsumerConfig.class})
 @EmbeddedKafka(
         partitions = 1,
         topics = "settlement-payout-request"
