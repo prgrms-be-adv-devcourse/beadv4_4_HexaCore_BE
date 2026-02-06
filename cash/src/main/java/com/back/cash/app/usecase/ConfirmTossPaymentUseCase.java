@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.ResourceAccessException;
 
 import java.math.BigDecimal;
 
@@ -24,6 +25,8 @@ import java.math.BigDecimal;
 @RequiredArgsConstructor
 @Slf4j
 public class ConfirmTossPaymentUseCase {
+
+    private enum TossConfirmStatus { SUCCESS, FAIL, UNKNOWN }
 
     private final PaymentRepository paymentRepository;
     private final WalletSupport walletSupport;
@@ -41,14 +44,17 @@ public class ConfirmTossPaymentUseCase {
         }
 
         // 토스 confirm 호출
-        boolean tossSuccess = callTossConfirm(req);
+        TossConfirmStatus tossStatus = callTossConfirm(req);
 
         // 결과 반영
-        if (tossSuccess) {
-            return applySuccess(req.orderId(), req.paymentKey());
-        } else {
-            return applyFailure(req.orderId());
-        }
+        return switch (tossStatus) {
+            case SUCCESS -> applySuccess(req.orderId(), req.paymentKey());
+            case FAIL -> applyFailure(req.orderId());
+            case UNKNOWN -> {
+                log.warn("[TOSS_CONFIRM_UNKNOWN] orderId={} - 결제 상태 불확실, READY 유지", req.orderId());
+                yield ConfirmResultResponseDto.pending();
+            }
+        };
     }
 
     /**
@@ -82,17 +88,24 @@ public class ConfirmTossPaymentUseCase {
 
     /**
      * 토스 confirm API 호출
+     *
+     * ResourceAccessException(타임아웃/네트워크 오류) → UNKNOWN: 토스 처리 여부 불확실
+     * 그 외 예외(HTTP 4xx/5xx 등) → FAIL: 토스가 명시적으로 거부
      */
-    private boolean callTossConfirm(TossConfirmRequest req) {
+    private TossConfirmStatus callTossConfirm(TossConfirmRequest req) {
         try {
             tossPaymentsClient.confirm(req.paymentKey(), req.orderId(), req.amount());
             log.info("[TOSS_CONFIRM_SUCCESS] orderId={}, paymentKey={}, amount={}",
                     req.orderId(), req.paymentKey(), req.amount());
-            return true;
+            return TossConfirmStatus.SUCCESS;
+        } catch (ResourceAccessException e) {
+            log.error("[TOSS_CONFIRM_UNKNOWN] orderId={}, paymentKey={}, error={}",
+                    req.orderId(), req.paymentKey(), e.getMessage(), e);
+            return TossConfirmStatus.UNKNOWN;
         } catch (Exception e) {
             log.error("[TOSS_CONFIRM_FAIL] orderId={}, paymentKey={}, amount={}, error={}",
                     req.orderId(), req.paymentKey(), req.amount(), e.getMessage(), e);
-            return false;
+            return TossConfirmStatus.FAIL;
         }
     }
 
