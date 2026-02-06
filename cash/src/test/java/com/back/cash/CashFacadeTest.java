@@ -106,6 +106,23 @@ class CashFacadeTest {
         verify(marketPaymentsClient).notifyPaymentCompleted(completedDto);
     }
 
+    @Test
+    @DisplayName("[confirmTossPayment] PENDING 응답 시 마켓 알림 전송하지 않음")
+    void confirmTossPayment_whenPending_thenNoMarketNotification() {
+        // given
+        TossConfirmRequest req = new TossConfirmRequest(PAYMENT_KEY, ORDER_ID, bd("18000"));
+        ConfirmResultResponseDto pendingResult = ConfirmResultResponseDto.pending();
+
+        given(confirmTossPaymentUseCase.execute(req)).willReturn(pendingResult);
+
+        // when
+        ConfirmResultResponseDto result = cashFacade.confirmTossPayment(req);
+
+        // then
+        assertThat(result.isPending()).isTrue();
+        verifyNoInteractions(marketPaymentsClient);
+    }
+
     private static BigDecimal bd(String v) {
         return new BigDecimal(v);
     }
