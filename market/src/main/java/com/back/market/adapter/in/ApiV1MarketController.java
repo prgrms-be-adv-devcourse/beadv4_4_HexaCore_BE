@@ -113,7 +113,7 @@ public class ApiV1MarketController implements ApiV1Market{
     }
 
     @Override
-    public CommonResponse<OrderDetailResponseDto> getOrderDetail(@AuthenticationPrincipal AuthPrincipal principal, Long orderId) {
+    public CommonResponse<OrderDetailResponseDto> getOrderDetail(@AuthenticationPrincipal AuthPrincipal principal, @PathVariable Long orderId) {
         OrderDetailResponseDto result = marketFacade.getOrderDetail(principal.getUserId(), orderId);
         return CommonResponse.success(SuccessCode.OK, result);
     }
