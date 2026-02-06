@@ -11,6 +11,13 @@ dependencies {
     // JWT
     implementation "io.jsonwebtoken:jjwt-api:${jjwtVersion}"
 
+    testImplementation(platform("org.testcontainers:testcontainers-bom:1.20.3"))
+
     testImplementation 'org.springframework:spring-messaging'
     testImplementation 'org.wiremock:wiremock-standalone:3.6.0'
+    testImplementation "org.testcontainers:junit-jupiter"
+    testImplementation "org.testcontainers:postgresql"
+    testImplementation "org.testcontainers:kafka"
+    testImplementation "org.awaitility:awaitility:4.2.0"
+    testImplementation "org.springframework.kafka:spring-kafka-test"
 }
