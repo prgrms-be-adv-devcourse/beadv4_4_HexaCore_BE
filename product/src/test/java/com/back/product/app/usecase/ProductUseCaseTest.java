@@ -59,6 +59,9 @@ class ProductUseCaseTest {
     @Mock
     private ProductSupport productSupport; // Though not used in create, good to have for other methods
 
+    @Mock
+    private com.back.product.mapper.ProductInfoMapper productInfoMapper;
+
     private ProductInfo productInfo;
     private OptionValue optionValue1, optionValue2;
 
@@ -80,7 +83,7 @@ class ProductUseCaseTest {
             ProductVariantCreateRequestDto variantDto1 = new ProductVariantCreateRequestDto(List.of(10L, 20L), 100L, List.of("img1.jpg"));
             ProductVariantCreateRequestDto variantDto2 = new ProductVariantCreateRequestDto(List.of(10L), 50L, List.of("img2.jpg"));
             List<ProductVariantCreateRequestDto> variants = List.of(variantDto1, variantDto2);
-            Map<Long, OptionValue> optionValueMap = Map.of(10L, optionValue1, 20L, optionValue2);
+            List<OptionValue> optionValues = List.of(optionValue1, optionValue2);
 
             Product product1 = Product.builder().id(1L).inventory(100L).build();
             Product product2 = Product.builder().id(2L).inventory(50L).build();
@@ -115,7 +118,7 @@ class ProductUseCaseTest {
 
 
             // when
-            List<ProductDto> resultDtos = productUseCase.createMultipleProduct(productInfo, variants, optionValueMap);
+            List<ProductDto> resultDtos = productUseCase.createMultipleProduct(productInfo, variants, optionValues);
 
             // then
             // Verify mappers were called correctly
@@ -158,7 +161,7 @@ class ProductUseCaseTest {
             ProductVariantUpdateRequestDto createDto = new ProductVariantUpdateRequestDto(null, List.of(20L), 300L, List.of("new.jpg"));
             List<ProductVariantUpdateRequestDto> variants = List.of(updateDto, createDto);
 
-            Map<Long, OptionValue> optionValueMap = Map.of(10L, optionValue1, 20L, optionValue2);
+            List<OptionValue> optionValues = List.of(optionValue1, optionValue2);
             Product newProduct = Product.builder().inventory(300L).productInfo(productInfo).build();
 
             // Mocking for the first part of the method
@@ -186,7 +189,7 @@ class ProductUseCaseTest {
 
 
             // when
-            productUseCase.updateMultipleProduct(productInfo, variants, optionValueMap);
+            productUseCase.updateMultipleProduct(productInfo, variants, optionValues);
 
             // then
             // 1. Verify deletions
@@ -286,6 +289,75 @@ class ProductUseCaseTest {
             verify(productSupport).getAllProductsByProductInfo(productInfo);
             verify(productSupport, never()).getAllProductOptionValuesByProductsIn(any());
             verify(productSupport, never()).getAllProductImagesByProductsIn(any());
+        }
+    }
+
+    @Nested
+    @DisplayName("findMultipleProduct 메서드")
+    class FindMultipleProductTest {
+
+        @Test
+        @DisplayName("성공: 여러 상품 ID로 조회하여 ProductListResponseDto를 반환한다")
+        void findMultipleProduct_Success() {
+            // given
+            List<Long> productIds = List.of(1L, 2L);
+            Product product1 = Product.builder().id(1L).productInfo(productInfo).inventory(10L).build();
+            Product product2 = Product.builder().id(2L).productInfo(productInfo).inventory(20L).build();
+            List<Product> foundProducts = List.of(product1, product2);
+
+            com.back.product.domain.ProductImage image1 = com.back.product.domain.ProductImage.builder().product(product1).imageUrl("img1.jpg").build();
+            ProductOptionValues option1 = ProductOptionValues.builder().product(product1).optionValue(optionValue1).build();
+
+            given(productSupport.findMultipleProductByIds(productIds)).willReturn(foundProducts);
+            given(productSupport.getAllProductImagesByProductsIn(foundProducts)).willReturn(List.of(image1));
+            given(productSupport.getAllProductOptionValuesByProductsIn(foundProducts)).willReturn(List.of(option1));
+
+            com.back.product.dto.ProductInfoDto productInfoDto = com.back.product.dto.ProductInfoDto.builder().productInfoId(productInfo.getId()).name(productInfo.getName()).build();
+            given(productInfoMapper.toDto(productInfo)).willReturn(productInfoDto);
+
+            com.back.product.dto.ProductDto productDto1 = com.back.product.dto.ProductDto.builder().productId(1L).build();
+            com.back.product.dto.ProductDto productDto2 = com.back.product.dto.ProductDto.builder().productId(2L).build();
+            given(productMapper.toDto(org.mockito.ArgumentMatchers.eq(product1), any(), any())).willReturn(productDto1);
+            given(productMapper.toDto(org.mockito.ArgumentMatchers.eq(product2), any(), any())).willReturn(productDto2);
+
+            // when
+            com.back.product.dto.response.ProductListResponseDto result = productUseCase.findMultipleProduct(productIds);
+
+            // then
+            assertThat(result).isNotNull();
+            assertThat(result.products()).hasSize(1);
+            com.back.product.dto.response.ProductResponseDto productResponse = result.products().get(0);
+            assertThat(productResponse.productInfo()).isEqualTo(productInfoDto);
+            assertThat(productResponse.products()).containsExactlyInAnyOrder(productDto1, productDto2);
+
+            verify(productSupport).findMultipleProductByIds(productIds);
+            verify(productSupport).getAllProductImagesByProductsIn(foundProducts);
+            verify(productSupport).getAllProductOptionValuesByProductsIn(foundProducts);
+            verify(productInfoMapper).toDto(productInfo);
+            verify(productMapper, times(2)).toDto(any(Product.class), any(), any());
+        }
+
+        @Test
+        @DisplayName("실패: 요청한 ID와 다른 수의 상품이 조회되면 예외를 발생시킨다")
+        void findMultipleProduct_Fail_NotFound() {
+            // given
+            List<Long> productIds = List.of(1L, 999L);
+            Product product1 = Product.builder().id(1L).productInfo(productInfo).build();
+            List<Product> foundProducts = List.of(product1); // Only one found
+
+            given(productSupport.findMultipleProductByIds(productIds)).willReturn(foundProducts);
+
+            // when & then
+            CustomException exception = assertThrows(CustomException.class, () ->
+                    productUseCase.findMultipleProduct(productIds)
+            );
+            assertThat(exception.getFailureCode()).isEqualTo(FailureCode.ENTITY_NOT_FOUND);
+
+            verify(productSupport).findMultipleProductByIds(productIds);
+            verify(productSupport, never()).getAllProductImagesByProductsIn(any());
+            verify(productSupport, never()).getAllProductOptionValuesByProductsIn(any());
+            verify(productInfoMapper, never()).toDto((ProductInfo) any());
+            verify(productMapper, never()).toDto(any(), any(), any());
         }
     }
 }

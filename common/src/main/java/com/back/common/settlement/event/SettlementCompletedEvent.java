@@ -1,4 +1,4 @@
-package com.back.common.Settlement.event;
+package com.back.common.settlement.event;
 
 import com.back.common.event.EventName;
 

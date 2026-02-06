@@ -53,13 +53,12 @@ class ProductDocumentUseCaseTest {
                     .categoryIds(List.of(1L))
                     .minPrice(BigDecimal.valueOf(10000))
                     .maxPrice(BigDecimal.valueOf(100000))
-                    .excludeSoldOut(true)
                     .sort(ProductSortType.PRICE_HIGH)
                     .build();
             long page = 0L;
             long size = 20L;
 
-            ProductDocument document = ProductDocument.builder().productName("Test Product").build();
+            ProductDocument document = ProductDocument.builder().productInfo(ProductDocument.ProductInfo.builder().productName("Test Product").build()).build();
             List<ProductDocument> documents = List.of(document);
             PageImpl<ProductDocument> productPage = new PageImpl<>(documents, PageRequest.of((int) page, (int) size), documents.size());
 
@@ -95,7 +94,7 @@ class ProductDocumentUseCaseTest {
             long page = 0L;
             long size = 10L;
 
-            ProductDocument document = ProductDocument.builder().productName("Another Product").build();
+            ProductDocument document = ProductDocument.builder().productInfo(ProductDocument.ProductInfo.builder().productName("Another Product").build()).build();
             List<ProductDocument> documents = List.of(document);
             PageImpl<ProductDocument> productPage = new PageImpl<>(documents, PageRequest.of((int) page, (int) size), documents.size());
 

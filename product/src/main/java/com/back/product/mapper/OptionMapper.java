@@ -1,5 +1,6 @@
 package com.back.product.mapper;
 
+import com.back.common.product.event.payload.OptionPayload;
 import com.back.product.domain.OptionGroup;
 import com.back.product.domain.OptionValue;
 import com.back.product.dto.OptionDto;
@@ -23,8 +24,8 @@ public class OptionMapper {
     }
 
     public OptionDto toDto(OptionGroup group, List<OptionValue> values) {
-        OptionDto.GroupDto optionGroup = toDto(group);
-        List<OptionDto.ValueDto> optionValues = values.stream().map(this::toDto).toList();
+        OptionDto.GroupDto optionGroup = toGroupDto(group);
+        List<OptionDto.ValueDto> optionValues = values.stream().map(this::toValueDto).toList();
 
         return OptionDto.builder()
                 .group(optionGroup)
@@ -32,17 +33,41 @@ public class OptionMapper {
                 .build();
     }
 
-    private OptionDto.GroupDto toDto(OptionGroup group) {
+    public OptionDto toDto(OptionPayload payload) {
+        OptionDto.GroupDto groupDto = toGroupDto(payload.group());
+        List<OptionDto.ValueDto> valueDtos = payload.values().stream().map(this::toValueDto).toList();
+
+        return OptionDto.builder()
+                .group(groupDto)
+                .values(valueDtos)
+                .build();
+    }
+
+    private OptionDto.GroupDto toGroupDto(OptionGroup group) {
         return OptionDto.GroupDto.builder()
                 .id(group.getId())
                 .name(group.getName())
                 .build();
     }
 
-    private OptionDto.ValueDto toDto(OptionValue value) {
+    private OptionDto.ValueDto toValueDto(OptionValue value) {
         return OptionDto.ValueDto.builder()
                 .id(value.getId())
                 .name(value.getValue())
+                .build();
+    }
+
+    private OptionDto.GroupDto toGroupDto(OptionPayload.GroupPayload payload) {
+        return OptionDto.GroupDto.builder()
+                .id(payload.groupId())
+                .name(payload.groupName())
+                .build();
+    }
+
+    private OptionDto.ValueDto toValueDto(OptionPayload.ValuePayload payload) {
+        return OptionDto.ValueDto.builder()
+                .id(payload.valueId())
+                .name(payload.valueName())
                 .build();
     }
 }

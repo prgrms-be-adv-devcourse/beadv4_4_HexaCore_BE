@@ -3,8 +3,7 @@ package com.back.market.app.usecase;
 import com.back.common.code.FailureCode;
 import com.back.common.exception.BadRequestException;
 import com.back.market.adapter.out.BiddingRepository;
-import com.back.market.adapter.out.MarketProductRepository;
-import com.back.market.adapter.out.MarketUserRepository;
+import com.back.market.adapter.out.cash.MarketCashAdapter;
 import com.back.market.app.MarketSupport;
 import com.back.market.domain.Bidding;
 import com.back.market.domain.MarketProduct;
@@ -34,10 +33,9 @@ import java.math.BigDecimal;
 @RequiredArgsConstructor
 public class RegisterBidUseCase {
     private final BiddingRepository biddingRepository;
-    private final MarketUserRepository marketUserRepository;
-    private final MarketProductRepository marketProductRepository;
     private final BiddingMapper biddingMapper;
     private final CashRequestMapper cashRequestMapper;
+    private final MarketCashAdapter marketCashAdapter;
     private final MarketSupport marketSupport;
 
     /**
@@ -55,23 +53,23 @@ public class RegisterBidUseCase {
         // 에러 발생 시 즉시 구매로 유도
         checkBuyPricePolicy(userId, requestDto);
 
-        // 엔티티 조회 및 예외 처리
-        MarketUser user = marketUserRepository.findById(userId)
-                .orElseThrow(() -> new BadRequestException(FailureCode.USER_NOT_FOUND));
-        MarketProduct product = marketProductRepository.findById(requestDto.productId())
-                .orElseThrow(() -> new BadRequestException(FailureCode.PRODUCT_NOT_FOUND));
+        UserProduct userProduct = getVerifiedUserAndProduct(userId, requestDto.productId());
+        MarketUser user = userProduct.user();
+        MarketProduct product = userProduct.product();
 
         // 구매 입찰 엔티티 생성 및 저장(id 생성을 위해 먼저 진행)
         Bidding bidding = biddingMapper.toEntity(requestDto, user, product, BiddingPosition.BUY);
         Bidding savedBidding = biddingRepository.save(bidding);
 
-        // TODO: 구매 입찰 등록 시 포인트 잔액 확인 및 차감 로직 추가 필요. 임시로 FakeCashClient 구현해서 테스트(marketSupport 클래스 확인)
+        // Cash 모듈에 예치금 확인 및 차감 요청
         PayAndHoldRequestDto cashRequest = cashRequestMapper.toPayAndHoldRequestForBidding(
                 userId,
                 requestDto.price(),
                 savedBidding.getId()
         );
-        PayAndHoldResponseDto responseData = marketSupport.getPayAndHoldResult(cashRequest);
+
+        //요청에 따른 결과 수신
+        PayAndHoldResponseDto responseData = marketCashAdapter.getPayAndHoldResult(cashRequest);
 
         if (responseData.status() == PayAndHoldStatus.PAID) {
             savedBidding.changeStatus(BiddingStatus.PROCESS);
@@ -83,7 +81,7 @@ public class RegisterBidUseCase {
         return MarketPaymentResponseDto.from(
                 responseData, // cash에서 보낸 정보
                 product.getName(),
-                user.getNickname(),
+                user.getName(),
                 user.getEmail()
         );
     }
@@ -103,18 +101,17 @@ public class RegisterBidUseCase {
         // 에러 발생 시 즉시 판매로 유도
         checkSellPricePolicy(userId, requestDto);
 
-        // 엔티티 조회 및 예외 처리
-        MarketUser user = marketUserRepository.findById(userId)
-                .orElseThrow(() -> new BadRequestException(FailureCode.USER_NOT_FOUND));
-        MarketProduct product = marketProductRepository.findById(requestDto.productId())
-                .orElseThrow(() -> new BadRequestException(FailureCode.PRODUCT_NOT_FOUND));
+        // 엔티티 조회
+        UserProduct userProduct = getVerifiedUserAndProduct(userId, requestDto.productId());
+        MarketUser user = userProduct.user();
+        MarketProduct product = userProduct.product();
 
         // 판매 입찰 저장
         Bidding bidding = biddingMapper.toEntity(requestDto, user, product, BiddingPosition.SELL);
         bidding.changeStatus(BiddingStatus.PROCESS); // 판매 입찰은 결제 과정이 없으므로 즉시 활성화
         Bidding savedBidding = biddingRepository.save(bidding);
 
-        // 가짜 Cash 응답 생성 (판매는 결제 완료 상태)
+        // 가짜 Cash 응답 생성 (판매는 결제 완료 상태이므로 cash 모듈과 통신 필요없음)
         PayAndHoldResponseDto cashResponse = PayAndHoldResponseDto.of(
                 PayAndHoldStatus.PAID,
                 RelType.BIDDING,
@@ -127,7 +124,7 @@ public class RegisterBidUseCase {
         return MarketPaymentResponseDto.from(
                 cashResponse,
                 product.getName(),
-                user.getNickname(),
+                user.getName(),
                 user.getEmail()
         );
     }
@@ -148,7 +145,7 @@ public class RegisterBidUseCase {
      * @param requestDto BiddingRequestDto
      */
     private void checkBuyPricePolicy(Long userId, BiddingRequestDto requestDto) {
-        biddingRepository.findFirstByMarketProductIdAndPositionAndStatusOrderByPriceAsc(
+        marketSupport.findInstantBuyPrice(
                 requestDto.productId(),
                 BiddingPosition.SELL,
                 BiddingStatus.PROCESS
@@ -170,7 +167,7 @@ public class RegisterBidUseCase {
      * @param requestDto BiddingRequestDto
      */
     private void checkSellPricePolicy(Long userId, BiddingRequestDto requestDto) {
-        biddingRepository.findFirstByMarketProductIdAndPositionAndStatusOrderByPriceDesc(
+        marketSupport.findInstantSellPrice(
                 requestDto.productId(),
                 BiddingPosition.BUY,
                 BiddingStatus.PROCESS
@@ -185,4 +182,23 @@ public class RegisterBidUseCase {
             }
         });
     }
+
+    /**
+     * 사용자와 상품의 유효성을 검사하여 UserProduct 객체를 반환하는 메서드
+     * @param userId 사용자ID
+     * @param productId 상품ID
+     * @return UserProduct 객체
+     */
+    private UserProduct getVerifiedUserAndProduct(Long userId, Long productId) {
+        MarketUser user = marketSupport.findMarketUserById(userId);
+        MarketProduct product = marketSupport.findMarketProductById(productId);
+        return new UserProduct(user, product);
+    }
+
+    /**
+     * 사용자와 상품 정보를 담은 record 클래스
+     * @param user MarketUser
+     * @param product MarketProduct
+     */
+    private record UserProduct(MarketUser user, MarketProduct product) {}
 }

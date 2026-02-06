@@ -1,6 +1,6 @@
 package com.back.notification.app.strategy;
 
-import com.back.common.Settlement.event.SettlementCompletedEvent;
+import com.back.common.settlement.event.SettlementCompletedEvent;
 import com.back.notification.domain.Notification;
 import com.back.notification.domain.enums.Type;
 import com.back.notification.mapper.NotificationMapper;

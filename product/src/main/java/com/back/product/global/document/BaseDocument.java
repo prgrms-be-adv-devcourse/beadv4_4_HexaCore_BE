@@ -48,4 +48,8 @@ public class BaseDocument<ID> implements Persistable<ID> {
     public int hashCode() {
         return Objects.hashCode(this.id);
     }
+
+    public void assignId(ID id) {
+        this.id = id;
+    }
 }

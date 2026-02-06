@@ -46,9 +46,9 @@ public class OrderCompletedIntegrationTests {
     void completeOrder_RealInfrastructure_Success() throws InterruptedException {
         // 1. 기초 데이터 저장 (User)
         MarketUser buyer = marketUserRepository.save(MarketUser.builder()
-                .id(101L).nickname("통합구매자").email("buyer@test.com").build());
+                .id(101L).name("통합구매자").email("buyer@test.com").build());
         MarketUser seller = marketUserRepository.save(MarketUser.builder()
-                .id(111L).nickname("통합판매자").email("seller@test.com").build());
+                .id(111L).name("통합판매자").email("seller@test.com").build());
 
         // 2. 기초 데이터 저장 (MarketProduct - 필수 필드 모두 입력)
         MarketProduct product = marketProductRepository.save(MarketProduct.builder()

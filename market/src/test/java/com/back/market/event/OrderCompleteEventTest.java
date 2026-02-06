@@ -34,7 +34,7 @@ public class OrderCompleteEventTest {
     @BeforeEach
     void setUp() {
         // marketFacade 객체의 "orderCompletedTopic" 필드에 "order-confirmed-topic" 값을 직접 주입합니다.
-        ReflectionTestUtils.setField(marketFacade, "orderCompletedTopic", "order-completed");
+        ReflectionTestUtils.setField(marketFacade, "orderCompletedTopic", "market.order.completed");
     }
 
     @Test
@@ -70,7 +70,7 @@ public class OrderCompleteEventTest {
                         .marketUser(com.back.market.domain.MarketUser.builder().id(buyerId).build())
                         .build())
                 .sellBidding(com.back.market.domain.Bidding.builder()
-                        .marketUser(com.back.market.domain.MarketUser.builder().id(999L).nickname("판매자").build())
+                        .marketUser(com.back.market.domain.MarketUser.builder().id(999L).name("판매자").build())
                         .marketProduct(com.back.market.domain.MarketProduct.builder().id(500L).build())
                         .build())
                 .build();
