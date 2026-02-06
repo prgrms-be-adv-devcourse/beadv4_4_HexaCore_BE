@@ -9,7 +9,6 @@ public record UserCreatedEvent(
         String address,
         String phone,
         String profileImageUrl,
-        String ipAddress,
-        Long createdTime
+        String ipAddress
 ) implements EventName {
 }

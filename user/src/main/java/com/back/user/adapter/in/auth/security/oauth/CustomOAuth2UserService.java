@@ -98,8 +98,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                     user.getAddress(),
                     user.getPhone(),
                     user.getProfileImageUrl(),
-                    clientIp,
-                    user.getCreatedAt()
+                    clientIp
                     ));
         }
 
