@@ -41,8 +41,6 @@ public class MarketFacade {
      * @param requestDto BiddingRequestDto
      * @return PayAndHoldResponseDto (결제/홀딩 상태 포함)
      */
-    @CheckHijack
-    @CheckBidSpam
     @Transactional
     public MarketPaymentResponseDto registerBuyBid(Long userId, BiddingRequestDto requestDto) {
         return registerBidUseCase.registerBuyBid(userId, requestDto);
@@ -54,8 +52,6 @@ public class MarketFacade {
      * @param requestDto BiddingRequestDto
      * @return PayAndHoldResponseDto (결제 불필요, PAID 상태)
      */
-    @CheckHijack
-    @CheckBidSpam
     @Transactional
     public MarketPaymentResponseDto registerSellBid(Long userId, BiddingRequestDto requestDto) {
         return registerBidUseCase.registerSellBid(userId, requestDto);
@@ -87,8 +83,6 @@ public class MarketFacade {
      * @param requestDto BiddingRequestDto
      * @return 생성된 주문(Order)의 ID
      */
-    @CheckHijack
-    @CheckBidSpam
     public MarketPaymentResponseDto purchaseNow(Long buyerId, BiddingRequestDto requestDto) {
         return matchInstantTradeUseCase.buyNow(buyerId, requestDto);
     }
@@ -99,8 +93,6 @@ public class MarketFacade {
      * @param requestDto BiddingRequestDto
      * @return 생성된 주문(Order)의 ID
      */
-    @CheckHijack
-    @CheckBidSpam
     public MarketPaymentResponseDto sellNow(Long sellerId, BiddingRequestDto requestDto) {
         return matchInstantTradeUseCase.sellNow(sellerId, requestDto);
     }
