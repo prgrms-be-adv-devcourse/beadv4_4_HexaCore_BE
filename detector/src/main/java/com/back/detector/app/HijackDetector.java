@@ -1,8 +1,8 @@
 package com.back.detector.app;
 
-import com.back.common.event.KafkaEventPublisher;
 import com.back.detector.domain.enums.DetectorRedisKey;
-import com.back.detector.event.HijackSuspectedEvent;
+import com.back.detector.dto.HijackDetectedEvent;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -19,12 +19,12 @@ import java.util.concurrent.TimeUnit;
 public class HijackDetector {
 
     private final RedisTemplate<String, String> detectorRedisTemplate;
-    private final KafkaEventPublisher eventPublisher;
 
     private static final BigDecimal NEW_IP_TRANSACTION_LIMIT = new BigDecimal("200000");
     private static final int IP_HISTORY_DAYS = 90;
     private static final int NEW_IP_COOLDOWN_HOURS = 24;
 
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     /**
      * 회원가입 시 첫 IP를 안전한 IP로 등록
@@ -155,7 +155,8 @@ public class HijackDetector {
     /**
      * 이메일 알림 발송
      */
-    private void sendEmailNotification(Long userId, String userEmail, String existingIps, 
+    @Transactional
+    public void sendEmailNotification(Long userId, String userEmail, String existingIps,
                                       String currentIp, BigDecimal currentAmount,
                                       BigDecimal limit, BigDecimal previousAmount, Long hoursPassed) {
         String reason;
@@ -172,18 +173,8 @@ public class HijackDetector {
                     total.longValue(), limit.longValue(), hoursPassed);
         }
 
-        log.warn("""
-            [이메일 알림] 계정 탈취 의심
-            - 사용자ID: {}
-            - 이메일: {}
-            - 기존IP 목록: {}
-            - 현재IP: {}
-            - 거래금액: {}원
-            - 알림사유: {}
-            """, userId, userEmail, existingIps, currentIp, currentAmount, reason);
-
         // 이벤트 발행
-        HijackSuspectedEvent event = new HijackSuspectedEvent(
+        HijackDetectedEvent event = new HijackDetectedEvent(
                 userId,
                 userEmail,
                 existingIps,
@@ -191,6 +182,9 @@ public class HijackDetector {
                 currentAmount,
                 reason
         );
-        eventPublisher.publish(event);
+        log.info("========== 이벤트 발행 시작 ==========");
+        log.info("발행할 이벤트: userId={}, email={}", userId, userEmail);
+        applicationEventPublisher.publishEvent(event);
+        log.info("========== 이벤트 발행 완료 ==========");
     }
 }

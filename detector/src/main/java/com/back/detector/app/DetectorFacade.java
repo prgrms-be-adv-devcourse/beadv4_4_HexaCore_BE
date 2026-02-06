@@ -3,6 +3,7 @@ package com.back.detector.app;
 import com.back.common.util.IpAddressExtractor;
 import com.back.security.util.SecurityHelper;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -44,6 +45,7 @@ public class DetectorFacade {
      * @param ip 현재 요청 IP 주소
      * @param transactionAmount 거래 금액
      */
+    @Transactional
     public void detectHijack(Long userId, String userEmail, String ip, BigDecimal transactionAmount) {
         hijackDetector.checkHijack(userId, userEmail, ip, transactionAmount);
     }
