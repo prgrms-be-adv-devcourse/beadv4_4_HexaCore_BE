@@ -19,7 +19,7 @@ public class CashPayoutResultKafkaListener {
     private final DomainEventPublisher domainEventPublisher;
 
     @KafkaListener(
-            topics = "${custom.kafka.topic.settlement-payout-result}",
+            topics = "${custom.kafka.topic.cash-payout-completed}",
             groupId = "${custom.kafka.consumer.group-id}",
             properties = "spring.json.value.default.type=com.back.common.event.Envelope"
     )
