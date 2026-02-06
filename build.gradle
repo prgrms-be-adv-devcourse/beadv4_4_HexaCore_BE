@@ -92,8 +92,8 @@ configure(subprojects.findAll { it.name in ['common', 'security'] }) {
     jar.enabled = true
 }
 
-// QueryDSL 설정 ( common, settlement 모듈만 )
-configure(subprojects.findAll { it.name in ['common', 'settlement'] }) {
+// QueryDSL 설정 ( common, settlement, market 모듈만 )
+configure(subprojects.findAll { it.name in ['common', 'settlement', 'market'] }) {
     def querydslDir = "${layout.buildDirectory.get()}/generated/querydsl"
 
     sourceSets {

@@ -2,14 +2,16 @@ package com.back.market.adapter.in;
 
 import com.back.common.response.CommonResponse;
 import com.back.market.dto.request.BiddingRequestDto;
-import com.back.market.dto.response.InstantBuyPriceResponseDto;
-import com.back.market.dto.response.InstantSellPriceResponseDto;
+import com.back.market.dto.response.*;
 import com.back.common.dto.cash.response.PaymentCancelResponseDto;
-import com.back.market.dto.response.MarketPaymentResponseDto;
 import com.back.security.principal.AuthPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -59,6 +61,27 @@ public interface ApiV1Market {
     @PatchMapping("/orders/{orderId}/complete")
     CommonResponse<Void> completeOrder(
             @AuthenticationPrincipal AuthPrincipal principal,
-             @PathVariable Long orderId
+            @PathVariable Long orderId
+    );
+
+    @Operation(summary = "구매 내역 조회", description = "특정 사용자의 구매 내역을 조회한다.")
+    @GetMapping("/orders/buying")
+    CommonResponse<Page<OrderListResponseDto>> getBuyingList(
+            @AuthenticationPrincipal AuthPrincipal principal,
+            @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
+    );
+
+    @Operation(summary = "판매 내역 조회", description = "특정 사용자의 판매 내역을 조회한다.")
+    @GetMapping("/orders/selling")
+    CommonResponse<Page<OrderListResponseDto>> getSellingList(
+            @AuthenticationPrincipal AuthPrincipal principal,
+            @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
+    );
+
+    @Operation(summary = "구매/판매 상세 내역 조회", description = "특정 사용자의 구매 내역을 조회한다.")
+    @GetMapping("/orders/{orderId}")
+    CommonResponse<OrderDetailResponseDto> getOrderDetail(
+            @AuthenticationPrincipal AuthPrincipal principal,
+            @PathVariable Long orderId
     );
 }
