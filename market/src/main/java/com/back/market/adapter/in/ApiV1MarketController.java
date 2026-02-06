@@ -4,13 +4,13 @@ import com.back.common.code.SuccessCode;
 import com.back.common.response.CommonResponse;
 import com.back.market.app.MarketFacade;
 import com.back.market.dto.request.BiddingRequestDto;
-import com.back.market.dto.response.InstantBuyPriceResponseDto;
-import com.back.market.dto.response.InstantSellPriceResponseDto;
+import com.back.market.dto.response.*;
 import com.back.common.dto.cash.response.PaymentCancelResponseDto;
-import com.back.market.dto.response.MarketPaymentResponseDto;
 import com.back.security.principal.AuthPrincipal;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -100,5 +100,22 @@ public class ApiV1MarketController implements ApiV1Market{
         return CommonResponse.success(SuccessCode.OK, null);
     }
 
+    @Override
+    public CommonResponse<Page<OrderListResponseDto>> getBuyingList(@AuthenticationPrincipal AuthPrincipal principal, Pageable pageable) {
+        Page<OrderListResponseDto> result = marketFacade.getBuyingList(principal.getUserId(), pageable);
+        return CommonResponse.success(SuccessCode.OK, result);
+    }
+
+    @Override
+    public CommonResponse<Page<OrderListResponseDto>> getSellingList(@AuthenticationPrincipal AuthPrincipal principal, Pageable pageable) {
+        Page<OrderListResponseDto> result = marketFacade.getSellingList(principal.getUserId(), pageable);
+        return CommonResponse.success(SuccessCode.OK, result);
+    }
+
+    @Override
+    public CommonResponse<OrderDetailResponseDto> getOrderDetail(@AuthenticationPrincipal AuthPrincipal principal, Long orderId) {
+        OrderDetailResponseDto result = marketFacade.getOrderDetail(principal.getUserId(), orderId);
+        return CommonResponse.success(SuccessCode.OK, result);
+    }
 
 }
