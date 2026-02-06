@@ -89,12 +89,7 @@ public class DetectorFacade {
             throw new IllegalStateException("HTTP 요청 컨텍스트가 없습니다");
         }
         HttpServletRequest request = attributes.getRequest();
-
-        String forwarded = request.getHeader("X-Forwarded-For");
-        if (forwarded != null && !forwarded.isBlank()) {
-            return forwarded.split(",")[0].trim();
-        }
-        return request.getRemoteAddr();
+        return IpAddressExtractor.extractClientIp(request);
     }
 
     /**

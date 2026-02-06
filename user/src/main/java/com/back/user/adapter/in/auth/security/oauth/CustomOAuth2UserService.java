@@ -2,6 +2,7 @@ package com.back.user.adapter.in.auth.security.oauth;
 
 import com.back.common.user.event.UserCreatedEvent;
 import com.back.common.user.event.WalletCreateRequestedEvent;
+import com.back.common.util.IpAddressExtractor;
 import com.back.user.adapter.in.auth.security.oauth.principal.CustomOAuth2User;
 import com.back.user.adapter.in.auth.security.oauth.userinfo.GoogleResponse;
 import com.back.user.adapter.in.auth.security.oauth.userinfo.KakaoResponse;
@@ -119,29 +120,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             }
             
             HttpServletRequest request = attributes.getRequest();
-            
-            // 프록시를 거쳤을 경우를 고려한 IP 추출
-            String ip = request.getHeader("X-Forwarded-For");
-            
-            if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-                ip = request.getHeader("Proxy-Client-IP");
-            }
-            if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-                ip = request.getHeader("WL-Proxy-Client-IP");
-            }
-            if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-                ip = request.getHeader("HTTP_X_FORWARDED_FOR");
-            }
-            if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-                ip = request.getRemoteAddr();
-            }
-            
-            // X-Forwarded-For에 여러 IP가 있을 경우 첫 번째가 실제 클라이언트 IP
-            if (ip != null && ip.contains(",")) {
-                ip = ip.split(",")[0].trim();
-            }
-            
-            return ip;
+            return IpAddressExtractor.extractClientIp(request);
         } catch (Exception e) {
             log.error("IP 추출 중 오류 발생", e);
             return null;
