@@ -35,6 +35,7 @@ public enum FailureCode {
     CANNOT_CANCEL_BID(HttpStatus.BAD_REQUEST, "CANNOT_CANCEL_BID", "이미 체결되었거나 취소할 수 없는 상태입니다."),
     WALLET_REFUND_FAILED(HttpStatus.BAD_REQUEST, "WALLET_REFUND_FAILED", "예치금 환불에 실패하였습니다"),
     CONSTRAINT_VIOLATION(HttpStatus.BAD_REQUEST, "CONSTRAINT_VIOLATION", "제약 조건 위반으로 작업을 수행할 수 없습니다."),
+    ORDER_ACCESS_DENIED(HttpStatus.BAD_REQUEST, "ORDER_ACCESS_DENIED", "해당 주문에 대한 접근 권한이 없습니다."),
 
     /**
      * 401 Unauthorized
