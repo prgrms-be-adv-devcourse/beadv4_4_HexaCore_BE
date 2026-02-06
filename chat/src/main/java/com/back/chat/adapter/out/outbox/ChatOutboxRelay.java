@@ -29,10 +29,10 @@ public class ChatOutboxRelay {
 
     private final ObjectMapper objectMapper;
 
-    @Value("${custom.kafka.topic.chat-blind-requested: chat.blind.requested}")
+    @Value("${custom.kafka.topic.chat-blind-requested:chat.blind.requested}")
     private String messageBlindedTopic;
 
-    @Value("${custom.kafka.topic.chat-blind-dlt-requested: chat.blind.dlt.requested}")
+    @Value("${custom.kafka.topic.chat-blind-dlt-requested:chat.blind.dlt.requested}")
     private String messageBlindedDltTopic;
 
     @Value("${chat.outbox.relay.batch-size:100}")
@@ -99,9 +99,19 @@ public class ChatOutboxRelay {
                 payload = objectMapper.readValue(outbox.getPayload(), ChatMessageBlindedKafkaEvent.class);
 
             } catch (Exception parseEx) {
-                // payload 실패 -> 즉시 DLT 동기 발행
-                String err = safeMsg(parseEx);
+                // payload 실패 -> FAILED 처리 -> DLT 처리
+                final LocalDateTime cbNow = LocalDateTime.now();
+                final String err = safeMsg(parseEx);
 
+                outboxStatusUpdater.markFailed(
+                        outboxId,
+                        err,
+                        cbNow,
+                        retryBaseDelaySeconds,
+                        retryMaxDelaySeconds
+                );
+
+                // DLT 동기 발행
                 boolean dltOk = sendDltSync(outboxId, eventTypeName, eventId, nextRetry, err, payloadJson);
 
                 if (dltOk) {
@@ -124,6 +134,9 @@ public class ChatOutboxRelay {
                         if (ex == null) {
                             success.incrementAndGet();
                             outboxStatusUpdater.markSent(outboxId, cbNow);
+
+                            log.info("[OUTBOX][SENT] id={}, eventId={}, type={}, topic={}",
+                                    outboxId, eventId, eventTypeName, messageBlindedTopic);
                             return;
                         }
 
