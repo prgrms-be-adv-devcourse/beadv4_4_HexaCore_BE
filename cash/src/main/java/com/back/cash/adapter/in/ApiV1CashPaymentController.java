@@ -28,6 +28,12 @@ public class ApiV1CashPaymentController {
 
         ConfirmResultResponseDto result = cashFacade.confirmTossPayment(req);
 
+        if (result.isPending()) {
+            return ResponseEntity.status(HttpStatus.ACCEPTED).body(
+                    CommonResponse.success(SuccessCode.ACCEPTED, null)
+            );
+        }
+
         if (!result.isSuccess()) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(
                     CommonResponse.createError(
