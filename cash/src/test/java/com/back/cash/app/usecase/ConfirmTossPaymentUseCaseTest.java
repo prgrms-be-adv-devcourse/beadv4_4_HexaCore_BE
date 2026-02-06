@@ -19,6 +19,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.web.client.ResourceAccessException;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -379,6 +380,66 @@ class ConfirmTossPaymentUseCaseTest {
         // then
         assertThat(result.isSuccess()).isFalse();
         assertThat(result.failedDto()).isNotNull();
+    }
+
+    // ========== 타임아웃/네트워크 오류 → PENDING ==========
+
+    @Test
+    @DisplayName("[타임아웃] ResourceAccessException 발생 시 DB 변경 없이 PENDING 반환")
+    void execute_whenTossTimeout_thenReturnPendingWithoutDbChange() {
+        // given
+        BigDecimal pgAmount = bd("18000");
+        TossConfirmRequest req = req(pgAmount);
+        Payment payment = paymentBuilder(PaymentStatus.READY).build();
+
+        given(paymentRepository.findWithLockByTossOrderId(ORDER_ID)).willReturn(Optional.of(payment));
+        doThrow(new ResourceAccessException("Read timed out"))
+                .when(tossPaymentsClient).confirm(PAYMENT_KEY, ORDER_ID, pgAmount);
+
+        // when
+        ConfirmResultResponseDto result = confirmTossPaymentUseCase.execute(req);
+
+        // then: PENDING 응답
+        assertThat(result.isPending()).isTrue();
+        assertThat(result.isSuccess()).isFalse();
+        assertThat(result.completedDto()).isNull();
+        assertThat(result.failedDto()).isNull();
+
+        // then: Payment 상태 READY 그대로 유지
+        assertThat(payment.getStatus()).isEqualTo(PaymentStatus.READY);
+
+        // then: 지갑/로그 변경 없음
+        verifyNoInteractions(walletSupport);
+        verify(cashLogSupport, never()).recordReleaseOnPaymentFail(any(), any(), any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("[타임아웃] 예치금 홀딩 상태에서 타임아웃 → 홀딩 해제하지 않고 READY 유지")
+    void execute_whenTossTimeout_withHeldAmount_thenKeepHolding() {
+        // given
+        BigDecimal pgAmount = bd("18000");
+        TossConfirmRequest req = req(pgAmount);
+        Payment payment = Payment.builder()
+                .userId(USER_ID).relType(REL_TYPE).relId(REL_ID)
+                .tossOrderId(ORDER_ID)
+                .totalAmount(bd("30000"))
+                .walletUsedAmount(bd("12000"))
+                .pgAmount(pgAmount)
+                .status(PaymentStatus.READY)
+                .build();
+
+        given(paymentRepository.findWithLockByTossOrderId(ORDER_ID)).willReturn(Optional.of(payment));
+        doThrow(new ResourceAccessException("Connection timed out"))
+                .when(tossPaymentsClient).confirm(PAYMENT_KEY, ORDER_ID, pgAmount);
+
+        // when
+        ConfirmResultResponseDto result = confirmTossPaymentUseCase.execute(req);
+
+        // then: READY 유지, 홀딩 해제 안 함
+        assertThat(result.isPending()).isTrue();
+        assertThat(payment.getStatus()).isEqualTo(PaymentStatus.READY);
+        assertThat(payment.isReleased()).isFalse();
+        verifyNoInteractions(walletSupport);
     }
 
     // ========== 헬퍼 메서드 ==========
