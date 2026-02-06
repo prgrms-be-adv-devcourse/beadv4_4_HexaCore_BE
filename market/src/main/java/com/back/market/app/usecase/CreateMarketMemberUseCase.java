@@ -37,8 +37,7 @@ public class CreateMarketMemberUseCase {
                     event.name(),
                     event.email(),
                     event.address(),
-                    event.phone(),
-                    event.profileImageUrl()
+                    event.phone()
             );
             MarketUser savedUser = marketUserRepository.save(newUser);
             log.info("[CreateMarketMemberUseCase] 복제 완료: id = {}", event.id());

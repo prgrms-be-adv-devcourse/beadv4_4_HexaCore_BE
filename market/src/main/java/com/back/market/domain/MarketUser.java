@@ -40,7 +40,4 @@ public class MarketUser extends BaseTimeEntity {
 
     @Column(name = "phone", length = 20)
     private String phone;           // 연락처
-
-    @Column(name = "profile_image_url")
-    private String profileImageUrl; // 프로필 이미지
 }

@@ -30,7 +30,7 @@ public class MarketFacade {
     private final CancelBidUseCase cancelBidUseCase;
     private final CompleteOrderUseCase completeOrderUseCase;
 
-    @Value("${custom.kafka.topic.order-completed}")
+    @Value("${custom.kafka.topic.market-order-completed}")
     private String orderCompletedTopic;
     private final KafkaEventPublisher kafkaEventPublisher;
 

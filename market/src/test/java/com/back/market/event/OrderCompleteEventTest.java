@@ -34,7 +34,7 @@ public class OrderCompleteEventTest {
     @BeforeEach
     void setUp() {
         // marketFacade 객체의 "orderCompletedTopic" 필드에 "order-confirmed-topic" 값을 직접 주입합니다.
-        ReflectionTestUtils.setField(marketFacade, "orderCompletedTopic", "order-completed");
+        ReflectionTestUtils.setField(marketFacade, "orderCompletedTopic", "market.order.completed");
     }
 
     @Test
