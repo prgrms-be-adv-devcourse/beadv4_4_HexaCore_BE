@@ -10,6 +10,7 @@ import com.back.market.domain.Order;
 import com.back.market.domain.enums.BiddingPosition;
 import com.back.market.domain.enums.BiddingStatus;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
@@ -127,4 +128,34 @@ public class MarketSupport {
     public Optional<Bidding> findInstantSellPrice(Long productId, BiddingPosition position, BiddingStatus status) {
         return biddingRepository.findFirstByMarketProductIdAndPositionAndStatusOrderByPriceDesc(productId, position, status);
     }
+
+    /**
+     * 구매 내역 목록 조회
+     * @param userId 사용자 id
+     * @param pageable 페이징
+     * @return Page<Order>
+     */
+    public Page<Order> findBuyHistoryList(Long userId, Pageable pageable) {
+        return orderRepository.findBuyHistoryList(userId, pageable);
+    }
+
+    /**
+     * 판매 내역 목록 조회
+     * @param userId 사용자 id
+     * @param pageable 페이징
+     * @return Page<Order>
+     */
+    public Page<Order> findSellHistoryList(Long userId, Pageable pageable) {
+        return orderRepository.findSellHistoryList(userId, pageable);
+    }
+
+    /**
+     * 주문 상세 조회
+     * @param orderId 주문 PK
+     * @return Order
+     */
+    public Order findOrderWithDetails(Long orderId) {
+        return orderRepository.findByIdWithDetails(orderId).orElseThrow(() -> new BadRequestException(FailureCode.ORDER_NOT_FOUND));
+    }
+
 }
