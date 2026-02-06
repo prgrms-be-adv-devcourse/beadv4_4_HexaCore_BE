@@ -1,7 +1,5 @@
 package com.back.market.app;
 
-import com.back.detector.annotation.CheckBidSpam;
-import com.back.detector.annotation.CheckHijack;
 import com.back.market.app.usecase.CancelBidUseCase;
 import com.back.market.app.usecase.GetInstantPriceUseCase;
 import com.back.market.app.usecase.MatchInstantTradeUseCase;
