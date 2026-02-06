@@ -4,20 +4,21 @@ import com.back.common.code.FailureCode;
 import com.back.common.exception.CustomException;
 import com.back.product.app.usecase.*;
 import com.back.product.domain.*;
-import com.back.product.dto.CategoryDto;
-import com.back.product.dto.ProductDto;
-import com.back.product.dto.ProductInfoDto;
+import com.back.product.dto.*;
 import com.back.product.dto.request.*;
-import com.back.product.dto.BrandDto;
 import com.back.product.dto.response.*;
+import com.back.product.global.event.ProductCreationCompletedEvent;
+import com.back.product.global.event.ProductDeletionCompletedEvent;
+import com.back.product.global.event.ProductUpdateCompletedEvent;
+import com.back.product.mapper.OptionMapper;
 import com.back.product.mapper.ProductInfoMapper;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -30,6 +31,8 @@ public class ProductFacade {
     private final ProductUseCase productUseCase;
     private final ProductInfoMapper productInfoMapper;
     private final ProductDocumentUseCase productDocumentUseCase;
+    private final OptionMapper optionMapper;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Transactional(readOnly = true)
     public List<BrandDto> getBrands() {
@@ -100,11 +103,17 @@ public class ProductFacade {
 
         List<Long> optionValueIds = request.variants().stream()
                 .flatMap(variant -> variant.optionValueIds().stream()).distinct().toList();
-        Map<Long, OptionValue> optionValueMap = optionUseCase.findOptionValuesAsMap(optionValueIds);
+        List<OptionValue> optionValues = optionUseCase.findOptionValues(optionValueIds);
 
         ProductInfo productInfo = productInfoUseCase.createProductInfo(brand, category, request.productInfo());
 
-        List<ProductDto> productDtos = productUseCase.createMultipleProduct(productInfo, request.variants(), optionValueMap);
+        List<ProductDto> productDtos = productUseCase.createMultipleProduct(productInfo, request.variants(), optionValues);
+
+        publishProductCreationCompletedEvent(
+                productInfo,
+                optionValues,
+                productDtos.getFirst().imageUrls().getFirst()
+        );
 
         return buildProductResponseDto(productInfo, productDtos);
     }
@@ -117,11 +126,17 @@ public class ProductFacade {
 
         List<Long> optionValueIds = request.variants().stream()
                 .flatMap(variant -> variant.optionValueIds().stream()).distinct().toList();
-        Map<Long, OptionValue> optionValueMap = optionUseCase.findOptionValuesAsMap(optionValueIds);
+        List<OptionValue> optionValues = optionUseCase.findOptionValues(optionValueIds);
 
         ProductInfo productInfo = productInfoUseCase.updateProductInfo(productInfoId, brand, category, request.productInfo());
 
-        List<ProductDto> productDtos = productUseCase.updateMultipleProduct(productInfo, request.variants(), optionValueMap);
+        List<ProductDto> productDtos = productUseCase.updateMultipleProduct(productInfo, request.variants(), optionValues);
+
+        publishProductUpdateCompletedEvent(
+                productInfo,
+                optionValues,
+                productDtos.getFirst().imageUrls().getFirst()
+        );
 
         return buildProductResponseDto(productInfo, productDtos);
     }
@@ -131,6 +146,8 @@ public class ProductFacade {
         productUseCase.deleteMultipleProduct(productInfoId);
 
         productInfoUseCase.deleteProductInfo(productInfoId);
+
+        publishProductDeletionCompletedEvent(productInfoId);
     }
 
     @Transactional(readOnly = true)
@@ -145,18 +162,6 @@ public class ProductFacade {
     @Transactional(readOnly = true)
     public ProductSearchListResponseDto findProductPage(@Valid ProductSearchRequestDto request, Long page, Long size) {
         return productDocumentUseCase.findProductPage(request, page, size);
-    }
-
-    @Transactional(readOnly = true)
-    public OptionListResponseDto getOptions() {
-        return optionUseCase.findAllOptions();
-    }
-
-    private ProductResponseDto buildProductResponseDto(ProductInfo productInfo, List<ProductDto> productDtos) {
-        return ProductResponseDto.builder()
-                .productInfo(productInfoMapper.toDto(productInfo))
-                .products(productDtos)
-                .build();
     }
 
     @Transactional
@@ -199,5 +204,57 @@ public class ProductFacade {
         }
 
         optionUseCase.deleteOption(optionValueId);
+    }
+
+    @Transactional(readOnly = true)
+    public OptionListResponseDto getOptions() {
+        return optionUseCase.findAllOptions();
+    }
+
+    private ProductResponseDto buildProductResponseDto(ProductInfo productInfo, List<ProductDto> productDtos) {
+        return ProductResponseDto.builder()
+                .productInfo(productInfoMapper.toDto(productInfo))
+                .products(productDtos)
+                .build();
+    }
+
+    private void publishProductCreationCompletedEvent(ProductInfo productInfo, List<OptionValue> optionValues, String thumbnailUrl) {
+        ProductInfoDto productInfoDto = productInfoMapper.toDto(productInfo);
+
+        List<OptionDto> optionDtos = buildMultipleOptionDto(optionValues);
+
+        ProductCreationCompletedEvent event = new ProductCreationCompletedEvent(
+                productInfoDto, optionDtos, thumbnailUrl
+        );
+
+        applicationEventPublisher.publishEvent(event);
+    }
+
+    private void publishProductUpdateCompletedEvent(ProductInfo productInfo, List<OptionValue> optionValues, String thumbnailUrl) {
+        ProductInfoDto productInfoDto = productInfoMapper.toDto(productInfo);
+
+        List<OptionDto> optionDtos = buildMultipleOptionDto(optionValues);
+
+        ProductUpdateCompletedEvent event = new ProductUpdateCompletedEvent(
+                productInfoDto, optionDtos, thumbnailUrl
+        );
+
+        applicationEventPublisher.publishEvent(event);
+    }
+
+    private void publishProductDeletionCompletedEvent(Long productInfoId) {
+        ProductDeletionCompletedEvent event = new ProductDeletionCompletedEvent(productInfoId);
+
+        applicationEventPublisher.publishEvent(event);
+    }
+
+    private List<OptionDto> buildMultipleOptionDto(List<OptionValue> optionValues) {
+        return optionValues.stream()
+                .collect(Collectors.groupingBy(OptionValue::getOptionGroup))
+                .entrySet().stream().map(entry -> {
+                    OptionGroup group = entry.getKey();
+                    List<OptionValue> values = entry.getValue();
+                    return optionMapper.toDto(group, values);
+                }).toList();
     }
 }

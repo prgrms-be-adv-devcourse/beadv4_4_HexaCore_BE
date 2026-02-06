@@ -22,7 +22,7 @@ public class KafkaIntegrationTest {
     @Autowired
     private CartRepository cartRepository;
 
-    @Value("${custom.kafka.topic.user-created}")
+    @Value("${custom.kafka.topic.user-account-created}")
     private String topic;
 
     @Test

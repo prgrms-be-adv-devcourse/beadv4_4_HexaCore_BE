@@ -1,5 +1,6 @@
 package com.back.product.mapper;
 
+import com.back.common.product.event.payload.ProductInfoPayload;
 import com.back.product.domain.Brand;
 import com.back.product.domain.Category;
 import com.back.product.domain.ProductInfo;
@@ -34,6 +35,18 @@ public class ProductInfoMapper {
                 .code(productInfo.getProductCode())
                 .releasePrice(productInfo.getReleasePrice())
                 .releaseDate(productInfo.getReleasedDate())
+                .build();
+    }
+
+    public ProductInfoDto toDto(ProductInfoPayload payload) {
+        return ProductInfoDto.builder()
+                .productInfoId(payload.productInfoId())
+                .brand(brandMapper.toDto(payload.brand()))
+                .category(categoryMapper.toDto(payload.category()))
+                .name(payload.name())
+                .code(payload.code())
+                .releasePrice(payload.releasePrice())
+                .releaseDate(payload.releaseDate())
                 .build();
     }
 }

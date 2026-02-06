@@ -17,8 +17,8 @@ public class MarketUserEventListener {
     private final MarketInternalFacade marketInternalFacade;
 
     @KafkaListener(
-            topics = "${custom.kafka.topic.user-created}",
-            groupId = "${custom.kafka.consumer.group-id}"
+            topics = "${custom.kafka.topic.user-account-created}",
+            groupId = "${spring.kafka.consumer.group-id}"
     )
     public void consume(UserCreatedEvent event) {
         log.info("[MarketUserEventListener] UserCreatedEvent 수신: {}", event.id());

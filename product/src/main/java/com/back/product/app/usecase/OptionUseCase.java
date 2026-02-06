@@ -35,15 +35,14 @@ public class OptionUseCase {
     private final OptionValueRepository optionValueRepository;
 
     @Transactional(readOnly = true)
-    public Map<Long, OptionValue> findOptionValuesAsMap(@Valid List<Long> optionValueIds) {
+    public List<OptionValue> findOptionValues(@Valid List<Long> optionValueIds) {
         List<OptionValue> foundValues = productSupport.getAllOptionValues(optionValueIds);
 
         if (foundValues.size() != optionValueIds.size()) {
             throw new CustomException(FailureCode.OPTION_VALUE_NOT_FOUND);
         }
 
-        return foundValues.stream()
-                .collect(Collectors.toMap(OptionValue::getId, value -> value));
+        return foundValues;
     }
 
     @Transactional(readOnly = true)
