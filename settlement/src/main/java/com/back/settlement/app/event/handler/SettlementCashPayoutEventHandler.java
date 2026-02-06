@@ -24,7 +24,7 @@ public class SettlementCashPayoutEventHandler {
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void settlementStartedEvent(SettlementStartedEvent event) {
+    public void publishPayoutRequest(SettlementStartedEvent event) {
         Envelope<PayoutRequestPayload> kafkaEvent = Envelope.of(
                 "settlement.payout.requested",
                 new PayoutRequestPayload(
