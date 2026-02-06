@@ -1,4 +1,4 @@
-package com.back.detector.event;
+package com.back.detector.adapter.in;
 
 import com.back.common.user.event.UserCreatedEvent;
 import com.back.detector.app.HijackDetector;
@@ -11,7 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class UserCreatedEventListener {
+public class DetectorEventListener {
 
     private final HijackDetector hijackDetector;
 
