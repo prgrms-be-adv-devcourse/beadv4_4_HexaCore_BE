@@ -15,6 +15,6 @@ public record OrderDetailResponseDto(
         BigDecimal price,
         OrderStatus orderStatus,
         String address,
-        LocalDateTime paymentDate //결제 완료일(requestPaymentDate)
+        LocalDateTime paymentDate //결제 완료일(paymentDate)
 ) {
 }

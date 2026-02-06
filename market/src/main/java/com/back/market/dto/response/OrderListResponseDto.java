@@ -12,7 +12,7 @@ public record OrderListResponseDto(
         String size,
         BigDecimal price,
         OrderStatus orderStatus,
-        LocalDateTime orderDate //DB의 requestPaymentDate 컬럼
+        LocalDateTime paymentDate //DB의 paymentDate 컬럼
 ) {
 
 }
