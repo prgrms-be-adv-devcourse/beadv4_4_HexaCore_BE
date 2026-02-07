@@ -1,4 +1,4 @@
-package com.back.app.usecase;
+package com.back.image.app.usecase;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

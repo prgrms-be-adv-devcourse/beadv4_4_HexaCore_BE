@@ -1,4 +1,4 @@
-package com.back.dto.response;
+package com.back.image.dto.response;
 
 import lombok.Builder;
 

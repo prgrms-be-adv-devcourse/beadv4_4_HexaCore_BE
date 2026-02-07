@@ -1,4 +1,4 @@
-package com.back.dto.enums;
+package com.back.image.dto.enums;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

@@ -1,7 +1,7 @@
 package com.back.product.adapter.in;
 
 import com.back.common.response.CommonResponse;
-import com.back.dto.enums.ImageCategory;
+import com.back.image.dto.enums.ImageCategory;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;

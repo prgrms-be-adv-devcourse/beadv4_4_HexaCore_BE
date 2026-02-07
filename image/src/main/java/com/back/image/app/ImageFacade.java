@@ -1,11 +1,11 @@
-package com.back.app;
+package com.back.image.app;
 
-import com.back.app.usecase.ConvertImageUseCase;
-import com.back.app.usecase.FlushImageUseCase;
-import com.back.app.usecase.ResizeImageUseCase;
-import com.back.app.usecase.UploadImageUseCase;
-import com.back.dto.enums.ImageCategory;
-import com.back.dto.response.ImageUploadResponseDto;
+import com.back.image.app.usecase.ConvertImageUseCase;
+import com.back.image.app.usecase.FlushImageUseCase;
+import com.back.image.app.usecase.ResizeImageUseCase;
+import com.back.image.app.usecase.UploadImageUseCase;
+import com.back.image.dto.enums.ImageCategory;
+import com.back.image.dto.response.ImageUploadResponseDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

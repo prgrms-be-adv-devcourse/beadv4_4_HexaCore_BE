@@ -1,9 +1,9 @@
 package com.back.product.adapter.in;
 
-import com.back.app.ImageFacade;
+import com.back.image.app.ImageFacade;
 import com.back.common.code.SuccessCode;
-import com.back.dto.enums.ImageCategory;
-import com.back.dto.response.ImageUploadResponseDto;
+import com.back.image.dto.enums.ImageCategory;
+import com.back.image.dto.response.ImageUploadResponseDto;
 import com.back.security.jwt.JWTUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;

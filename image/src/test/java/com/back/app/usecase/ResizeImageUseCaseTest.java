@@ -1,7 +1,8 @@
 package com.back.app.usecase;
 
 import com.back.common.exception.CustomException;
-import com.back.utils.ImageUtility;
+import com.back.image.app.usecase.ResizeImageUseCase;
+import com.back.image.utils.ImageUtility;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

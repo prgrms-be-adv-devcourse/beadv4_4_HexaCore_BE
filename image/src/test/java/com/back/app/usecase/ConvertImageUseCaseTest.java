@@ -1,7 +1,8 @@
 package com.back.app.usecase;
 
 import com.back.common.exception.CustomException;
-import com.back.utils.ImageUtility;
+import com.back.image.app.usecase.ConvertImageUseCase;
+import com.back.image.utils.ImageUtility;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,7 +15,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;

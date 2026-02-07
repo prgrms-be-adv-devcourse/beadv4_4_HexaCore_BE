@@ -1,8 +1,8 @@
-package com.back.app.usecase;
+package com.back.image.app.usecase;
 
 import com.back.common.code.FailureCode;
 import com.back.common.exception.CustomException;
-import com.back.utils.ImageUtility;
+import com.back.image.utils.ImageUtility;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
