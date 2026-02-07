@@ -5,11 +5,11 @@ import com.back.app.usecase.FlushImageUseCase;
 import com.back.app.usecase.ResizeImageUseCase;
 import com.back.app.usecase.UploadImageUseCase;
 import com.back.dto.enums.ImageCategory;
-import com.back.dto.request.ImageUploadRequestDto;
 import com.back.dto.response.ImageUploadResponseDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -24,11 +24,11 @@ public class ImageFacade {
     private final UploadImageUseCase uploadImageUseCase;
     private final FlushImageUseCase flushImageUseCase;
 
-    public ImageUploadResponseDto uploadImage(ImageUploadRequestDto imageUploadRequestDto, ImageCategory category) {
+    public ImageUploadResponseDto uploadImage(List<MultipartFile> images, ImageCategory category) {
         List<File> allTemporaryFiles = new ArrayList<>();
 
         try {
-            List<File> convertedImages = convertImageUseCase.convertMultipleFile(imageUploadRequestDto.files());
+            List<File> convertedImages = convertImageUseCase.convertMultipleFile(images);
             allTemporaryFiles.addAll(convertedImages);
 
             List<File> resizeFiles = resizeImageUseCase.resizeMultipleImage(convertedImages);
