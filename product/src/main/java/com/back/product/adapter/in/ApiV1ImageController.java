@@ -13,7 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 @RestController
-@RequestMapping(path = "/api/v1/images")
+@RequestMapping(path = "/api/v1/products/images")
 @RequiredArgsConstructor
 public class ApiV1ImageController implements ImageApiController {
     private final ImageFacade imageFacade;
