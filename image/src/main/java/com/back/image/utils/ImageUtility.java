@@ -1,17 +1,15 @@
 package com.back.image.utils;
 
-import org.springframework.beans.factory.annotation.Value;
+import com.back.image.config.FileExtensionProperties;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Objects;
 
 @Component
+@RequiredArgsConstructor
 public class ImageUtility {
-
-    @Value("${file.allowed.extensions}")
-    private List<String> allowedExtensions;
+    private final FileExtensionProperties fileExtensionProperties;
 
     public String getFileExtension(String fileName) throws IOException {
         if (fileName == null || fileName.isEmpty()) {
@@ -38,6 +36,7 @@ public class ImageUtility {
             throw new IOException("파일 확장자를 확인할 수 없습니다.");
         }
 
-        return allowedExtensions.stream().anyMatch(fileExtension::equalsIgnoreCase);
+        return fileExtensionProperties.getAllowed().stream()
+                .anyMatch(fileExtension::equalsIgnoreCase);
     }
 }

@@ -2,6 +2,7 @@ package com.back.image.app.usecase;
 
 import com.back.common.code.FailureCode;
 import com.back.common.exception.CustomException;
+import com.back.image.config.ImageResizeProperties;
 import com.back.image.utils.ImageUtility;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,9 +21,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ResizeImageUseCase {
     private final ImageUtility imageUtility;
-
-    @Value("${file.resize.max.width}")
-    Integer maxWidth;
+    private final ImageResizeProperties imageResizeProperties;
 
     public List<File> resizeMultipleImage(List<File> convertedImages) {
         return convertedImages.stream().map(f -> {
@@ -44,13 +43,13 @@ public class ResizeImageUseCase {
         int originWidth = originalImage.getWidth();
         int originHeight = originalImage.getHeight();
 
-        if (originWidth < maxWidth) {
+        if (originWidth < imageResizeProperties.getWidth() || originHeight < imageResizeProperties.getHeight()) {
             return convertedImage;
         }
 
         double ratio = (double) originHeight / (double) originWidth;
-        int resizedWidth = maxWidth;
-        int resizedHeight = (int) Math.round(maxWidth * ratio);
+        int resizedWidth = imageResizeProperties.getWidth();
+        int resizedHeight = (int) Math.round(imageResizeProperties.getWidth() * ratio);
 
         Image scaledImage = originalImage.getScaledInstance(resizedWidth, resizedHeight, java.awt.Image.SCALE_SMOOTH);
         BufferedImage resizedImage = new BufferedImage(resizedWidth, resizedHeight, BufferedImage.TYPE_INT_RGB);

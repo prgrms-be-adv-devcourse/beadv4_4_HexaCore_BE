@@ -8,6 +8,7 @@ import com.back.common.code.FailureCode;
 import com.back.common.exception.CustomException;
 import com.back.image.app.usecase.UploadImageUseCase;
 import com.back.image.utils.ImageUtility;
+import com.back.image.config.AwsS3Properties;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -39,6 +40,9 @@ class UploadImageUseCaseTest {
     @Mock
     private AmazonS3Client amazonS3Client;
 
+    @Mock
+    private AwsS3Properties awsS3Properties;
+
     @InjectMocks
     private UploadImageUseCase uploadImageUseCase;
 
@@ -55,7 +59,11 @@ class UploadImageUseCaseTest {
     @BeforeEach
     void setUp() throws IOException {
         MockitoAnnotations.openMocks(this);
-        ReflectionTestUtils.setField(uploadImageUseCase, "bucket", bucketName);
+
+        // Mock AwsS3Properties
+        AwsS3Properties.S3 s3Properties = new AwsS3Properties.S3();
+        s3Properties.setBucket(bucketName);
+        when(awsS3Properties.getS3()).thenReturn(s3Properties);
 
         dummyFile = Files.createFile(tempDir.resolve(originalFileName)).toFile();
         Files.write(dummyFile.toPath(), "dummy content".getBytes());
@@ -79,7 +87,7 @@ class UploadImageUseCaseTest {
 
         verify(imageUtility, times(1)).getFileExtension(originalFileName);
         verify(amazonS3Client, times(1)).putObject(any(PutObjectRequest.class));
-        verify(amazonS3Client, times(1)).getUrl(eq(bucketName), anyString());
+        verify(amazonS3Client, times(1)).getUrl(eq(awsS3Properties.getS3().getBucket()), anyString());
     }
 
     @Test
@@ -91,7 +99,7 @@ class UploadImageUseCaseTest {
         List<File> filesToUpload = List.of(dummyFile, dummyFile2);
 
         when(imageUtility.getFileExtension("original2.png")).thenReturn("png");
-        when(amazonS3Client.getUrl(eq(bucketName), argThat(filename -> filename.contains("png"))))
+        when(amazonS3Client.getUrl(eq(awsS3Properties.getS3().getBucket()), argThat(filename -> filename.contains("png"))))
             .thenReturn(new URL("https://test-bucket.s3.amazonaws.com/test-app/test-dir/some-uuid2.png"));
 
         // When
@@ -105,7 +113,7 @@ class UploadImageUseCaseTest {
 
         verify(imageUtility, times(2)).getFileExtension(anyString());
         verify(amazonS3Client, times(2)).putObject(any(PutObjectRequest.class));
-        verify(amazonS3Client, times(2)).getUrl(eq(bucketName), anyString());
+        verify(amazonS3Client, times(2)).getUrl(eq(awsS3Properties.getS3().getBucket()), anyString());
         Files.deleteIfExists(dummyFile2.toPath());
     }
 
@@ -173,7 +181,7 @@ class UploadImageUseCaseTest {
         );
         assertEquals(FailureCode.IMAGE_PROCESSING_FAILED, thrown.getFailureCode());
         verify(amazonS3Client, times(1)).putObject(any(PutObjectRequest.class));
-        verify(amazonS3Client, times(1)).getUrl(anyString(), anyString());
+        verify(amazonS3Client, times(1)).getUrl(eq(awsS3Properties.getS3().getBucket()), anyString());
     }
 
 

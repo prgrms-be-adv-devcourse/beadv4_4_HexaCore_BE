@@ -2,6 +2,7 @@ package com.back.app.usecase;
 
 import com.back.common.exception.CustomException;
 import com.back.image.app.usecase.ResizeImageUseCase;
+import com.back.image.config.ImageResizeProperties;
 import com.back.image.utils.ImageUtility;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -30,6 +31,9 @@ class ResizeImageUseCaseTest {
     @Mock
     private ImageUtility imageUtility;
 
+    @Mock
+    private ImageResizeProperties imageResizeProperties;
+
     @InjectMocks
     private ResizeImageUseCase resizeImageUseCase;
 
@@ -39,8 +43,8 @@ class ResizeImageUseCaseTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        // Manually inject @Value fields for unit testing
-        ReflectionTestUtils.setField(resizeImageUseCase, "maxWidth", 500); // Set a dummy max width
+        when(imageResizeProperties.getWidth()).thenReturn(500);
+        when(imageResizeProperties.getHeight()).thenReturn(500);
     }
 
     private File createDummyImageFile(String filename, int width, int height) throws IOException {
@@ -151,7 +155,7 @@ class ResizeImageUseCaseTest {
     void resizeMultipleImage_partialFailure_throwsCustomException() throws IOException {
         // Given
         File file1 = createDummyImageFile("valid.jpg", 1000, 800);
-        File file2 = createDummyImageFile("invalid.png", 600, 400); // This one will fail validation
+        File file2 = createDummyImageFile("invalid.png", 600, 600); // Changed dimensions
         List<File> filesToResize = List.of(file1, file2);
 
         when(imageUtility.validateFileExtension("valid.jpg")).thenReturn(true);
@@ -163,7 +167,7 @@ class ResizeImageUseCaseTest {
         // For "invalid.png", assume getFileExtension can still extract "png",
         // but validateFileExtension should return FALSE for unsupported format.
         // The file name generated in resizeImage for file2 will be "resized_invalid.png"
-        when(imageUtility.validateFileExtension(startsWith("resized_invalid.png"))).thenReturn(false); // <--- CHANGE HERE: return false
+        when(imageUtility.validateFileExtension(startsWith("resized_invalid.png"))).thenThrow(new IOException("Simulated unsupported format"));
         when(imageUtility.getFileExtension(startsWith("resized_invalid.png"))).thenReturn("png"); // <--- MOCK THIS TO AVOID NULL for ImageIO.write
         
         // When & Then
@@ -171,6 +175,7 @@ class ResizeImageUseCaseTest {
                 resizeImageUseCase.resizeMultipleImage(filesToResize)
         );
         assertEquals(com.back.common.code.FailureCode.IMAGE_PROCESSING_FAILED, thrown.getFailureCode());
+        verify(imageUtility, times(1)).validateFileExtension(startsWith("resized_invalid.png"));
         
         // Clean up all potential temporary files
         Files.deleteIfExists(file1.toPath());

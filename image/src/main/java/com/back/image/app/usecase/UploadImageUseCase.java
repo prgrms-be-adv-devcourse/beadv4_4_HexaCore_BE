@@ -2,14 +2,13 @@ package com.back.image.app.usecase;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.services.s3.AmazonS3Client;
-import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.back.common.code.FailureCode;
 import com.back.common.exception.CustomException;
+import com.back.image.config.AwsS3Properties;
 import com.back.image.utils.ImageUtility;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -22,11 +21,9 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class UploadImageUseCase {
 
-    @Value("${cloud.aws.s3.bucket}")
-    private String bucket;
-
     private final ImageUtility imageUtility;
     private final AmazonS3Client amazonS3Client;
+    private final AwsS3Properties awsS3Properties;
 
     public List<String> uploadMultipleImage(List<File> resizedFiles, String dirName) {
         return resizedFiles.stream().map(f -> {
@@ -58,11 +55,10 @@ public class UploadImageUseCase {
     private String putS3(File uploadFile, String fileName) throws IOException {
         try {
             amazonS3Client.putObject(
-                    new PutObjectRequest(bucket, fileName, uploadFile)
-                            .withCannedAcl(CannedAccessControlList.PublicRead)
+                    new PutObjectRequest(awsS3Properties.getS3().getBucket(), fileName, uploadFile)
             );
 
-            return amazonS3Client.getUrl(bucket, fileName).toString();
+            return amazonS3Client.getUrl(awsS3Properties.getS3().getBucket(), fileName).toString();
         } catch (AmazonClientException e) {
             log.error("[S3UploadFailed] S3 업로드 중 오류 발생: {}", e.getMessage(), e);
             throw new IOException("[S3UploadFailed] S3 업로드 중 오류 발생", e);

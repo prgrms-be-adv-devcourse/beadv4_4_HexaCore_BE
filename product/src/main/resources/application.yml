@@ -2,7 +2,9 @@ spring:
   application:
     name: product
   config:
-    import: optional:file:.env[.properties]
+    import:
+      - optional:file:.env[.properties]
+      - optional:classpath:application-image.yml
   profiles:
     active: local
   output:
