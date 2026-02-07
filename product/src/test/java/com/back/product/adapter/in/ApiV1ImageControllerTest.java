@@ -42,7 +42,7 @@ class ApiV1ImageControllerTest {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Nested
-    @DisplayName("GET /api/v1/images/upload/{category}")
+    @DisplayName("GET /api/v1/products/images/upload/{category}")
     class GetCategoriesTest {
         @DisplayName("이미지 업로드 성공")
         @Test
@@ -63,7 +63,7 @@ class ApiV1ImageControllerTest {
                     .thenReturn(mockResponseDto);
 
             // when
-            ResultActions resultActions = mockMvc.perform(multipart("/api/v1/images/upload/{category}", category.name())
+            ResultActions resultActions = mockMvc.perform(multipart("/api/v1/products/images/upload/{category}", category.name())
                             .file(mockFile)
                             .contentType(MediaType.MULTIPART_FORM_DATA_VALUE)
                             .accept(MediaType.APPLICATION_JSON)
@@ -91,7 +91,7 @@ class ApiV1ImageControllerTest {
             );
 
             // when
-            ResultActions resultActions = mockMvc.perform(multipart("/api/v1/images/upload/{category}", invalidCategory)
+            ResultActions resultActions = mockMvc.perform(multipart("/api/v1/products/images/upload/{category}", invalidCategory)
                             .file(mockFile)
                             .contentType(MediaType.MULTIPART_FORM_DATA_VALUE)
                             .accept(MediaType.APPLICATION_JSON)
@@ -109,7 +109,7 @@ class ApiV1ImageControllerTest {
             ImageCategory category = ImageCategory.PRODUCT;
 
             // when
-            ResultActions resultActions = mockMvc.perform(multipart("/api/v1/images/upload/{category}", category.name())
+            ResultActions resultActions = mockMvc.perform(multipart("/api/v1/products/images/upload/{category}", category.name())
                             .contentType(MediaType.MULTIPART_FORM_DATA_VALUE) // Even without file, need to set content type
                             .accept(MediaType.APPLICATION_JSON)
                     )
