@@ -1,0 +1,29 @@
+package com.back.product.adapter.in;
+
+import com.back.app.ImageFacade;
+import com.back.dto.enums.ImageCategory;
+import com.back.common.code.SuccessCode;
+import com.back.common.response.CommonResponse;
+import com.back.dto.response.ImageUploadResponseDto;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
+
+@RestController
+@RequestMapping(path = "/api/v1/images")
+@RequiredArgsConstructor
+public class ApiV1ImageController implements ImageApiController {
+    private final ImageFacade imageFacade;
+
+    @PostMapping(path = "/upload/{category}", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+    public CommonResponse<ImageUploadResponseDto> uploadImages(
+            @PathVariable ImageCategory category,
+            @RequestPart List<MultipartFile> images
+    ) {
+        ImageUploadResponseDto response = imageFacade.uploadImage(images, category);
+        return CommonResponse.success(SuccessCode.OK, response);
+    }
+}
