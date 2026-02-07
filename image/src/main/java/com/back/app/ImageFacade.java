@@ -4,6 +4,7 @@ import com.back.app.usecase.ConvertImageUseCase;
 import com.back.app.usecase.FlushImageUseCase;
 import com.back.app.usecase.ResizeImageUseCase;
 import com.back.app.usecase.UploadImageUseCase;
+import com.back.dto.enums.ImageCategory;
 import com.back.dto.request.ImageUploadRequestDto;
 import com.back.dto.response.ImageUploadResponseDto;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +24,7 @@ public class ImageFacade {
     private final UploadImageUseCase uploadImageUseCase;
     private final FlushImageUseCase flushImageUseCase;
 
-    public ImageUploadResponseDto uploadImage(ImageUploadRequestDto imageUploadRequestDto) {
+    public ImageUploadResponseDto uploadImage(ImageUploadRequestDto imageUploadRequestDto, ImageCategory category) {
         List<File> allTemporaryFiles = new ArrayList<>();
 
         try {
@@ -33,9 +34,9 @@ public class ImageFacade {
             List<File> resizeFiles = resizeImageUseCase.resizeMultipleImage(convertedImages);
             allTemporaryFiles.addAll(resizeFiles);
 
-            // List<String> uploadedImageUrls = uploadImageUseCase.uploadMultipleImage(resizeFiles);
+            List<String> uploadedImageUrls = uploadImageUseCase.uploadMultipleImage(resizeFiles, category.getPath());
 
-            return ImageUploadResponseDto.builder().build();
+            return ImageUploadResponseDto.builder().fileUrl(uploadedImageUrls).build();
         } finally {
             if (!allTemporaryFiles.isEmpty()) {
                 log.info("[FileCleanup] 임시 파일 정리 시작, 파일 개수: {}", allTemporaryFiles.size());
