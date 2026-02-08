@@ -14,6 +14,7 @@ import java.util.List;
 public interface ImageApiController {
     @Operation(summary = "이미지 파일 업로드", description = "이미지 파일들을 업로드하여 S3에 저장합니다.")
     @ApiResponse(responseCode = "200", description = "이미지 파일 등록 성공")
+    @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터", content = @Content)
     @ApiResponse(responseCode = "401", description = "인증 실패", content = @Content)
     @ApiResponse(responseCode = "403", description = "권한 없음", content = @Content)
     @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
