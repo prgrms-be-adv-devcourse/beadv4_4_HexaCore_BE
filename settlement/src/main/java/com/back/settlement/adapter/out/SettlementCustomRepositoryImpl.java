@@ -101,7 +101,7 @@ public class SettlementCustomRepositoryImpl implements SettlementCustomRepositor
                 .distinct()
                 .from(settlementItem)
                 .where(
-                        settlementItem.settlement.isNull(),
+                        settlementItem.status.eq(SettlementItemStatus.COLLECTED),
                         settlementItem.payeeId.isNotNull(),
                         settlementItem.payeeId.ne(systemPayeeId),
                         settlementItem.confirmedAt.goe(startAt),
@@ -115,7 +115,7 @@ public class SettlementCustomRepositoryImpl implements SettlementCustomRepositor
                 .selectFrom(settlementItem)
                 .where(
                         settlementItem.payeeId.eq(payeeId),
-                        settlementItem.settlement.isNull(),
+                        settlementItem.status.eq(SettlementItemStatus.COLLECTED),
                         settlementItem.confirmedAt.goe(startAt),
                         settlementItem.confirmedAt.loe(endAt)
                 )
