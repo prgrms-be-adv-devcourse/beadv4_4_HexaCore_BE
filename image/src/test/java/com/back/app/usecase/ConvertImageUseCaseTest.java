@@ -95,25 +95,25 @@ class ConvertImageUseCaseTest {
     }
 
     @Test
-    @DisplayName("파일이 비어있을 경우 IOException을 발생시킨다")
-    void convertFile_emptyFile_throwsIOException() {
+    @DisplayName("파일이 비어있을 경우 CustomException을 발생시킨다")
+    void convertFile_emptyFile_throwsCustomException() {
         // Given
         MockMultipartFile emptyFile = new MockMultipartFile("file", "empty.jpg", "image/jpeg", new byte[0]);
 
         // When & Then
-        assertThrows(IOException.class, () ->
+        assertThrows(CustomException.class, () ->
                 convertImageUseCase.convertFile(emptyFile)
         );
     }
 
     @Test
-    @DisplayName("MultipartFile이 null일 경우 IOException을 발생시킨다")
-    void convertFile_nullMultipartFile_throwsIOException() {
+    @DisplayName("MultipartFile이 null일 경우 CustomException을 발생시킨다")
+    void convertFile_nullMultipartFile_throwsCustomException() {
         // Given
         MultipartFile nullFile = null;
 
         // When & Then
-        assertThrows(IOException.class, () ->
+        assertThrows(CustomException.class, () ->
                 convertImageUseCase.convertFile(nullFile)
         );
     }
