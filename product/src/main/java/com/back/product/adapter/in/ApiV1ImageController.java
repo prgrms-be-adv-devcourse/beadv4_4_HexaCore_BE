@@ -18,6 +18,7 @@ import java.util.List;
 public class ApiV1ImageController implements ImageApiController {
     private final ImageFacade imageFacade;
 
+    @Override
     @PostMapping(path = "/upload/{category}", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     public CommonResponse<ImageUploadResponseDto> uploadImages(
             @PathVariable ImageCategory category,
