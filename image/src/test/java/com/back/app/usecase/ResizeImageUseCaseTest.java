@@ -102,15 +102,15 @@ class ResizeImageUseCaseTest {
     }
 
     @Test
-    @DisplayName("리사이즈할 파일이 null이거나 존재하지 않으면 IOException을 발생시킨다")
-    void resizeImage_nullOrNonExistentFile_throwsIOException() {
+    @DisplayName("리사이즈할 파일이 null이거나 존재하지 않으면 CustomException을 발생시킨다")
+    void resizeImage_nullOrNonExistentFile_throwsCustomException() {
         // Given
         File nullFile = null;
         File nonExistentFile = tempDir.resolve("non_existent.jpg").toFile();
 
         // When & Then
-        assertThrows(IOException.class, () -> resizeImageUseCase.resizeImage(nullFile));
-        assertThrows(IOException.class, () -> resizeImageUseCase.resizeImage(nonExistentFile));
+        assertThrows(CustomException.class, () -> resizeImageUseCase.resizeImage(nullFile));
+        assertThrows(CustomException.class, () -> resizeImageUseCase.resizeImage(nonExistentFile));
     }
 
     @Test
