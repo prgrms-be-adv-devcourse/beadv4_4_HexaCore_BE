@@ -19,6 +19,7 @@ import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import com.back.settlement.domain.exception.InvalidSettlementItemStateException;
 import java.util.List;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -88,7 +89,7 @@ public class SettlementItem extends BaseTimeEntity {
                 .sellerName(request.sellerName())
                 .amount(netAmount)
                 .eventType(SettlementEventType.SETTLEMENT_PRODUCT_SALES_AMOUNT)
-                .status(SettlementItemStatus.INCLUDED)
+                .status(SettlementItemStatus.COLLECTED)
                 .confirmedAt(request.confirmedAt())
                 .build();
 
@@ -101,7 +102,7 @@ public class SettlementItem extends BaseTimeEntity {
                 .sellerName(request.sellerName())
                 .amount(feeAmount)
                 .eventType(SettlementEventType.SETTLEMENT_PRODUCT_SALES_FEE)
-                .status(SettlementItemStatus.INCLUDED)
+                .status(SettlementItemStatus.COLLECTED)
                 .confirmedAt(request.confirmedAt())
                 .build();
 
@@ -110,5 +111,16 @@ public class SettlementItem extends BaseTimeEntity {
 
     public void addSettlement(Settlement settlement) {
         this.settlement = settlement;
+    }
+
+    public void included() {
+        validateStatusTransition(SettlementItemStatus.INCLUDED);
+        this.status = SettlementItemStatus.INCLUDED;
+    }
+
+    private void validateStatusTransition(SettlementItemStatus targetStatus) {
+        if (!this.status.canTransitionTo(targetStatus)) {
+            throw new InvalidSettlementItemStateException(this.status, targetStatus);
+        }
     }
 }
