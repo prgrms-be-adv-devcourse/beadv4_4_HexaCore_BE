@@ -28,8 +28,8 @@ public class ResizeImageUseCase {
             try {
                 return resizeImage(f);
             } catch (CustomException e) {
-                log.error("[ImageProcessingFailed] 이미지 리사이징 실패 : {}", e.getMessage());
-                throw new CustomException("[ImageProcessingFailed] 이미지 리사이징 실패 : {}", FailureCode.IMAGE_PROCESSING_FAILED);
+                log.error("[ImageProcessingFailed] 이미지 리사이징 실패 : {}", e.getMessage(), e);
+                throw e;
             }
         }).toList();
     }
