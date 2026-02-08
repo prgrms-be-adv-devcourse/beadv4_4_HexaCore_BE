@@ -45,7 +45,7 @@ class SettlementCashPayoutEventHandlerTest {
         );
 
         // when
-        handler.settlementStartedEvent(event);
+        handler.publishPayoutRequest(event);
 
         // then
         ArgumentCaptor<Envelope<PayoutRequestPayload>> captor = ArgumentCaptor.forClass(Envelope.class);

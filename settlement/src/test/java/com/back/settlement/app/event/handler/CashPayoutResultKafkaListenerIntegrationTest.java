@@ -10,17 +10,15 @@ import static org.mockito.Mockito.never;
 import com.back.common.event.Envelope;
 import com.back.common.event.EventName;
 import com.back.settlement.adapter.out.SettlementRepository;
-import com.back.settlement.app.dto.request.SettlementRequest;
 import com.back.settlement.app.event.payload.PayoutResultPayload;
 import com.back.settlement.app.support.DomainEventPublisher;
 import com.back.settlement.domain.Settlement;
 import com.back.settlement.domain.SettlementStatus;
+import com.back.settlement.fixture.SettlementFixture;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import java.math.BigDecimal;
 import java.time.Duration;
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,7 +39,6 @@ import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
-import org.springframework.test.util.ReflectionTestUtils;
 
 @Slf4j
 @SpringJUnitConfig({KafkaTestConsumerConfig.class})
@@ -49,7 +46,7 @@ import org.springframework.test.util.ReflectionTestUtils;
         partitions = 1,
         topics = CashPayoutResultKafkaListenerIntegrationTest.TOPIC
 )
-@DisplayName("CashPayoutResultKafkaListener 통합 테스트")
+@DisplayName("캐시 지급 요쳥 결과를 받는 통합 테스트")
 class CashPayoutResultKafkaListenerIntegrationTest {
 
     static final String TOPIC = "settlement-payout-result";
@@ -63,13 +60,7 @@ class CashPayoutResultKafkaListenerIntegrationTest {
     private EmbeddedKafkaBroker embeddedKafka;
 
     private Settlement createSettlement(Long id, SettlementStatus status) {
-        Settlement settlement = Settlement.create(new SettlementRequest(
-                1L, "판매자", LocalDateTime.now().minusDays(7), LocalDateTime.now(),
-                        BigDecimal.valueOf(100000), BigDecimal.valueOf(10000), BigDecimal.valueOf(90000)
-                ));
-        ReflectionTestUtils.setField(settlement, "id", id);
-        ReflectionTestUtils.setField(settlement, "status", status);
-        return settlement;
+        return SettlementFixture.createSettlement(id, 1L, "판매자", status);
     }
 
     private void publishToKafka(PayoutResultPayload payload) {
