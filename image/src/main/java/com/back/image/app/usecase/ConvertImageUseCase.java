@@ -12,6 +12,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -42,7 +43,8 @@ public class ConvertImageUseCase {
                 throw new CustomException("[ImageProcessingFailed] 지원하지 않는 파일 형식입니다.", FailureCode.IMAGE_PROCESSING_FAILED);
             }
 
-            File originalTempFile = new File(System.getProperty("java.io.tmpdir") + File.separator + multipartFile.getOriginalFilename());
+            String uniqueFileName = buildUniqueFileName(multipartFile.getOriginalFilename());
+            File originalTempFile = new File(System.getProperty("java.io.tmpdir") + File.separator + uniqueFileName);
 
             try (FileOutputStream fos = new FileOutputStream(originalTempFile)) {
                 fos.write(multipartFile.getBytes());
@@ -56,5 +58,11 @@ public class ConvertImageUseCase {
             log.error("[ImageProcessingFailed] 이미지 파일 변환 중 IOException 발생하였습니다. : {}", e.getMessage(), e);
             throw new CustomException("[ImageProcessingFailed] 이미지 파일 중 IOException 발생하였습니다. : " + e.getMessage(), FailureCode.IMAGE_PROCESSING_FAILED);
         }
+    }
+
+    private String buildUniqueFileName(String originalFilename) throws IOException {
+        String fileExtension = imageUtility.getFileExtension(originalFilename);
+        String uniqueID = UUID.randomUUID().toString();
+        return uniqueID + "." + fileExtension;
     }
 }
