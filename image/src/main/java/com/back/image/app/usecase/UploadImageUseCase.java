@@ -48,7 +48,7 @@ public class UploadImageUseCase {
             return putS3(resizedFile, fileName);
         } catch (IOException e) {
             log.error("[ImageProcessingFailed] 이미지 업로드 중 오류 발생", e);
-            throw new CustomException("[ImageProcessingFailed] 이미지 업로드 중 오류가 발생했습니다.", FailureCode.IMAGE_PROCESSING_FAILED);
+            throw new CustomException("[ImageProcessingFailed] 이미지 업로드 중 오류가 발생했습니다. 원인 : " + e.getMessage(), FailureCode.IMAGE_PROCESSING_FAILED);
         }
     }
 
