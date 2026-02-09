@@ -1,7 +1,7 @@
 package com.back.product.dto.response;
 
-import com.back.product.dto.ProductDto;
-import com.back.product.dto.ProductInfoDto;
+import com.back.product.dto.model.ProductDto;
+import com.back.product.dto.model.ProductInfoDto;
 import lombok.Builder;
 
 import java.util.List;

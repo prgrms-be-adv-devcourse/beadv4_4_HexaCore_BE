@@ -2,7 +2,7 @@ package com.back.product.mapper;
 
 import com.back.common.product.event.payload.CategoryPayload;
 import com.back.product.domain.Category;
-import com.back.product.dto.CategoryDto;
+import com.back.product.dto.model.CategoryDto;
 import com.back.product.dto.request.CategoryCreateRequestDto;
 import org.springframework.stereotype.Component;
 

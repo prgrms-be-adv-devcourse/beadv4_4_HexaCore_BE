@@ -4,8 +4,8 @@ import com.back.product.domain.Product;
 import com.back.product.domain.ProductImage;
 import com.back.product.domain.ProductInfo;
 import com.back.product.domain.ProductOptionValues;
-import com.back.product.dto.ProductDto;
-import com.back.product.dto.ProductOptionDto;
+import com.back.product.dto.model.ProductDto;
+import com.back.product.dto.model.ProductOptionDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

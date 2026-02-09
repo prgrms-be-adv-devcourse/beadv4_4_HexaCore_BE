@@ -1,9 +1,9 @@
 package com.back.product.adapter.in.event;
 
 import com.back.product.adapter.out.event.ProductKafkaEventPublisher;
-import com.back.product.global.event.ProductCreationCompletedEvent;
-import com.back.product.global.event.ProductDeletionCompletedEvent;
-import com.back.product.global.event.ProductUpdateCompletedEvent;
+import com.back.product.dto.event.ProductCreationCompletedEvent;
+import com.back.product.dto.event.ProductDeletionCompletedEvent;
+import com.back.product.dto.event.ProductUpdateCompletedEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.event.TransactionPhase;

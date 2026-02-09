@@ -1,13 +1,13 @@
 package com.back.product.app;
 
-import com.back.product.app.usecase.*;
-import com.back.product.dto.BrandDto;
-import com.back.product.dto.CategoryDto;
-import com.back.product.dto.OptionDto;
-import com.back.product.dto.ProductInfoDto;
-import com.back.product.global.event.ProductCreationCompletedEvent;
-import com.back.product.global.event.ProductUpdateCompletedEvent;
-import com.back.product.global.event.ProductDeletionCompletedEvent;
+import com.back.product.app.usecase.command.ProductDocumentUseCase;
+import com.back.product.dto.model.BrandDto;
+import com.back.product.dto.model.CategoryDto;
+import com.back.product.dto.model.OptionDto;
+import com.back.product.dto.model.ProductInfoDto;
+import com.back.product.dto.event.ProductCreationCompletedEvent;
+import com.back.product.dto.event.ProductUpdateCompletedEvent;
+import com.back.product.dto.event.ProductDeletionCompletedEvent;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;

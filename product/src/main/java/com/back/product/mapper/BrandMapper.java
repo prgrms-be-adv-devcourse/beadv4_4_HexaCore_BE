@@ -3,7 +3,7 @@ package com.back.product.mapper;
 import com.back.common.product.event.payload.BrandPayload;
 import com.back.product.domain.Brand;
 import com.back.product.dto.request.BrandCreateRequestDto;
-import com.back.product.dto.BrandDto;
+import com.back.product.dto.model.BrandDto;
 import org.springframework.stereotype.Component;
 
 @Component

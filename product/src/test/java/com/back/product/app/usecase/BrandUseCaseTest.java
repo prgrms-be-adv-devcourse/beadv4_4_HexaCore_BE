@@ -2,9 +2,11 @@ package com.back.product.app.usecase;
 
 import com.back.common.code.FailureCode;
 import com.back.common.exception.CustomException;
-import com.back.product.adapter.out.BrandRepository;
+import com.back.product.adapter.out.persistence.BrandRepository;
+import com.back.product.app.usecase.command.BrandUseCase;
+import com.back.product.app.usecase.query.ProductSupport;
 import com.back.product.domain.Brand;
-import com.back.product.dto.BrandDto;
+import com.back.product.dto.model.BrandDto;
 import com.back.product.dto.request.BrandCreateRequestDto;
 import com.back.product.dto.request.BrandModifyRequestDto;
 import com.back.product.mapper.BrandMapper;

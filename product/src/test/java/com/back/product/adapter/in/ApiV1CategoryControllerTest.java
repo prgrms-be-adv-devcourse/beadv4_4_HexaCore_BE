@@ -2,8 +2,9 @@ package com.back.product.adapter.in;
 
 import com.back.common.code.FailureCode;
 import com.back.common.exception.CustomException;
-import com.back.product.app.ProductFacade;
-import com.back.product.dto.CategoryDto;
+import com.back.product.adapter.in.web.controller.ApiV1CategoryController;
+import com.back.product.app.facade.ProductFacade;
+import com.back.product.dto.model.CategoryDto;
 import com.back.product.dto.request.CategoryCreateRequestDto;
 import com.back.product.dto.request.CategoryModifyRequestDto;
 import com.back.product.dto.response.CategoryListResponseDto;

@@ -2,11 +2,13 @@ package com.back.product.app.usecase;
 
 import com.back.common.code.FailureCode;
 import com.back.common.exception.CustomException;
-import com.back.product.adapter.out.OptionGroupRepository;
-import com.back.product.adapter.out.OptionValueRepository;
+import com.back.product.adapter.out.persistence.OptionGroupRepository;
+import com.back.product.adapter.out.persistence.OptionValueRepository;
+import com.back.product.app.usecase.command.OptionUseCase;
+import com.back.product.app.usecase.query.ProductSupport;
 import com.back.product.domain.OptionGroup;
 import com.back.product.domain.OptionValue;
-import com.back.product.dto.OptionDto;
+import com.back.product.dto.model.OptionDto;
 import com.back.product.dto.request.OptionAppendRequestDto;
 import com.back.product.dto.request.OptionCreateRequestDto;
 import com.back.product.dto.request.OptionGroupModifyRequestDto;

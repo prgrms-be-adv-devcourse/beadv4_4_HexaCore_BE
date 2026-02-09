@@ -1,10 +1,10 @@
 package com.back.product.util;
 
-import com.back.product.dto.BrandDto;
-import com.back.product.dto.CategoryDto;
-import com.back.product.dto.ProductDto;
-import com.back.product.dto.ProductInfoDto;
-import com.back.product.dto.ProductOptionDto;
+import com.back.product.dto.model.BrandDto;
+import com.back.product.dto.model.CategoryDto;
+import com.back.product.dto.model.ProductDto;
+import com.back.product.dto.model.ProductInfoDto;
+import com.back.product.dto.model.ProductOptionDto;
 import com.back.product.dto.request.ProductCreateRequestDto;
 import com.back.product.dto.request.ProductInfoCreateRequestDto;
 import com.back.product.dto.request.ProductUpdateRequestDto;

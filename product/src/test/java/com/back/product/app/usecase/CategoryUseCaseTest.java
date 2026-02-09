@@ -2,9 +2,11 @@ package com.back.product.app.usecase;
 
 import com.back.common.code.FailureCode;
 import com.back.common.exception.CustomException;
-import com.back.product.adapter.out.CategoryRepository;
+import com.back.product.adapter.out.persistence.CategoryRepository;
+import com.back.product.app.usecase.command.CategoryUseCase;
+import com.back.product.app.usecase.query.ProductSupport;
 import com.back.product.domain.Category;
-import com.back.product.dto.CategoryDto;
+import com.back.product.dto.model.CategoryDto;
 import com.back.product.dto.request.CategoryCreateRequestDto;
 import com.back.product.dto.request.CategoryModifyRequestDto;
 import com.back.product.mapper.CategoryMapper;

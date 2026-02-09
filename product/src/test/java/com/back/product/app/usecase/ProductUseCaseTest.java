@@ -2,14 +2,17 @@ package com.back.product.app.usecase;
 
 import com.back.common.code.FailureCode;
 import com.back.common.exception.CustomException;
-import com.back.product.adapter.out.ProductImageRepository;
-import com.back.product.adapter.out.ProductOptionValuesRepository;
-import com.back.product.adapter.out.ProductRepository;
+import com.back.product.adapter.out.persistence.ProductImageRepository;
+import com.back.product.adapter.out.persistence.ProductOptionValuesRepository;
+import com.back.product.adapter.out.persistence.ProductRepository;
+import com.back.product.app.usecase.command.ProductUseCase;
+import com.back.product.app.usecase.query.ProductSupport;
 import com.back.product.domain.OptionValue;
 import com.back.product.domain.Product;
 import com.back.product.domain.ProductInfo;
 import com.back.product.domain.ProductOptionValues;
-import com.back.product.dto.ProductDto;
+import com.back.product.dto.model.ProductDto;
+import com.back.product.dto.model.ProductInfoDto;
 import com.back.product.dto.request.ProductVariantCreateRequestDto;
 import com.back.product.dto.request.ProductVariantUpdateRequestDto;
 import com.back.product.mapper.ProductImageMapper;
@@ -27,7 +30,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -312,11 +314,11 @@ class ProductUseCaseTest {
             given(productSupport.getAllProductImagesByProductsIn(foundProducts)).willReturn(List.of(image1));
             given(productSupport.getAllProductOptionValuesByProductsIn(foundProducts)).willReturn(List.of(option1));
 
-            com.back.product.dto.ProductInfoDto productInfoDto = com.back.product.dto.ProductInfoDto.builder().productInfoId(productInfo.getId()).name(productInfo.getName()).build();
+            ProductInfoDto productInfoDto = ProductInfoDto.builder().productInfoId(productInfo.getId()).name(productInfo.getName()).build();
             given(productInfoMapper.toDto(productInfo)).willReturn(productInfoDto);
 
-            com.back.product.dto.ProductDto productDto1 = com.back.product.dto.ProductDto.builder().productId(1L).build();
-            com.back.product.dto.ProductDto productDto2 = com.back.product.dto.ProductDto.builder().productId(2L).build();
+            ProductDto productDto1 = ProductDto.builder().productId(1L).build();
+            ProductDto productDto2 = ProductDto.builder().productId(2L).build();
             given(productMapper.toDto(org.mockito.ArgumentMatchers.eq(product1), any(), any())).willReturn(productDto1);
             given(productMapper.toDto(org.mockito.ArgumentMatchers.eq(product2), any(), any())).willReturn(productDto2);
 

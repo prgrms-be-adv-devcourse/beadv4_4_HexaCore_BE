@@ -2,8 +2,9 @@ package com.back.product.adapter.in;
 
 import com.back.common.code.FailureCode;
 import com.back.common.exception.CustomException;
-import com.back.product.app.ProductFacade;
-import com.back.product.dto.BrandDto;
+import com.back.product.adapter.in.web.controller.ApiV1BrandController;
+import com.back.product.app.facade.ProductFacade;
+import com.back.product.dto.model.BrandDto;
 import com.back.product.dto.request.BrandCreateRequestDto;
 import com.back.product.dto.request.BrandModifyRequestDto;
 import com.back.product.dto.response.BrandListResponseDto;

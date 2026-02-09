@@ -4,7 +4,7 @@ import com.back.common.product.event.payload.ProductInfoPayload;
 import com.back.product.domain.Brand;
 import com.back.product.domain.Category;
 import com.back.product.domain.ProductInfo;
-import com.back.product.dto.ProductInfoDto;
+import com.back.product.dto.model.ProductInfoDto;
 import com.back.product.dto.request.ProductInfoCreateRequestDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

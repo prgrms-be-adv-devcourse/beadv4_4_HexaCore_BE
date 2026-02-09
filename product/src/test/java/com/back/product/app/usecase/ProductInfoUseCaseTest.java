@@ -2,7 +2,9 @@ package com.back.product.app.usecase;
 
 import com.back.common.code.FailureCode;
 import com.back.common.exception.CustomException;
-import com.back.product.adapter.out.ProductInfoRepository;
+import com.back.product.adapter.out.persistence.ProductInfoRepository;
+import com.back.product.app.usecase.command.ProductInfoUseCase;
+import com.back.product.app.usecase.query.ProductSupport;
 import com.back.product.domain.Brand;
 import com.back.product.domain.Category;
 import com.back.product.domain.ProductInfo;

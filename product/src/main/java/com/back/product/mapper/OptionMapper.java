@@ -3,7 +3,7 @@ package com.back.product.mapper;
 import com.back.common.product.event.payload.OptionPayload;
 import com.back.product.domain.OptionGroup;
 import com.back.product.domain.OptionValue;
-import com.back.product.dto.OptionDto;
+import com.back.product.dto.model.OptionDto;
 import org.springframework.stereotype.Component;
 
 import java.util.List;

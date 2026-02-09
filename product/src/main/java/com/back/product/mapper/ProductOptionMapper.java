@@ -1,9 +1,7 @@
 package com.back.product.mapper;
 
-import com.back.product.domain.OptionGroup;
-import com.back.product.domain.OptionValue;
 import com.back.product.domain.ProductOptionValues;
-import com.back.product.dto.ProductOptionDto;
+import com.back.product.dto.model.ProductOptionDto;
 import org.springframework.stereotype.Component;
 
 @Component

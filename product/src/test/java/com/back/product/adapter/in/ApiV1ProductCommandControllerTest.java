@@ -2,7 +2,8 @@ package com.back.product.adapter.in;
 
 import com.back.common.code.FailureCode;
 import com.back.common.exception.CustomException;
-import com.back.product.app.ProductFacade;
+import com.back.product.adapter.in.web.controller.ApiV1ProductCommandController;
+import com.back.product.app.facade.ProductFacade;
 import com.back.product.dto.request.ProductCreateRequestDto;
 import com.back.product.dto.request.ProductUpdateRequestDto;
 import com.back.product.dto.response.ProductResponseDto;

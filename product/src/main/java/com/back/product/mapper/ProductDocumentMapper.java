@@ -1,11 +1,10 @@
 package com.back.product.mapper;
 
 import com.back.product.document.ProductDocument;
-import com.back.product.dto.BrandDto;
-import com.back.product.dto.CategoryDto;
-import com.back.product.dto.OptionDto;
-import com.back.product.dto.ProductInfoDto;
-import com.back.product.dto.response.OptionGroupModifyResponseDto;
+import com.back.product.dto.model.BrandDto;
+import com.back.product.dto.model.CategoryDto;
+import com.back.product.dto.model.OptionDto;
+import com.back.product.dto.model.ProductInfoDto;
 import com.back.product.dto.response.ProductSearchResponseDto;
 import org.springframework.stereotype.Component;
 
