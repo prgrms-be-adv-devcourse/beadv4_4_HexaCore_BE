@@ -94,6 +94,22 @@ class CashPayoutResultKafkaListenerIntegrationTest {
         }
     }
 
+    private String consumeRawMessage() {
+        try (KafkaConsumer<String, String> consumer = createStringConsumer()) {
+            consumer.subscribe(List.of(TOPIC));
+            log.info("[수신 대기] 토픽 '{}' 구독ing", TOPIC);
+
+            ConsumerRecords<String, String> records = consumer.poll(Duration.ofSeconds(10));
+            log.info("[수신 완료] 수신된 메시지 개수: {}", records.count());
+
+            assertThat(records.count()).isGreaterThanOrEqualTo(1);
+
+            ConsumerRecord<String, String> record = records.iterator().next();
+            log.info("[원본 JSON] {}", record.value());
+            return record.value();
+        }
+    }
+
     private KafkaConsumer<String, String> createStringConsumer() {
         Map<String, Object> props = new HashMap<>(KafkaTestUtils.consumerProps("test-listener-group", "true", embeddedKafka));
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
@@ -138,12 +154,12 @@ class CashPayoutResultKafkaListenerIntegrationTest {
             DomainEventPublisher eventPublisher = mock(DomainEventPublisher.class);
             given(repository.findById(settlementId)).willReturn(Optional.of(settlement));
 
-            CashPayoutResultKafkaListener listener = new CashPayoutResultKafkaListener(repository, eventPublisher);
+            CashPayoutResultKafkaListener listener = new CashPayoutResultKafkaListener(repository, eventPublisher, objectMapper);
             log.info("[테스트 시작] 캐시 지급 성공 메시지 처리 테스트");
 
             // when
             publishToKafka(new PayoutResultPayload(settlementId, true, null));
-            Envelope<PayoutResultPayload> received = consumeAndDeserialize();
+            String received = consumeRawMessage();
 
             log.info("[리스너 호출] listener.listen() 실행");
             listener.listen(received);
@@ -175,12 +191,12 @@ class CashPayoutResultKafkaListenerIntegrationTest {
             DomainEventPublisher eventPublisher = mock(DomainEventPublisher.class);
             given(repository.findById(settlementId)).willReturn(Optional.of(settlement));
 
-            CashPayoutResultKafkaListener listener = new CashPayoutResultKafkaListener(repository, eventPublisher);
+            CashPayoutResultKafkaListener listener = new CashPayoutResultKafkaListener(repository, eventPublisher, objectMapper);
             log.info("[테스트 시작] 캐시 지급 실패 메시지 처리 테스트");
 
             // when
             publishToKafka(new PayoutResultPayload(settlementId, false, failReason));
-            Envelope<PayoutResultPayload> received = consumeAndDeserialize();
+            String received = consumeRawMessage();
 
             log.info("[리스너 호출] listener.listen()");
             listener.listen(received);
@@ -211,12 +227,12 @@ class CashPayoutResultKafkaListenerIntegrationTest {
             DomainEventPublisher eventPublisher = mock(DomainEventPublisher.class);
             given(repository.findById(settlementId)).willReturn(Optional.empty());
 
-            CashPayoutResultKafkaListener listener = new CashPayoutResultKafkaListener(repository, eventPublisher);
+            CashPayoutResultKafkaListener listener = new CashPayoutResultKafkaListener(repository, eventPublisher, objectMapper);
             log.info("[테스트 시작] 정산서가 없는 경우 메시지 처리 테스트");
 
             // when
             publishToKafka(new PayoutResultPayload(settlementId, true, null));
-            Envelope<PayoutResultPayload> received = consumeAndDeserialize();
+            String received = consumeRawMessage();
 
             log.info("[리스너 호출] listener.listen() 실행...");
             listener.listen(received);
