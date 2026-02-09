@@ -1,6 +1,7 @@
 package com.back.chat.app;
 
 import com.back.chat.adapter.out.UserClient;
+import com.back.chat.adapter.out.redis.RedisChatRestrictionReader;
 import com.back.chat.domain.ChatMessage;
 import com.back.chat.dto.request.ChatMessageSendRequestDto;
 import com.back.chat.event.payload.ChatMessagePayload;
@@ -22,9 +23,11 @@ public class ChatSendMessageUseCase {
     private final ChatSupport chatSupport;
     private final ApplicationEventPublisher eventPublisher;
     private final UserClient userClient;
+    private final RedisChatRestrictionReader redisChatRestrictionReader;
 
     @Transactional
     public void sendMessage(ChatMessageSendRequestDto requestDto, Long userId) {
+        LocalDateTime now = LocalDateTime.now();
 
         Long roomId = requestDto.roomId();
 
@@ -32,9 +35,13 @@ public class ChatSendMessageUseCase {
             throw new BadRequestException(FailureCode.CHAT_ROOM_NOT_FOUND);
         }
 
-        LocalDateTime until = userClient.getChatRestrictedUntil(userId);
-        if(until != null && until.isAfter(LocalDateTime.now())){
-            throw new ForbiddenException(FailureCode.CHAT_RESTRICTED);
+        LocalDateTime until = redisChatRestrictionReader.getRestrictedUntil(userId);
+        if (until != null) {
+            if (!until.isAfter(now)) {
+                redisChatRestrictionReader.delete(userId);
+            } else {
+                throw new ForbiddenException(FailureCode.CHAT_RESTRICTED);
+            }
         }
 
         ChatMessage savedMessage = chatSupport.saveMessage(
