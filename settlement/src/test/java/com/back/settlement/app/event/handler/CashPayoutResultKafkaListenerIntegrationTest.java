@@ -46,7 +46,7 @@ import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
         partitions = 1,
         topics = CashPayoutResultKafkaListenerIntegrationTest.TOPIC
 )
-@DisplayName("캐시 지급 요쳥 결과를 받는 통합 테스트")
+@DisplayName("캐시 지급 요청 결과를 받는 통합 테스트")
 class CashPayoutResultKafkaListenerIntegrationTest {
 
     static final String TOPIC = "settlement-payout-result";
