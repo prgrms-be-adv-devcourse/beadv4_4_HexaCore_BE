@@ -8,6 +8,7 @@ include(
         "market",
         "user",
         "product",
+        "image",
         "settlement",
         "detector",
         "security"
