@@ -1,4 +1,4 @@
-package com.back.user.adapter.in;
+package com.back.user.adapter.in.chat;
 
 import com.back.common.chat.ChatDeadLetterPayload;
 import lombok.RequiredArgsConstructor;

@@ -16,17 +16,6 @@ public class UserIncrementBlindCountUseCase {
 
     private final RedisChatRestrictionCache redisChatRestrictionCache;
 
-    public void incrementBlindCount(Long userId){
-        User user = userSupport.findById(userId);
-
-        user.incrementBlindCount();
-
-        if(user.getBlindCount()>= ChatRestrictionPolicy.BLIND_THRESHOLD){
-            // user.restrictChatForDays(ChatRestrictionPolicy.RESTRICT_DAYS);
-            user.resetBlindCount();
-        }
-    }
-
     @Transactional
     public void incrementBlindCount(Long userId, LocalDateTime now) {
         LocalDateTime restrictedUntil = userSupport.incrementBlindAndReturnRestrictedUntil(
