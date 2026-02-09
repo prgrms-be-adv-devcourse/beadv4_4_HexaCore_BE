@@ -1,6 +1,5 @@
 package com.back.chat.app;
 
-import com.back.chat.adapter.out.UserClient;
 import com.back.chat.adapter.out.redis.RedisChatRestrictionReader;
 import com.back.chat.domain.ChatMessage;
 import com.back.chat.dto.request.ChatMessageSendRequestDto;
@@ -22,7 +21,6 @@ public class ChatSendMessageUseCase {
 
     private final ChatSupport chatSupport;
     private final ApplicationEventPublisher eventPublisher;
-    private final UserClient userClient;
     private final RedisChatRestrictionReader redisChatRestrictionReader;
 
     @Transactional
