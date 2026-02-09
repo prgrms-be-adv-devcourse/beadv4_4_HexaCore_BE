@@ -1,6 +1,6 @@
 package com.back.user.app;
 
-import com.back.user.domain.User;
+import com.back.user.adapter.in.chat.TxAfterCommit;
 import com.back.user.domain.policy.ChatRestrictionPolicy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,15 +18,21 @@ public class UserIncrementBlindCountUseCase {
 
     @Transactional
     public void incrementBlindCount(Long userId, LocalDateTime now) {
-        LocalDateTime restrictedUntil = userSupport.incrementBlindAndReturnRestrictedUntil(
+        int updated =  userSupport.incrementBlindCount(
                 userId,
                 now,
                 ChatRestrictionPolicy.BLIND_THRESHOLD,
                 ChatRestrictionPolicy.RESTRICT_DURATION.getSeconds()
         );
 
+        if (updated == 0) {
+            throw new IllegalArgumentException("user not found: " + userId);
+        }
+
+        LocalDateTime restrictedUntil = userSupport.getRestrictedUntil(userId);
+
         if (restrictedUntil != null && restrictedUntil.isAfter(now)) {
-            redisChatRestrictionCache.put(userId, restrictedUntil, now);
+            TxAfterCommit.run(() -> redisChatRestrictionCache.put(userId, restrictedUntil, now));
         }
     }
 }
