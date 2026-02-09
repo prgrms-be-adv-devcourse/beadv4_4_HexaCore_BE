@@ -16,13 +16,14 @@ public class UserIdempotencyService {
 
     // true면 최초 처리, false면 이미 처리됨.
     @Transactional
-    public boolean tryMarkConsumed(UUID eventId, String eventType, LocalDateTime now) {
-        if (userConsumedEventRepository.existsById(eventId)) {
+    public boolean insertConsumed(UUID eventId, String eventType, LocalDateTime now) {
+        try {
+            userConsumedEventRepository.saveAndFlush(
+                    UserConsumedEvent.create(eventId, eventType, now)
+            );
+            return true;
+        } catch (DataIntegrityViolationException e) {
             return false;
         }
-        userConsumedEventRepository.saveAndFlush(
-                UserConsumedEvent.create(eventId, eventType, now)
-        );
-        return true;
     }
 }

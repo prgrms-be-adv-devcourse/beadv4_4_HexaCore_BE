@@ -6,6 +6,7 @@ import com.back.user.kafka.UserIdempotencyService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Component;
@@ -32,23 +33,26 @@ public class ChatMessageBlindedEventListener {
                         ConsumerRecord<String, ChatMessageBlindedKafkaEvent> record) {
         LocalDateTime now = LocalDateTime.now();
 
-        // 1) 멱등 게이트
-        boolean first = idempotencyService.tryMarkConsumed(UUID.fromString(event.eventId()), EVENT_TYPE, now);
+        try {
+            // 1) 멱등 게이트 (insert 시도)
+            try {
+                idempotencyService.insertConsumed(UUID.fromString(event.eventId()), EVENT_TYPE, now);
+            } catch (DataIntegrityViolationException dup) {
+                log.info("[USER][KAFKA] DUPLICATE ignore eventId={}, userId={}, topic={}, partition={}, offset={}",
+                        event.eventId(), event.authorUserId(), record.topic(), record.partition(), record.offset());
+                ack.acknowledge();
+                return;
+            }
 
-        if (!first) {
-            log.info("[USER][KAFKA] DUPLICATE ignore eventId={}, userId={}, topic={}, partition={}, offset={}",
-                    event.eventId(), event.authorUserId(), record.topic(), record.partition(), record.offset());
+            // 2) 비즈니스 처리
+            userFacade.incrementBlindCount(event.authorUserId(), now);
+
             ack.acknowledge();
-            return;
+
+            log.info("[USER][KAFKA] SUCCESS eventId={}, userId={}, topic={}, partition={}, offset={}",
+                    event.eventId(), event.authorUserId(), record.topic(), record.partition(), record.offset());
+        } catch (Exception e) {
+            throw e;
         }
-
-        // 2) 비즈니스 처리
-        userFacade.incrementBlindCount(event.authorUserId(),now);
-
-        // 3) 성공 커밋
-        ack.acknowledge();
-
-        log.info("[USER][KAFKA] SUCCESS eventId={}, userId={}, topic={}, partition={}, offset={}",
-                event.eventId(), event.authorUserId(), record.topic(), record.partition(), record.offset());
     }
 }

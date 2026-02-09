@@ -23,10 +23,8 @@ import org.springframework.kafka.support.serializer.JacksonJsonDeserializer;
 import java.util.HashMap;
 import java.util.Map;
 
-@Slf4j
 @EnableKafka
 @Configuration
-@RequiredArgsConstructor
 public class KafkaConsumerConfig {
 
     @Value("${spring.kafka.bootstrap-servers}")

@@ -36,7 +36,7 @@ public class UserSupport {
         }
     }
 
-    public LocalDateTime incrementBlindAndReturnRestrictedUntil(Long userId,LocalDateTime now, int threshold, long restrictSeconds) {
+    public LocalDateTime incrementBlindAndReturnRestrictedUntil(Long userId, LocalDateTime now, int threshold, long restrictSeconds) {
         return userRepository.incrementBlindAndReturnRestrictedUntil(userId, now, threshold, restrictSeconds);
     }
 }

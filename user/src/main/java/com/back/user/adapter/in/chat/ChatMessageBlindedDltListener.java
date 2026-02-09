@@ -20,10 +20,19 @@ public class ChatMessageBlindedDltListener {
     public void onDlt(ChatDeadLetterPayload payload,
                       Acknowledgment ack,
                       ConsumerRecord<String, ChatDeadLetterPayload> record) {
-        log.error("[USER][DLT] source={}, eventType={}, eventId={}, outboxId={}, retryCount={}, deadAt={}, lastError={}",
-                payload.source(), payload.eventType(), payload.eventId(), payload.outboxId(),
-                payload.retryCount(), payload.deadAt(), payload.lastError());
 
-        // TODO: DB 적재 / Slack 알림 / 재처리 큐 적재 등
+        try {
+            log.error("[USER][DLT] source={}, eventType={}, eventId={}, outboxId={}, retryCount={}, deadAt={}, lastError={}",
+                    payload.source(), payload.eventType(), payload.eventId(), payload.outboxId(),
+                    payload.retryCount(), payload.deadAt(), payload.lastError());
+
+            // TODO: DB 적재 / Slack 알림 / 재처리 큐 적재 등 (여기서 예외 나면 ack 하지 않음)
+
+            ack.acknowledge();
+        } catch (Exception e) {
+            log.error("[USER][DLT] handling failed. topic={}, partition={}, offset={}",
+                    record.topic(), record.partition(), record.offset(), e);
+            throw e;
+        }
     }
 }

@@ -67,19 +67,6 @@ public class User extends BaseTimeEntity {
         this.fcmToken = fcmToken;
     }
 
-    public void incrementBlindCount() {
-        this.blindCount++;
-    }
-
-    public LocalDateTime applyChatRestriction(LocalDateTime now, Duration duration) {
-            this.chatRestrictedUntil = now.plus(duration);
-            return this.chatRestrictedUntil;
-    }
-
-    public void resetBlindCount(){
-        this.blindCount=0;
-    }
-
     public void updateProfile(UpdateUserProfileRequestDto req) {
         if (req.nickname() != null) this.nickname = req.nickname();
         if (req.name() != null) this.name = req.name();
