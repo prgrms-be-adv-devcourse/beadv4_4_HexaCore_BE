@@ -12,12 +12,15 @@ import com.back.settlement.app.support.DomainEventPublisher;
 import com.back.settlement.domain.Settlement;
 import com.back.settlement.domain.SettlementStatus;
 import com.back.settlement.fixture.SettlementFixture;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -25,30 +28,34 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @DisplayName("캐시 지급 요청 결과를 받는 단위 테스트")
 class CashPayoutResultKafkaListenerTest {
 
+    private static final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
+
     @Mock
     private SettlementRepository settlementRepository;
 
     @Mock
     private DomainEventPublisher domainEventPublisher;
 
-    @InjectMocks
     private CashPayoutResultKafkaListener listener;
+
+    @BeforeEach
+    void setUp() {
+        listener = new CashPayoutResultKafkaListener(settlementRepository, domainEventPublisher, objectMapper);
+    }
 
     private Settlement createSettlement(Long id, SettlementStatus status) {
         return SettlementFixture.createSettlement(id, 1L, "판매자", status);
     }
 
-    private Envelope<PayoutResultPayload> successEvent(Long settlementId) {
-        return Envelope.of(
-                "settlement.payout.result",
-                new PayoutResultPayload(settlementId, true, null)
+    private String successMessage(Long settlementId) throws JsonProcessingException {
+        return objectMapper.writeValueAsString(
+                Envelope.of("settlement.payout.result", new PayoutResultPayload(settlementId, true, null))
         );
     }
 
-    private Envelope<PayoutResultPayload> failureEvent(Long settlementId, String reason) {
-        return Envelope.of(
-                "settlement.payout.result",
-                new PayoutResultPayload(settlementId, false, reason)
+    private String failureMessage(Long settlementId, String reason) throws JsonProcessingException {
+        return objectMapper.writeValueAsString(
+                Envelope.of("settlement.payout.result", new PayoutResultPayload(settlementId, false, reason))
         );
     }
 
@@ -58,14 +65,14 @@ class CashPayoutResultKafkaListenerTest {
 
         @Test
         @DisplayName("정산 상태를 COMPLETED로 변경하고 도메인 이벤트를 발행한다")
-        void completesSettlementAndPublishesEvents() {
+        void completesSettlementAndPublishesEvents() throws Exception {
             // given
             Long settlementId = 1L;
             Settlement settlement = createSettlement(settlementId, SettlementStatus.IN_PROGRESS);
             given(settlementRepository.findById(settlementId)).willReturn(Optional.of(settlement));
 
             // when
-            listener.listen(successEvent(settlementId));
+            listener.listen(successMessage(settlementId));
 
             // then
             assertThat(settlement.getStatus()).isEqualTo(SettlementStatus.COMPLETED);
@@ -79,7 +86,7 @@ class CashPayoutResultKafkaListenerTest {
 
         @Test
         @DisplayName("정산 상태를 FAILED로 변경하고 실패 사유와 함께 도메인 이벤트를 발행한다")
-        void failsSettlementWithReasonAndPublishesEvents() {
+        void failsSettlementWithReasonAndPublishesEvents() throws Exception {
             // given
             Long settlementId = 1L;
             String failReason = "잔액 부족";
@@ -87,7 +94,7 @@ class CashPayoutResultKafkaListenerTest {
             given(settlementRepository.findById(settlementId)).willReturn(Optional.of(settlement));
 
             // when
-            listener.listen(failureEvent(settlementId, failReason));
+            listener.listen(failureMessage(settlementId, failReason));
 
             // then
             assertThat(settlement.getStatus()).isEqualTo(SettlementStatus.FAILED);
@@ -101,13 +108,13 @@ class CashPayoutResultKafkaListenerTest {
 
         @Test
         @DisplayName("도메인 이벤트를 발행하지 않고 조기 종료한다")
-        void doesNothingWhenNotFound() {
+        void doesNothingWhenNotFound() throws Exception {
             // given
             Long settlementId = 999L;
             given(settlementRepository.findById(settlementId)).willReturn(Optional.empty());
 
             // when
-            listener.listen(successEvent(settlementId));
+            listener.listen(successMessage(settlementId));
 
             // then
             then(domainEventPublisher).should(never()).publishEvents(org.mockito.ArgumentMatchers.any());
@@ -120,14 +127,14 @@ class CashPayoutResultKafkaListenerTest {
 
         @Test
         @DisplayName("COMPLETED 상태 → 중복 처리 방지, 아무 변경 없이 종료한다")
-        void ignoresAlreadyCompletedSettlement() {
+        void ignoresAlreadyCompletedSettlement() throws Exception {
             // given
             Long settlementId = 1L;
             Settlement settlement = createSettlement(settlementId, SettlementStatus.COMPLETED);
             given(settlementRepository.findById(settlementId)).willReturn(Optional.of(settlement));
 
             // when
-            listener.listen(successEvent(settlementId));
+            listener.listen(successMessage(settlementId));
 
             // then
             assertThat(settlement.getStatus()).isEqualTo(SettlementStatus.COMPLETED);
@@ -136,14 +143,14 @@ class CashPayoutResultKafkaListenerTest {
 
         @Test
         @DisplayName("FAILED 상태 → 중복 처리 방지, 아무 변경 없이 종료한다")
-        void ignoresAlreadyFailedSettlement() {
+        void ignoresAlreadyFailedSettlement() throws Exception {
             // given
             Long settlementId = 1L;
             Settlement settlement = createSettlement(settlementId, SettlementStatus.FAILED);
             given(settlementRepository.findById(settlementId)).willReturn(Optional.of(settlement));
 
             // when
-            listener.listen(failureEvent(settlementId, "잔액 부족"));
+            listener.listen(failureMessage(settlementId, "잔액 부족"));
 
             // then
             assertThat(settlement.getStatus()).isEqualTo(SettlementStatus.FAILED);
