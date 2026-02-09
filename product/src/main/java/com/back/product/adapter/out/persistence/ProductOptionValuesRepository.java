@@ -2,6 +2,7 @@ package com.back.product.adapter.out.persistence;
 
 import com.back.product.domain.Product;
 import com.back.product.domain.ProductOptionValues;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -14,6 +15,7 @@ public interface ProductOptionValuesRepository extends JpaRepository<ProductOpti
     @Query("update ProductOptionValues pov set pov.deletedAt = CURRENT_TIMESTAMP where pov.product in :products")
     void deleteAllByProductIn(@Param("products") List<Product> products);
 
+    @EntityGraph(attributePaths = {"product", "optionValue", "optionValue.optionGroup"})
     List<ProductOptionValues> findAllByProductIn(List<Product> products);
 
     Boolean existsByOptionValue_OptionGroup_Id(Long optionGroupId);

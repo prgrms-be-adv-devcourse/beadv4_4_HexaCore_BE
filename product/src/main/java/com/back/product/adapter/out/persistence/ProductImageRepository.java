@@ -2,6 +2,7 @@ package com.back.product.adapter.out.persistence;
 
 import com.back.product.domain.Product;
 import com.back.product.domain.ProductImage;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -14,5 +15,6 @@ public interface ProductImageRepository extends JpaRepository<ProductImage, Long
     @Query("update ProductImage pi set pi.deletedAt = CURRENT_TIMESTAMP where pi.product in :products")
     void deleteAllByProductIn(@Param("products") List<Product> existsProducts);
 
+    @EntityGraph(attributePaths = {"product"})
     List<ProductImage> findALlByProductIn(List<Product> products);
 }
