@@ -5,7 +5,7 @@ import com.back.common.response.CommonResponse;
 import com.back.product.adapter.in.web.api.OptionApiController;
 import com.back.product.app.facade.ProductFacade;
 import com.back.product.dto.request.OptionAppendRequestDto;
-import com.back.product.dto.request.OptionCreateRequestDto;
+import com.back.product.dto.request.OptionListCreateRequestDto;
 import com.back.product.dto.request.OptionGroupModifyRequestDto;
 import com.back.product.dto.request.OptionValueModifyRequestDto;
 import com.back.product.dto.response.OptionGroupModifyResponseDto;
@@ -34,7 +34,7 @@ public class ApiV1OptionController implements OptionApiController {
     @Override
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public CommonResponse<OptionListResponseDto> createOptions(@Valid @RequestBody OptionCreateRequestDto request) {
+    public CommonResponse<OptionListResponseDto> createOptions(@Valid @RequestBody OptionListCreateRequestDto request) {
         OptionListResponseDto response = productFacade.createOptions(request);
         return CommonResponse.success(SuccessCode.CREATED, response);
     }

@@ -1,32 +1,21 @@
 package com.back.product.dto.request;
 
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Builder;
 import org.hibernate.validator.constraints.URL;
 
-import java.util.List;
-
 @Builder
 public record CategoryCreateRequestDto(
-        @NotEmpty(message = "Categories cannot be empty")
-        @Valid
-    List<CategoryDto> categories
-) {
-    @Builder
-    public record CategoryDto(
-            @NotBlank(message = "카테고리 이름은 필수입니다.")
-            @Size(min=1, max=50, message = "카테고리 이름은 1자 이상 50자 이하여야 합니다.")
-            @Pattern(regexp = "^[a-zA-Z]+$", message = "카테고리 명은 영문만 허용됩니다.")
-            String name,
+        @NotBlank(message = "카테고리 이름은 필수입니다.")
+        @Size(min=1, max=50, message = "카테고리 이름은 1자 이상 50자 이하여야 합니다.")
+        @Pattern(regexp = "^[a-zA-Z]+$", message = "카테고리 명은 영문만 허용됩니다.")
+        String name,
 
-            @NotBlank(message = "이미지 URL은 필수입니다.")
-            @Size(min=1, max=255, message = "이미지 URL은 1자 이상 255자 이하여야 합니다.")
-            @URL(message = "유효한 URL 형식이 아닙니다.")
-            String imageUrl
-    ) {
-    }
+        @NotBlank(message = "이미지 URL은 필수입니다.")
+        @Size(min=1, max=255, message = "이미지 URL은 1자 이상 255자 이하여야 합니다.")
+        @URL(message = "유효한 URL 형식이 아닙니다.")
+        String imageUrl
+) {
 }

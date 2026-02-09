@@ -7,6 +7,7 @@ import com.back.product.app.usecase.command.BrandUseCase;
 import com.back.product.app.usecase.query.ProductSupport;
 import com.back.product.domain.Brand;
 import com.back.product.dto.model.BrandDto;
+import com.back.product.dto.request.BrandListCreateRequestDto;
 import com.back.product.dto.request.BrandCreateRequestDto;
 import com.back.product.dto.request.BrandModifyRequestDto;
 import com.back.product.mapper.BrandMapper;
@@ -80,9 +81,9 @@ class BrandUseCaseTest {
         @DisplayName("새로운 브랜드들을 DB에 저장하고 생성된 정보 리스트를 반환한다")
         void createBrands_Success() {
             // given
-            BrandCreateRequestDto.BrandDto newBrandDto1 = new BrandCreateRequestDto.BrandDto("New Balance", "https://example.com/logo.png");
-            BrandCreateRequestDto.BrandDto newBrandDto2 = new BrandCreateRequestDto.BrandDto("Nike", "https://example.com/logo2.png");
-            BrandCreateRequestDto requestDto = new BrandCreateRequestDto(List.of(newBrandDto1, newBrandDto2));
+            BrandCreateRequestDto newBrandDto1 = new BrandCreateRequestDto("New Balance", "https://example.com/logo.png");
+            BrandCreateRequestDto newBrandDto2 = new BrandCreateRequestDto("Nike", "https://example.com/logo2.png");
+            BrandListCreateRequestDto requestDto = new BrandListCreateRequestDto(List.of(newBrandDto1, newBrandDto2));
 
             Brand newBrandEntity1 = Brand.builder().name("New Balance").imageUrl("https://example.com/logo.png").build();
             Brand newBrandEntity2 = Brand.builder().name("Nike").imageUrl("https://example.com/logo2.png").build();
@@ -107,7 +108,7 @@ class BrandUseCaseTest {
             assertThat(result).extracting(BrandDto::name).containsExactlyInAnyOrder("New Balance", "Nike");
             verify(productSupport).getAllBrands();
             verify(brandRepository).saveAll(brandsToCreate);
-            verify(brandMapper, times(2)).toEntity(any(BrandCreateRequestDto.BrandDto.class));
+            verify(brandMapper, times(2)).toEntity(any(BrandCreateRequestDto.class));
             verify(brandMapper, times(2)).toDto(any(Brand.class));
         }
 
@@ -115,9 +116,9 @@ class BrandUseCaseTest {
         @DisplayName("이미 존재하는 브랜드 이름은 필터링하고, 새로운 브랜드만 생성한다")
         void createBrands_Should_Filter_DuplicateName() {
             // given
-            BrandCreateRequestDto.BrandDto existingBrandDto = new BrandCreateRequestDto.BrandDto("Existing Brand", "https://example.com/logo_exist.png");
-            BrandCreateRequestDto.BrandDto newBrandDto = new BrandCreateRequestDto.BrandDto("New Brand", "https://example.com/logo_new.png");
-            BrandCreateRequestDto requestDto = new BrandCreateRequestDto(List.of(existingBrandDto, newBrandDto));
+            BrandCreateRequestDto existingBrandDto = new BrandCreateRequestDto("Existing Brand", "https://example.com/logo_exist.png");
+            BrandCreateRequestDto newBrandDto = new BrandCreateRequestDto("New Brand", "https://example.com/logo_new.png");
+            BrandListCreateRequestDto requestDto = new BrandListCreateRequestDto(List.of(existingBrandDto, newBrandDto));
 
             Brand existingEntity = Brand.builder().id(1L).name("Existing Brand").imageUrl("https://example.com/logo_exist.png").build();
             Brand newEntity = Brand.builder().name("New Brand").imageUrl("https://example.com/logo_new.png").build();
@@ -137,7 +138,7 @@ class BrandUseCaseTest {
 
             verify(productSupport).getAllBrands();
             verify(brandRepository).saveAll(List.of(newEntity));
-            verify(brandMapper, times(1)).toEntity(any(BrandCreateRequestDto.BrandDto.class));
+            verify(brandMapper, times(1)).toEntity(any(BrandCreateRequestDto.class));
             verify(brandMapper, times(1)).toDto(any(Brand.class));
         }
     }

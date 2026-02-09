@@ -9,7 +9,7 @@ import com.back.product.domain.OptionGroup;
 import com.back.product.domain.OptionValue;
 import com.back.product.dto.model.OptionDto;
 import com.back.product.dto.request.OptionAppendRequestDto;
-import com.back.product.dto.request.OptionCreateRequestDto;
+import com.back.product.dto.request.OptionListCreateRequestDto;
 import com.back.product.dto.request.OptionGroupModifyRequestDto;
 import com.back.product.dto.request.OptionValueModifyRequestDto;
 import com.back.product.dto.response.OptionGroupModifyResponseDto;
@@ -61,7 +61,7 @@ public class OptionUseCase {
     }
 
     @Transactional
-    public OptionListResponseDto createOptions(@Valid OptionCreateRequestDto request) {
+    public OptionListResponseDto createOptions(@Valid OptionListCreateRequestDto request) {
         List<OptionDto> createdOptions = request.options().stream()
                 .map(option -> createOption(option.group(), option.values()))
                 .toList();

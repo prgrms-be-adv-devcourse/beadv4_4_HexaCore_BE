@@ -40,7 +40,7 @@ public class ProductFacade {
     }
 
     @Transactional
-    public BrandListResponseDto createBrands(@Valid BrandCreateRequestDto request) {
+    public BrandListResponseDto createBrands(@Valid BrandListCreateRequestDto request) {
         List<BrandDto> brandDtos = brandUseCase.createBrands(request);
         return BrandListResponseDto.builder().brands(brandDtos).build();
     }
@@ -68,7 +68,7 @@ public class ProductFacade {
     }
 
     @Transactional
-    public CategoryListResponseDto createCategories(@Valid CategoryCreateRequestDto request) {
+    public CategoryListResponseDto createCategories(@Valid CategoryListCreateRequestDto request) {
         List<CategoryDto> categoryDtos =  categoryUseCase.createCategories(request);
         return CategoryListResponseDto.builder().categories(categoryDtos).build();
     }
@@ -165,7 +165,7 @@ public class ProductFacade {
     }
 
     @Transactional
-    public OptionListResponseDto createOptions(@Valid OptionCreateRequestDto request) {
+    public OptionListResponseDto createOptions(@Valid OptionListCreateRequestDto request) {
         return optionUseCase.createOptions(request);
     }
 

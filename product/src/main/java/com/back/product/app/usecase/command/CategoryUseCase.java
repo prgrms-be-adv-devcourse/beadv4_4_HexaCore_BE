@@ -7,7 +7,7 @@ import com.back.product.adapter.out.persistence.CategoryRepository;
 import com.back.product.app.usecase.query.ProductSupport;
 import com.back.product.domain.Category;
 import com.back.product.dto.model.CategoryDto;
-import com.back.product.dto.request.CategoryCreateRequestDto;
+import com.back.product.dto.request.CategoryListCreateRequestDto;
 import com.back.product.dto.request.CategoryModifyRequestDto;
 import com.back.product.mapper.CategoryMapper;
 import jakarta.validation.Valid;
@@ -32,7 +32,7 @@ public class CategoryUseCase {
     }
 
     @Transactional
-    public List<CategoryDto> createCategories(@Valid CategoryCreateRequestDto request) {
+    public List<CategoryDto> createCategories(@Valid CategoryListCreateRequestDto request) {
         Map<String, Category> existsCategories = productSupport.getAllCategories().stream()
                 .collect(Collectors.toMap(
                         category -> toPlainText(category.getName()),

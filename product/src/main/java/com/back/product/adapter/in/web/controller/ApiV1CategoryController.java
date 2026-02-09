@@ -4,7 +4,7 @@ import com.back.common.code.SuccessCode;
 import com.back.common.response.CommonResponse;
 import com.back.product.adapter.in.web.api.CategoryApiController;
 import com.back.product.app.facade.ProductFacade;
-import com.back.product.dto.request.CategoryCreateRequestDto;
+import com.back.product.dto.request.CategoryListCreateRequestDto;
 import com.back.product.dto.request.CategoryModifyRequestDto;
 import com.back.product.dto.response.CategoryListResponseDto;
 import com.back.product.dto.response.CategoryResponseDto;
@@ -32,7 +32,7 @@ public class ApiV1CategoryController implements CategoryApiController {
     @Override
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public CommonResponse<CategoryListResponseDto> createCategories(@RequestBody @Valid CategoryCreateRequestDto request) {
+    public CommonResponse<CategoryListResponseDto> createCategories(@RequestBody @Valid CategoryListCreateRequestDto request) {
         CategoryListResponseDto response = productFacade.createCategories(request);
         return CommonResponse.success(SuccessCode.CREATED, response);
     }

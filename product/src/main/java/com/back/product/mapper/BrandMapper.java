@@ -16,7 +16,7 @@ public class BrandMapper {
                 .build();
     }
 
-    public Brand toEntity(BrandCreateRequestDto.BrandDto request) {
+    public Brand toEntity(BrandCreateRequestDto request) {
         return Brand.builder()
                 .name(request.name())
                 .imageUrl(request.logoUrl())

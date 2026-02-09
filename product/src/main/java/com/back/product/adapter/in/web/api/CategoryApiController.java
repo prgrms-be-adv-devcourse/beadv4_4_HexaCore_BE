@@ -1,7 +1,7 @@
 package com.back.product.adapter.in.web.api;
 
 import com.back.common.response.CommonResponse;
-import com.back.product.dto.request.CategoryCreateRequestDto;
+import com.back.product.dto.request.CategoryListCreateRequestDto;
 import com.back.product.dto.request.CategoryModifyRequestDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -21,7 +21,7 @@ public interface CategoryApiController {
     @ApiResponse(responseCode = "401", description = "인증 실패", content = @Content)
     @ApiResponse(responseCode = "403", description = "권한 없음", content = @Content)
     @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
-    CommonResponse<?> createCategories(CategoryCreateRequestDto request);
+    CommonResponse<?> createCategories(CategoryListCreateRequestDto request);
 
     @Operation(summary = "카테고리 수정", description = "기존의 상품 카테고리를 수정합니다.")
     @ApiResponse(responseCode = "200", description = "카테고리 수정 성공")

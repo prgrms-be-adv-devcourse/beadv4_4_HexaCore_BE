@@ -21,7 +21,7 @@ public interface OptionApiController {
     @ApiResponse(responseCode = "401", description = "인증 실패", content = @Content)
     @ApiResponse(responseCode = "403", description = "권한 없음", content = @Content)
     @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
-    CommonResponse<?> createOptions(OptionCreateRequestDto request);
+    CommonResponse<?> createOptions(OptionListCreateRequestDto request);
 
     @Operation(summary = "옵션 추가", description = "기존의 옵션 그룹에 값을 추가합니다.")
     @ApiResponse(responseCode = "201", description = "새로운 옵션 값 생성 성공")

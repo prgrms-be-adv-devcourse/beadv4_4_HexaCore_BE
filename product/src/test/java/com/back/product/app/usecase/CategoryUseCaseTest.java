@@ -7,6 +7,7 @@ import com.back.product.app.usecase.command.CategoryUseCase;
 import com.back.product.app.usecase.query.ProductSupport;
 import com.back.product.domain.Category;
 import com.back.product.dto.model.CategoryDto;
+import com.back.product.dto.request.CategoryListCreateRequestDto;
 import com.back.product.dto.request.CategoryCreateRequestDto;
 import com.back.product.dto.request.CategoryModifyRequestDto;
 import com.back.product.mapper.CategoryMapper;
@@ -82,9 +83,9 @@ class CategoryUseCaseTest {
         @DisplayName("새로운 카테고리들을 DB에 저장하고 생성된 정보 리스트를 반환한다")
         void createCategories_Success() {
             // given
-            CategoryCreateRequestDto.CategoryDto newCategoryDto1 = new CategoryCreateRequestDto.CategoryDto("Tops", "https://e.com/1.png");
-            CategoryCreateRequestDto.CategoryDto newCategoryDto2 = new CategoryCreateRequestDto.CategoryDto("Bottoms", "https://e.com/2.png");
-            CategoryCreateRequestDto requestDto = new CategoryCreateRequestDto(List.of(newCategoryDto1, newCategoryDto2));
+            CategoryCreateRequestDto newCategoryDto1 = new CategoryCreateRequestDto("Tops", "https://e.com/1.png");
+            CategoryCreateRequestDto newCategoryDto2 = new CategoryCreateRequestDto("Bottoms", "https://e.com/2.png");
+            CategoryListCreateRequestDto requestDto = new CategoryListCreateRequestDto(List.of(newCategoryDto1, newCategoryDto2));
 
             Category newCategoryEntity1 = Category.builder().name("Tops").imageUrl("https://e.com/1.png").build();
             Category newCategoryEntity2 = Category.builder().name("Bottoms").imageUrl("https://e.com/2.png").build();
@@ -109,7 +110,7 @@ class CategoryUseCaseTest {
             assertThat(result).extracting(CategoryDto::name).containsExactlyInAnyOrder("Tops", "Bottoms");
             verify(productSupport).getAllCategories();
             verify(categoryRepository).saveAll(categoriesToCreate);
-            verify(categoryMapper, times(2)).toEntity(any(CategoryCreateRequestDto.CategoryDto.class));
+            verify(categoryMapper, times(2)).toEntity(any(CategoryCreateRequestDto.class));
             verify(categoryMapper, times(2)).toDto(any(Category.class));
         }
 
@@ -117,9 +118,9 @@ class CategoryUseCaseTest {
         @DisplayName("이미 존재하는 카테고리 이름은 필터링하고, 새로운 카테고리만 생성한다")
         void createCategories_Should_Filter_DuplicateName() {
             // given
-            CategoryCreateRequestDto.CategoryDto existingDto = new CategoryCreateRequestDto.CategoryDto("Existed", "https://e.com/e.png");
-            CategoryCreateRequestDto.CategoryDto newDto = new CategoryCreateRequestDto.CategoryDto("New", "https://e.com/n.png");
-            CategoryCreateRequestDto requestDto = new CategoryCreateRequestDto(List.of(existingDto, newDto));
+            CategoryCreateRequestDto existingDto = new CategoryCreateRequestDto("Existed", "https://e.com/e.png");
+            CategoryCreateRequestDto newDto = new CategoryCreateRequestDto("New", "https://e.com/n.png");
+            CategoryListCreateRequestDto requestDto = new CategoryListCreateRequestDto(List.of(existingDto, newDto));
 
             Category existingEntity = Category.builder().id(1L).name("Existed").imageUrl("https://e.com/e.png").build();
             Category newEntity = Category.builder().name("New").imageUrl("https://e.com/n.png").build();
@@ -139,7 +140,7 @@ class CategoryUseCaseTest {
 
             verify(productSupport).getAllCategories();
             verify(categoryRepository).saveAll(List.of(newEntity));
-            verify(categoryMapper, times(1)).toEntity(any(CategoryCreateRequestDto.CategoryDto.class));
+            verify(categoryMapper, times(1)).toEntity(any(CategoryCreateRequestDto.class));
             verify(categoryMapper, times(1)).toDto(any(Category.class));
         }
     }

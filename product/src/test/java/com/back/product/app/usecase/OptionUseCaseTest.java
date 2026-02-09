@@ -10,6 +10,7 @@ import com.back.product.domain.OptionGroup;
 import com.back.product.domain.OptionValue;
 import com.back.product.dto.model.OptionDto;
 import com.back.product.dto.request.OptionAppendRequestDto;
+import com.back.product.dto.request.OptionListCreateRequestDto;
 import com.back.product.dto.request.OptionCreateRequestDto;
 import com.back.product.dto.request.OptionGroupModifyRequestDto;
 import com.back.product.dto.request.OptionValueModifyRequestDto;
@@ -198,9 +199,9 @@ class OptionUseCaseTest {
         void createOptions_success_newGroupAndValues() {
             // given
             // 1. 요청 DTO 생성
-            OptionCreateRequestDto.OptionDto requestOption1 = new OptionCreateRequestDto.OptionDto("color", List.of("red", "blue"));
-            OptionCreateRequestDto.OptionDto requestOption2 = new OptionCreateRequestDto.OptionDto("size", List.of("small", "large"));
-            OptionCreateRequestDto requestDto = new OptionCreateRequestDto(List.of(requestOption1, requestOption2));
+            OptionCreateRequestDto requestOption1 = new OptionCreateRequestDto("color", List.of("red", "blue"));
+            OptionCreateRequestDto requestOption2 = new OptionCreateRequestDto("size", List.of("small", "large"));
+            OptionListCreateRequestDto requestDto = new OptionListCreateRequestDto(List.of(requestOption1, requestOption2));
 
             // 2. Mocking ProductSupport for group lookup (returns null for new groups)
             given(productSupport.getOptionGroupByName(eq("color"))).willReturn(null);
@@ -280,8 +281,8 @@ class OptionUseCaseTest {
         void createOptions_success_existingGroupAndNewValues() {
             // given
             // 1. 요청 DTO 생성
-            OptionCreateRequestDto.OptionDto requestOption1 = new OptionCreateRequestDto.OptionDto("color", List.of("red", "blue"));
-            OptionCreateRequestDto requestDto = new OptionCreateRequestDto(List.of(requestOption1));
+            OptionCreateRequestDto requestOption1 = new OptionCreateRequestDto("color", List.of("red", "blue"));
+            OptionListCreateRequestDto requestDto = new OptionListCreateRequestDto(List.of(requestOption1));
 
             // 2. Mocking ProductSupport for group lookup (returns existing group)
             OptionGroup existingGroup1 = OptionGroup.builder().id(1L).name("color").build();
@@ -335,9 +336,9 @@ class OptionUseCaseTest {
         void createOptions_success_mixedGroupsAndValues() {
             // given
             // 1. 요청 DTO 생성
-            OptionCreateRequestDto.OptionDto requestOption1 = new OptionCreateRequestDto.OptionDto("color", List.of("red", "blue")); // Existing group
-            OptionCreateRequestDto.OptionDto requestOption2 = new OptionCreateRequestDto.OptionDto("pattern", List.of("stripe", "dot")); // New group
-            OptionCreateRequestDto requestDto = new OptionCreateRequestDto(List.of(requestOption1, requestOption2));
+            OptionCreateRequestDto requestOption1 = new OptionCreateRequestDto("color", List.of("red", "blue")); // Existing group
+            OptionCreateRequestDto requestOption2 = new OptionCreateRequestDto("pattern", List.of("stripe", "dot")); // New group
+            OptionListCreateRequestDto requestDto = new OptionListCreateRequestDto(List.of(requestOption1, requestOption2));
 
             // 2. Mocking ProductSupport for group lookup
             OptionGroup existingGroup1 = OptionGroup.builder().id(1L).name("color").build();
