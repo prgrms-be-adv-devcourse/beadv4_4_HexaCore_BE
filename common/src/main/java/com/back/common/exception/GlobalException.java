@@ -17,6 +17,7 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
 @Slf4j
 @RestControllerAdvice
@@ -86,6 +87,15 @@ public class GlobalException {
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ResponseEntity<CommonResponse<?>> handleMissingParameter(MissingServletRequestParameterException ex) {
         log.error("handle: MissingServletRequestParameterException ", ex);
+        FailureCode errorCode = FailureCode.MISSING_REQUIRED_FIELD;
+        return ResponseEntity
+                .status(errorCode.getHttpStatus())
+                .body(CommonResponse.createError(errorCode.getHttpStatus(), errorCode.getCode(), errorCode.getMessage()));
+    }
+
+    @ExceptionHandler(MissingServletRequestPartException.class)
+    public ResponseEntity<CommonResponse<?>> handleMissingServletRequestPartException(MissingServletRequestPartException ex) {
+        log.error("handle: MissingServletRequestPartException ", ex);
         FailureCode errorCode = FailureCode.MISSING_REQUIRED_FIELD;
         return ResponseEntity
                 .status(errorCode.getHttpStatus())

@@ -86,8 +86,8 @@ subprojects {
     }
 }
 
-// common, security 모듈 bootJar 비활성화
-configure(subprojects.findAll { it.name in ['common', 'security'] }) {
+// common, security, image 모듈 bootJar 비활성화
+configure(subprojects.findAll { it.name in ['common', 'security', 'image'] }) {
     bootJar.enabled = false
     jar.enabled = true
 }

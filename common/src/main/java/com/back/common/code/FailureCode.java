@@ -106,7 +106,8 @@ public enum FailureCode {
     CASH_MODULE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "CASH_MODULE_ERROR", "CASH 모듈과의 통신 중 오류가 발생했습니다."),
     PAYMENT_TOTAL_AMOUNT_MISSING(HttpStatus.INTERNAL_SERVER_ERROR, "PAYMENT_TOTAL_AMOUNT_MISSING","결제 데이터에 totalAmount가 없습니다."),
     PAYMENT_STATE_INCONSISTENT(HttpStatus.INTERNAL_SERVER_ERROR, "PAYMENT_STATE_INCONSISTENT", "결제 상태가 일관되지 않습니다."),
-    BATCH_EXECUTION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "BATCH_EXECUTION_FAILED", "배치 실행에 실패했습니다.");
+    BATCH_EXECUTION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "BATCH_EXECUTION_FAILED", "배치 실행에 실패했습니다."),
+    IMAGE_PROCESSING_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "IMAGE_PROCESSING_FAILED", "이미지 처리에 실패했습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
