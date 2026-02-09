@@ -3,6 +3,7 @@ package com.back.cash.app.usecase;
 import com.back.cash.adapter.out.PaymentRepository;
 import com.back.cash.adapter.out.TossPaymentsClient;
 import com.back.cash.app.CashLogSupport;
+import com.back.cash.app.ConfirmPaymentSupport;
 import com.back.cash.app.WalletSupport;
 import com.back.cash.domain.Payment;
 import com.back.cash.domain.Wallet;
@@ -13,12 +14,13 @@ import com.back.cash.dto.response.ConfirmResultResponseDto;
 import com.back.common.dto.cash.enums.RelType;
 import com.back.common.exception.BadRequestException;
 import com.back.common.exception.EntityNotFoundException;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.web.client.ResourceAccessException;
 
 import java.math.BigDecimal;
@@ -35,17 +37,26 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class ConfirmTossPaymentUseCaseTest {
 
-    @InjectMocks
     private ConfirmTossPaymentUseCase confirmTossPaymentUseCase;
 
     @Mock
     private PaymentRepository paymentRepository;
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
     @Mock
     private WalletSupport walletSupport;
     @Mock
     private CashLogSupport cashLogSupport;
     @Mock
     private TossPaymentsClient tossPaymentsClient;
+
+    @BeforeEach
+    void setUp() {
+        ConfirmPaymentSupport confirmPaymentSupport =
+                new ConfirmPaymentSupport(paymentRepository, eventPublisher, walletSupport, cashLogSupport);
+        confirmTossPaymentUseCase =
+                new ConfirmTossPaymentUseCase(confirmPaymentSupport, tossPaymentsClient);
+    }
 
     private static final Long USER_ID = 1L;
     private static final Long REL_ID = 100L;
@@ -203,6 +214,9 @@ class ConfirmTossPaymentUseCaseTest {
 
         // then: 토스 confirm 호출됨
         verify(tossPaymentsClient).confirm(PAYMENT_KEY, ORDER_ID, pgAmount);
+
+        // then: 이벤트 발행됨
+        verify(eventPublisher).publishEvent(any(Object.class));
     }
 
     @Test
@@ -273,6 +287,9 @@ class ConfirmTossPaymentUseCaseTest {
         // then: 해제 로그
         verify(cashLogSupport).recordReleaseOnPaymentFail(
                 eq(buyerWallet), eq(systemWallet), eq(walletUsed), eq(REL_TYPE), eq(REL_ID));
+
+        // then: 이벤트 발행됨
+        verify(eventPublisher).publishEvent(any(Object.class));
     }
 
     @Test
@@ -411,6 +428,9 @@ class ConfirmTossPaymentUseCaseTest {
         // then: 지갑/로그 변경 없음
         verifyNoInteractions(walletSupport);
         verify(cashLogSupport, never()).recordReleaseOnPaymentFail(any(), any(), any(), any(), any());
+
+        // then: 이벤트 발행 안 됨
+        verifyNoInteractions(eventPublisher);
     }
 
     @Test

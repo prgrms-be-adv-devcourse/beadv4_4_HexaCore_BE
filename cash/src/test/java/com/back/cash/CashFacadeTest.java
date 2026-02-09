@@ -1,6 +1,5 @@
 package com.back.cash;
 
-import com.back.cash.adapter.out.market.MarketPaymentsClient;
 import com.back.cash.app.CashFacade;
 import com.back.cash.app.usecase.CancelPaymentUseCase;
 import com.back.cash.app.usecase.ConfirmTossPaymentUseCase;
@@ -21,9 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.math.BigDecimal;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class CashFacadeTest {
@@ -36,8 +33,6 @@ class CashFacadeTest {
     @Mock
     private ConfirmTossPaymentUseCase confirmTossPaymentUseCase;
     @Mock
-    private MarketPaymentsClient marketPaymentsClient;
-    @Mock
     private FailTossPaymentUseCase failTossPaymentUseCase;
     @Mock
     private CancelPaymentUseCase cancelPaymentUseCase;
@@ -48,8 +43,8 @@ class CashFacadeTest {
     private static final Long REL_ID = 100L;
 
     @Test
-    @DisplayName("[confirmTossPayment] 결제 성공 시 마켓에 성공 알림 전송")
-    void confirmTossPayment_whenSuccess_thenNotifyCompleted() {
+    @DisplayName("[confirmTossPayment] 결제 성공 시 성공 결과 반환")
+    void confirmTossPayment_whenSuccess_thenReturnResult() {
         // given
         TossConfirmRequest req = new TossConfirmRequest(PAYMENT_KEY, ORDER_ID, bd("18000"));
         PaymentCompletedRequestDto completedDto = new PaymentCompletedRequestDto(REL_TYPE, REL_ID, bd("30000"));
@@ -62,17 +57,17 @@ class CashFacadeTest {
 
         // then
         assertThat(result.isSuccess()).isTrue();
-        verify(marketPaymentsClient).notifyPaymentCompleted(completedDto);
-        verify(marketPaymentsClient, never()).notifyPaymentFailed(any());
+        assertThat(result.completedDto()).isEqualTo(completedDto);
+        assertThat(result.failReason()).isNull();
     }
 
     @Test
-    @DisplayName("[confirmTossPayment] 결제 실패 시 마켓에 실패 알림 전송")
-    void confirmTossPayment_whenFail_thenNotifyFailed() {
+    @DisplayName("[confirmTossPayment] 결제 실패 시 실패 결과와 사유 반환")
+    void confirmTossPayment_whenFail_thenReturnFailWithReason() {
         // given
         TossConfirmRequest req = new TossConfirmRequest(PAYMENT_KEY, ORDER_ID, bd("18000"));
         PaymentFailedRequestDto failedDto = new PaymentFailedRequestDto(REL_TYPE, REL_ID);
-        ConfirmResultResponseDto failResult = ConfirmResultResponseDto.fail(failedDto);
+        ConfirmResultResponseDto failResult = ConfirmResultResponseDto.fail(failedDto, "TOSS_CONFIRM_REJECTED");
 
         given(confirmTossPaymentUseCase.execute(req)).willReturn(failResult);
 
@@ -81,34 +76,12 @@ class CashFacadeTest {
 
         // then
         assertThat(result.isSuccess()).isFalse();
-        verify(marketPaymentsClient).notifyPaymentFailed(failedDto);
-        verify(marketPaymentsClient, never()).notifyPaymentCompleted(any());
+        assertThat(result.failReason()).isEqualTo("TOSS_CONFIRM_REJECTED");
     }
 
     @Test
-    @DisplayName("[confirmTossPayment] 마켓 알림 예외 발생해도 결과는 정상 반환 (예외 삼킴)")
-    void confirmTossPayment_whenMarketNotifyFails_thenStillReturnResult() {
-        // given
-        TossConfirmRequest req = new TossConfirmRequest(PAYMENT_KEY, ORDER_ID, bd("18000"));
-        PaymentCompletedRequestDto completedDto = new PaymentCompletedRequestDto(REL_TYPE, REL_ID, bd("30000"));
-        ConfirmResultResponseDto successResult = ConfirmResultResponseDto.success(completedDto);
-
-        given(confirmTossPaymentUseCase.execute(req)).willReturn(successResult);
-        doThrow(new RuntimeException("Market API error"))
-                .when(marketPaymentsClient).notifyPaymentCompleted(completedDto);
-
-        // when
-        ConfirmResultResponseDto result = cashFacade.confirmTossPayment(req);
-
-        // then: 예외가 전파되지 않고 정상 반환
-        assertThat(result.isSuccess()).isTrue();
-        assertThat(result).isEqualTo(successResult);
-        verify(marketPaymentsClient).notifyPaymentCompleted(completedDto);
-    }
-
-    @Test
-    @DisplayName("[confirmTossPayment] PENDING 응답 시 마켓 알림 전송하지 않음")
-    void confirmTossPayment_whenPending_thenNoMarketNotification() {
+    @DisplayName("[confirmTossPayment] PENDING 응답 시 PENDING 결과 반환")
+    void confirmTossPayment_whenPending_thenReturnPending() {
         // given
         TossConfirmRequest req = new TossConfirmRequest(PAYMENT_KEY, ORDER_ID, bd("18000"));
         ConfirmResultResponseDto pendingResult = ConfirmResultResponseDto.pending();
@@ -120,7 +93,6 @@ class CashFacadeTest {
 
         // then
         assertThat(result.isPending()).isTrue();
-        verifyNoInteractions(marketPaymentsClient);
     }
 
     private static BigDecimal bd(String v) {
