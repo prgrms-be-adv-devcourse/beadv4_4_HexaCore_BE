@@ -3,6 +3,7 @@ package com.back.settlement.domain;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.back.common.exception.BadRequestException;
 import com.back.settlement.domain.event.SettlementFailedEvent;
 import com.back.settlement.domain.event.SettlementHoldEvent;
 import com.back.settlement.domain.event.SettlementInternalCompletedEvent;
@@ -98,6 +99,68 @@ class SettlementTest {
 
             // then
             assertThat(settlement.getStatus()).isEqualTo(SettlementStatus.FAILED);
+        }
+
+        @Test
+        @DisplayName("fail() 호출 시 사유가 없으면 예외 발생")
+        void fail_withoutReason_throwsException() {
+            Settlement settlement = SettlementFixture.createPendingSettlement(1L, 100L);
+
+            assertThatThrownBy(() -> settlement.fail(null)).isInstanceOf(BadRequestException.class);
+            assertThatThrownBy(() -> settlement.fail("")).isInstanceOf(BadRequestException.class);
+            assertThatThrownBy(() -> settlement.fail("  ")).isInstanceOf(BadRequestException.class);
+        }
+
+        @Test
+        @DisplayName("HOLD → IN_PROGRESS 전이 성공 (보류 해제)")
+        void start_fromHold_success() {
+            Settlement settlement = SettlementFixture.createSettlement(1L, 100L, "TestSeller", SettlementStatus.HOLD);
+
+            settlement.start();
+
+            assertThat(settlement.getStatus()).isEqualTo(SettlementStatus.IN_PROGRESS);
+        }
+
+        @Test
+        @DisplayName("IN_PROGRESS → HOLD 전이 성공")
+        void hold_fromInProgress_success() {
+            Settlement settlement = SettlementFixture.createSettlement(1L, 100L, "TestSeller", SettlementStatus.IN_PROGRESS);
+
+            settlement.hold("점검 필요");
+
+            assertThat(settlement.getStatus()).isEqualTo(SettlementStatus.HOLD);
+        }
+
+        @Test
+        @DisplayName("IN_PROGRESS → FAILED 전이 성공")
+        void fail_fromInProgress_success() {
+            Settlement settlement = SettlementFixture.createSettlement(1L, 100L, "TestSeller", SettlementStatus.IN_PROGRESS);
+
+            settlement.fail("캐시 지급 실패");
+
+            assertThat(settlement.getStatus()).isEqualTo(SettlementStatus.FAILED);
+        }
+
+        @Test
+        @DisplayName("COMPLETED 상태에서 모든 전이 불가")
+        void completed_cannotTransition() {
+            Settlement settlement = SettlementFixture.createCompletedSettlement(1L, 100L);
+
+            assertThatThrownBy(settlement::start).isInstanceOf(InvalidSettlementStateException.class);
+            assertThatThrownBy(settlement::complete).isInstanceOf(InvalidSettlementStateException.class);
+            assertThatThrownBy(() -> settlement.hold("사유")).isInstanceOf(InvalidSettlementStateException.class);
+            assertThatThrownBy(() -> settlement.fail("사유")).isInstanceOf(InvalidSettlementStateException.class);
+        }
+
+        @Test
+        @DisplayName("FAILED 상태에서 모든 전이 불가")
+        void failed_cannotTransition() {
+            Settlement settlement = SettlementFixture.createSettlement(1L, 100L, "TestSeller", SettlementStatus.FAILED);
+
+            assertThatThrownBy(settlement::start).isInstanceOf(InvalidSettlementStateException.class);
+            assertThatThrownBy(settlement::complete).isInstanceOf(InvalidSettlementStateException.class);
+            assertThatThrownBy(() -> settlement.hold("사유")).isInstanceOf(InvalidSettlementStateException.class);
+            assertThatThrownBy(() -> settlement.fail("사유")).isInstanceOf(InvalidSettlementStateException.class);
         }
     }
 
@@ -199,6 +262,24 @@ class SettlementTest {
         }
 
         @Test
+        @DisplayName("IN_PROGRESS에서 허용된 전이 상태 검증")
+        void inProgress_allowedTransitions() {
+            assertThat(SettlementStatus.IN_PROGRESS.canTransitionTo(SettlementStatus.COMPLETED)).isTrue();
+            assertThat(SettlementStatus.IN_PROGRESS.canTransitionTo(SettlementStatus.HOLD)).isTrue();
+            assertThat(SettlementStatus.IN_PROGRESS.canTransitionTo(SettlementStatus.FAILED)).isTrue();
+            assertThat(SettlementStatus.IN_PROGRESS.canTransitionTo(SettlementStatus.PENDING)).isFalse();
+        }
+
+        @Test
+        @DisplayName("HOLD에서 허용된 전이 상태 검증")
+        void hold_allowedTransitions() {
+            assertThat(SettlementStatus.HOLD.canTransitionTo(SettlementStatus.IN_PROGRESS)).isTrue();
+            assertThat(SettlementStatus.HOLD.canTransitionTo(SettlementStatus.FAILED)).isTrue();
+            assertThat(SettlementStatus.HOLD.canTransitionTo(SettlementStatus.COMPLETED)).isFalse();
+            assertThat(SettlementStatus.HOLD.canTransitionTo(SettlementStatus.PENDING)).isFalse();
+        }
+
+        @Test
         @DisplayName("COMPLETED는 최종 상태")
         void completed_isTerminal() {
             assertThat(SettlementStatus.COMPLETED.isTerminal()).isTrue();
@@ -210,6 +291,16 @@ class SettlementTest {
         void failed_isTerminal() {
             assertThat(SettlementStatus.FAILED.isTerminal()).isTrue();
             assertThat(SettlementStatus.FAILED.getAllowedTransitions()).isEmpty();
+        }
+
+        @Test
+        @DisplayName("isProcessing 검증")
+        void isProcessing() {
+            assertThat(SettlementStatus.PENDING.isProcessing()).isTrue();
+            assertThat(SettlementStatus.IN_PROGRESS.isProcessing()).isTrue();
+            assertThat(SettlementStatus.HOLD.isProcessing()).isTrue();
+            assertThat(SettlementStatus.COMPLETED.isProcessing()).isFalse();
+            assertThat(SettlementStatus.FAILED.isProcessing()).isFalse();
         }
     }
 }

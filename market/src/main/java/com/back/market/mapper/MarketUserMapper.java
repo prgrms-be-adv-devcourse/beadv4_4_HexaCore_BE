@@ -5,14 +5,13 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class MarketUserMapper {
-    public MarketUser toEntity(Long id, String name, String email, String address, String phone, String profileImageUrl){
+    public MarketUser toEntity(Long id, String name, String email, String address, String phone){
         return MarketUser.builder()
                 .id(id)
                 .name(name)
                 .email(email)
                 .address(address)
                 .phone(phone)
-                .profileImageUrl(profileImageUrl)
                 .build();
     }
 }

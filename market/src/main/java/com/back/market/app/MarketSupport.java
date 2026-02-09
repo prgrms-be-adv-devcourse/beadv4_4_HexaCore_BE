@@ -9,11 +9,14 @@ import com.back.market.domain.MarketUser;
 import com.back.market.domain.Order;
 import com.back.market.domain.enums.BiddingPosition;
 import com.back.market.domain.enums.BiddingStatus;
+import com.back.market.domain.enums.OrderStatus;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -127,4 +130,41 @@ public class MarketSupport {
     public Optional<Bidding> findInstantSellPrice(Long productId, BiddingPosition position, BiddingStatus status) {
         return biddingRepository.findFirstByMarketProductIdAndPositionAndStatusOrderByPriceDesc(productId, position, status);
     }
+
+    /**
+     * 조회 가능한 주문 상태 리스트 정의(OrderStatus.HOLD 제외)
+     */
+    private static final List<OrderStatus> VISIBLE_STATUSES = Arrays.stream(OrderStatus.values())
+            .filter(status -> status != OrderStatus.HOLD)
+            .toList();
+
+    /**
+     * 구매 내역 목록 조회
+     * @param userId 사용자 id
+     * @param pageable 페이징
+     * @return Page<Order>
+     */
+    public Page<Order> findBuyHistoryList(Long userId, Pageable pageable) {
+        return orderRepository.findBuyHistoryList(userId, VISIBLE_STATUSES, pageable);
+    }
+
+    /**
+     * 판매 내역 목록 조회
+     * @param userId 사용자 id
+     * @param pageable 페이징
+     * @return Page<Order>
+     */
+    public Page<Order> findSellHistoryList(Long userId, Pageable pageable) {
+        return orderRepository.findSellHistoryList(userId, VISIBLE_STATUSES, pageable);
+    }
+
+    /**
+     * 주문 상세 조회
+     * @param orderId 주문 PK
+     * @return Order
+     */
+    public Order findOrderWithDetails(Long userId, Long orderId) {
+        return orderRepository.findOrderWithDetails(userId, orderId).orElseThrow(() -> new BadRequestException(FailureCode.ORDER_NOT_FOUND));
+    }
+
 }

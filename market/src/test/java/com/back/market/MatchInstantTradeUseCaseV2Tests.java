@@ -239,9 +239,9 @@ public class MatchInstantTradeUseCaseV2Tests {
     // --- Helper Methods (기존과 동일) ---
     private void setupBaseData(Long productId, Long sellerId, Long buyerId, String buyerAddress) {
         // ... (기존 코드 그대로)
-        MarketUser seller = marketUserMapper.toEntity(sellerId,"seller", "s@t.com", "판매자주소", "010-1234-5678", "img");
+        MarketUser seller = marketUserMapper.toEntity(sellerId,"seller", "s@t.com", "판매자주소", "010-1234-5678");
         marketUserRepository.save(seller);
-        MarketUser buyer = marketUserMapper.toEntity(buyerId, "buyer", "b@t.com", buyerAddress, "010-1234-5678", "img");
+        MarketUser buyer = marketUserMapper.toEntity(buyerId, "buyer", "b@t.com", buyerAddress, "010-1234-5678");
         marketUserRepository.save(buyer);
         if (!marketProductRepository.existsById(productId)) {
             marketProductRepository.save(marketProductMapper.toEntity(productId, "N", "신발", "N1", "270", 100000L, "S", "img"));

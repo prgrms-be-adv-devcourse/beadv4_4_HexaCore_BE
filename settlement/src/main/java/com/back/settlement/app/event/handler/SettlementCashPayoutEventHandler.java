@@ -1,35 +1,40 @@
 package com.back.settlement.app.event.handler;
 
-import static org.springframework.transaction.event.TransactionPhase.AFTER_COMMIT;
-
-import com.back.common.dto.settlement.SettlementPayoutRequest;
-import com.back.settlement.adapter.out.feign.cash.CashClient;
-import com.back.settlement.domain.event.SettlementInternalCompletedEvent;
-import java.util.List;
-import lombok.RequiredArgsConstructor;
+import com.back.common.event.Envelope;
+import com.back.common.event.KafkaEventPublisher;
+import com.back.settlement.app.event.payload.PayoutRequestPayload;
+import com.back.settlement.domain.event.SettlementStartedEvent;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class SettlementCashPayoutEventHandler {
-    private final CashClient cashClient;
+    private final KafkaEventPublisher kafkaEventPublisher;
+    private final String topic;
 
-    @Async
-    @TransactionalEventListener(phase = AFTER_COMMIT)
-    public void handleSettlementCompleted(SettlementInternalCompletedEvent event) {
-        log.debug("정산 완료 이벤트 수신. settlementId={}, sellerId={}", event.settlementId(), event.sellerId());
-        requestPayout(event.settlementId(), event.sellerId(), event.totalNetAmount(), event.completedAt());
+    public SettlementCashPayoutEventHandler(KafkaEventPublisher kafkaEventPublisher, @Value("${kafka.topic.settlement-payout-request}") String topic) {
+        this.kafkaEventPublisher = kafkaEventPublisher;
+        this.topic = topic;
     }
 
-    private void requestPayout(Long settlementId, Long sellerId, java.math.BigDecimal amount, java.time.LocalDateTime completedAt) {
-        SettlementPayoutRequest payoutRequest = new SettlementPayoutRequest(
-                settlementId, sellerId, amount, completedAt
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void publishPayoutRequest(SettlementStartedEvent event) {
+        Envelope<PayoutRequestPayload> kafkaEvent = Envelope.of(
+                "settlement.payout.requested",
+                new PayoutRequestPayload(
+                        event.settlementId(),
+                        event.sellerId(),
+                        event.totalGrossAmount(),
+                        event.totalNetAmount(),
+                        event.totalFeeAmount()
+                )
         );
-        cashClient.requestPayout(List.of(payoutRequest));
-        log.info("캐시 지급 요청 완료. settlementId={}, amount={}", settlementId, amount);
+        kafkaEventPublisher.publish(topic, kafkaEvent);
     }
 }
