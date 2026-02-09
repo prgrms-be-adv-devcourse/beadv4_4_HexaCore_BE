@@ -5,13 +5,13 @@ import com.back.settlement.adapter.out.SettlementRepository;
 import com.back.settlement.app.event.payload.PayoutResultPayload;
 import com.back.settlement.app.support.DomainEventPublisher;
 import com.back.settlement.domain.Settlement;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.type.TypeReference;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.databind.json.JsonMapper;
 
 @Slf4j
 @Component
@@ -19,7 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class CashPayoutResultKafkaListener {
     private final SettlementRepository settlementRepository;
     private final DomainEventPublisher domainEventPublisher;
-    private final ObjectMapper objectMapper;
+    private final JsonMapper jsonMapper;
 
     @KafkaListener(
             topics = "${kafka.topic.cash-payout-completed}",
@@ -29,7 +29,7 @@ public class CashPayoutResultKafkaListener {
     public void listen(String message) {
         Envelope<PayoutResultPayload> event;
         try {
-            event = objectMapper.readValue(message, new TypeReference<Envelope<PayoutResultPayload>>() {});
+            event = jsonMapper.readValue(message, new TypeReference<Envelope<PayoutResultPayload>>() {});
         } catch (Exception e) {
             log.error("캐시 지급 결과 메시지 역직렬화 실패. message={}", message, e);
             return;

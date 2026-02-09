@@ -15,9 +15,8 @@ import com.back.settlement.app.support.DomainEventPublisher;
 import com.back.settlement.domain.Settlement;
 import com.back.settlement.domain.SettlementStatus;
 import com.back.settlement.fixture.SettlementFixture;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
@@ -51,7 +50,7 @@ class CashPayoutResultKafkaListenerIntegrationTest {
 
     static final String TOPIC = "settlement-payout-result";
 
-    private static final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
+    private static final JsonMapper jsonMapper = new JsonMapper();
 
     @Autowired
     private KafkaTemplate<String, EventName> kafkaTemplate;
@@ -86,7 +85,7 @@ class CashPayoutResultKafkaListenerIntegrationTest {
             ConsumerRecord<String, String> record = records.iterator().next();
             log.info("[원본 JSON] {}", record.value());
 
-            Envelope<PayoutResultPayload> envelope = objectMapper.readValue(record.value(), new TypeReference<>() {});
+            Envelope<PayoutResultPayload> envelope = jsonMapper.readValue(record.value(), new TypeReference<>() {});
             log.info("[역직렬화 완료] eventType={}, eventId={}", envelope.header().eventType(), envelope.header().eventId());
             log.info("[Payload] settlementId={}, success={}, failReason={}", envelope.payload().settlementId(), envelope.payload().success(), envelope.payload().failReason());
 
@@ -154,7 +153,7 @@ class CashPayoutResultKafkaListenerIntegrationTest {
             DomainEventPublisher eventPublisher = mock(DomainEventPublisher.class);
             given(repository.findById(settlementId)).willReturn(Optional.of(settlement));
 
-            CashPayoutResultKafkaListener listener = new CashPayoutResultKafkaListener(repository, eventPublisher, objectMapper);
+            CashPayoutResultKafkaListener listener = new CashPayoutResultKafkaListener(repository, eventPublisher, jsonMapper);
             log.info("[테스트 시작] 캐시 지급 성공 메시지 처리 테스트");
 
             // when
@@ -191,7 +190,7 @@ class CashPayoutResultKafkaListenerIntegrationTest {
             DomainEventPublisher eventPublisher = mock(DomainEventPublisher.class);
             given(repository.findById(settlementId)).willReturn(Optional.of(settlement));
 
-            CashPayoutResultKafkaListener listener = new CashPayoutResultKafkaListener(repository, eventPublisher, objectMapper);
+            CashPayoutResultKafkaListener listener = new CashPayoutResultKafkaListener(repository, eventPublisher, jsonMapper);
             log.info("[테스트 시작] 캐시 지급 실패 메시지 처리 테스트");
 
             // when
@@ -227,7 +226,7 @@ class CashPayoutResultKafkaListenerIntegrationTest {
             DomainEventPublisher eventPublisher = mock(DomainEventPublisher.class);
             given(repository.findById(settlementId)).willReturn(Optional.empty());
 
-            CashPayoutResultKafkaListener listener = new CashPayoutResultKafkaListener(repository, eventPublisher, objectMapper);
+            CashPayoutResultKafkaListener listener = new CashPayoutResultKafkaListener(repository, eventPublisher, jsonMapper);
             log.info("[테스트 시작] 정산서가 없는 경우 메시지 처리 테스트");
 
             // when

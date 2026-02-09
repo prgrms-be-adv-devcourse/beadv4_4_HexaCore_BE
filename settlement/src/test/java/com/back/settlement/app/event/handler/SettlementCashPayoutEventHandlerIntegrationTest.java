@@ -6,9 +6,8 @@ import com.back.common.event.Envelope;
 import com.back.settlement.app.event.payload.PayoutRequestPayload;
 import com.back.settlement.domain.SettlementStatus;
 import com.back.settlement.domain.event.SettlementStartedEvent;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.util.HashMap;
@@ -39,7 +38,7 @@ class SettlementCashPayoutEventHandlerIntegrationTest {
 
     private static final String TOPIC = "settlement-payout-request";
 
-    private static final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
+    private static final JsonMapper jsonMapper = new JsonMapper();
 
     @Autowired
     private SettlementCashPayoutEventHandler handler;
@@ -78,7 +77,7 @@ class SettlementCashPayoutEventHandlerIntegrationTest {
             ConsumerRecord<String, String> record = records.iterator().next();
             log.info("[원본 JSON] {}", record.value());
 
-            Envelope<PayoutRequestPayload> envelope = objectMapper.readValue(record.value(), new TypeReference<>() {});
+            Envelope<PayoutRequestPayload> envelope = jsonMapper.readValue(record.value(), new TypeReference<>() {});
 
             log.info("[역직렬화 완료] eventType={}, eventId={}", envelope.header().eventType(), envelope.header().eventId());
 
