@@ -7,6 +7,7 @@ import com.back.user.dto.request.UpdateUserProfileRequestDto;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 
 @Entity
@@ -70,13 +71,9 @@ public class User extends BaseTimeEntity {
         this.blindCount++;
     }
 
-    public void restrictChatForDays(int days) {
-        if (this.chatRestrictedUntil == null
-                || this.chatRestrictedUntil.isBefore(LocalDateTime.now())) {
-            this.chatRestrictedUntil = LocalDateTime.now().plusDays(days);
-        } else {
-            this.chatRestrictedUntil = this.chatRestrictedUntil.plusDays(days);
-        }
+    public LocalDateTime applyChatRestriction(LocalDateTime now, Duration duration) {
+            this.chatRestrictedUntil = now.plus(duration);
+            return this.chatRestrictedUntil;
     }
 
     public void resetBlindCount(){

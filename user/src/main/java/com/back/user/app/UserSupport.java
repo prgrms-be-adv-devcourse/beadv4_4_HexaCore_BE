@@ -10,6 +10,8 @@ import com.back.user.domain.UserSetting;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
+
 @Component
 @RequiredArgsConstructor
 public class UserSupport {
@@ -32,5 +34,9 @@ public class UserSupport {
                 throw new CustomException(FailureCode.NICKNAME_ALREADY_EXISTS);
             }
         }
+    }
+
+    public LocalDateTime incrementBlindAndReturnRestrictedUntil(Long userId,LocalDateTime now, int threshold, long restrictSeconds) {
+        return userRepository.incrementBlindAndReturnRestrictedUntil(userId, now, threshold, restrictSeconds);
     }
 }

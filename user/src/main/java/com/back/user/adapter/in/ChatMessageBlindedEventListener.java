@@ -32,7 +32,7 @@ public class ChatMessageBlindedEventListener {
                         ConsumerRecord<String, ChatMessageBlindedKafkaEvent> record) {
         LocalDateTime now = LocalDateTime.now();
 
-        // 1) 멱등 게이트 (eventId PK insert)
+        // 1) 멱등 게이트
         boolean first = idempotencyService.tryMarkConsumed(UUID.fromString(event.eventId()), EVENT_TYPE, now);
 
         if (!first) {
@@ -43,7 +43,7 @@ public class ChatMessageBlindedEventListener {
         }
 
         // 2) 비즈니스 처리
-
+        userFacade.incrementBlindCount(event.authorUserId(),now);
 
         // 3) 성공 커밋
         ack.acknowledge();
