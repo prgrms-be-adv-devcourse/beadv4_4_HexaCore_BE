@@ -1,4 +1,4 @@
-package com.back.product.adapter.in;
+package com.back.product.adapter.in.web.api;
 
 import com.back.common.response.CommonResponse;
 import com.back.image.dto.enums.ImageCategory;

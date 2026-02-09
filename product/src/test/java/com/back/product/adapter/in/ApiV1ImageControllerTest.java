@@ -4,6 +4,7 @@ import com.back.image.app.ImageFacade;
 import com.back.common.code.SuccessCode;
 import com.back.image.dto.enums.ImageCategory;
 import com.back.image.dto.response.ImageUploadResponseDto;
+import com.back.product.adapter.in.web.controller.ApiV1ImageController;
 import com.back.security.jwt.JWTUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
