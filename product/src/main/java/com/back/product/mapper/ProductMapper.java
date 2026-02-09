@@ -5,7 +5,7 @@ import com.back.product.domain.ProductImage;
 import com.back.product.domain.ProductInfo;
 import com.back.product.domain.ProductOptionValues;
 import com.back.product.dto.model.ProductDto;
-import com.back.product.dto.model.ProductOptionDto;
+import com.back.product.dto.model.ProductOptionValueDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -25,7 +25,7 @@ public class ProductMapper {
     }
 
     public ProductDto toDto(Product product, List<ProductOptionValues> options, List<ProductImage> images) {
-        List<ProductOptionDto> optionDtos = options.stream().map(productOptionMapper::toDto).toList();
+        List<ProductOptionValueDto> optionDtos = options.stream().map(productOptionMapper::toDto).toList();
         List<String> imageUrlDtos = images.stream().map(productImageMapper::toDto).toList();
 
         return ProductDto.builder()

@@ -3,7 +3,7 @@ package com.back.product.dto.model;
 import lombok.Builder;
 
 @Builder
-public record ProductOptionDto(
+public record ProductOptionValueDto(
         Long productOptionValueId,
         String groupName,
         String value

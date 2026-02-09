@@ -4,7 +4,7 @@ import com.back.product.dto.model.BrandDto;
 import com.back.product.dto.model.CategoryDto;
 import com.back.product.dto.model.ProductDto;
 import com.back.product.dto.model.ProductInfoDto;
-import com.back.product.dto.model.ProductOptionDto;
+import com.back.product.dto.model.ProductOptionValueDto;
 import com.back.product.dto.request.ProductCreateRequestDto;
 import com.back.product.dto.request.ProductInfoDataRequestDto;
 import com.back.product.dto.request.ProductUpdateRequestDto;
@@ -85,7 +85,7 @@ public class RequestFixture {
                 .releaseDate(LocalDateTime.now())
                 .build();
 
-        ProductOptionDto option = ProductOptionDto.builder()
+        ProductOptionValueDto option = ProductOptionValueDto.builder()
                 .productOptionValueId(1L)
                 .groupName("Color")
                 .value("Black")
@@ -125,7 +125,7 @@ public class RequestFixture {
                 .releaseDate(LocalDateTime.now())
                 .build();
 
-        ProductOptionDto option = ProductOptionDto.builder()
+        ProductOptionValueDto option = ProductOptionValueDto.builder()
                 .productOptionValueId(1L)
                 .groupName("Color")
                 .value("Black")

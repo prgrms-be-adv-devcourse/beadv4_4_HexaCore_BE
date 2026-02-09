@@ -184,8 +184,8 @@ class ApiV1ProductQueryControllerTest {
                                     .inventory(10L)
                                     .imageUrls(List.of("image1.jpg"))
                                     .options(List.of(
-                                            ProductOptionDto.builder().groupName("size").value("M").build(),
-                                            ProductOptionDto.builder().groupName("color").value("red").build()
+                                            ProductOptionValueDto.builder().groupName("size").value("M").build(),
+                                            ProductOptionValueDto.builder().groupName("color").value("red").build()
                                     ))
                                     .build()))
                             .build(),
@@ -202,8 +202,8 @@ class ApiV1ProductQueryControllerTest {
                                     .inventory(20L)
                                     .imageUrls(List.of("image2.jpg"))
                                     .options(List.of(
-                                            ProductOptionDto.builder().groupName("size").value("L").build(),
-                                            ProductOptionDto.builder().groupName("color").value("blue").build()
+                                            ProductOptionValueDto.builder().groupName("size").value("L").build(),
+                                            ProductOptionValueDto.builder().groupName("color").value("blue").build()
                                     ))
                                     .build()))
                             .build(),
@@ -220,8 +220,8 @@ class ApiV1ProductQueryControllerTest {
                                     .inventory(30L)
                                     .imageUrls(List.of("image3.jpg"))
                                     .options(List.of(
-                                            ProductOptionDto.builder().groupName("size").value("S").build(),
-                                            ProductOptionDto.builder().groupName("color").value("green").build()
+                                            ProductOptionValueDto.builder().groupName("size").value("S").build(),
+                                            ProductOptionValueDto.builder().groupName("color").value("green").build()
                                     ))
                                     .build()))
                             .build()

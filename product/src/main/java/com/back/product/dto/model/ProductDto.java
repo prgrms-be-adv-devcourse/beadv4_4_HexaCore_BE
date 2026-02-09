@@ -8,7 +8,7 @@ import java.util.List;
 public record ProductDto(
         Long productId,
         Long inventory,
-        List<ProductOptionDto> options,
+        List<ProductOptionValueDto> options,
         List<String> imageUrls
 ) {
 }
