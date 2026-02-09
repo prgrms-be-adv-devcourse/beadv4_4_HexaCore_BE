@@ -6,7 +6,7 @@ import com.back.product.adapter.in.web.controller.ApiV1ProductCommandController;
 import com.back.product.app.facade.ProductFacade;
 import com.back.product.dto.request.ProductCreateRequestDto;
 import com.back.product.dto.request.ProductUpdateRequestDto;
-import com.back.product.dto.response.ProductResponseDto;
+import com.back.product.dto.response.ProductDetailResponseDto;
 import com.back.product.util.RequestFixture;
 import com.back.security.jwt.JWTUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -65,7 +65,7 @@ class ApiV1ProductCommandControllerTest {
         void createProduct_Success() throws Exception {
             // given
             ProductCreateRequestDto request = RequestFixture.createProductCreateRequest();
-            ProductResponseDto response = RequestFixture.createProductResponse();
+            ProductDetailResponseDto response = RequestFixture.createProductResponse();
 
             given(productFacade.createProduct(any(ProductCreateRequestDto.class))).willReturn(response);
 
@@ -77,8 +77,8 @@ class ApiV1ProductCommandControllerTest {
                     ).andDo(print())
                     .andExpect(status().isCreated())
                     .andExpect(jsonPath("$.code").value("CREATED"))
-                    .andExpect(jsonPath("$.data.productInfo.productInfoId").value(response.productInfo().productInfoId()))
-                    .andExpect(jsonPath("$.data.productInfo.name").value(response.productInfo().name()));
+                    .andExpect(jsonPath("$.data.product.productInfo.productInfoId").value(response.product().productInfo().productInfoId()))
+                    .andExpect(jsonPath("$.data.product.productInfo.name").value(response.product().productInfo().name()));
 
             verify(productFacade).createProduct(any(ProductCreateRequestDto.class));
         }
@@ -113,7 +113,7 @@ class ApiV1ProductCommandControllerTest {
             // given
             long productInfoId = 1L;
             ProductUpdateRequestDto request = RequestFixture.createProductUpdateRequest();
-            ProductResponseDto response = RequestFixture.createUpdatedProductResponse();
+            ProductDetailResponseDto response = RequestFixture.createUpdatedProductResponse();
 
             given(productFacade.updateProduct(anyLong(), any(ProductUpdateRequestDto.class))).willReturn(response);
 
@@ -125,8 +125,8 @@ class ApiV1ProductCommandControllerTest {
                     ).andDo(print())
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.code").value("OK"))
-                    .andExpect(jsonPath("$.data.productInfo.productInfoId").value(response.productInfo().productInfoId()))
-                    .andExpect(jsonPath("$.data.productInfo.name").value(response.productInfo().name()));
+                    .andExpect(jsonPath("$.data.product.productInfo.productInfoId").value(response.product().productInfo().productInfoId()))
+                    .andExpect(jsonPath("$.data.product.productInfo.name").value(response.product().productInfo().name()));
 
             verify(productFacade).updateProduct(anyLong(), any(ProductUpdateRequestDto.class));
         }

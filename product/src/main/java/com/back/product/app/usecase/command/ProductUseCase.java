@@ -7,12 +7,11 @@ import com.back.product.adapter.out.persistence.ProductOptionValuesRepository;
 import com.back.product.adapter.out.persistence.ProductRepository;
 import com.back.product.app.usecase.query.ProductSupport;
 import com.back.product.domain.*;
+import com.back.product.dto.command.ProductVariantCreateCommand;
+import com.back.product.dto.command.ProductVariantUpdateCommand;
+import com.back.product.dto.model.ProductDetailDto;
 import com.back.product.dto.model.ProductDto;
 import com.back.product.dto.model.ProductInfoDto;
-import com.back.product.dto.request.ProductVariantCreateRequestDto;
-import com.back.product.dto.request.ProductVariantUpdateRequestDto;
-import com.back.product.dto.response.ProductListResponseDto;
-import com.back.product.dto.response.ProductResponseDto;
 import com.back.product.mapper.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -34,13 +33,12 @@ public class ProductUseCase {
     private final ProductSupport productSupport;
 
     @Transactional
-    public List<ProductDto> createMultipleProduct(
-            ProductInfo productInfo,
-            List<ProductVariantCreateRequestDto> variants,
-            List<OptionValue> optionValues
-    ) {
-        Map<Long, OptionValue> optionValueMap = optionValues.stream()
-                .collect(Collectors.toMap(OptionValue::getId, value -> value));
+    public List<ProductDto> createMultipleProduct(ProductInfo productInfo, List<ProductVariantCreateCommand> variants) {
+        List<Long> allOptionValueIds = variants.stream()
+                .flatMap(variant -> variant.optionValueIds().stream())
+                .distinct()
+                .toList();
+        Map<Long, OptionValue> optionValueMap = findOptionValuesAsMap(allOptionValueIds);
 
         List<Product> createdProducts = new ArrayList<>();
         List<ProductOptionValues> createdProductOptionValues = new ArrayList<>();
@@ -65,16 +63,19 @@ public class ProductUseCase {
     }
 
     @Transactional
-    public List<ProductDto> updateMultipleProduct(ProductInfo productInfo, List<ProductVariantUpdateRequestDto> variants, List<OptionValue> optionValues) {
+    public List<ProductDto> updateMultipleProduct(ProductInfo productInfo, List<ProductVariantUpdateCommand> variants) {
         List<Product> existProducts = productSupport.getAllProductsByProductInfo(productInfo);
 
-        Map<Long, OptionValue> optionValueMap = optionValues.stream()
-                .collect(Collectors.toMap(OptionValue::getId, value -> value));
+        List<Long> allOptionValueIds = variants.stream()
+                .flatMap(variant -> variant.optionValueIds().stream())
+                .distinct()
+                .toList();
+        Map<Long, OptionValue> optionValueMap = findOptionValuesAsMap(allOptionValueIds);
 
-        Map<Boolean, List<ProductVariantUpdateRequestDto>> categorizedVariants = variants.stream()
+        Map<Boolean, List<ProductVariantUpdateCommand>> categorizedVariants = variants.stream()
                 .collect(Collectors.partitioningBy(variant -> variant.productId() != null));
-        List<ProductVariantUpdateRequestDto> variantsToUpdate = categorizedVariants.get(true);
-        List<ProductVariantUpdateRequestDto> variantsToCreate = categorizedVariants.get(false);
+        List<ProductVariantUpdateCommand> variantsToUpdate = categorizedVariants.get(true);
+        List<ProductVariantUpdateCommand> variantsToCreate = categorizedVariants.get(false);
 
         handleDeletes(existProducts, variants);
         handleUpdates(productInfo, variantsToUpdate, optionValueMap, existProducts);
@@ -103,7 +104,7 @@ public class ProductUseCase {
         return buildProductDto(products, productOptionValues, productImages);
     }
 
-    private void handleCreations(ProductInfo productInfo, List<ProductVariantUpdateRequestDto> variantsToCreate, Map<Long, OptionValue> optionValueMap) {
+    private void handleCreations(ProductInfo productInfo, List<ProductVariantUpdateCommand> variantsToCreate, Map<Long, OptionValue> optionValueMap) {
         List<Product> createdProducts = new ArrayList<>();
         List<ProductOptionValues> createdProductOptionValues = new ArrayList<>();
         List<ProductImage> createdImages = new ArrayList<>();
@@ -128,7 +129,7 @@ public class ProductUseCase {
         productImageRepository.saveAll(createdImages);
     }
 
-    private void handleUpdates(ProductInfo productInfo, List<ProductVariantUpdateRequestDto> variantsToUpdate, Map<Long, OptionValue> optionValueMap, List<Product> existProducts) {
+    private void handleUpdates(ProductInfo productInfo, List<ProductVariantUpdateCommand> variantsToUpdate, Map<Long, OptionValue> optionValueMap, List<Product> existProducts) {
         Map<Long, Product> existProductsMap = existProducts.stream()
                 .collect(Collectors.toMap(Product::getId, p -> p));
 
@@ -157,9 +158,9 @@ public class ProductUseCase {
         productImageRepository.saveAll(updatedProductImages);
     }
 
-    private void handleDeletes(List<Product> existProducts, List<ProductVariantUpdateRequestDto> variants) {
+    private void handleDeletes(List<Product> existProducts, List<ProductVariantUpdateCommand> variants) {
         Set<Long> requestIds = variants.stream()
-                .map(ProductVariantUpdateRequestDto::productId)
+                .map(ProductVariantUpdateCommand::productId)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
 
@@ -202,6 +203,19 @@ public class ProductUseCase {
                 productImageMapper.toEntity(product, imageUrl)
         ).toList();
     }
+    
+    private Map<Long, OptionValue> findOptionValuesAsMap(List<Long> optionValueIds) {
+        List<OptionValue> optionValues = productSupport.getAllOptionValues(optionValueIds);
+        
+        if (optionValues.size() != optionValueIds.size()) {
+            throw new CustomException(FailureCode.ENTITY_NOT_FOUND);
+        }
+        
+        return optionValues.stream().collect(Collectors.toMap(
+                OptionValue::getId, 
+                value -> value
+        ));
+    }
 
     private List<ProductDto> buildProductDto(
             List<Product> products,
@@ -233,7 +247,7 @@ public class ProductUseCase {
     }
 
     @Transactional(readOnly = true)
-    public ProductListResponseDto findMultipleProduct(List<Long> productIds) {
+    public List<ProductDetailDto> findMultipleProduct(List<Long> productIds) {
         List<Product> products = productSupport.findMultipleProductByIds(productIds);
 
         if (!isSameSize(products, productIds)) {
@@ -246,7 +260,7 @@ public class ProductUseCase {
         return buildProductResponseDto(products, productOptions, productImages);
     }
 
-    private ProductListResponseDto buildProductResponseDto(List<Product> products, List<ProductOptionValues> options, List<ProductImage> images) {
+    private List<ProductDetailDto> buildProductResponseDto(List<Product> products, List<ProductOptionValues> options, List<ProductImage> images) {
         Map<Product, List<ProductImage>> imagesByProduct = images.stream()
                 .collect(Collectors.groupingBy(ProductImage::getProduct));
 
@@ -256,7 +270,7 @@ public class ProductUseCase {
         Map<ProductInfo, List<Product>> productsByInfo = products.stream()
                 .collect(Collectors.groupingBy(Product::getProductInfo));
 
-        List<ProductResponseDto> productResponseDtos = productsByInfo.entrySet().stream().map(entry -> {
+        return productsByInfo.entrySet().stream().map(entry -> {
             ProductInfoDto productInfoDto = productInfoMapper.toDto(entry.getKey());
 
             List<ProductDto> productDtos = entry.getValue().stream().map(product -> productMapper.toDto(
@@ -265,10 +279,8 @@ public class ProductUseCase {
                     imagesByProduct.getOrDefault(product, Collections.emptyList())
             )).toList();
 
-            return ProductResponseDto.builder().productInfo(productInfoDto).products(productDtos).build();
+            return productMapper.toDetailDto(productInfoDto, productDtos);
         }).toList();
-
-        return ProductListResponseDto.builder().products(productResponseDtos).build();
     }
 
     private Boolean isSameSize(List<?> list1, List<?> list2) {

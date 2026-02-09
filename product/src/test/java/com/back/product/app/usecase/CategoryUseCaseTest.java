@@ -6,6 +6,7 @@ import com.back.product.adapter.out.persistence.CategoryRepository;
 import com.back.product.app.usecase.command.CategoryUseCase;
 import com.back.product.app.usecase.query.ProductSupport;
 import com.back.product.domain.Category;
+import com.back.product.dto.command.CategoryDataCommand;
 import com.back.product.dto.model.CategoryDto;
 import com.back.product.dto.request.CategoryListCreateRequestDto;
 import com.back.product.dto.request.CategoryDataRequestDto;
@@ -82,9 +83,9 @@ class CategoryUseCaseTest {
         @DisplayName("새로운 카테고리들을 DB에 저장하고 생성된 정보 리스트를 반환한다")
         void createCategories_Success() {
             // given
-            CategoryDataRequestDto newCategoryDto1 = new CategoryDataRequestDto("Tops", "https://e.com/1.png");
-            CategoryDataRequestDto newCategoryDto2 = new CategoryDataRequestDto("Bottoms", "https://e.com/2.png");
-            CategoryListCreateRequestDto requestDto = new CategoryListCreateRequestDto(List.of(newCategoryDto1, newCategoryDto2));
+            CategoryDataCommand newCategoryDto1 = new CategoryDataCommand("Tops", "https://e.com/1.png");
+            CategoryDataCommand newCategoryDto2 = new CategoryDataCommand("Bottoms", "https://e.com/2.png");
+            List<CategoryDataCommand> requestDto = List.of(newCategoryDto1, newCategoryDto2);
 
             Category newCategoryEntity1 = Category.builder().name("Tops").imageUrl("https://e.com/1.png").build();
             Category newCategoryEntity2 = Category.builder().name("Bottoms").imageUrl("https://e.com/2.png").build();
@@ -109,7 +110,7 @@ class CategoryUseCaseTest {
             assertThat(result).extracting(CategoryDto::name).containsExactlyInAnyOrder("Tops", "Bottoms");
             verify(productSupport).getAllCategories();
             verify(categoryRepository).saveAll(categoriesToCreate);
-            verify(categoryMapper, times(2)).toEntity(any(CategoryDataRequestDto.class));
+            verify(categoryMapper, times(2)).toEntity(any(CategoryDataCommand.class));
             verify(categoryMapper, times(2)).toDto(any(Category.class));
         }
 
@@ -117,9 +118,9 @@ class CategoryUseCaseTest {
         @DisplayName("이미 존재하는 카테고리 이름은 필터링하고, 새로운 카테고리만 생성한다")
         void createCategories_Should_Filter_DuplicateName() {
             // given
-            CategoryDataRequestDto existingDto = new CategoryDataRequestDto("Existed", "https://e.com/e.png");
-            CategoryDataRequestDto newDto = new CategoryDataRequestDto("New", "https://e.com/n.png");
-            CategoryListCreateRequestDto requestDto = new CategoryListCreateRequestDto(List.of(existingDto, newDto));
+            CategoryDataCommand existingDto = new CategoryDataCommand("Existed", "https://e.com/e.png");
+            CategoryDataCommand newDto = new CategoryDataCommand("New", "https://e.com/n.png");
+            List<CategoryDataCommand> requestDto = List.of(existingDto, newDto);
 
             Category existingEntity = Category.builder().id(1L).name("Existed").imageUrl("https://e.com/e.png").build();
             Category newEntity = Category.builder().name("New").imageUrl("https://e.com/n.png").build();
@@ -139,7 +140,7 @@ class CategoryUseCaseTest {
 
             verify(productSupport).getAllCategories();
             verify(categoryRepository).saveAll(List.of(newEntity));
-            verify(categoryMapper, times(1)).toEntity(any(CategoryDataRequestDto.class));
+            verify(categoryMapper, times(1)).toEntity(any(CategoryDataCommand.class));
             verify(categoryMapper, times(1)).toDto(any(Category.class));
         }
     }
@@ -156,7 +157,7 @@ class CategoryUseCaseTest {
         void modifyCategory_Success() {
             // given
             final Long CATEGORY_ID = 1L;
-            CategoryDataRequestDto requestDto = CategoryDataRequestDto.builder()
+            CategoryDataCommand requestDto = CategoryDataCommand.builder()
                     .name("Modified")
                     .imageUrl("modified.png")
                     .build();
@@ -183,7 +184,7 @@ class CategoryUseCaseTest {
         void modifyCategory_Fail_CategoryNotFound() {
             // given
             final Long NON_EXISTENT_ID = 99L;
-            CategoryDataRequestDto requestDto = CategoryDataRequestDto.builder().name("any").imageUrl("any.png").build();
+            CategoryDataCommand requestDto = CategoryDataCommand.builder().name("any").imageUrl("any.png").build();
 
             given(productSupport.findCategoryById(NON_EXISTENT_ID)).willReturn(Optional.empty());
 
@@ -202,7 +203,7 @@ class CategoryUseCaseTest {
             // given
             final Long CATEGORY_ID = 1L;
             Category existingCategoryWithSameName = Category.builder().id(2L).name("Existing").imageUrl("existing.png").build();
-            CategoryDataRequestDto requestDto = CategoryDataRequestDto.builder().name("Existing").imageUrl("modified.png").build();
+            CategoryDataCommand requestDto = CategoryDataCommand.builder().name("Existing").imageUrl("modified.png").build();
 
             given(productSupport.findCategoryById(CATEGORY_ID)).willReturn(Optional.of(categoryToModify));
             given(productSupport.getAllCategories()).willReturn(List.of(categoryToModify, existingCategoryWithSameName));

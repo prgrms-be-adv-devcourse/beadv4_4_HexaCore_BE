@@ -7,6 +7,7 @@ import com.back.product.app.usecase.query.ProductSupport;
 import com.back.product.domain.Brand;
 import com.back.product.domain.Category;
 import com.back.product.domain.ProductInfo;
+import com.back.product.dto.command.ProductInfoDataCommand;
 import com.back.product.dto.request.ProductInfoDataRequestDto;
 import com.back.product.mapper.ProductInfoMapper;
 import jakarta.validation.Valid;
@@ -22,12 +23,12 @@ public class ProductInfoUseCase {
     private final ProductSupport productSupport;
 
     @Transactional
-    public ProductInfo createProductInfo(Brand brand, Category category, @Valid ProductInfoDataRequestDto request) {
-        isDuplicateProductInfo(brand, request.code());
+    public ProductInfo createProductInfo(ProductInfoDataCommand productInfo) {
+        isDuplicateProductInfo(productInfo.brand(), productInfo.code());
 
-        ProductInfo productInfo = productInfoMapper.toEntity(brand, category, request.name(), request.code(), request.releasePrice(), request.releasedDate());
+        ProductInfo newProductInfo = productInfoMapper.toEntity(productInfo);
 
-        return productInfoRepository.save(productInfo);
+        return productInfoRepository.save(newProductInfo);
     }
 
     private void isDuplicateProductInfo(Brand brand, String code) {
@@ -37,20 +38,13 @@ public class ProductInfoUseCase {
     }
 
     @Transactional
-    public ProductInfo updateProductInfo(Long productInfoId, Brand brand, Category category, @Valid ProductInfoDataRequestDto request) {
-        ProductInfo productInfo = productSupport.findProductInfoById(productInfoId)
+    public ProductInfo updateProductInfo(Long productInfoId, ProductInfoDataCommand productInfo) {
+        ProductInfo productInfoToUpdate = productSupport.findProductInfoById(productInfoId)
                 .orElseThrow(() -> new CustomException(FailureCode.PRODUCT_NOT_FOUND));
 
-        productInfo.update(
-            brand,
-            category,
-            request.name(),
-            request.code(),
-            request.releasePrice(),
-            request.releasedDate()
-        );
+        productInfoToUpdate.update(productInfo);
 
-        return productInfo;
+        return productInfoToUpdate;
     }
 
     @Transactional

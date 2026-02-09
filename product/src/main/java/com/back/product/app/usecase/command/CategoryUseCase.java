@@ -6,6 +6,7 @@ import com.back.common.exception.InvalidValueException;
 import com.back.product.adapter.out.persistence.CategoryRepository;
 import com.back.product.app.usecase.query.ProductSupport;
 import com.back.product.domain.Category;
+import com.back.product.dto.command.CategoryDataCommand;
 import com.back.product.dto.model.CategoryDto;
 import com.back.product.dto.request.CategoryDataRequestDto;
 import com.back.product.dto.request.CategoryListCreateRequestDto;
@@ -32,14 +33,14 @@ public class CategoryUseCase {
     }
 
     @Transactional
-    public List<CategoryDto> createCategories(@Valid CategoryListCreateRequestDto request) {
+    public List<CategoryDto> createCategories(List<CategoryDataCommand> categories) {
         Map<String, Category> existsCategories = productSupport.getAllCategories().stream()
                 .collect(Collectors.toMap(
                         category -> toPlainText(category.getName()),
                         category -> category
                 ));
 
-        List<Category> categoriesToCreate = request.categories().stream()
+        List<Category> categoriesToCreate = categories.stream()
                 .filter(newCategory -> {
                     String newName = toPlainText(newCategory.name());
                     return !existsCategories.containsKey(newName);
@@ -59,10 +60,10 @@ public class CategoryUseCase {
     }
 
     @Transactional
-    public CategoryDto modifyCategory(Long categoryId, @Valid CategoryDataRequestDto request) {
+    public CategoryDto modifyCategory(Long categoryId, CategoryDataCommand category) {
         Category categoryToModify = findCategoryExists(categoryId);
 
-        String newName = toPlainText(request.name());
+        String newName = toPlainText(category.name());
 
         productSupport.getAllCategories().stream()
                 .filter(existsCategory -> !existsCategory.getId().equals(categoryId))
@@ -71,9 +72,9 @@ public class CategoryUseCase {
                 .findFirst()
                 .ifPresent(_ -> { throw new CustomException(FailureCode.CATEGORY_NAME_DUPLICATE); });
 
-        categoryToModify.modifyName(request.name());
+        categoryToModify.modifyName(category.name());
 
-        categoryToModify.modifyImageUrl(request.imageUrl());
+        categoryToModify.modifyImageUrl(category.imageUrl());
 
         return categoryMapper.toDto(categoryToModify);
     }

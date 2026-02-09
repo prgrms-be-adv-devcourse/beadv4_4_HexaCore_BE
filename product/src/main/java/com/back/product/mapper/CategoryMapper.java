@@ -3,6 +3,7 @@ package com.back.product.mapper;
 import com.back.common.product.event.payload.CategoryPayload;
 import com.back.product.document.ProductDocument;
 import com.back.product.domain.Category;
+import com.back.product.dto.command.CategoryDataCommand;
 import com.back.product.dto.model.CategoryDto;
 import com.back.product.dto.request.CategoryDataRequestDto;
 import com.back.product.dto.response.CategoryListResponseDto;
@@ -28,10 +29,10 @@ public class CategoryMapper {
                 .build();
     }
 
-    public Category toEntity(CategoryDataRequestDto request) {
+    public Category toEntity(CategoryDataCommand categoryDataCommand) {
         return Category.builder()
-                .name(request.name())
-                .imageUrl(request.imageUrl())
+                .name(categoryDataCommand.name())
+                .imageUrl(categoryDataCommand.imageUrl())
                 .build();
     }
 

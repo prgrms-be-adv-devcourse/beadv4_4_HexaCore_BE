@@ -6,6 +6,7 @@ import com.back.common.exception.InvalidValueException;
 import com.back.product.adapter.out.persistence.BrandRepository;
 import com.back.product.app.usecase.query.ProductSupport;
 import com.back.product.domain.Brand;
+import com.back.product.dto.command.BrandDataCommand;
 import com.back.product.dto.request.BrandDataRequestDto;
 import com.back.product.dto.request.BrandListCreateRequestDto;
 import com.back.product.dto.model.BrandDto;
@@ -32,14 +33,14 @@ public class BrandUseCase {
     }
 
     @Transactional
-    public List<BrandDto> createBrands(@Valid BrandListCreateRequestDto request) {
+    public List<BrandDto> createBrands(List<BrandDataCommand> brands) {
         Map<String, Brand> existsBrands = productSupport.getAllBrands().stream()
                 .collect(Collectors.toMap(
                         brand -> toPlainText(brand.getName()),
                         brand -> brand)
                 );
 
-        List<Brand> brandsToCreate = request.brands().stream()
+        List<Brand> brandsToCreate = brands.stream()
                 .filter(newBrand -> {
                     String newName = toPlainText(newBrand.name());
                     return !existsBrands.containsKey(newName);
@@ -58,10 +59,10 @@ public class BrandUseCase {
     }
 
     @Transactional
-    public BrandDto modifyBrand(Long brandId, @Valid BrandDataRequestDto request) {
+    public BrandDto modifyBrand(Long brandId, BrandDataCommand brand) {
         Brand brandToModify = findBrandExists(brandId);
 
-        String newName = toPlainText(request.name());
+        String newName = toPlainText(brand.name());
 
         productSupport.getAllBrands().stream()
                 .filter(existsBrand -> !existsBrand.getId().equals(brandId))
@@ -70,9 +71,9 @@ public class BrandUseCase {
                 .findFirst()
                 .ifPresent(_ -> { throw new CustomException(FailureCode.BRAND_NAME_DUPLICATE); });
 
-        brandToModify.modifyName(request.name());
+        brandToModify.modifyName(brand.name());
 
-        brandToModify.modifyImageUrl(request.imageUrl());
+        brandToModify.modifyImageUrl(brand.imageUrl());
 
         return brandMapper.toDto(brandToModify);
     }

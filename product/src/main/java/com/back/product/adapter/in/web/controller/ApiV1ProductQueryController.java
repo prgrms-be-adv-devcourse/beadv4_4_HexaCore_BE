@@ -6,8 +6,8 @@ import com.back.product.adapter.in.web.api.ProductQueryApiController;
 import com.back.product.app.facade.ProductFacade;
 import com.back.product.dto.request.ProductQueryRequestDto;
 import com.back.product.dto.request.ProductSearchRequestDto;
-import com.back.product.dto.response.ProductListResponseDto;
-import com.back.product.dto.response.ProductResponseDto;
+import com.back.product.dto.response.ProductDetailListResponseDto;
+import com.back.product.dto.response.ProductDetailResponseDto;
 import com.back.product.dto.response.ProductSearchResponseDto;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -22,8 +22,8 @@ public class ApiV1ProductQueryController implements ProductQueryApiController {
 
     @Override
     @GetMapping("/{productInfoId}")
-    public CommonResponse<ProductResponseDto> getProductDetail(@PathVariable Long productInfoId) {
-        ProductResponseDto response = productFacade.getProductDetail(productInfoId);
+    public CommonResponse<ProductDetailResponseDto> getProductDetail(@PathVariable Long productInfoId) {
+        ProductDetailResponseDto response = productFacade.getProductDetail(productInfoId);
         return CommonResponse.success(SuccessCode.OK, response);
     }
 
@@ -40,8 +40,8 @@ public class ApiV1ProductQueryController implements ProductQueryApiController {
 
     @Override
     @GetMapping("/variants")
-    public CommonResponse<ProductListResponseDto> getProducts(@Valid @ModelAttribute ProductQueryRequestDto request) {
-        ProductListResponseDto response = productFacade.getProducts(request);
+    public CommonResponse<ProductDetailListResponseDto> getProducts(@Valid @ModelAttribute ProductQueryRequestDto request) {
+        ProductDetailListResponseDto response = productFacade.getProducts(request);
         return CommonResponse.success(SuccessCode.OK, response);
     }
 }

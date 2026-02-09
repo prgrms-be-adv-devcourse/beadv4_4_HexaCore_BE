@@ -14,12 +14,4 @@ public class ProductOptionValuesMapper {
                 .optionValue(optionValue)
                 .build();
     }
-
-    public ProductOptionValueDto toDto(ProductOptionValues productOptionValues) {
-        return ProductOptionValueDto.builder()
-                .productOptionValueId(productOptionValues.getId())
-                .groupName(productOptionValues.getOptionValue().getOptionGroup().getName())
-                .value(productOptionValues.getOptionValue().getValue())
-                .build();
-    }
 }

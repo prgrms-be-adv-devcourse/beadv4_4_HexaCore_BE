@@ -1,16 +1,12 @@
 package com.back.product.util;
 
-import com.back.product.dto.model.BrandDto;
-import com.back.product.dto.model.CategoryDto;
-import com.back.product.dto.model.ProductDto;
-import com.back.product.dto.model.ProductInfoDto;
-import com.back.product.dto.model.ProductOptionValueDto;
+import com.back.product.dto.model.*;
 import com.back.product.dto.request.ProductCreateRequestDto;
 import com.back.product.dto.request.ProductInfoDataRequestDto;
 import com.back.product.dto.request.ProductUpdateRequestDto;
 import com.back.product.dto.request.ProductVariantCreateRequestDto;
 import com.back.product.dto.request.ProductVariantUpdateRequestDto;
-import com.back.product.dto.response.ProductResponseDto;
+import com.back.product.dto.response.ProductDetailResponseDto;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -63,7 +59,7 @@ public class RequestFixture {
                 .build();
     }
 
-    public static ProductResponseDto createProductResponse() {
+    public static ProductDetailResponseDto createProductResponse() {
         BrandDto brand = BrandDto.builder()
                 .brandId(1L)
                 .name("Test Brand")
@@ -85,11 +81,23 @@ public class RequestFixture {
                 .releaseDate(LocalDateTime.now())
                 .build();
 
-        ProductOptionValueDto option = ProductOptionValueDto.builder()
-                .productOptionValueId(1L)
-                .groupName("Color")
-                .value("Black")
+        OptionDto option = OptionDto.builder()
+                .group(
+                        OptionDto.GroupDto.builder()
+                                .id(1L)
+                                .name("Color")
+                                .build()
+                )
+                .values(
+                        List.of(
+                                OptionDto.ValueDto.builder()
+                                        .id(1L)
+                                        .name("Black")
+                                        .build()
+                        )
+                )
                 .build();
+
         ProductDto product = ProductDto.builder()
                 .productId(1L)
                 .inventory(100L)
@@ -97,13 +105,16 @@ public class RequestFixture {
                 .imageUrls(List.of("http://example.com/image.jpg"))
                 .build();
 
-        return ProductResponseDto.builder()
-                .productInfo(productInfo)
-                .products(List.of(product))
-                .build();
+        return ProductDetailResponseDto.builder()
+                .product(
+                        ProductDetailDto.builder()
+                                .productInfo(productInfo)
+                                .products(List.of(product))
+                                .build()
+                ).build();
     }
 
-    public static ProductResponseDto createUpdatedProductResponse() {
+    public static ProductDetailResponseDto createUpdatedProductResponse() {
         BrandDto brand = BrandDto.builder()
                 .brandId(1L)
                 .name("Test Brand")
@@ -125,11 +136,23 @@ public class RequestFixture {
                 .releaseDate(LocalDateTime.now())
                 .build();
 
-        ProductOptionValueDto option = ProductOptionValueDto.builder()
-                .productOptionValueId(1L)
-                .groupName("Color")
-                .value("Black")
+        OptionDto option = OptionDto.builder()
+                .group(
+                        OptionDto.GroupDto.builder()
+                                .id(1L)
+                                .name("Color")
+                                .build()
+                )
+                .values(
+                        List.of(
+                                OptionDto.ValueDto.builder()
+                                        .id(1L)
+                                        .name("Black")
+                                        .build()
+                        )
+                )
                 .build();
+
         ProductDto product = ProductDto.builder()
                 .productId(1L)
                 .inventory(150L)
@@ -137,9 +160,12 @@ public class RequestFixture {
                 .imageUrls(List.of("http://example.com/updated_image.jpg"))
                 .build();
 
-        return ProductResponseDto.builder()
-                .productInfo(productInfo)
-                .products(List.of(product))
-                .build();
+        return ProductDetailResponseDto.builder()
+                .product(
+                        ProductDetailDto.builder()
+                                .productInfo(productInfo)
+                                .products(List.of(product))
+                                .build()
+                ).build();
     }
 }

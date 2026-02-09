@@ -6,6 +6,7 @@ import com.back.product.adapter.out.persistence.BrandRepository;
 import com.back.product.app.usecase.command.BrandUseCase;
 import com.back.product.app.usecase.query.ProductSupport;
 import com.back.product.domain.Brand;
+import com.back.product.dto.command.BrandDataCommand;
 import com.back.product.dto.model.BrandDto;
 import com.back.product.dto.request.BrandListCreateRequestDto;
 import com.back.product.dto.request.BrandDataRequestDto;
@@ -80,9 +81,9 @@ class BrandUseCaseTest {
         @DisplayName("새로운 브랜드들을 DB에 저장하고 생성된 정보 리스트를 반환한다")
         void createBrands_Success() {
             // given
-            BrandDataRequestDto newBrandDto1 = new BrandDataRequestDto("New Balance", "https://example.com/logo.png");
-            BrandDataRequestDto newBrandDto2 = new BrandDataRequestDto("Nike", "https://example.com/logo2.png");
-            BrandListCreateRequestDto requestDto = new BrandListCreateRequestDto(List.of(newBrandDto1, newBrandDto2));
+            BrandDataCommand newBrandDto1 = new BrandDataCommand("New Balance", "https://example.com/logo.png");
+            BrandDataCommand newBrandDto2 = new BrandDataCommand("Nike", "https://example.com/logo2.png");
+            List<BrandDataCommand> requestDto = List.of(newBrandDto1, newBrandDto2);
 
             Brand newBrandEntity1 = Brand.builder().name("New Balance").imageUrl("https://example.com/logo.png").build();
             Brand newBrandEntity2 = Brand.builder().name("Nike").imageUrl("https://example.com/logo2.png").build();
@@ -107,7 +108,7 @@ class BrandUseCaseTest {
             assertThat(result).extracting(BrandDto::name).containsExactlyInAnyOrder("New Balance", "Nike");
             verify(productSupport).getAllBrands();
             verify(brandRepository).saveAll(brandsToCreate);
-            verify(brandMapper, times(2)).toEntity(any(BrandDataRequestDto.class));
+            verify(brandMapper, times(2)).toEntity(any(BrandDataCommand.class));
             verify(brandMapper, times(2)).toDto(any(Brand.class));
         }
 
@@ -115,9 +116,9 @@ class BrandUseCaseTest {
         @DisplayName("이미 존재하는 브랜드 이름은 필터링하고, 새로운 브랜드만 생성한다")
         void createBrands_Should_Filter_DuplicateName() {
             // given
-            BrandDataRequestDto existingBrandDto = new BrandDataRequestDto("Existing Brand", "https://example.com/logo_exist.png");
-            BrandDataRequestDto newBrandDto = new BrandDataRequestDto("New Brand", "https://example.com/logo_new.png");
-            BrandListCreateRequestDto requestDto = new BrandListCreateRequestDto(List.of(existingBrandDto, newBrandDto));
+            BrandDataCommand existingBrandDto = new BrandDataCommand("Existing Brand", "https://example.com/logo_exist.png");
+            BrandDataCommand newBrandDto = new BrandDataCommand("New Brand", "https://example.com/logo_new.png");
+            List<BrandDataCommand> requestDto = List.of(existingBrandDto, newBrandDto);
 
             Brand existingEntity = Brand.builder().id(1L).name("Existing Brand").imageUrl("https://example.com/logo_exist.png").build();
             Brand newEntity = Brand.builder().name("New Brand").imageUrl("https://example.com/logo_new.png").build();
@@ -137,7 +138,7 @@ class BrandUseCaseTest {
 
             verify(productSupport).getAllBrands();
             verify(brandRepository).saveAll(List.of(newEntity));
-            verify(brandMapper, times(1)).toEntity(any(BrandDataRequestDto.class));
+            verify(brandMapper, times(1)).toEntity(any(BrandDataCommand.class));
             verify(brandMapper, times(1)).toDto(any(Brand.class));
         }
     }
@@ -154,7 +155,7 @@ class BrandUseCaseTest {
         void modifyBrand_Success() {
             // given
             final Long BRAND_ID = 1L;
-            BrandDataRequestDto requestDto = BrandDataRequestDto.builder()
+            BrandDataCommand requestDto = BrandDataCommand.builder()
                     .name("Modified Name")
                     .imageUrl("modified.png")
                     .build();
@@ -181,7 +182,7 @@ class BrandUseCaseTest {
         void modifyBrand_Fail_BrandNotFound() {
             // given
             final Long NON_EXISTENT_ID = 99L;
-            BrandDataRequestDto requestDto = BrandDataRequestDto.builder().name("any").imageUrl("any.png").build();
+            BrandDataCommand requestDto = BrandDataCommand.builder().name("any").imageUrl("any.png").build();
 
             given(productSupport.findBrandById(NON_EXISTENT_ID)).willReturn(Optional.empty());
 
@@ -200,13 +201,13 @@ class BrandUseCaseTest {
             // given
             final Long BRAND_ID = 1L;
             Brand existingBrandWithSameName = Brand.builder().id(2L).name("Existing Name").imageUrl("existing.png").build();
-            BrandDataRequestDto requestDto = BrandDataRequestDto.builder().name("Existing Name").imageUrl("modified.png").build();
+            BrandDataCommand command = BrandDataCommand.builder().name("Existing Name").imageUrl("modified.png").build();
 
             given(productSupport.findBrandById(BRAND_ID)).willReturn(Optional.of(brandToModify));
             given(productSupport.getAllBrands()).willReturn(List.of(brandToModify, existingBrandWithSameName));
 
             // when & then
-            assertThatThrownBy(() -> brandUseCase.modifyBrand(BRAND_ID, requestDto))
+            assertThatThrownBy(() -> brandUseCase.modifyBrand(BRAND_ID, command))
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("failureCode", FailureCode.BRAND_NAME_DUPLICATE);
 

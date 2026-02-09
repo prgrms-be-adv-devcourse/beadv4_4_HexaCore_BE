@@ -6,7 +6,7 @@ import com.back.product.adapter.in.web.api.ProductCommandApiController;
 import com.back.product.app.facade.ProductFacade;
 import com.back.product.dto.request.ProductCreateRequestDto;
 import com.back.product.dto.request.ProductUpdateRequestDto;
-import com.back.product.dto.response.ProductResponseDto;
+import com.back.product.dto.response.ProductDetailResponseDto;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -22,18 +22,18 @@ public class ApiV1ProductCommandController implements ProductCommandApiControlle
     @Override
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public CommonResponse<ProductResponseDto> createProduct(@Valid @RequestBody ProductCreateRequestDto request) {
-        ProductResponseDto response = productFacade.createProduct(request);
+    public CommonResponse<ProductDetailResponseDto> createProduct(@Valid @RequestBody ProductCreateRequestDto request) {
+        ProductDetailResponseDto response = productFacade.createProduct(request);
         return CommonResponse.success(SuccessCode.CREATED, response);
     }
 
     @Override
     @PutMapping("/{productInfoId}")
-    public CommonResponse<ProductResponseDto> updateProduct(
+    public CommonResponse<ProductDetailResponseDto> updateProduct(
             @PathVariable Long productInfoId,
             @Valid @RequestBody ProductUpdateRequestDto request
     ) {
-        ProductResponseDto response = productFacade.updateProduct(productInfoId, request);
+        ProductDetailResponseDto response = productFacade.updateProduct(productInfoId, request);
         return CommonResponse.success(SuccessCode.OK, response);
     }
 

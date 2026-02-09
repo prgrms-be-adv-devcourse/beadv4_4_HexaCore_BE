@@ -3,6 +3,7 @@ package com.back.product.mapper;
 import com.back.common.product.event.payload.BrandPayload;
 import com.back.product.document.ProductDocument;
 import com.back.product.domain.Brand;
+import com.back.product.dto.command.BrandDataCommand;
 import com.back.product.dto.request.BrandDataRequestDto;
 import com.back.product.dto.model.BrandDto;
 import com.back.product.dto.response.BrandListResponseDto;
@@ -28,10 +29,10 @@ public class BrandMapper {
                 .build();
     }
 
-    public Brand toEntity(BrandDataRequestDto request) {
+    public Brand toEntity(BrandDataCommand brandDataCommand) {
         return Brand.builder()
-                .name(request.name())
-                .imageUrl(request.imageUrl())
+                .name(brandDataCommand.name())
+                .imageUrl(brandDataCommand.imageUrl())
                 .build();
     }
 

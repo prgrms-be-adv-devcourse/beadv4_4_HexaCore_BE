@@ -1,15 +1,14 @@
-package com.back.product.dto.model;
+package com.back.product.dto.command;
 
 import lombok.Builder;
 
 import java.util.List;
 
 @Builder
-public record ProductDto(
+public record ProductVariantUpdateCommand(
         Long productId,
+        List<Long> optionValueIds,
         Long inventory,
-        List<OptionDto> options,
         List<String> imageUrls
 ) {
 }
-

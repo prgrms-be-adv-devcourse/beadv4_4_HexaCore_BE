@@ -4,6 +4,7 @@ import com.back.common.code.FailureCode;
 import com.back.common.exception.CustomException;
 import com.back.product.app.usecase.command.*;
 import com.back.product.domain.*;
+import com.back.product.dto.command.*;
 import com.back.product.dto.model.*;
 import com.back.product.dto.request.*;
 import com.back.product.dto.response.*;
@@ -18,7 +19,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -38,6 +38,14 @@ public class ProductFacade {
     private final ProductMapper productMapper;
     private final OptionMapper optionMapper;
 
+    private final BrandDataCommandMapper brandDataCommandMapper;
+    private final CategoryDataCommandMapper categoryDataCommandMapper;
+    private final OptionCreateCommandMapper optionCreateCommandMapper;
+    private final ProductInfoDataCommandMapper productInfoDataCommandMapper;
+    private final ProductSearchCommandMapper productSearchCommandMapper;
+    private final ProductVariantCreateCommandMapper productVariantCreateCommandMapper;
+    private final ProductVariantUpdateCommandMapper productVariantUpdateCommandMapper;
+
     @Transactional(readOnly = true)
     public List<BrandDto> getBrands() {
         return brandUseCase.getBrands();
@@ -45,13 +53,15 @@ public class ProductFacade {
 
     @Transactional
     public BrandListResponseDto createBrands(@Valid BrandListCreateRequestDto request) {
-        List<BrandDto> brandDtos = brandUseCase.createBrands(request);
+        List<BrandDataCommand> brandsCommands = request.brands().stream().map(brandDataCommandMapper::toCommand).toList();
+        List<BrandDto> brandDtos = brandUseCase.createBrands(brandsCommands);
         return brandMapper.toListResponseDto(brandDtos);
     }
 
     @Transactional
     public BrandResponseDto modifyBrand(Long brandId, @Valid BrandDataRequestDto request) {
-        BrandDto brandDto = brandUseCase.modifyBrand(brandId, request);
+        BrandDataCommand brandCommand = brandDataCommandMapper.toCommand(request);
+        BrandDto brandDto = brandUseCase.modifyBrand(brandId, brandCommand);
         return brandMapper.toResponseDto(brandDto);
     }
 
@@ -73,13 +83,15 @@ public class ProductFacade {
 
     @Transactional
     public CategoryListResponseDto createCategories(@Valid CategoryListCreateRequestDto request) {
-        List<CategoryDto> categoryDtos =  categoryUseCase.createCategories(request);
+        List<CategoryDataCommand> categoryCommands = request.categories().stream().map(categoryDataCommandMapper::toCommand).toList();
+        List<CategoryDto> categoryDtos =  categoryUseCase.createCategories(categoryCommands);
         return categoryMapper.toListResponseDto(categoryDtos);
     }
 
     @Transactional
     public CategoryResponseDto modifyCategory(Long categoryId, @Valid CategoryDataRequestDto request) {
-        CategoryDto categoryDto = categoryUseCase.modifyCategory(categoryId, request);
+        CategoryDataCommand categoryCommand = categoryDataCommandMapper.toCommand(request);
+        CategoryDto categoryDto = categoryUseCase.modifyCategory(categoryId, categoryCommand);
         return categoryMapper.toResponseDto(categoryDto);
     }
 
@@ -95,56 +107,45 @@ public class ProductFacade {
     }
 
     @Transactional(readOnly = true)
-    public ProductListResponseDto getProducts(@Valid ProductQueryRequestDto request) {
-        return productUseCase.findMultipleProduct(request.productIds());
+    public ProductDetailListResponseDto getProducts(@Valid ProductQueryRequestDto request) {
+        List<ProductDetailDto> productDetailDtos = productUseCase.findMultipleProduct(request.productIds());
+        return productMapper.toListResponseDto(productDetailDtos);
     }
 
     @Transactional
-    public ProductResponseDto createProduct(@Valid ProductCreateRequestDto request) {
+    public ProductDetailResponseDto createProduct(@Valid ProductCreateRequestDto request) {
         Brand brand = brandUseCase.findBrandExists(request.productInfo().brandId());
 
         Category category = categoryUseCase.findCategoryExists(request.productInfo().categoryId());
 
-        List<Long> optionValueIds = request.variants().stream()
-                .flatMap(variant -> variant.optionValueIds().stream()).distinct().toList();
-        List<OptionValue> optionValues = optionUseCase.findOptionValues(optionValueIds);
-
-        ProductInfo productInfo = productInfoUseCase.createProductInfo(brand, category, request.productInfo());
-
-        List<ProductDto> productDtos = productUseCase.createMultipleProduct(productInfo, request.variants(), optionValues);
-
-        publishProductCreationCompletedEvent(
-                productInfo,
-                optionValues,
-                productDtos.getFirst().imageUrls().getFirst()
-        );
-
+        ProductInfoDataCommand productInfoCommand = productInfoDataCommandMapper.toCommand(request.productInfo(), brand, category);
+        ProductInfo productInfo = productInfoUseCase.createProductInfo(productInfoCommand);
         ProductInfoDto productInfoDto = productInfoMapper.toDto(productInfo);
+
+        List<ProductVariantCreateCommand> productVariantCreateCommands = request.variants().stream()
+                .map(productVariantCreateCommandMapper::toCommand).toList();
+        List<ProductDto> productDtos = productUseCase.createMultipleProduct(productInfo, productVariantCreateCommands);
+
+        publishProductCreateEvent(productInfoDto, productDtos);
 
         return productMapper.toResponseDto(productInfoDto, productDtos);
     }
 
     @Transactional
-    public ProductResponseDto updateProduct(Long productInfoId, @Valid ProductUpdateRequestDto request) {
+    public ProductDetailResponseDto updateProduct(Long productInfoId, @Valid ProductUpdateRequestDto request) {
         Brand brand = brandUseCase.findBrandExists(request.productInfo().brandId());
 
         Category category = categoryUseCase.findCategoryExists(request.productInfo().categoryId());
 
-        List<Long> optionValueIds = request.variants().stream()
-                .flatMap(variant -> variant.optionValueIds().stream()).distinct().toList();
-        List<OptionValue> optionValues = optionUseCase.findOptionValues(optionValueIds);
-
-        ProductInfo productInfo = productInfoUseCase.updateProductInfo(productInfoId, brand, category, request.productInfo());
-
-        List<ProductDto> productDtos = productUseCase.updateMultipleProduct(productInfo, request.variants(), optionValues);
-
-        publishProductUpdateCompletedEvent(
-                productInfo,
-                optionValues,
-                productDtos.getFirst().imageUrls().getFirst()
-        );
-
+        ProductInfoDataCommand productInfoCommand = productInfoDataCommandMapper.toCommand(request.productInfo(), brand, category);
+        ProductInfo productInfo = productInfoUseCase.updateProductInfo(productInfoId, productInfoCommand);
         ProductInfoDto productInfoDto = productInfoMapper.toDto(productInfo);
+
+        List<ProductVariantUpdateCommand> productVariantUpdateCommands = request.variants().stream()
+                .map(productVariantUpdateCommandMapper::toCommand).toList();
+        List<ProductDto> productDtos = productUseCase.updateMultipleProduct(productInfo, productVariantUpdateCommands);
+
+        publishProductUpdateEvent(productInfoDto, productDtos);
 
         return productMapper.toResponseDto(productInfoDto, productDtos);
     }
@@ -155,11 +156,12 @@ public class ProductFacade {
 
         productInfoUseCase.deleteProductInfo(productInfoId);
 
-        publishProductDeletionCompletedEvent(productInfoId);
+        ProductDeletionCompletedEvent event = new ProductDeletionCompletedEvent(productInfoId);
+        applicationEventPublisher.publishEvent(event);
     }
 
     @Transactional(readOnly = true)
-    public ProductResponseDto getProductDetail(Long productInfoId) {
+    public ProductDetailResponseDto getProductDetail(Long productInfoId) {
         ProductInfo productInfo = productInfoUseCase.findProductInfo(productInfoId);
 
         List<ProductDto> productDtos = productUseCase.findAllProduct(productInfo);
@@ -171,29 +173,31 @@ public class ProductFacade {
 
     @Transactional(readOnly = true)
     public ProductSearchResponseDto findProductPage(@Valid ProductSearchRequestDto request, Long page, Long size) {
-        return productDocumentUseCase.findProductPage(request, page, size);
+        ProductSearchCommand productSearchCommand = productSearchCommandMapper.toCommand(request, page, size);
+        return productDocumentUseCase.findProductPage(productSearchCommand);
     }
 
     @Transactional
     public OptionListResponseDto createOptions(@Valid OptionListCreateRequestDto request) {
-        List<OptionDto> optionDtos = optionUseCase.createOptions(request);
+        List<OptionCreateCommand> optionCreateCommands = request.options().stream().map(optionCreateCommandMapper::toCommand).toList();
+        List<OptionDto> optionDtos = optionUseCase.createOptions(optionCreateCommands);
         return optionMapper.toListResponseDto(optionDtos);
     }
 
     @Transactional
     public OptionResponseDto appendOptions(Long optionGroupId, @Valid OptionAppendRequestDto request) {
-        OptionDto optionDto = optionUseCase.appendOptions(optionGroupId, request);
+        OptionDto optionDto = optionUseCase.appendOptions(optionGroupId, request.values());
         return optionMapper.toResponseDto(optionDto);
     }
 
     @Transactional
     public OptionGroupModifyResponseDto modifyOptionGroup(Long optionGroupId, @Valid OptionGroupModifyRequestDto request) {
-        return optionUseCase.modifyOptionGroup(optionGroupId, request);
+        return optionUseCase.modifyOptionGroup(optionGroupId, request.name());
     }
 
     @Transactional
     public OptionValueModifyResponseDto modifyOptionValue(Long optionValueId, @Valid OptionValueModifyRequestDto request) {
-        return optionUseCase.modifyOptionValue(optionValueId, request);
+        return optionUseCase.modifyOptionValue(request.optionGroupId(), optionValueId, request.name());
     }
 
     @Transactional
@@ -224,32 +228,35 @@ public class ProductFacade {
         return optionMapper.toListResponseDto(optionDtos);
     }
 
-    private void publishProductCreationCompletedEvent(ProductInfo productInfo, List<OptionValue> optionValues, String thumbnailUrl) {
-        ProductInfoDto productInfoDto = productInfoMapper.toDto(productInfo);
+    private void publishProductUpdateEvent(ProductInfoDto productInfoDto, List<ProductDto> productDtos) {
+        List<OptionDto> optionDtos = productDtos.stream()
+                .flatMap(productDto -> productDto.options().stream())
+                .toList();
 
-        List<OptionDto> optionDtos = optionMapper.toDtoList(optionValues);
+        String thumbnailUrl = findThumbnailUrl(productDtos);
 
-        ProductCreationCompletedEvent event = new ProductCreationCompletedEvent(
-                productInfoDto, optionDtos, thumbnailUrl
-        );
-
-        applicationEventPublisher.publishEvent(event);
-    }
-
-    private void publishProductUpdateCompletedEvent(ProductInfo productInfo, List<OptionValue> optionValues, String thumbnailUrl) {
-        ProductInfoDto productInfoDto = productInfoMapper.toDto(productInfo);
-        List<OptionDto> optionDtos = optionMapper.toDtoList(optionValues);
-
-        ProductUpdateCompletedEvent event = new ProductUpdateCompletedEvent(
-                productInfoDto, optionDtos, thumbnailUrl
-        );
+        ProductUpdateCompletedEvent event = new ProductUpdateCompletedEvent(productInfoDto, optionDtos, thumbnailUrl);
 
         applicationEventPublisher.publishEvent(event);
     }
 
-    private void publishProductDeletionCompletedEvent(Long productInfoId) {
-        ProductDeletionCompletedEvent event = new ProductDeletionCompletedEvent(productInfoId);
+    private void publishProductCreateEvent(ProductInfoDto productInfoDto, List<ProductDto> productDtos) {
+        List<OptionDto> optionDtos = productDtos.stream()
+                .flatMap(productDto -> productDto.options().stream())
+                .toList();
+
+        String thumbnailUrl = findThumbnailUrl(productDtos);
+
+        ProductCreationCompletedEvent event = new ProductCreationCompletedEvent(productInfoDto, optionDtos, thumbnailUrl);
 
         applicationEventPublisher.publishEvent(event);
+    }
+
+    private String findThumbnailUrl(List<ProductDto> productDtos) {
+        return productDtos.stream()
+                .map(ProductDto::imageUrls)
+                .flatMap(List::stream)
+                .findFirst()
+                .orElseThrow(() -> new CustomException(FailureCode.MISSING_REQUIRED_FIELD));
     }
 }

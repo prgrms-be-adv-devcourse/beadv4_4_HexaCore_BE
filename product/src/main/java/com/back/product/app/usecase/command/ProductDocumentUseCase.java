@@ -5,6 +5,7 @@ import co.elastic.clients.elasticsearch._types.query_dsl.*;
 import com.back.product.adapter.out.document.ProductDocumentRepository;
 import com.back.product.app.usecase.query.ProductDocumentSupport;
 import com.back.product.document.ProductDocument;
+import com.back.product.dto.command.ProductSearchCommand;
 import com.back.product.dto.model.OptionDto;
 import com.back.product.dto.model.ProductInfoDto;
 import com.back.product.dto.request.ProductSearchRequestDto;
@@ -45,22 +46,22 @@ public class ProductDocumentUseCase {
     }
 
     @Transactional(readOnly = true)
-    public ProductSearchResponseDto findProductPage(@Valid ProductSearchRequestDto request, Long page, Long size) {
+    public ProductSearchResponseDto findProductPage(ProductSearchCommand search) {
         Query query = buildSearchQuery(
-                request.keyword(),
-                request.brandIds(),
-                request.categoryIds(),
-                request.minPrice(),
-                request.maxPrice()
+                search.keyword(),
+                search.brandIds(),
+                search.categoryIds(),
+                search.minPrice(),
+                search.maxPrice()
         );
 
-        PageImpl<ProductDocument> productPage = productDocumentSupport.findProductPage(query, request.sort(), page, size);
+        PageImpl<ProductDocument> productPage = productDocumentSupport.findProductPage(query, search.sort(), search.page(), search.size());
 
         return convertToDto(
                 productPage.getContent(),
                 (long) productPage.getTotalPages(),
                 productPage.getTotalElements(),
-                (long) page.intValue()
+                search.page()
         );
     }
 

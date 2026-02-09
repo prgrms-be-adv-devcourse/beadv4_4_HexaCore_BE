@@ -7,8 +7,8 @@ import com.back.product.app.facade.ProductFacade;
 import com.back.product.dto.model.*;
 import com.back.product.dto.request.ProductQueryRequestDto;
 import com.back.product.dto.request.ProductSearchRequestDto;
-import com.back.product.dto.response.ProductListResponseDto;
-import com.back.product.dto.response.ProductResponseDto;
+import com.back.product.dto.response.ProductDetailListResponseDto;
+import com.back.product.dto.response.ProductDetailResponseDto;
 import com.back.product.dto.response.ProductSearchResponseDto;
 import com.back.product.dto.model.ProductSearchDto;
 import com.back.product.util.RequestFixture;
@@ -66,7 +66,7 @@ class ApiV1ProductQueryControllerTest {
         void getProductDetail_Success() throws Exception {
             // given
             long productInfoId = 1L;
-            ProductResponseDto response = RequestFixture.createProductResponse();
+            ProductDetailResponseDto response = RequestFixture.createProductResponse();
             given(productFacade.getProductDetail(productInfoId)).willReturn(response);
 
             // when & then
@@ -75,8 +75,8 @@ class ApiV1ProductQueryControllerTest {
                     ).andDo(print())
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.code").value("OK"))
-                    .andExpect(jsonPath("$.data.productInfo.productInfoId").value(response.productInfo().productInfoId()))
-                    .andExpect(jsonPath("$.data.products[0].productId").value(response.products().getFirst().productId()));
+                    .andExpect(jsonPath("$.data.product.productInfo.productInfoId").value(response.product().productInfo().productInfoId()))
+                    .andExpect(jsonPath("$.data.product.products[0].productId").value(response.product().products().getFirst().productId()));
 
             verify(productFacade).getProductDetail(productInfoId);
         }
@@ -170,63 +170,92 @@ class ApiV1ProductQueryControllerTest {
         @DisplayName("유효한 상품 ID 리스트로 상품 목록 조회를 성공한다")
         void getProducts_Success() throws Exception {
             // given
-            List<ProductResponseDto> products = Arrays.asList(
-                    ProductResponseDto.builder()
-                            .productInfo(ProductInfoDto.builder()
-                                    .productInfoId(1L)
-                                    .name("Test Product 1")
-                                    .brand(BrandDto.builder().name("Brand 1").build())
-                                    .category(CategoryDto.builder().name("category1").build())
-                                    .releasePrice(BigDecimal.valueOf(10000))
-                                    .build())
-                            .products(List.of(ProductDto.builder()
-                                    .productId(1L)
-                                    .inventory(10L)
-                                    .imageUrls(List.of("image1.jpg"))
-                                    .options(List.of(
-                                            ProductOptionValueDto.builder().groupName("size").value("M").build(),
-                                            ProductOptionValueDto.builder().groupName("color").value("red").build()
-                                    ))
-                                    .build()))
-                            .build(),
-                    ProductResponseDto.builder()
-                            .productInfo(ProductInfoDto.builder()
-                                    .productInfoId(2L)
-                                    .name("Test Product 2")
-                                    .brand(BrandDto.builder().name("Brand 2").build())
-                                    .category(CategoryDto.builder().name("category2").build())
-                                    .releasePrice(BigDecimal.valueOf(20000))
-                                    .build())
-                            .products(List.of(ProductDto.builder()
-                                    .productId(2L)
-                                    .inventory(20L)
-                                    .imageUrls(List.of("image2.jpg"))
-                                    .options(List.of(
-                                            ProductOptionValueDto.builder().groupName("size").value("L").build(),
-                                            ProductOptionValueDto.builder().groupName("color").value("blue").build()
-                                    ))
-                                    .build()))
-                            .build(),
-                    ProductResponseDto.builder()
-                            .productInfo(ProductInfoDto.builder()
-                                    .productInfoId(3L)
-                                    .name("Test Product 3")
-                                    .brand(BrandDto.builder().name("Brand 3").build())
-                                    .category(CategoryDto.builder().name("category3").build())
-                                    .releasePrice(BigDecimal.valueOf(30000))
-                                    .build())
-                            .products(List.of(ProductDto.builder()
-                                    .productId(3L)
-                                    .inventory(30L)
-                                    .imageUrls(List.of("image3.jpg"))
-                                    .options(List.of(
-                                            ProductOptionValueDto.builder().groupName("size").value("S").build(),
-                                            ProductOptionValueDto.builder().groupName("color").value("green").build()
-                                    ))
-                                    .build()))
-                            .build()
+            List<ProductDetailResponseDto> products = Arrays.asList(
+                    ProductDetailResponseDto.builder()
+                            .product(
+                                    ProductDetailDto.builder()
+                                        .productInfo(ProductInfoDto.builder()
+                                                .productInfoId(1L)
+                                                .name("Test Product 1")
+                                                .brand(BrandDto.builder().name("Brand 1").build())
+                                                .category(CategoryDto.builder().name("category1").build())
+                                                .releasePrice(BigDecimal.valueOf(10000))
+                                                .build())
+                                        .products(List.of(ProductDto.builder()
+                                                .productId(1L)
+                                                .inventory(10L)
+                                                .imageUrls(List.of("image1.jpg"))
+                                                .options(List.of(
+                                                        OptionDto.builder()
+                                                                .group(OptionDto.GroupDto.builder().id(1L).name("size").build())
+                                                                .values(List.of(OptionDto.ValueDto.builder().id(1L).name("M").build()))
+                                                                .build(),
+                                                        OptionDto.builder()
+                                                                .group(OptionDto.GroupDto.builder().id(2L).name("color").build())
+                                                                .values(List.of(OptionDto.ValueDto.builder().id(2L).name("red").build()))
+                                                                .build()
+                                                ))
+                                                .build())
+                                        ).build()
+                            ).build(),
+                    ProductDetailResponseDto.builder()
+                            .product(
+                                    ProductDetailDto.builder()
+                                            .productInfo(ProductInfoDto.builder()
+                                                    .productInfoId(2L)
+                                                    .name("Test Product 2")
+                                                    .brand(BrandDto.builder().name("Brand 2").build())
+                                                    .category(CategoryDto.builder().name("category2").build())
+                                                    .releasePrice(BigDecimal.valueOf(20000))
+                                                    .build())
+                                            .products(List.of(ProductDto.builder()
+                                                    .productId(2L)
+                                                    .inventory(20L)
+                                                    .imageUrls(List.of("image2.jpg"))
+                                                    .options(List.of(
+                                                            OptionDto.builder()
+                                                                    .group(OptionDto.GroupDto.builder().id(1L).name("size").build())
+                                                                    .values(List.of(OptionDto.ValueDto.builder().id(3L).name("L").build()))
+                                                                    .build(),
+                                                            OptionDto.builder()
+                                                                    .group(OptionDto.GroupDto.builder().id(2L).name("color").build())
+                                                                    .values(List.of(OptionDto.ValueDto.builder().id(4L).name("blue").build()))
+                                                                    .build()
+                                                    ))
+                                                    .build())
+                                            ).build()
+                            ).build(),
+                    ProductDetailResponseDto.builder()
+                            .product(
+                                    ProductDetailDto.builder()
+                                            .productInfo(ProductInfoDto.builder()
+                                                    .productInfoId(3L)
+                                                    .name("Test Product 3")
+                                                    .brand(BrandDto.builder().name("Brand 3").build())
+                                                    .category(CategoryDto.builder().name("category3").build())
+                                                    .releasePrice(BigDecimal.valueOf(30000))
+                                                    .build())
+                                            .products(List.of(ProductDto.builder()
+                                                    .productId(3L)
+                                                    .inventory(30L)
+                                                    .imageUrls(List.of("image3.jpg"))
+                                                    .options(List.of(
+                                                            OptionDto.builder()
+                                                                    .group(OptionDto.GroupDto.builder().id(1L).name("size").build())
+                                                                    .values(List.of(OptionDto.ValueDto.builder().id(5L).name("S").build()))
+                                                                    .build(),
+                                                            OptionDto.builder()
+                                                                    .group(OptionDto.GroupDto.builder().id(2L).name("color").build())
+                                                                    .values(List.of(OptionDto.ValueDto.builder().id(6L).name("green").build()))
+                                                                    .build()
+                                                    ))
+                                                    .build())
+                                            ).build()
+                            ).build()
             );
-            ProductListResponseDto responseDto = ProductListResponseDto.builder().products(products).build();
+            ProductDetailListResponseDto responseDto = ProductDetailListResponseDto.builder().products(
+                    products.stream().map(ProductDetailResponseDto::product).toList()
+            ).build();
 
             given(productFacade.getProducts(any(ProductQueryRequestDto.class))).willReturn(responseDto);
 

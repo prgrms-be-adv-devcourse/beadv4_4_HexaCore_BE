@@ -4,6 +4,7 @@ import com.back.common.product.event.payload.ProductInfoPayload;
 import com.back.product.domain.Brand;
 import com.back.product.domain.Category;
 import com.back.product.domain.ProductInfo;
+import com.back.product.dto.command.ProductInfoDataCommand;
 import com.back.product.dto.model.ProductInfoDto;
 import com.back.product.dto.request.ProductInfoDataRequestDto;
 import lombok.RequiredArgsConstructor;
@@ -18,14 +19,14 @@ public class ProductInfoMapper {
     private final BrandMapper brandMapper;
     private final CategoryMapper categoryMapper;
 
-    public ProductInfo toEntity(Brand brand, Category category, String name, String code, BigDecimal releasedPrice, LocalDateTime releasedDate) {
+    public ProductInfo toEntity(ProductInfoDataCommand command) {
         return ProductInfo.builder()
-                .brand(brand)
-                .category(category)
-                .name(name)
-                .productCode(code)
-                .releasePrice(releasedPrice)
-                .releasedDate(releasedDate)
+                .brand(command.brand())
+                .category(command.category())
+                .name(command.name())
+                .productCode(command.code())
+                .releasePrice(command.releasePrice())
+                .releasedDate(command.releasedDate())
                 .build();
     }
 

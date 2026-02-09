@@ -7,6 +7,7 @@ import com.back.product.adapter.out.persistence.OptionValueRepository;
 import com.back.product.app.usecase.query.ProductSupport;
 import com.back.product.domain.OptionGroup;
 import com.back.product.domain.OptionValue;
+import com.back.product.dto.command.OptionCreateCommand;
 import com.back.product.dto.model.OptionDto;
 import com.back.product.dto.request.OptionAppendRequestDto;
 import com.back.product.dto.request.OptionListCreateRequestDto;
@@ -41,17 +42,6 @@ public class OptionUseCase {
     private final OptionValueRepository optionValueRepository;
 
     @Transactional(readOnly = true)
-    public List<OptionValue> findOptionValues(@Valid List<Long> optionValueIds) {
-        List<OptionValue> foundValues = productSupport.getAllOptionValues(optionValueIds);
-
-        if (foundValues.size() != optionValueIds.size()) {
-            throw new CustomException(FailureCode.OPTION_VALUE_NOT_FOUND);
-        }
-
-        return foundValues;
-    }
-
-    @Transactional(readOnly = true)
     public List<OptionDto> findAllOptions() {
         List<OptionGroup> optionGroups = productSupport.getAllProductOptionGroups();
 
@@ -69,8 +59,8 @@ public class OptionUseCase {
     }
 
     @Transactional
-    public List<OptionDto> createOptions(@Valid OptionListCreateRequestDto request) {
-        return request.options().stream()
+    public List<OptionDto> createOptions(List<OptionCreateCommand> options) {
+        return options.stream()
                 .map(option -> createOption(option.group(), option.values()))
                 .toList();
     }
@@ -91,11 +81,11 @@ public class OptionUseCase {
     }
 
     @Transactional
-    public OptionDto appendOptions(Long optionGroupId, @Valid OptionAppendRequestDto request) {
+    public OptionDto appendOptions(Long optionGroupId, List<String> values) {
         OptionGroup group = productSupport.getOptionGroupById(optionGroupId)
                 .orElseThrow(() -> new CustomException(FailureCode.OPTION_GROUP_NOT_FOUND));
 
-        List<OptionValue> newValues = createOptionValues(group, request.values());
+        List<OptionValue> newValues = createOptionValues(group, values);
 
         List<OptionValue> createdValues = optionValueRepository.saveAll(newValues);
 
@@ -103,24 +93,24 @@ public class OptionUseCase {
     }
 
     @Transactional
-    public OptionGroupModifyResponseDto modifyOptionGroup(Long optionGroupId, @Valid OptionGroupModifyRequestDto request) {
+    public OptionGroupModifyResponseDto modifyOptionGroup(Long optionGroupId, String name) {
         OptionGroup existsGroup = productSupport.getOptionGroupById(optionGroupId)
                 .orElseThrow(() -> new CustomException(FailureCode.OPTION_GROUP_NOT_FOUND));
 
-        existsGroup.modifyName(request.name());
+        existsGroup.modifyName(name);
 
         return optionGroupMapper.toModifyResponseDto(existsGroup);
     }
 
     @Transactional
-    public OptionValueModifyResponseDto modifyOptionValue(Long optionValueId, @Valid OptionValueModifyRequestDto request) {
+    public OptionValueModifyResponseDto modifyOptionValue(Long optionGroupId, Long optionValueId, String name) {
         OptionValue existsValue = productSupport.getOptionValueById(optionValueId)
                 .orElseThrow(() -> new CustomException(FailureCode.OPTION_VALUE_NOT_FOUND));
 
-        existsValue.modifyName(request.name());
+        existsValue.modifyName(name);
 
-        if (existsValue.willChangeGroup(request.optionGroupId())) {
-            OptionGroup changedGroup = productSupport.getOptionGroupById(request.optionGroupId())
+        if (existsValue.willChangeGroup(optionGroupId)) {
+            OptionGroup changedGroup = productSupport.getOptionGroupById(optionGroupId)
                             .orElseThrow(() -> new CustomException(FailureCode.OPTION_GROUP_NOT_FOUND));
 
             existsValue.changeGroup(changedGroup);
