@@ -17,7 +17,6 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import com.back.settlement.domain.exception.InvalidSettlementItemStateException;
 import java.util.List;
@@ -77,7 +76,7 @@ public class SettlementItem extends BaseTimeEntity {
 
     public static List<SettlementItem> createSettlementItem(SettlementTargetOrder request, Long systemPayeeId) {
         BigDecimal price = request.price();
-        BigDecimal feeAmount = price.multiply(PLATFORM_FEE_RATE).setScale(0, RoundingMode.HALF_UP);
+        BigDecimal feeAmount = price.multiply(PLATFORM_FEE_RATE);
         BigDecimal netAmount = price.subtract(feeAmount);
 
         SettlementItem salesItem = SettlementItem.builder()
