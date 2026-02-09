@@ -10,6 +10,14 @@ import java.time.LocalDateTime;
 
 public class SettlementItemFixture {
 
+    public static SettlementItem createCollectedItem(Long id, Long payeeId) {
+        return createSettlementItem(
+                id, null, 1L, 1L, 1L, payeeId, "TestSeller",
+                BigDecimal.valueOf(100000), SettlementEventType.SETTLEMENT_PRODUCT_SALES_AMOUNT,
+                SettlementItemStatus.COLLECTED, LocalDateTime.now()
+        );
+    }
+
     public static SettlementItem createIncludedItem(Long id, Long payeeId) {
         return createSettlementItem(
                 id, null, 1L, 1L, 1L, payeeId, "TestSeller",

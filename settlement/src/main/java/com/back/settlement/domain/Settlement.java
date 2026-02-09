@@ -1,10 +1,10 @@
 package com.back.settlement.domain;
 
 import static com.back.common.code.FailureCode.*;
+import static com.back.settlement.domain.SettlementEventType.SETTLEMENT_PRODUCT_SALES_AMOUNT;
 
 import com.back.common.entity.BaseTimeEntity;
 import com.back.common.exception.BadRequestException;
-import com.back.settlement.app.dto.request.SettlementRequest;
 import com.back.settlement.domain.event.SettlementEvent;
 import com.back.settlement.domain.event.SettlementFailedEvent;
 import com.back.settlement.domain.event.SettlementHoldEvent;
@@ -31,6 +31,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.util.StringUtils;
 
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED) @AllArgsConstructor(access = AccessLevel.PRIVATE)
@@ -84,26 +85,30 @@ public class Settlement extends BaseTimeEntity {
     @Transient
     private final List<SettlementEvent> domainEvents = new ArrayList<>();
 
-    public static Settlement create(SettlementRequest request) {
+    private static final String SYSTEM_NAME = "SYSTEM";
+
+    public static Settlement create(Long sellerId, List<SettlementItem> items, LocalDateTime startAt, LocalDateTime endAt) {
+        SettlementAmounts amounts = SettlementAmounts.fromItems(items);
         return Settlement.builder()
-                .sellerId(request.sellerId())
-                .sellerName(request.sellerName())
-                .status(SettlementStatus.IN_PROGRESS)
-                .startAt(request.startAt())
-                .endAt(request.endAt())
-                .expectedAt(calculateExpectedDate(request.endAt()))
-                .completedAt(null)
-                .totalSalesAmount(request.totalSalesAmount())
-                .totalFeeAmount(request.totalFeeAmount())
-                .totalNetAmount(request.totalNetAmount())
+                .sellerId(sellerId)
+                .sellerName(extractSellerName(items))
+                .status(SettlementStatus.PENDING)
+                .startAt(startAt)
+                .endAt(endAt)
+                .expectedAt(calculateExpectedDate(endAt))
+                .totalSalesAmount(amounts.totalSalesAmount())
+                .totalFeeAmount(amounts.totalFeeAmount())
+                .totalNetAmount(amounts.totalNetAmount())
                 .build();
     }
 
-    public void registerCreatedEvent() {
-        registerEvent(new SettlementStartedEvent(
-                this.id, null,
-                this.sellerId, this.totalSalesAmount, this.totalNetAmount, this.totalFeeAmount
-        ));
+    private static String extractSellerName(List<SettlementItem> items) {
+        return items.stream()
+                .filter(item -> item.getEventType() == SETTLEMENT_PRODUCT_SALES_AMOUNT)
+                .map(SettlementItem::getSellerName)
+                .filter(StringUtils::hasText)
+                .findFirst()
+                .orElse(SYSTEM_NAME);
     }
 
     private static LocalDateTime calculateExpectedDate(LocalDateTime endAt) {
@@ -122,7 +127,7 @@ public class Settlement extends BaseTimeEntity {
         SettlementStatus previousStatus = this.status;
         this.status = SettlementStatus.IN_PROGRESS;
 
-        registerEvent(new SettlementStartedEvent(this.id, previousStatus));
+        registerEvent(new SettlementStartedEvent(this.id, previousStatus, this.sellerId, this.totalSalesAmount, this.totalNetAmount, this.totalFeeAmount));
     }
 
     // 정산 완료 처리

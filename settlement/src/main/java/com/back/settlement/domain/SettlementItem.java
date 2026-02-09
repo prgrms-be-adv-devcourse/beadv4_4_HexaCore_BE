@@ -17,8 +17,8 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import com.back.settlement.domain.exception.InvalidSettlementItemStateException;
 import java.util.List;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -76,7 +76,7 @@ public class SettlementItem extends BaseTimeEntity {
 
     public static List<SettlementItem> createSettlementItem(SettlementTargetOrder request, Long systemPayeeId) {
         BigDecimal price = request.price();
-        BigDecimal feeAmount = price.multiply(PLATFORM_FEE_RATE).setScale(0, RoundingMode.HALF_UP);
+        BigDecimal feeAmount = price.multiply(PLATFORM_FEE_RATE);
         BigDecimal netAmount = price.subtract(feeAmount);
 
         SettlementItem salesItem = SettlementItem.builder()
@@ -88,7 +88,7 @@ public class SettlementItem extends BaseTimeEntity {
                 .sellerName(request.sellerName())
                 .amount(netAmount)
                 .eventType(SettlementEventType.SETTLEMENT_PRODUCT_SALES_AMOUNT)
-                .status(SettlementItemStatus.INCLUDED)
+                .status(SettlementItemStatus.COLLECTED)
                 .confirmedAt(request.confirmedAt())
                 .build();
 
@@ -101,7 +101,7 @@ public class SettlementItem extends BaseTimeEntity {
                 .sellerName(request.sellerName())
                 .amount(feeAmount)
                 .eventType(SettlementEventType.SETTLEMENT_PRODUCT_SALES_FEE)
-                .status(SettlementItemStatus.INCLUDED)
+                .status(SettlementItemStatus.COLLECTED)
                 .confirmedAt(request.confirmedAt())
                 .build();
 
@@ -110,5 +110,16 @@ public class SettlementItem extends BaseTimeEntity {
 
     public void addSettlement(Settlement settlement) {
         this.settlement = settlement;
+    }
+
+    public void included() {
+        validateStatusTransition(SettlementItemStatus.INCLUDED);
+        this.status = SettlementItemStatus.INCLUDED;
+    }
+
+    private void validateStatusTransition(SettlementItemStatus targetStatus) {
+        if (!this.status.canTransitionTo(targetStatus)) {
+            throw new InvalidSettlementItemStateException(this.status, targetStatus);
+        }
     }
 }

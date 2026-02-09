@@ -19,8 +19,8 @@ public class CashPayoutResultKafkaListener {
     private final DomainEventPublisher domainEventPublisher;
 
     @KafkaListener(
-            topics = "${custom.kafka.topic.cash-payout-completed}",
-            groupId = "${custom.kafka.consumer.group-id}",
+            topics = "${kafka.topic.cash-payout-completed}",
+            groupId = "${kafka.consumer.group-id}",
             properties = "spring.json.value.default.type=com.back.common.event.Envelope"
     )
     @Transactional
@@ -41,12 +41,9 @@ public class CashPayoutResultKafkaListener {
 
         if (data.success()) {
             settlement.complete();
-            domainEventPublisher.publishEvents(settlement);
-            log.info("정산 완료 처리. settlementId={}", data.settlementId());
         } else {
             settlement.fail(data.failReason());
-            domainEventPublisher.publishEvents(settlement);
-            log.info("정산 실패 처리. settlementId={}, reason={}", data.settlementId(), data.failReason());
         }
+        domainEventPublisher.publishEvents(settlement);
     }
 }

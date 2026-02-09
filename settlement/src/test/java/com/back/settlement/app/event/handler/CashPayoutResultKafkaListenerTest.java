@@ -11,8 +11,7 @@ import com.back.settlement.app.event.payload.PayoutResultPayload;
 import com.back.settlement.app.support.DomainEventPublisher;
 import com.back.settlement.domain.Settlement;
 import com.back.settlement.domain.SettlementStatus;
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import com.back.settlement.fixture.SettlementFixture;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -21,7 +20,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("캐시 지급 요청 결과를 받는 단위 테스트")
@@ -37,15 +35,7 @@ class CashPayoutResultKafkaListenerTest {
     private CashPayoutResultKafkaListener listener;
 
     private Settlement createSettlement(Long id, SettlementStatus status) {
-        Settlement settlement = Settlement.create(
-                new com.back.settlement.app.dto.request.SettlementRequest(
-                        1L, "판매자", LocalDateTime.now().minusDays(7), LocalDateTime.now(),
-                        BigDecimal.valueOf(100000), BigDecimal.valueOf(10000), BigDecimal.valueOf(90000)
-                )
-        );
-        ReflectionTestUtils.setField(settlement, "id", id);
-        ReflectionTestUtils.setField(settlement, "status", status);
-        return settlement;
+        return SettlementFixture.createSettlement(id, 1L, "판매자", status);
     }
 
     private Envelope<PayoutResultPayload> successEvent(Long settlementId) {

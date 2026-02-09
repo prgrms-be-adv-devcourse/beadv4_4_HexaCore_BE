@@ -62,7 +62,7 @@ class SettlementCashPayoutEventHandlerIntegrationTest {
         log.info("[발행] SettlementStartedEvent - settlementId={}, sellerId={}, totalGrossAmount={}", event.settlementId(), event.sellerId(), event.totalGrossAmount());
 
         // when
-        handler.settlementStartedEvent(event);
+        handler.publishPayoutRequest(event);
         log.info("[발행 완료] Kafka 토픽 '{}' 으로 메시지 전송됨", TOPIC);
 
         // then
