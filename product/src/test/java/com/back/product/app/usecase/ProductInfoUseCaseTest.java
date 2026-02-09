@@ -8,8 +8,7 @@ import com.back.product.app.usecase.query.ProductSupport;
 import com.back.product.domain.Brand;
 import com.back.product.domain.Category;
 import com.back.product.domain.ProductInfo;
-import com.back.product.dto.request.ProductInfoCreateRequestDto;
-import com.back.product.dto.request.ProductInfoUpdateRequestDto;
+import com.back.product.dto.request.ProductInfoDataRequestDto;
 import com.back.product.mapper.ProductInfoMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -75,7 +74,7 @@ class ProductInfoUseCaseTest {
         @DisplayName("성공: 새로운 상품 정보를 생성한다")
         void createProductInfo_Success() {
             // given
-            ProductInfoCreateRequestDto request = ProductInfoCreateRequestDto.builder()
+            ProductInfoDataRequestDto request = ProductInfoDataRequestDto.builder()
                     .brandId(brand.getId())
                     .categoryId(category.getId())
                     .name("New Product")
@@ -101,7 +100,7 @@ class ProductInfoUseCaseTest {
         @DisplayName("실패: 동일한 브랜드 내에 상품 코드가 중복되면 예외를 발생시킨다")
         void createProductInfo_Fail_DuplicateCode() {
             // given
-            ProductInfoCreateRequestDto request = ProductInfoCreateRequestDto.builder()
+            ProductInfoDataRequestDto request = ProductInfoDataRequestDto.builder()
                     .brandId(brand.getId())
                     .categoryId(category.getId())
                     .name("New Product")
@@ -127,7 +126,7 @@ class ProductInfoUseCaseTest {
         @DisplayName("성공: 상품 정보를 수정한다")
         void updateProductInfo_Success() {
             // given
-            ProductInfoUpdateRequestDto request = ProductInfoUpdateRequestDto.builder()
+            ProductInfoDataRequestDto request = ProductInfoDataRequestDto.builder()
                     .brandId(brand.getId())
                     .categoryId(category.getId())
                     .name("Updated Name")
@@ -150,7 +149,7 @@ class ProductInfoUseCaseTest {
         @DisplayName("실패: 존재하지 않는 상품 정보 ID이면 예외를 발생시킨다")
         void updateProductInfo_Fail_NotFound() {
             // given
-            ProductInfoUpdateRequestDto request = ProductInfoUpdateRequestDto.builder()
+            ProductInfoDataRequestDto request = ProductInfoDataRequestDto.builder()
                     .brandId(brand.getId())
                     .categoryId(category.getId())
                     .name("Updated Name")

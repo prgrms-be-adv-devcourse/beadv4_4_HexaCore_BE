@@ -4,8 +4,8 @@ import com.back.common.code.SuccessCode;
 import com.back.common.response.CommonResponse;
 import com.back.product.adapter.in.web.api.BrandApiController;
 import com.back.product.app.facade.ProductFacade;
+import com.back.product.dto.request.BrandDataRequestDto;
 import com.back.product.dto.request.BrandListCreateRequestDto;
-import com.back.product.dto.request.BrandModifyRequestDto;
 import com.back.product.dto.response.BrandListResponseDto;
 import com.back.product.dto.response.BrandResponseDto;
 import jakarta.validation.Valid;
@@ -41,7 +41,7 @@ public class ApiV1BrandController implements BrandApiController {
     @PutMapping("/{brandId}")
     public CommonResponse<BrandResponseDto> modifyBrand(
             @PathVariable Long brandId,
-            @Valid @RequestBody BrandModifyRequestDto request) {
+            @Valid @RequestBody BrandDataRequestDto request) {
         BrandResponseDto response = productFacade.modifyBrand(brandId, request);
         return CommonResponse.success(SuccessCode.OK, response);
     }

@@ -10,6 +10,6 @@ import java.util.List;
 public record CategoryListCreateRequestDto(
         @NotEmpty(message = "Categories cannot be empty")
         @Valid
-    List<CategoryCreateRequestDto> categories
+    List<CategoryDataRequestDto> categories
 ) {
 }

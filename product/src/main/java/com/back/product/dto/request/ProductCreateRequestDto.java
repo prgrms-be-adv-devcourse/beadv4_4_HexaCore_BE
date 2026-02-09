@@ -10,7 +10,7 @@ import java.util.List;
 public record ProductCreateRequestDto(
         @NotNull(message = "Product info cannot be null")
         @Valid
-        ProductInfoCreateRequestDto productInfo,
+        ProductInfoDataRequestDto productInfo,
 
         @NotEmpty(message = "Product variants cannot be empty")
         @Valid

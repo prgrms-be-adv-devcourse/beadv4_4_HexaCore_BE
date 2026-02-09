@@ -2,7 +2,7 @@ package com.back.product.mapper;
 
 import com.back.common.product.event.payload.BrandPayload;
 import com.back.product.domain.Brand;
-import com.back.product.dto.request.BrandCreateRequestDto;
+import com.back.product.dto.request.BrandDataRequestDto;
 import com.back.product.dto.model.BrandDto;
 import org.springframework.stereotype.Component;
 
@@ -12,14 +12,14 @@ public class BrandMapper {
         return BrandDto.builder()
                 .brandId(brand.getId())
                 .name(brand.getName())
-                .logoUrl(brand.getImageUrl())
+                .imageUrl(brand.getImageUrl())
                 .build();
     }
 
-    public Brand toEntity(BrandCreateRequestDto request) {
+    public Brand toEntity(BrandDataRequestDto request) {
         return Brand.builder()
                 .name(request.name())
-                .imageUrl(request.logoUrl())
+                .imageUrl(request.imageUrl())
                 .build();
     }
 

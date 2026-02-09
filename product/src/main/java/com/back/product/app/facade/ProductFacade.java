@@ -46,7 +46,7 @@ public class ProductFacade {
     }
 
     @Transactional
-    public BrandResponseDto modifyBrand(Long brandId, @Valid BrandModifyRequestDto request) {
+    public BrandResponseDto modifyBrand(Long brandId, @Valid BrandDataRequestDto request) {
         BrandDto brandDto = brandUseCase.modifyBrand(brandId, request);
         return BrandResponseDto.builder().brand(brandDto).build();
     }
@@ -74,7 +74,7 @@ public class ProductFacade {
     }
 
     @Transactional
-    public CategoryResponseDto modifyCategory(Long categoryId, @Valid CategoryModifyRequestDto request) {
+    public CategoryResponseDto modifyCategory(Long categoryId, @Valid CategoryDataRequestDto request) {
         CategoryDto categoryDto = categoryUseCase.modifyCategory(categoryId, request);
         return CategoryResponseDto.builder().category(categoryDto).build();
     }

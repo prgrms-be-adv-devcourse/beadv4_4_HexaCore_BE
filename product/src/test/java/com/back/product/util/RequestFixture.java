@@ -6,9 +6,8 @@ import com.back.product.dto.model.ProductDto;
 import com.back.product.dto.model.ProductInfoDto;
 import com.back.product.dto.model.ProductOptionDto;
 import com.back.product.dto.request.ProductCreateRequestDto;
-import com.back.product.dto.request.ProductInfoCreateRequestDto;
+import com.back.product.dto.request.ProductInfoDataRequestDto;
 import com.back.product.dto.request.ProductUpdateRequestDto;
-import com.back.product.dto.request.ProductInfoUpdateRequestDto;
 import com.back.product.dto.request.ProductVariantCreateRequestDto;
 import com.back.product.dto.request.ProductVariantUpdateRequestDto;
 import com.back.product.dto.response.ProductResponseDto;
@@ -20,7 +19,7 @@ import java.util.List;
 public class RequestFixture {
 
     public static ProductCreateRequestDto createProductCreateRequest() {
-        ProductInfoCreateRequestDto productInfo = ProductInfoCreateRequestDto.builder()
+        ProductInfoDataRequestDto productInfo = ProductInfoDataRequestDto.builder()
                 .brandId(1L)
                 .categoryId(1L)
                 .name("Test Product")
@@ -42,7 +41,7 @@ public class RequestFixture {
     }
 
     public static ProductUpdateRequestDto createProductUpdateRequest() {
-        ProductInfoUpdateRequestDto productInfo = ProductInfoUpdateRequestDto.builder()
+        ProductInfoDataRequestDto productInfo = ProductInfoDataRequestDto.builder()
                 .brandId(1L)
                 .categoryId(1L)
                 .name("Updated Product")
@@ -68,7 +67,7 @@ public class RequestFixture {
         BrandDto brand = BrandDto.builder()
                 .brandId(1L)
                 .name("Test Brand")
-                .logoUrl("http://example.com/logo.png")
+                .imageUrl("http://example.com/logo.png")
                 .build();
         CategoryDto category = CategoryDto.builder()
                 .categoryId(1L)
@@ -108,7 +107,7 @@ public class RequestFixture {
         BrandDto brand = BrandDto.builder()
                 .brandId(1L)
                 .name("Test Brand")
-                .logoUrl("http://example.com/logo.png")
+                .imageUrl("http://example.com/logo.png")
                 .build();
         CategoryDto category = CategoryDto.builder()
                 .categoryId(1L)

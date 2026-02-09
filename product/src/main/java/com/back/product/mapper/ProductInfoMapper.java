@@ -5,7 +5,7 @@ import com.back.product.domain.Brand;
 import com.back.product.domain.Category;
 import com.back.product.domain.ProductInfo;
 import com.back.product.dto.model.ProductInfoDto;
-import com.back.product.dto.request.ProductInfoCreateRequestDto;
+import com.back.product.dto.request.ProductInfoDataRequestDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -15,7 +15,7 @@ public class ProductInfoMapper {
     private final BrandMapper brandMapper;
     private final CategoryMapper categoryMapper;
 
-    public ProductInfo toEntity(Brand brand, Category category, ProductInfoCreateRequestDto request) {
+    public ProductInfo toEntity(Brand brand, Category category, ProductInfoDataRequestDto request) {
         return ProductInfo.builder()
                 .brand(brand)
                 .category(category)

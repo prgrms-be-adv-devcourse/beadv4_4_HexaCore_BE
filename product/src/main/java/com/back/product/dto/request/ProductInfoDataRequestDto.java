@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Builder
-public record ProductInfoUpdateRequestDto(
+public record ProductInfoDataRequestDto(
         @NotNull(message = "Brand ID cannot be null")
         @Min(value = 1, message = "Brand ID must be a Integer value")
         Long brandId,

@@ -7,8 +7,8 @@ import com.back.product.adapter.out.persistence.CategoryRepository;
 import com.back.product.app.usecase.query.ProductSupport;
 import com.back.product.domain.Category;
 import com.back.product.dto.model.CategoryDto;
+import com.back.product.dto.request.CategoryDataRequestDto;
 import com.back.product.dto.request.CategoryListCreateRequestDto;
-import com.back.product.dto.request.CategoryModifyRequestDto;
 import com.back.product.mapper.CategoryMapper;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -59,7 +59,7 @@ public class CategoryUseCase {
     }
 
     @Transactional
-    public CategoryDto modifyCategory(Long categoryId, @Valid CategoryModifyRequestDto request) {
+    public CategoryDto modifyCategory(Long categoryId, @Valid CategoryDataRequestDto request) {
         Category categoryToModify = findCategoryExists(categoryId);
 
         String newName = toPlainText(request.name());

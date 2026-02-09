@@ -7,8 +7,7 @@ import com.back.product.app.usecase.query.ProductSupport;
 import com.back.product.domain.Brand;
 import com.back.product.domain.Category;
 import com.back.product.domain.ProductInfo;
-import com.back.product.dto.request.ProductInfoCreateRequestDto;
-import com.back.product.dto.request.ProductInfoUpdateRequestDto;
+import com.back.product.dto.request.ProductInfoDataRequestDto;
 import com.back.product.mapper.ProductInfoMapper;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +22,7 @@ public class ProductInfoUseCase {
     private final ProductSupport productSupport;
 
     @Transactional
-    public ProductInfo createProductInfo(Brand brand, Category category, @Valid ProductInfoCreateRequestDto request) {
+    public ProductInfo createProductInfo(Brand brand, Category category, @Valid ProductInfoDataRequestDto request) {
         isDuplicateProductInfo(brand, request.code());
 
         ProductInfo productInfo = productInfoMapper.toEntity(brand, category, request);
@@ -38,7 +37,7 @@ public class ProductInfoUseCase {
     }
 
     @Transactional
-    public ProductInfo updateProductInfo(Long productInfoId, Brand brand, Category category, @Valid ProductInfoUpdateRequestDto request) {
+    public ProductInfo updateProductInfo(Long productInfoId, Brand brand, Category category, @Valid ProductInfoDataRequestDto request) {
         ProductInfo productInfo = productSupport.findProductInfoById(productInfoId)
                 .orElseThrow(() -> new CustomException(FailureCode.PRODUCT_NOT_FOUND));
 

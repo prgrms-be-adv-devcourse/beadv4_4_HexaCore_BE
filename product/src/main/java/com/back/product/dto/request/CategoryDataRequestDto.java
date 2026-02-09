@@ -7,7 +7,7 @@ import lombok.Builder;
 import org.hibernate.validator.constraints.URL;
 
 @Builder
-public record CategoryCreateRequestDto(
+public record CategoryDataRequestDto(
         @NotBlank(message = "카테고리 이름은 필수입니다.")
         @Size(min=1, max=50, message = "카테고리 이름은 1자 이상 50자 이하여야 합니다.")
         @Pattern(regexp = "^[a-zA-Z]+$", message = "카테고리 명은 영문만 허용됩니다.")

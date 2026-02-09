@@ -10,6 +10,6 @@ import java.util.List;
 public record BrandListCreateRequestDto(
         @NotEmpty(message = "Brands cannot be null")
         @Valid
-        List<BrandCreateRequestDto> brands
+        List<BrandDataRequestDto> brands
 ) {
 }

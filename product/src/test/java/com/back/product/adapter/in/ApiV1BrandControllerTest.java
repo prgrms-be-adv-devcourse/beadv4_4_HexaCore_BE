@@ -6,8 +6,7 @@ import com.back.product.adapter.in.web.controller.ApiV1BrandController;
 import com.back.product.app.facade.ProductFacade;
 import com.back.product.dto.model.BrandDto;
 import com.back.product.dto.request.BrandListCreateRequestDto;
-import com.back.product.dto.request.BrandCreateRequestDto;
-import com.back.product.dto.request.BrandModifyRequestDto;
+import com.back.product.dto.request.BrandDataRequestDto;
 import com.back.product.dto.response.BrandListResponseDto;
 import com.back.product.dto.response.BrandResponseDto;
 import com.back.security.jwt.JWTUtil;
@@ -80,8 +79,8 @@ class ApiV1BrandControllerTest {
         @WithMockUser
         void createBrand_Success() throws Exception {
             // given
-            BrandCreateRequestDto newBrand1 = new BrandCreateRequestDto("New Balance", "https://example.com/logo.png");
-            BrandCreateRequestDto newBrand2 = new BrandCreateRequestDto("Nike", "https://example.com/logo2.png");
+            BrandDataRequestDto newBrand1 = new BrandDataRequestDto("New Balance", "https://example.com/logo.png");
+            BrandDataRequestDto newBrand2 = new BrandDataRequestDto("Nike", "https://example.com/logo2.png");
             BrandListCreateRequestDto requestDto = new BrandListCreateRequestDto(List.of(newBrand1, newBrand2));
 
             BrandListResponseDto responseDto = BrandListResponseDto.builder()
@@ -112,8 +111,8 @@ class ApiV1BrandControllerTest {
         @WithMockUser
         void createBrand_Filter_DuplicateName() throws Exception {
             // given
-            BrandCreateRequestDto existingBrand = new BrandCreateRequestDto("Existing Brand", "https://example.com/logo_exist.png");
-            BrandCreateRequestDto newBrand = new BrandCreateRequestDto("New Brand", "https://example.com/logo_new.png");
+            BrandDataRequestDto existingBrand = new BrandDataRequestDto("Existing Brand", "https://example.com/logo_exist.png");
+            BrandDataRequestDto newBrand = new BrandDataRequestDto("New Brand", "https://example.com/logo_new.png");
             BrandListCreateRequestDto requestDto = new BrandListCreateRequestDto(List.of(existingBrand, newBrand));
 
             // UseCase에서 중복을 걸러내고, 새로 생성된 브랜드만 반환
@@ -145,7 +144,7 @@ class ApiV1BrandControllerTest {
         @WithMockUser
         void createBrand_Fail_Validation() throws Exception {
             // given
-            BrandCreateRequestDto invalidBrand = new BrandCreateRequestDto(" ", "invalid-url");
+            BrandDataRequestDto invalidBrand = new BrandDataRequestDto(" ", "invalid-url");
             BrandListCreateRequestDto requestDto = new BrandListCreateRequestDto(List.of(invalidBrand));
 
 
@@ -172,7 +171,7 @@ class ApiV1BrandControllerTest {
         @WithMockUser
         void modifyBrand_Success() throws Exception {
             // given
-            BrandModifyRequestDto requestDto = BrandModifyRequestDto.builder()
+            BrandDataRequestDto requestDto = BrandDataRequestDto.builder()
                     .name("Modified Brand")
                     .imageUrl("https://example.com/modified_logo.png")
                     .build();
@@ -180,7 +179,7 @@ class ApiV1BrandControllerTest {
                     .brand(new BrandDto(BRAND_ID, "Modified Brand", "https://example.com/modified_logo.png"))
                     .build();
 
-            given(productFacade.modifyBrand(eq(BRAND_ID), any(BrandModifyRequestDto.class))).willReturn(responseDto);
+            given(productFacade.modifyBrand(eq(BRAND_ID), any(BrandDataRequestDto.class))).willReturn(responseDto);
 
             // when & then
             mockMvc.perform(
@@ -193,7 +192,7 @@ class ApiV1BrandControllerTest {
                     .andExpect(jsonPath("$.data.brand.brandId").value(BRAND_ID))
                     .andExpect(jsonPath("$.data.brand.name").value("Modified Brand"));
 
-            verify(productFacade).modifyBrand(eq(BRAND_ID), any(BrandModifyRequestDto.class));
+            verify(productFacade).modifyBrand(eq(BRAND_ID), any(BrandDataRequestDto.class));
         }
 
         @Test
@@ -201,12 +200,12 @@ class ApiV1BrandControllerTest {
         @WithMockUser
         void modifyBrand_Fail_BrandNotFound() throws Exception {
             // given
-            BrandModifyRequestDto requestDto = BrandModifyRequestDto.builder()
+            BrandDataRequestDto requestDto = BrandDataRequestDto.builder()
                     .name("NonExistent Brand")
                     .imageUrl("https://example.com/non_existent.png")
                     .build();
 
-            given(productFacade.modifyBrand(eq(BRAND_ID), any(BrandModifyRequestDto.class)))
+            given(productFacade.modifyBrand(eq(BRAND_ID), any(BrandDataRequestDto.class)))
                     .willThrow(new CustomException(FailureCode.BRAND_NOT_FOUND));
 
             // when & then
@@ -218,7 +217,7 @@ class ApiV1BrandControllerTest {
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.code").value("BRAND_NOT_FOUND"));
 
-            verify(productFacade).modifyBrand(eq(BRAND_ID), any(BrandModifyRequestDto.class));
+            verify(productFacade).modifyBrand(eq(BRAND_ID), any(BrandDataRequestDto.class));
         }
 
         @Test
@@ -226,12 +225,12 @@ class ApiV1BrandControllerTest {
         @WithMockUser
         void modifyBrand_Fail_DuplicateName() throws Exception {
             // given
-            BrandModifyRequestDto requestDto = BrandModifyRequestDto.builder()
+            BrandDataRequestDto requestDto = BrandDataRequestDto.builder()
                     .name("Existing Brand Name")
                     .imageUrl("https://example.com/existing.png")
                     .build();
 
-            given(productFacade.modifyBrand(eq(BRAND_ID), any(BrandModifyRequestDto.class)))
+            given(productFacade.modifyBrand(eq(BRAND_ID), any(BrandDataRequestDto.class)))
                     .willThrow(new CustomException(FailureCode.BRAND_NAME_DUPLICATE));
 
             // when & then
@@ -243,7 +242,7 @@ class ApiV1BrandControllerTest {
                     .andExpect(status().isConflict())
                     .andExpect(jsonPath("$.code").value("BRAND_NAME_DUPLICATE"));
 
-            verify(productFacade).modifyBrand(eq(BRAND_ID), any(BrandModifyRequestDto.class));
+            verify(productFacade).modifyBrand(eq(BRAND_ID), any(BrandDataRequestDto.class));
         }
 
         @Test
@@ -252,7 +251,7 @@ class ApiV1BrandControllerTest {
         void modifyBrand_Fail_Validation() throws Exception {
             // given
             // Invalid name (blank) and invalid URL
-            BrandModifyRequestDto requestDto = BrandModifyRequestDto.builder()
+            BrandDataRequestDto requestDto = BrandDataRequestDto.builder()
                     .name(" ")
                     .imageUrl("invalid-url")
                     .build();
@@ -265,7 +264,7 @@ class ApiV1BrandControllerTest {
                     ).andDo(print())
                     .andExpect(status().isBadRequest());
 
-            verify(productFacade, never()).modifyBrand(eq(BRAND_ID), any(BrandModifyRequestDto.class));
+            verify(productFacade, never()).modifyBrand(eq(BRAND_ID), any(BrandDataRequestDto.class));
         }
     }
 

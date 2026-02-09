@@ -1,8 +1,8 @@
 package com.back.product.adapter.in.web.api;
 
 import com.back.common.response.CommonResponse;
+import com.back.product.dto.request.BrandDataRequestDto;
 import com.back.product.dto.request.BrandListCreateRequestDto;
-import com.back.product.dto.request.BrandModifyRequestDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -29,7 +29,7 @@ public interface BrandApiController {
     @ApiResponse(responseCode = "401", description = "인증 실패", content = @Content)
     @ApiResponse(responseCode = "403", description = "권한 없음", content = @Content)
     @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
-    CommonResponse<?> modifyBrand(Long brandId, BrandModifyRequestDto request);
+    CommonResponse<?> modifyBrand(Long brandId, BrandDataRequestDto request);
 
     @Operation(summary = "브랜드 삭제", description = "기존의 브랜드를 삭제합니다.")
     @ApiResponse(responseCode = "204", description = "브랜드 삭제 성공")
