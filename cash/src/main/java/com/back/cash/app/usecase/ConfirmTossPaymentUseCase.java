@@ -1,36 +1,20 @@
 package com.back.cash.app.usecase;
 
-import com.back.cash.adapter.out.PaymentRepository;
 import com.back.cash.adapter.out.TossPaymentsClient;
-import com.back.cash.app.CashLogSupport;
-import com.back.cash.app.WalletSupport;
-import com.back.cash.domain.Payment;
-import com.back.cash.domain.Wallet;
-import com.back.cash.domain.enums.PaymentStatus;
+import com.back.cash.app.ConfirmPaymentSupport;
 import com.back.cash.dto.request.TossConfirmRequest;
 import com.back.cash.dto.response.ConfirmResultResponseDto;
-import com.back.cash.mapper.PaymentMapper;
-import com.back.common.code.FailureCode;
-import com.back.common.exception.BadRequestException;
-import com.back.common.exception.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.ResourceAccessException;
-
-import java.math.BigDecimal;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class ConfirmTossPaymentUseCase {
 
-    private enum TossConfirmStatus { SUCCESS, FAIL, UNKNOWN }
-
-    private final PaymentRepository paymentRepository;
-    private final WalletSupport walletSupport;
-    private final CashLogSupport cashLogSupport;
+    private final ConfirmPaymentSupport confirmPaymentSupport;
     private final TossPaymentsClient tossPaymentsClient;
 
     /**
@@ -38,52 +22,23 @@ public class ConfirmTossPaymentUseCase {
      */
     public ConfirmResultResponseDto execute(TossConfirmRequest req) {
         // 검증 (이미 DONE이면 바로 반환)
-        ConfirmResultResponseDto alreadyDone = validatePayment(req);
+        ConfirmResultResponseDto alreadyDone = confirmPaymentSupport.validatePayment(req);
         if (alreadyDone != null) {
             return alreadyDone;
         }
 
         // 토스 confirm 호출
-        TossConfirmStatus tossStatus = callTossConfirm(req);
+        TossConfirmResult tossResult = callTossConfirm(req);
 
         // 결과 반영
-        return switch (tossStatus) {
-            case SUCCESS -> applySuccess(req.orderId(), req.paymentKey());
-            case FAIL -> applyFailure(req.orderId());
+        return switch (tossResult.status()) {
+            case SUCCESS -> confirmPaymentSupport.applySuccess(req.orderId(), req.paymentKey());
+            case FAIL -> confirmPaymentSupport.applyFailure(req.orderId(), tossResult.failReason());
             case UNKNOWN -> {
-                log.warn("[TOSS_CONFIRM_UNKNOWN] orderId={} - 결제 상태 불확실, READY 유지", req.orderId());
+                log.warn("[TOSS_CONFIRM_UNKNOWN] orderId={} - 결제 상태 불확실", req.orderId());
                 yield ConfirmResultResponseDto.pending();
             }
         };
-    }
-
-    /**
-     * Payment 조회 및 검증 (트랜잭션)
-     */
-    @Transactional
-    public ConfirmResultResponseDto validatePayment(TossConfirmRequest req) {
-        Payment payment = paymentRepository.findWithLockByTossOrderId(req.orderId())
-                .orElseThrow(() -> new EntityNotFoundException(FailureCode.PAYMENT_NOT_FOUND));
-
-        // 이미 DONE이면 바로 성공 응답 반환
-        if (payment.getStatus() == PaymentStatus.DONE) {
-            return ConfirmResultResponseDto.success(PaymentMapper.toCompletedDto(payment));
-        }
-
-        // FAIL이나 CANCELED면 처리 불가
-        if (payment.getStatus() == PaymentStatus.FAIL || payment.getStatus() == PaymentStatus.CANCELED) {
-            throw new BadRequestException(FailureCode.INVALID_CONFIRM);
-        }
-
-        // PG 대상/금액 검증
-        if (payment.getPgAmount() == null || payment.getPgAmount().signum() <= 0) {
-            throw new BadRequestException(FailureCode.INVALID_CONFIRM);
-        }
-        if (payment.getPgAmount().compareTo(req.amount()) != 0) {
-            throw new BadRequestException(FailureCode.AMOUNT_MISMATCH);
-        }
-
-        return null;
     }
 
     /**
@@ -92,105 +47,29 @@ public class ConfirmTossPaymentUseCase {
      * ResourceAccessException(타임아웃/네트워크 오류) → UNKNOWN: 토스 처리 여부 불확실
      * 그 외 예외(HTTP 4xx/5xx 등) → FAIL: 토스가 명시적으로 거부
      */
-    private TossConfirmStatus callTossConfirm(TossConfirmRequest req) {
+    private TossConfirmResult callTossConfirm(TossConfirmRequest req) {
         try {
             tossPaymentsClient.confirm(req.paymentKey(), req.orderId(), req.amount());
             log.info("[TOSS_CONFIRM_SUCCESS] orderId={}, paymentKey={}, amount={}",
                     req.orderId(), req.paymentKey(), req.amount());
-            return TossConfirmStatus.SUCCESS;
+            return TossConfirmResult.success();
         } catch (ResourceAccessException e) {
             log.error("[TOSS_CONFIRM_UNKNOWN] orderId={}, paymentKey={}, error={}",
                     req.orderId(), req.paymentKey(), e.getMessage(), e);
-            return TossConfirmStatus.UNKNOWN;
+            return TossConfirmResult.unknown();
         } catch (Exception e) {
             log.error("[TOSS_CONFIRM_FAIL] orderId={}, paymentKey={}, amount={}, error={}",
                     req.orderId(), req.paymentKey(), req.amount(), e.getMessage(), e);
-            return TossConfirmStatus.FAIL;
+            return TossConfirmResult.fail(e.getMessage());
         }
     }
 
-    /**
-     * 토스 성공 시 DB 반영 (트랜잭션)
-     */
-    @Transactional
-    public ConfirmResultResponseDto applySuccess(String orderId, String paymentKey) {
-        Payment payment = paymentRepository.findWithLockByTossOrderId(orderId)
-                .orElseThrow(() -> new EntityNotFoundException(FailureCode.PAYMENT_NOT_FOUND));
+    private enum TossConfirmStatus { SUCCESS, FAIL, UNKNOWN }
 
-        // 멱등성: 이미 DONE이면 성공 응답
-        if (payment.getStatus() == PaymentStatus.DONE) {
-            return ConfirmResultResponseDto.success(PaymentMapper.toCompletedDto(payment));
-        }
-
-        // PG 금액 충전 후 즉시 홀딩
-        applyPgTopUpThenHold(payment);
-
-        payment.setPaymentKeyIfAbsent(paymentKey);
-        payment.markAsDone();
-
-        log.info("[PAYMENT_DONE] orderId={}, paymentKey={}, totalAmount={}",
-                orderId, paymentKey, payment.getTotalAmount());
-
-        return ConfirmResultResponseDto.success(PaymentMapper.toCompletedDto(payment));
+    private record TossConfirmResult(TossConfirmStatus status, String failReason) {
+        static TossConfirmResult success() { return new TossConfirmResult(TossConfirmStatus.SUCCESS, null); }
+        static TossConfirmResult fail(String reason) { return new TossConfirmResult(TossConfirmStatus.FAIL, reason); }
+        static TossConfirmResult unknown() { return new TossConfirmResult(TossConfirmStatus.UNKNOWN, null); }
     }
 
-    /**
-     * 토스 실패 시 DB 반영 (트랜잭션)
-     */
-    @Transactional
-    public ConfirmResultResponseDto applyFailure(String orderId) {
-        Payment payment = paymentRepository.findWithLockByTossOrderId(orderId)
-                .orElseThrow(() -> new EntityNotFoundException(FailureCode.PAYMENT_NOT_FOUND));
-
-        // 멱등성: 이미 처리된 상태면 그에 맞게 응답
-        if (payment.getStatus() == PaymentStatus.DONE) {
-            return ConfirmResultResponseDto.success(PaymentMapper.toCompletedDto(payment));
-        }
-        if (payment.getStatus() == PaymentStatus.FAIL) {
-            return ConfirmResultResponseDto.fail(PaymentMapper.toFailedDto(payment));
-        }
-
-        handleConfirmFail(payment);
-
-        return ConfirmResultResponseDto.fail(PaymentMapper.toFailedDto(payment));
-    }
-
-    private void applyPgTopUpThenHold(Payment payment) {
-        Wallet buyerWallet = walletSupport.getUserWallet(payment.getUserId());
-        Wallet systemWallet = walletSupport.getSystemWallet();
-
-        BigDecimal pgAmount = payment.getPgAmount();
-
-        // 유저 지갑에 PG 결제 금액만큼 충전
-        buyerWallet.deposit(pgAmount);
-        cashLogSupport.recordUserPgTopUpLog(buyerWallet, pgAmount, payment.getRelType(), payment.getRelId());
-
-        // PG 결제 금액 즉시 홀딩(유저 -> 시스템)
-        buyerWallet.withdraw(pgAmount);
-        systemWallet.deposit(pgAmount);
-        cashLogSupport.recordHoldingLog(buyerWallet, systemWallet, pgAmount, payment.getRelType(), payment.getRelId());
-    }
-
-    private void handleConfirmFail(Payment payment) {
-        payment.markAsFail();
-
-        BigDecimal held = payment.getWalletUsedAmount();
-        if (held == null || held.signum() <= 0) return;
-
-        if (payment.isReleased()) return;
-
-        Wallet buyerWallet = walletSupport.getUserWallet(payment.getUserId());
-        Wallet systemWallet = walletSupport.getSystemWallet();
-
-        // 홀딩 되돌리기: 시스템 -held / 유저 +held
-        systemWallet.withdraw(held);
-        buyerWallet.deposit(held);
-
-        cashLogSupport.recordReleaseOnPaymentFail(buyerWallet, systemWallet, held, payment.getRelType(), payment.getRelId());
-
-        payment.markReleased();
-
-        log.info("[PAYMENT_FAIL_RELEASED] orderId={}, releasedAmount={}",
-                payment.getTossOrderId(), held);
-    }
 }
