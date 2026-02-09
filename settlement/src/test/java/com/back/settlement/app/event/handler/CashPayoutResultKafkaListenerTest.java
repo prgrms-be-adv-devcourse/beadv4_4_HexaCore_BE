@@ -16,6 +16,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -37,7 +38,8 @@ class CashPayoutResultKafkaListenerTest {
 
     private CashPayoutResultKafkaListener listener;
 
-    private void setupListener() {
+    @BeforeEach
+    void setUp() {
         listener = new CashPayoutResultKafkaListener(settlementRepository, domainEventPublisher, objectMapper);
     }
 
@@ -68,7 +70,6 @@ class CashPayoutResultKafkaListenerTest {
             Long settlementId = 1L;
             Settlement settlement = createSettlement(settlementId, SettlementStatus.IN_PROGRESS);
             given(settlementRepository.findById(settlementId)).willReturn(Optional.of(settlement));
-            setupListener();
 
             // when
             listener.listen(successMessage(settlementId));
@@ -91,7 +92,6 @@ class CashPayoutResultKafkaListenerTest {
             String failReason = "잔액 부족";
             Settlement settlement = createSettlement(settlementId, SettlementStatus.IN_PROGRESS);
             given(settlementRepository.findById(settlementId)).willReturn(Optional.of(settlement));
-            setupListener();
 
             // when
             listener.listen(failureMessage(settlementId, failReason));
@@ -112,7 +112,6 @@ class CashPayoutResultKafkaListenerTest {
             // given
             Long settlementId = 999L;
             given(settlementRepository.findById(settlementId)).willReturn(Optional.empty());
-            setupListener();
 
             // when
             listener.listen(successMessage(settlementId));
@@ -133,7 +132,6 @@ class CashPayoutResultKafkaListenerTest {
             Long settlementId = 1L;
             Settlement settlement = createSettlement(settlementId, SettlementStatus.COMPLETED);
             given(settlementRepository.findById(settlementId)).willReturn(Optional.of(settlement));
-            setupListener();
 
             // when
             listener.listen(successMessage(settlementId));
@@ -150,7 +148,6 @@ class CashPayoutResultKafkaListenerTest {
             Long settlementId = 1L;
             Settlement settlement = createSettlement(settlementId, SettlementStatus.FAILED);
             given(settlementRepository.findById(settlementId)).willReturn(Optional.of(settlement));
-            setupListener();
 
             // when
             listener.listen(failureMessage(settlementId, "잔액 부족"));
