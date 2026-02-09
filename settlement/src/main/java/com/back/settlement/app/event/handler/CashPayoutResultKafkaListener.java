@@ -22,8 +22,8 @@ public class CashPayoutResultKafkaListener {
     private final JsonMapper jsonMapper;
 
     @KafkaListener(
-            topics = "${kafka.topic.cash-payout-completed}",
-            groupId = "${kafka.consumer.group-id}"
+            topics = "${custom.kafka.topic.cash-payout-completed}",
+            groupId = "${spring.kafka.consumer.group-id}"
     )
     @Transactional
     public void listen(String message) {

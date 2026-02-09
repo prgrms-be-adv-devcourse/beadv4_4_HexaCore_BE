@@ -20,14 +20,14 @@ public class CashPayoutStubListener {
     private final JsonMapper jsonMapper;
     private final String resultTopic;
 
-    public CashPayoutStubListener(KafkaEventPublisher kafkaEventPublisher, JsonMapper jsonMapper, @Value("${kafka.topic.cash-payout-completed}") String resultTopic) {
+    public CashPayoutStubListener(KafkaEventPublisher kafkaEventPublisher, JsonMapper jsonMapper, @Value("${custom.kafka.topic.cash-payout-completed}") String resultTopic) {
         this.kafkaEventPublisher = kafkaEventPublisher;
         this.jsonMapper = jsonMapper;
         this.resultTopic = resultTopic;
     }
 
     @KafkaListener(
-            topics = "${kafka.topic.settlement-payout-request}",
+            topics = "${custom.kafka.topic.settlement-payout-request}",
             groupId = "settlement-stub-group"
     )
     public void handlePayoutRequest(String message) {
