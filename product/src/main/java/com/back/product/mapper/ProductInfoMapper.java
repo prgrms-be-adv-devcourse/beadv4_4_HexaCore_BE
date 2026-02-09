@@ -9,20 +9,23 @@ import com.back.product.dto.request.ProductInfoDataRequestDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
 @Component
 @RequiredArgsConstructor
 public class ProductInfoMapper {
     private final BrandMapper brandMapper;
     private final CategoryMapper categoryMapper;
 
-    public ProductInfo toEntity(Brand brand, Category category, ProductInfoDataRequestDto request) {
+    public ProductInfo toEntity(Brand brand, Category category, String name, String code, BigDecimal releasedPrice, LocalDateTime releasedDate) {
         return ProductInfo.builder()
                 .brand(brand)
                 .category(category)
-                .name(request.name())
-                .productCode(request.code())
-                .releasePrice(request.releasePrice())
-                .releasedDate(request.releasedDate())
+                .name(name)
+                .productCode(code)
+                .releasePrice(releasedPrice)
+                .releasedDate(releasedDate)
                 .build();
     }
 

@@ -10,8 +10,7 @@ import com.back.product.dto.response.*;
 import com.back.product.dto.event.ProductCreationCompletedEvent;
 import com.back.product.dto.event.ProductDeletionCompletedEvent;
 import com.back.product.dto.event.ProductUpdateCompletedEvent;
-import com.back.product.mapper.OptionMapper;
-import com.back.product.mapper.ProductInfoMapper;
+import com.back.product.mapper.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -24,15 +23,20 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class ProductFacade {
+    private final ApplicationEventPublisher applicationEventPublisher;
+
     private final BrandUseCase brandUseCase;
     private final CategoryUseCase categoryUseCase;
     private final OptionUseCase optionUseCase;
     private final ProductInfoUseCase productInfoUseCase;
     private final ProductUseCase productUseCase;
-    private final ProductInfoMapper productInfoMapper;
     private final ProductDocumentUseCase productDocumentUseCase;
+
+    private final BrandMapper brandMapper;
+    private final CategoryMapper categoryMapper;
+    private final ProductInfoMapper productInfoMapper;
+    private final ProductMapper productMapper;
     private final OptionMapper optionMapper;
-    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Transactional(readOnly = true)
     public List<BrandDto> getBrands() {
@@ -42,13 +46,13 @@ public class ProductFacade {
     @Transactional
     public BrandListResponseDto createBrands(@Valid BrandListCreateRequestDto request) {
         List<BrandDto> brandDtos = brandUseCase.createBrands(request);
-        return BrandListResponseDto.builder().brands(brandDtos).build();
+        return brandMapper.toListResponseDto(brandDtos);
     }
 
     @Transactional
     public BrandResponseDto modifyBrand(Long brandId, @Valid BrandDataRequestDto request) {
         BrandDto brandDto = brandUseCase.modifyBrand(brandId, request);
-        return BrandResponseDto.builder().brand(brandDto).build();
+        return brandMapper.toResponseDto(brandDto);
     }
 
     @Transactional
@@ -70,13 +74,13 @@ public class ProductFacade {
     @Transactional
     public CategoryListResponseDto createCategories(@Valid CategoryListCreateRequestDto request) {
         List<CategoryDto> categoryDtos =  categoryUseCase.createCategories(request);
-        return CategoryListResponseDto.builder().categories(categoryDtos).build();
+        return categoryMapper.toListResponseDto(categoryDtos);
     }
 
     @Transactional
     public CategoryResponseDto modifyCategory(Long categoryId, @Valid CategoryDataRequestDto request) {
         CategoryDto categoryDto = categoryUseCase.modifyCategory(categoryId, request);
-        return CategoryResponseDto.builder().category(categoryDto).build();
+        return categoryMapper.toResponseDto(categoryDto);
     }
 
     @Transactional
@@ -115,7 +119,9 @@ public class ProductFacade {
                 productDtos.getFirst().imageUrls().getFirst()
         );
 
-        return buildProductResponseDto(productInfo, productDtos);
+        ProductInfoDto productInfoDto = productInfoMapper.toDto(productInfo);
+
+        return productMapper.toResponseDto(productInfoDto, productDtos);
     }
 
     @Transactional
@@ -138,7 +144,9 @@ public class ProductFacade {
                 productDtos.getFirst().imageUrls().getFirst()
         );
 
-        return buildProductResponseDto(productInfo, productDtos);
+        ProductInfoDto productInfoDto = productInfoMapper.toDto(productInfo);
+
+        return productMapper.toResponseDto(productInfoDto, productDtos);
     }
 
     @Transactional
@@ -156,22 +164,26 @@ public class ProductFacade {
 
         List<ProductDto> productDtos = productUseCase.findAllProduct(productInfo);
 
-        return buildProductResponseDto(productInfo, productDtos);
+        ProductInfoDto productInfoDto = productInfoMapper.toDto(productInfo);
+
+        return productMapper.toResponseDto(productInfoDto, productDtos);
     }
 
     @Transactional(readOnly = true)
-    public ProductSearchListResponseDto findProductPage(@Valid ProductSearchRequestDto request, Long page, Long size) {
+    public ProductSearchResponseDto findProductPage(@Valid ProductSearchRequestDto request, Long page, Long size) {
         return productDocumentUseCase.findProductPage(request, page, size);
     }
 
     @Transactional
     public OptionListResponseDto createOptions(@Valid OptionListCreateRequestDto request) {
-        return optionUseCase.createOptions(request);
+        List<OptionDto> optionDtos = optionUseCase.createOptions(request);
+        return optionMapper.toListResponseDto(optionDtos);
     }
 
     @Transactional
     public OptionResponseDto appendOptions(Long optionGroupId, @Valid OptionAppendRequestDto request) {
-        return optionUseCase.appendOptions(optionGroupId, request);
+        OptionDto optionDto = optionUseCase.appendOptions(optionGroupId, request);
+        return optionMapper.toResponseDto(optionDto);
     }
 
     @Transactional
@@ -208,20 +220,14 @@ public class ProductFacade {
 
     @Transactional(readOnly = true)
     public OptionListResponseDto getOptions() {
-        return optionUseCase.findAllOptions();
-    }
-
-    private ProductResponseDto buildProductResponseDto(ProductInfo productInfo, List<ProductDto> productDtos) {
-        return ProductResponseDto.builder()
-                .productInfo(productInfoMapper.toDto(productInfo))
-                .products(productDtos)
-                .build();
+        List<OptionDto> optionDtos = optionUseCase.findAllOptions();
+        return optionMapper.toListResponseDto(optionDtos);
     }
 
     private void publishProductCreationCompletedEvent(ProductInfo productInfo, List<OptionValue> optionValues, String thumbnailUrl) {
         ProductInfoDto productInfoDto = productInfoMapper.toDto(productInfo);
 
-        List<OptionDto> optionDtos = buildMultipleOptionDto(optionValues);
+        List<OptionDto> optionDtos = optionMapper.toDtoList(optionValues);
 
         ProductCreationCompletedEvent event = new ProductCreationCompletedEvent(
                 productInfoDto, optionDtos, thumbnailUrl
@@ -232,8 +238,7 @@ public class ProductFacade {
 
     private void publishProductUpdateCompletedEvent(ProductInfo productInfo, List<OptionValue> optionValues, String thumbnailUrl) {
         ProductInfoDto productInfoDto = productInfoMapper.toDto(productInfo);
-
-        List<OptionDto> optionDtos = buildMultipleOptionDto(optionValues);
+        List<OptionDto> optionDtos = optionMapper.toDtoList(optionValues);
 
         ProductUpdateCompletedEvent event = new ProductUpdateCompletedEvent(
                 productInfoDto, optionDtos, thumbnailUrl
@@ -246,15 +251,5 @@ public class ProductFacade {
         ProductDeletionCompletedEvent event = new ProductDeletionCompletedEvent(productInfoId);
 
         applicationEventPublisher.publishEvent(event);
-    }
-
-    private List<OptionDto> buildMultipleOptionDto(List<OptionValue> optionValues) {
-        return optionValues.stream()
-                .collect(Collectors.groupingBy(OptionValue::getOptionGroup))
-                .entrySet().stream().map(entry -> {
-                    OptionGroup group = entry.getKey();
-                    List<OptionValue> values = entry.getValue();
-                    return optionMapper.toDto(group, values);
-                }).toList();
     }
 }

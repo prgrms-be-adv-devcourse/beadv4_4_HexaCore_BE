@@ -1,16 +1,15 @@
 package com.back.product.dto.response;
 
+import com.back.product.dto.model.ProductSearchDto;
 import lombok.Builder;
 
-import java.math.BigDecimal;
+import java.util.List;
 
 @Builder
 public record ProductSearchResponseDto(
-        Long productInfoId,
-        String productName,
-        String thumbnailUrl,
-        String brandName,
-        String categoryName,
-        BigDecimal releasePrice
+        List<ProductSearchDto> products,
+        Long totalPages,
+        Long totalElements,
+        Long currentPage
 ) {
 }

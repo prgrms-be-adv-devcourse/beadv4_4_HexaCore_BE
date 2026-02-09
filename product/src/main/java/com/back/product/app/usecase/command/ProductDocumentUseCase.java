@@ -8,8 +8,8 @@ import com.back.product.document.ProductDocument;
 import com.back.product.dto.model.OptionDto;
 import com.back.product.dto.model.ProductInfoDto;
 import com.back.product.dto.request.ProductSearchRequestDto;
-import com.back.product.dto.response.ProductSearchListResponseDto;
 import com.back.product.dto.response.ProductSearchResponseDto;
+import com.back.product.dto.model.ProductSearchDto;
 import com.back.product.mapper.ProductDocumentMapper;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -45,7 +45,7 @@ public class ProductDocumentUseCase {
     }
 
     @Transactional(readOnly = true)
-    public ProductSearchListResponseDto findProductPage(@Valid ProductSearchRequestDto request, Long page, Long size) {
+    public ProductSearchResponseDto findProductPage(@Valid ProductSearchRequestDto request, Long page, Long size) {
         Query query = buildSearchQuery(
                 request.keyword(),
                 request.brandIds(),
@@ -136,10 +136,10 @@ public class ProductDocumentUseCase {
                 .build();
     }
 
-    private ProductSearchListResponseDto convertToDto(List<ProductDocument> productList, Long totalPages, Long totalElements, Long currentPage) {
-        List<ProductSearchResponseDto> products = productList.stream().map(productDocumentMapper::toDto).toList();
+    private ProductSearchResponseDto convertToDto(List<ProductDocument> productList, Long totalPages, Long totalElements, Long currentPage) {
+        List<ProductSearchDto> products = productList.stream().map(productDocumentMapper::toDto).toList();
 
-        return ProductSearchListResponseDto.builder()
+        return ProductSearchResponseDto.builder()
                 .products(products)
                 .totalElements(totalElements)
                 .totalPages(totalPages)

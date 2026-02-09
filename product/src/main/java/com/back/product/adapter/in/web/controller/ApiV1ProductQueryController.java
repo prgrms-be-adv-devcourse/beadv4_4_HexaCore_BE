@@ -8,7 +8,7 @@ import com.back.product.dto.request.ProductQueryRequestDto;
 import com.back.product.dto.request.ProductSearchRequestDto;
 import com.back.product.dto.response.ProductListResponseDto;
 import com.back.product.dto.response.ProductResponseDto;
-import com.back.product.dto.response.ProductSearchListResponseDto;
+import com.back.product.dto.response.ProductSearchResponseDto;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
@@ -29,12 +29,12 @@ public class ApiV1ProductQueryController implements ProductQueryApiController {
 
     @Override
     @GetMapping
-    public CommonResponse<ProductSearchListResponseDto> searchProducts(
+    public CommonResponse<ProductSearchResponseDto> searchProducts(
        @ModelAttribute @Valid ProductSearchRequestDto request,
        @RequestParam(defaultValue = "0") Long page,
        @RequestParam(defaultValue = "10") Long size
      ) {
-        ProductSearchListResponseDto response = productFacade.findProductPage(request, page, size);
+        ProductSearchResponseDto response = productFacade.findProductPage(request, page, size);
         return CommonResponse.success(SuccessCode.OK, response);
     }
 

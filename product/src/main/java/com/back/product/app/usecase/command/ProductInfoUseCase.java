@@ -25,7 +25,7 @@ public class ProductInfoUseCase {
     public ProductInfo createProductInfo(Brand brand, Category category, @Valid ProductInfoDataRequestDto request) {
         isDuplicateProductInfo(brand, request.code());
 
-        ProductInfo productInfo = productInfoMapper.toEntity(brand, category, request);
+        ProductInfo productInfo = productInfoMapper.toEntity(brand, category, request.name(), request.code(), request.releasePrice(), request.releasedDate());
 
         return productInfoRepository.save(productInfo);
     }

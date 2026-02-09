@@ -16,7 +16,9 @@ import com.back.product.dto.response.OptionGroupModifyResponseDto;
 import com.back.product.dto.response.OptionListResponseDto;
 import com.back.product.dto.response.OptionResponseDto;
 import com.back.product.dto.response.OptionValueModifyResponseDto;
+import com.back.product.mapper.OptionGroupMapper;
 import com.back.product.mapper.OptionMapper;
+import com.back.product.mapper.OptionValueMapper;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -31,6 +33,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class OptionUseCase {
     private final OptionMapper optionMapper;
+    private final OptionGroupMapper optionGroupMapper;
+    private final OptionValueMapper optionValueMapper;
+
     private final ProductSupport productSupport;
     private final OptionGroupRepository optionGroupRepository;
     private final OptionValueRepository optionValueRepository;
@@ -47,26 +52,27 @@ public class OptionUseCase {
     }
 
     @Transactional(readOnly = true)
-    public OptionListResponseDto findAllOptions() {
+    public List<OptionDto> findAllOptions() {
         List<OptionGroup> optionGroups = productSupport.getAllProductOptionGroups();
 
         if (optionGroups.isEmpty()) {
-            return OptionListResponseDto.builder().build();
+            return List.of();
         }
 
         Map<OptionGroup, List<OptionValue>> optionValueAsMap = productSupport.getAllProductOptionValuesByOptionGroupIn(optionGroups)
                 .stream().collect(Collectors.groupingBy(OptionValue::getOptionGroup));
 
-        return convertToOptionResponseDto(optionGroups, optionValueAsMap);
+        return optionGroups.stream().map(group -> {
+            List<OptionValue> values = optionValueAsMap.getOrDefault(group, new ArrayList<>());
+            return optionMapper.toDto(group, values);
+        }).toList();
     }
 
     @Transactional
-    public OptionListResponseDto createOptions(@Valid OptionListCreateRequestDto request) {
-        List<OptionDto> createdOptions = request.options().stream()
+    public List<OptionDto> createOptions(@Valid OptionListCreateRequestDto request) {
+        return request.options().stream()
                 .map(option -> createOption(option.group(), option.values()))
                 .toList();
-
-        return OptionListResponseDto.builder().options(createdOptions).build();
     }
 
     @Transactional
@@ -81,11 +87,11 @@ public class OptionUseCase {
         List<OptionValue> newValues = createOptionValues(group, valueNames);
         List<OptionValue> createdValues = optionValueRepository.saveAll(newValues);
         
-        return convertToOptionDto(group, createdValues);
+        return optionMapper.toDto(group, createdValues);
     }
 
     @Transactional
-    public OptionResponseDto appendOptions(Long optionGroupId, @Valid OptionAppendRequestDto request) {
+    public OptionDto appendOptions(Long optionGroupId, @Valid OptionAppendRequestDto request) {
         OptionGroup group = productSupport.getOptionGroupById(optionGroupId)
                 .orElseThrow(() -> new CustomException(FailureCode.OPTION_GROUP_NOT_FOUND));
 
@@ -93,7 +99,7 @@ public class OptionUseCase {
 
         List<OptionValue> createdValues = optionValueRepository.saveAll(newValues);
 
-        return OptionResponseDto.builder().option(convertToOptionDto(group, createdValues)).build();
+        return optionMapper.toDto(group, createdValues);
     }
 
     @Transactional
@@ -103,7 +109,7 @@ public class OptionUseCase {
 
         existsGroup.modifyName(request.name());
 
-        return convertToModifyGroupDto(existsGroup);
+        return optionGroupMapper.toModifyResponseDto(existsGroup);
     }
 
     @Transactional
@@ -120,7 +126,7 @@ public class OptionUseCase {
             existsValue.changeGroup(changedGroup);
         }
 
-        return convertToModifyValueDto(existsValue);
+        return optionValueMapper.toModifyResponseDto(existsValue);
     }
 
     @Transactional
@@ -136,7 +142,7 @@ public class OptionUseCase {
     }
     
     private OptionGroup createOptionGroup(String name) {
-        return optionMapper.toGroupEntity(name);
+        return optionGroupMapper.toGroupEntity(name);
     }
     
     private List<OptionValue> createOptionValues(OptionGroup group, List<String> valueNames) {
@@ -146,47 +152,6 @@ public class OptionUseCase {
     }
     
     private OptionValue createOptionValue(OptionGroup group, String valueName) {
-        return optionMapper.toValueEntity(group, valueName);
-    }
-
-    private OptionListResponseDto convertToOptionResponseDto(List<OptionGroup> optionGroups, Map<OptionGroup, List<OptionValue>> optionValueAsMap) {
-        List<OptionDto> optionDtos = optionGroups.stream().map(group -> {
-            List<OptionValue> values = optionValueAsMap.get(group);
-
-            if (values == null) values = new ArrayList<>();
-
-            return convertToOptionDto(group, values);
-        }).toList();
-
-        return OptionListResponseDto.builder().options(optionDtos).build();
-    }
-    
-    private OptionDto convertToOptionDto(OptionGroup group, List<OptionValue> values) {
-        return optionMapper.toDto(group, values);
-    }
-
-    private OptionGroupModifyResponseDto convertToModifyGroupDto(OptionGroup group) {
-        return OptionGroupModifyResponseDto.builder()
-                .group(
-                        OptionGroupModifyResponseDto.OptionGroupDto.builder()
-                                .id(group.getId())
-                                .name(group.getName())
-                                .updatedAt(group.getLastModifiedAt())
-                                .build()
-                )
-                .build();
-    }
-
-    private OptionValueModifyResponseDto convertToModifyValueDto(OptionValue value) {
-        return OptionValueModifyResponseDto.builder()
-                .value(
-                        OptionValueModifyResponseDto.OptionValueDto.builder()
-                                .id(value.getId())
-                                .optionGroupId(value.getOptionGroup().getId())
-                                .value(value.getValue())
-                                .updatedAt(value.getLastModifiedAt())
-                                .build()
-                )
-                .build();
+        return optionValueMapper.toValueEntity(group, valueName);
     }
 }

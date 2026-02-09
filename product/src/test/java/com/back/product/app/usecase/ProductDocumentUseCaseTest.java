@@ -5,8 +5,8 @@ import com.back.product.app.usecase.query.ProductDocumentSupport;
 import com.back.product.document.ProductDocument;
 import com.back.product.dto.enums.ProductSortType;
 import com.back.product.dto.request.ProductSearchRequestDto;
-import com.back.product.dto.response.ProductSearchListResponseDto;
 import com.back.product.dto.response.ProductSearchResponseDto;
+import com.back.product.dto.model.ProductSearchDto;
 import com.back.product.mapper.ProductDocumentMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -64,14 +64,14 @@ class ProductDocumentUseCaseTest {
             List<ProductDocument> documents = List.of(document);
             PageImpl<ProductDocument> productPage = new PageImpl<>(documents, PageRequest.of((int) page, (int) size), documents.size());
 
-            ProductSearchResponseDto dto = ProductSearchResponseDto.builder().productName("Test Product").build();
+            ProductSearchDto dto = ProductSearchDto.builder().productName("Test Product").build();
 
             given(productDocumentSupport.findProductPage(any(Query.class), any(ProductSortType.class), any(Long.class), any(Long.class)))
                     .willReturn(productPage);
             given(productDocumentMapper.toDto(document)).willReturn(dto);
 
             // when
-            ProductSearchListResponseDto result = productDocumentUseCase.findProductPage(request, page, size);
+            ProductSearchResponseDto result = productDocumentUseCase.findProductPage(request, page, size);
 
             // then
             ArgumentCaptor<Query> queryCaptor = ArgumentCaptor.forClass(Query.class);
@@ -100,14 +100,14 @@ class ProductDocumentUseCaseTest {
             List<ProductDocument> documents = List.of(document);
             PageImpl<ProductDocument> productPage = new PageImpl<>(documents, PageRequest.of((int) page, (int) size), documents.size());
 
-            ProductSearchResponseDto dto = ProductSearchResponseDto.builder().productName("Another Product").build();
+            ProductSearchDto dto = ProductSearchDto.builder().productName("Another Product").build();
 
             given(productDocumentSupport.findProductPage(any(Query.class), any(ProductSortType.class), any(Long.class), any(Long.class)))
                     .willReturn(productPage);
             given(productDocumentMapper.toDto(document)).willReturn(dto);
 
             // when
-            ProductSearchListResponseDto result = productDocumentUseCase.findProductPage(request, page, size);
+            ProductSearchResponseDto result = productDocumentUseCase.findProductPage(request, page, size);
 
             // then
             ArgumentCaptor<Query> queryCaptor = ArgumentCaptor.forClass(Query.class);

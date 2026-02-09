@@ -9,8 +9,8 @@ import com.back.product.dto.request.ProductQueryRequestDto;
 import com.back.product.dto.request.ProductSearchRequestDto;
 import com.back.product.dto.response.ProductListResponseDto;
 import com.back.product.dto.response.ProductResponseDto;
-import com.back.product.dto.response.ProductSearchListResponseDto;
 import com.back.product.dto.response.ProductSearchResponseDto;
+import com.back.product.dto.model.ProductSearchDto;
 import com.back.product.util.RequestFixture;
 import com.back.security.jwt.JWTUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -110,7 +110,7 @@ class ApiV1ProductQueryControllerTest {
         @WithMockUser
         void searchProducts_Success() throws Exception {
             // given
-            ProductSearchResponseDto productSearchResponseDto = ProductSearchResponseDto.builder()
+            ProductSearchDto productSearchDto = ProductSearchDto.builder()
                     .productInfoId(1L)
                     .productName("Test Product")
                     .thumbnailUrl("thumb.jpg")
@@ -119,8 +119,8 @@ class ApiV1ProductQueryControllerTest {
                     .releasePrice(BigDecimal.valueOf(30000))
                     .build();
 
-            ProductSearchListResponseDto responseDto = ProductSearchListResponseDto.builder()
-                    .products(List.of(productSearchResponseDto))
+            ProductSearchResponseDto responseDto = ProductSearchResponseDto.builder()
+                    .products(List.of(productSearchDto))
                     .build();
 
             given(productFacade.findProductPage(any(ProductSearchRequestDto.class), anyLong(), anyLong())).willReturn(responseDto);

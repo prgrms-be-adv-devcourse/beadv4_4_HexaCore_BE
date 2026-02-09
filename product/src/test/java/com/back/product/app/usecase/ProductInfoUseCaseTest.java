@@ -73,17 +73,22 @@ class ProductInfoUseCaseTest {
         @Test
         @DisplayName("성공: 새로운 상품 정보를 생성한다")
         void createProductInfo_Success() {
+            String name = "New Product";
+            String code = "NP-01";
+            BigDecimal releasePrice = BigDecimal.valueOf(20000);
+            LocalDateTime releasedDate = LocalDateTime.now();
+
             // given
             ProductInfoDataRequestDto request = ProductInfoDataRequestDto.builder()
                     .brandId(brand.getId())
                     .categoryId(category.getId())
-                    .name("New Product")
-                    .code("NP-01")
-                    .releasePrice(BigDecimal.valueOf(20000))
-                    .releasedDate(LocalDateTime.now())
+                    .name(name)
+                    .code(code)
+                    .releasePrice(releasePrice)
+                    .releasedDate(releasedDate)
                     .build();
             given(productSupport.existsProductInfoByBrandAndCode(any(Brand.class), anyString())).willReturn(false);
-            given(productInfoMapper.toEntity(brand, category, request)).willReturn(productInfo);
+            given(productInfoMapper.toEntity(brand, category, name, code, releasePrice, releasedDate)).willReturn(productInfo);
             given(productInfoRepository.save(productInfo)).willReturn(productInfo);
 
             // when
