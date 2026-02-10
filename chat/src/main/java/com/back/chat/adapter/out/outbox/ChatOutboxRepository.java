@@ -7,55 +7,111 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 
-public interface ChatOutboxRepository extends JpaRepository<ChatOutbox, Long>, ChatOutboxRepositoryCustom {
-    @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Query("""
-    update ChatOutbox o
-       set o.status = com.back.chat.adapter.out.outbox.OutboxStatus.SENT,
-           o.sentAt = :now
-     where o.id = :outboxId
-       and o.status = com.back.chat.adapter.out.outbox.OutboxStatus.PROCESSING
-""")
-    int updateSent(@Param("outboxId") Long outboxId,
-                   @Param("now") LocalDateTime now);
+public interface ChatOutboxRepository extends JpaRepository<ChatOutbox, Long> {
+    @Modifying(clearAutomatically = true)
+    @Query(value = """
+update chat_outbox
+   set status = 'SENT',
+       sent_at = :now
+ where id = :outboxId
+   and status = 'PROCESSING'
+""", nativeQuery = true)
+    int markSent(@Param("outboxId") Long outboxId,
+                 @Param("now") LocalDateTime now);
 
-    @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Query(
-            value = """
-    update chat_outbox
-       set status = 'FAILED',
-           retry_count = retry_count + 1,
-           last_error = :error,
-           next_attempt_at =
-             now() + make_interval(
-               secs => least(
-                 :retryMaxDelaySeconds,
-                 :retryBaseDelaySeconds * power(2, retry_count)
-               )
-             )
-     where id = :outboxId
-       and status = 'PROCESSING'
-    """,
-            nativeQuery = true
-    )
-    int updateFailed(@Param("outboxId") Long outboxId,
-                     @Param("error") String error,
-                     @Param("retryBaseDelaySeconds") int retryBaseDelaySeconds,
-                     @Param("retryMaxDelaySeconds") int retryMaxDelaySeconds);
+    @Modifying(clearAutomatically = true)
+    @Query(value = """
+        update chat_outbox
+           set status = 'PROCESSING',
+               processing_started_at = :now
+         where id = :outboxId
+           and status = 'PENDING'
+        """, nativeQuery = true)
+    int claimOneById(@Param("outboxId") Long outboxId,
+                     @Param("now") LocalDateTime now);
 
-    @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Query("""
-    update ChatOutbox o
-       set o.status = com.back.chat.adapter.out.outbox.OutboxStatus.DEAD,
-           o.deadAt = :now,
-           o.lastError = :reason
-     where o.id = :outboxId
-       and o.status = com.back.chat.adapter.out.outbox.OutboxStatus.FAILED
-""")
-    int updateDead(@Param("outboxId") Long outboxId,
-                   @Param("reason") String reason,
-                   @Param("now") LocalDateTime now);
+    @Modifying
+    @Query(value = """
+update chat_outbox
+   set status = 'FAILED',
+       retry_count = retry_count + 1,
+       last_error = :error,
+       next_attempt_at = now() + make_interval(secs => :baseDelaySeconds)
+ where id = :outboxId
+   and status = 'PROCESSING'
+""", nativeQuery = true)
+    int markInitialFailed(
+            @Param("outboxId") Long outboxId,
+            @Param("error") String error,
+            @Param("baseDelaySeconds") int baseDelaySeconds
+    );
+
+    @Query(value = """
+        WITH cte AS (
+            SELECT id
+              FROM chat_outbox
+             WHERE status = 'FAILED'
+               AND next_attempt_at <= :now
+             ORDER BY next_attempt_at ASC, id ASC
+             LIMIT :batchSize
+             FOR UPDATE SKIP LOCKED
+        )
+        UPDATE chat_outbox o
+           SET status = 'PROCESSING',
+               processing_started_at = :now
+         WHERE o.id IN (SELECT id FROM cte)
+        RETURNING o.id
+        """, nativeQuery = true)
+    List<Long> claimFailedBatch(@Param("now") LocalDateTime now,
+                                @Param("batchSize") int batchSize);
+
+    @Query(value = """
+select *
+  from chat_outbox
+ where id = any(:ids)
+ order by next_attempt_at nulls last, id asc
+""", nativeQuery = true)
+    List<ChatOutbox> findByIdInOrderByNextAttemptAtAscIdAsc(@Param("ids") Long[] ids);
+
+    @Modifying(clearAutomatically = true)
+    @Query(value = """
+UPDATE chat_outbox
+SET
+  retry_count = retry_count + 1,
+  last_error = :lastError,
+  status =
+    CASE
+      WHEN (retry_count + 1) >= :maxRetry THEN 'DEAD'
+      ELSE 'FAILED'
+    END,
+  next_attempt_at =
+    CASE
+      WHEN (retry_count + 1) >= :maxRetry THEN NULL
+      ELSE
+        :now + make_interval(
+          secs => LEAST(
+            :retryMaxDelaySeconds,
+            (:retryBaseDelaySeconds * POWER(2, (retry_count + 1) - 1))::bigint
+          )
+        )
+    END,
+  dead_at =
+    CASE
+      WHEN (retry_count + 1) >= :maxRetry THEN :now
+      ELSE dead_at
+    END,
+  processing_started_at = NULL
+WHERE id = :outboxId
+  AND status = 'PROCESSING'
+RETURNING status
+""", nativeQuery = true)
+    String markFailedOrDeadAtomic(
+            @Param("outboxId") Long outboxId,
+            @Param("lastError") String lastError,
+            @Param("now") LocalDateTime now,
+            @Param("maxRetry") int maxRetry,
+            @Param("retryBaseDelaySeconds") int retryBaseDelaySeconds,
+            @Param("retryMaxDelaySeconds") int retryMaxDelaySeconds
+    );
 }

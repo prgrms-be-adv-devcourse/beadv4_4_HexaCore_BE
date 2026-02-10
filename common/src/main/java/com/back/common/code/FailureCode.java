@@ -75,6 +75,7 @@ public enum FailureCode {
     CHAT_MESSAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "CHAT_MESSAGE_NOT_FOUND", "해당 메시지를 찾을 수 없습니다."),
     USER_SETTING_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_SETTING_NOT_FOUND", "해당 유저의 알림 세팅을 찾을 수 없습니다."),
     OPTION_GROUP_NOT_FOUND(HttpStatus.NOT_FOUND, "OPTION_GROUP_NOT_FOUND", "옵션 그룹이 존재하지 않습니다."),
+    CHAT_OUTBOX_NOT_FOUND(HttpStatus.NOT_FOUND, "CHAT_OUTBOX_NOT_FOUND", "해당 아웃박스를 찾을 수 없습니다."),
 
     /**
      * 405 Method Not Allowed

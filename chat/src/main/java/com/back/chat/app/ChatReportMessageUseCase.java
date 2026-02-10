@@ -9,6 +9,7 @@ import com.back.chat.dto.request.ChatMessageReportRequestDto;
 import com.back.chat.dto.response.ChatMessageReportResponseDto;
 import com.back.chat.event.ChatEventType;
 import com.back.chat.event.ChatMessageBlindedEvent;
+import com.back.chat.event.ChatOutboxSavedEvent;
 import com.back.chat.mapper.ChatMessageMapper;
 import com.back.common.chat.ChatMessageBlindedKafkaEvent;
 import com.back.common.code.FailureCode;
@@ -76,7 +77,7 @@ public class ChatReportMessageUseCase {
                 throw new IllegalStateException("Outbox payload 직렬화 실패", e);
             }
 
-            chatOutboxRepository.save(
+            ChatOutbox outbox = chatOutboxRepository.save(
                     ChatOutbox.pending(
                             UUID.fromString(payload.eventId()),
                             "CHAT_MESSAGE",
@@ -94,6 +95,8 @@ public class ChatReportMessageUseCase {
                             message.getUserId()
                     )
             );
+
+            eventPublisher.publishEvent(new ChatOutboxSavedEvent(outbox.getId()));
         }
 
         return ChatMessageMapper.toReportResponseDto(message);

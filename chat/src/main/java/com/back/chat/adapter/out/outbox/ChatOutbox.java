@@ -14,20 +14,7 @@ import static jakarta.persistence.GenerationType.*;
 
 @Entity
 @Table(
-        name = "chat_outbox",
-        uniqueConstraints = {
-                @UniqueConstraint(name="uk_chat_outbox_event_id", columnNames="event_id")
-        },
-        indexes = {
-                @Index(
-                        name = "idx_chat_outbox_status_next_attempt_id",
-                        columnList = "status, next_attempt_at, id"
-                ),
-                @Index(
-                        name = "idx_chat_outbox_processing_started_id",
-                        columnList = "status, processing_started_at, id"
-                )
-        }
+        name = "chat_outbox"
 )
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
