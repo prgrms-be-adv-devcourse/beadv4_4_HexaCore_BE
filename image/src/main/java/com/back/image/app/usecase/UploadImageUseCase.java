@@ -26,7 +26,7 @@ public class UploadImageUseCase {
     private final AmazonS3Client amazonS3Client;
     private final AwsS3Properties awsS3Properties;
 
-    @Loggable
+    @Loggable(logArgs = false)
     public List<String> uploadMultipleImage(List<File> resizedFiles, String dirName) {
         return resizedFiles.stream().map(f -> {
             try {
@@ -38,7 +38,7 @@ public class UploadImageUseCase {
         }).toList();
     }
 
-    @Loggable
+    @Loggable(logArgs = false)
     public String uploadImage(File resizedFile, String dirName) {
         try {
             if (resizedFile == null || !resizedFile.exists()) {

@@ -21,7 +21,7 @@ import java.util.UUID;
 public class ConvertImageUseCase {
     private final ImageUtility imageUtility;
 
-    @Loggable
+    @Loggable(logArgs = false)
     public List<File> convertMultipleFile(List<MultipartFile> multipartFiles) {
         return multipartFiles.stream().map(mf -> {
             try {
@@ -33,7 +33,7 @@ public class ConvertImageUseCase {
         }).toList();
     }
 
-    @Loggable
+    @Loggable(logArgs = false)
     public File convertFile(MultipartFile multipartFile) {
         try {
             if (multipartFile == null || multipartFile.isEmpty()) {

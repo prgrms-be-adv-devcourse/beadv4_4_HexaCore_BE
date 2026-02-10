@@ -24,7 +24,7 @@ public class ResizeImageUseCase {
     private final ImageUtility imageUtility;
     private final ImageResizeProperties imageResizeProperties;
 
-    @Loggable
+    @Loggable(logArgs = false)
     public List<File> resizeMultipleImage(List<File> convertedImages) {
         return convertedImages.stream().map(f -> {
             try {
@@ -36,7 +36,7 @@ public class ResizeImageUseCase {
         }).toList();
     }
 
-    @Loggable
+    @Loggable(logArgs = false)
     public File resizeImage(File convertedImage) {
         try {
             if (convertedImage == null || !convertedImage.exists()) {

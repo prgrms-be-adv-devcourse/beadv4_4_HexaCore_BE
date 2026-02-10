@@ -16,7 +16,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class FlushImageUseCase {
 
-    @Loggable
+    @Loggable(logArgs = false)
     public void flushMultipleFile(List<File> tempFiles) {
         if (tempFiles == null || tempFiles.isEmpty()) {
             return;
@@ -34,7 +34,7 @@ public class FlushImageUseCase {
         }
     }
 
-    @Loggable
+    @Loggable(logArgs = false)
     public boolean flushFile(File tempFile) {
         if (tempFile == null) return true;
 
