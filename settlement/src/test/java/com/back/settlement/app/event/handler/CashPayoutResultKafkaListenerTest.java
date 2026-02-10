@@ -12,9 +12,7 @@ import com.back.settlement.app.support.DomainEventPublisher;
 import com.back.settlement.domain.Settlement;
 import com.back.settlement.domain.SettlementStatus;
 import com.back.settlement.fixture.SettlementFixture;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import tools.jackson.databind.json.JsonMapper;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -28,7 +26,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @DisplayName("캐시 지급 요청 결과를 받는 단위 테스트")
 class CashPayoutResultKafkaListenerTest {
 
-    private static final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
+    private static final JsonMapper jsonMapper = new JsonMapper();
 
     @Mock
     private SettlementRepository settlementRepository;
@@ -40,21 +38,21 @@ class CashPayoutResultKafkaListenerTest {
 
     @BeforeEach
     void setUp() {
-        listener = new CashPayoutResultKafkaListener(settlementRepository, domainEventPublisher, objectMapper);
+        listener = new CashPayoutResultKafkaListener(settlementRepository, domainEventPublisher, jsonMapper);
     }
 
     private Settlement createSettlement(Long id, SettlementStatus status) {
         return SettlementFixture.createSettlement(id, 1L, "판매자", status);
     }
 
-    private String successMessage(Long settlementId) throws JsonProcessingException {
-        return objectMapper.writeValueAsString(
+    private String successMessage(Long settlementId) {
+        return jsonMapper.writeValueAsString(
                 Envelope.of("settlement.payout.result", new PayoutResultPayload(settlementId, true, null))
         );
     }
 
-    private String failureMessage(Long settlementId, String reason) throws JsonProcessingException {
-        return objectMapper.writeValueAsString(
+    private String failureMessage(Long settlementId, String reason) {
+        return jsonMapper.writeValueAsString(
                 Envelope.of("settlement.payout.result", new PayoutResultPayload(settlementId, false, reason))
         );
     }
