@@ -7,7 +7,6 @@ import com.back.product.dto.event.kafka.ProductUpdatedPayload;
 import com.back.product.dto.event.spring.ProductCreationCompletedEvent;
 import com.back.product.dto.event.spring.ProductDeletionCompletedEvent;
 import com.back.product.dto.event.spring.ProductUpdateCompletedEvent;
-import com.back.product.mapper.ProductMapper;
 import com.back.product.mapper.ProductPayloadMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

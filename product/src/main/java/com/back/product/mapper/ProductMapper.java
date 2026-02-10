@@ -16,7 +16,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ProductMapper {
     private final OptionMapper optionMapper;
-    private final ProductOptionValuesMapper productOptionValuesMapper;
     private final ProductImageMapper productImageMapper;
 
     public Product toEntity(ProductInfo productInfo, Long inventory) {
