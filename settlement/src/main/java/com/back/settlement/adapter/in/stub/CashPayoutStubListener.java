@@ -27,7 +27,7 @@ public class CashPayoutStubListener {
     }
 
     @KafkaListener(
-            topics = "${custom.kafka.topic.settlement-payout-request}",
+            topics = "${custom.kafka.topic.settlement-payout-requested}",
             groupId = "settlement-stub-group"
     )
     public void handlePayoutRequest(String message) {

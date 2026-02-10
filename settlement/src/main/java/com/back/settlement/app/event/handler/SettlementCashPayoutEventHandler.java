@@ -17,7 +17,7 @@ public class SettlementCashPayoutEventHandler {
     private final KafkaEventPublisher kafkaEventPublisher;
     private final String topic;
 
-    public SettlementCashPayoutEventHandler(KafkaEventPublisher kafkaEventPublisher, @Value("${custom.kafka.topic.settlement-payout-request}") String topic) {
+    public SettlementCashPayoutEventHandler(KafkaEventPublisher kafkaEventPublisher, @Value("${custom.kafka.topic.settlement-payout-requested}") String topic) {
         this.kafkaEventPublisher = kafkaEventPublisher;
         this.topic = topic;
     }
