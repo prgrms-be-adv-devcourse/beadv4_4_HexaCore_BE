@@ -5,6 +5,7 @@ import com.back.cash.dto.request.TossConfirmRequest;
 import com.back.cash.dto.request.TossFailRequestDto;
 import com.back.cash.dto.response.ConfirmResultResponseDto;
 import com.back.cash.dto.response.TossConfirmResponseDto;
+import com.back.common.code.FailureCode;
 import com.back.common.code.SuccessCode;
 import com.back.common.response.CommonResponse;
 import lombok.RequiredArgsConstructor;
@@ -24,13 +25,23 @@ public class ApiV1CashPaymentController {
     private final CashFacade cashFacade;
 
     @PostMapping("/confirm/toss")
-    public ResponseEntity<CommonResponse<TossConfirmResponseDto>> confirm(@RequestBody TossConfirmRequest req) {
+    public ResponseEntity<CommonResponse<?>> confirm(@RequestBody TossConfirmRequest req) {
 
         ConfirmResultResponseDto result = cashFacade.confirmTossPayment(req);
 
         if (result.isPending()) {
             return ResponseEntity.status(HttpStatus.ACCEPTED)
                     .body(CommonResponse.success(SuccessCode.ACCEPTED, null));
+        }
+
+        if (!result.isSuccess()) {
+            return ResponseEntity.status(FailureCode.PAYMENT_REJECTED.getHttpStatus())
+                    .body(CommonResponse.createError(
+                            FailureCode.PAYMENT_REJECTED.getHttpStatus(),
+                            FailureCode.PAYMENT_REJECTED.getCode(),
+                            result.failReason(),
+                            result.errorCode()
+                    ));
         }
 
         return ResponseEntity.ok(CommonResponse.success(SuccessCode.OK, TossConfirmResponseDto.from(result)));
