@@ -2,7 +2,6 @@ package com.back.settlement.app.usecase;
 
 import com.back.settlement.adapter.out.SettlementItemRepository;
 import com.back.settlement.adapter.out.SettlementRepository;
-import com.back.settlement.app.support.DomainEventPublisher;
 import com.back.settlement.app.support.LocalDateUtils;
 import com.back.settlement.app.support.SettlementSupport;
 import com.back.settlement.batch.SettlementWithItems;
@@ -24,7 +23,6 @@ public class SettlementCreateUseCase {
     private final SettlementRepository settlementRepository;
     private final SettlementItemRepository settlementItemRepository;
     private final SettlementSupport settlementSupport;
-    private final DomainEventPublisher domainEventPublisher;
 
     public SettlementWithItems createSettlement(Long payeeId, YearMonth targetMonth) {
         LocalDateTime startAt = LocalDateUtils.startOfMonth(targetMonth);
@@ -46,6 +44,6 @@ public class SettlementCreateUseCase {
         });
         settlementItemRepository.saveAll(items);
         saved.start();
-        domainEventPublisher.publishEvents(saved);
+        settlementRepository.save(saved);
     }
 }

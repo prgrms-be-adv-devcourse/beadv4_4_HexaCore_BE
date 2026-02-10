@@ -3,9 +3,7 @@ package com.back.settlement.domain;
 import static com.back.common.code.FailureCode.*;
 import static com.back.settlement.domain.SettlementEventType.SETTLEMENT_PRODUCT_SALES_AMOUNT;
 
-import com.back.common.entity.BaseTimeEntity;
 import com.back.common.exception.BadRequestException;
-import com.back.settlement.domain.event.SettlementEvent;
 import com.back.settlement.domain.event.SettlementFailedEvent;
 import com.back.settlement.domain.event.SettlementHoldEvent;
 import com.back.settlement.domain.event.SettlementInternalCompletedEvent;
@@ -19,12 +17,9 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -38,7 +33,7 @@ import org.springframework.util.StringUtils;
 @Builder(access = AccessLevel.PRIVATE)
 @Getter
 @Table(name = "settlement")
-public class Settlement extends BaseTimeEntity {
+public class Settlement extends BaseAggregateEntity<Settlement> {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -81,9 +76,6 @@ public class Settlement extends BaseTimeEntity {
     @NotNull
     @Column(name = "total_net_amount", precision = 15, scale = 2)
     private BigDecimal totalNetAmount;
-
-    @Transient
-    private final List<SettlementEvent> domainEvents = new ArrayList<>();
 
     private static final String SYSTEM_NAME = "SYSTEM";
 
@@ -182,18 +174,4 @@ public class Settlement extends BaseTimeEntity {
         }
     }
 
-    // 도메인 이벤트 등록
-    private void registerEvent(SettlementEvent event) {
-        this.domainEvents.add(event);
-    }
-
-    // 등록된 도메인 이벤트 목록 조회
-    public List<SettlementEvent> getDomainEvents() {
-        return Collections.unmodifiableList(domainEvents);
-    }
-
-    // 등록된 도메인 이벤트 제거
-    public void clearDomainEvents() {
-        this.domainEvents.clear();
-    }
 }

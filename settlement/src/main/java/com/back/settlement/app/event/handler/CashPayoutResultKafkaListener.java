@@ -3,7 +3,6 @@ package com.back.settlement.app.event.handler;
 import com.back.common.event.Envelope;
 import com.back.settlement.adapter.out.SettlementRepository;
 import com.back.settlement.app.event.payload.PayoutResultPayload;
-import com.back.settlement.app.support.DomainEventPublisher;
 import com.back.settlement.domain.Settlement;
 import tools.jackson.core.type.TypeReference;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +17,6 @@ import tools.jackson.databind.json.JsonMapper;
 @RequiredArgsConstructor
 public class CashPayoutResultKafkaListener {
     private final SettlementRepository settlementRepository;
-    private final DomainEventPublisher domainEventPublisher;
     private final JsonMapper jsonMapper;
 
     @KafkaListener(
@@ -54,6 +52,6 @@ public class CashPayoutResultKafkaListener {
         } else {
             settlement.fail(data.failReason());
         }
-        domainEventPublisher.publishEvents(settlement);
+        settlementRepository.save(settlement);
     }
 }

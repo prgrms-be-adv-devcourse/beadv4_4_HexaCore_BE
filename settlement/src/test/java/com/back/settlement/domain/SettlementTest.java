@@ -84,7 +84,7 @@ class SettlementTest {
 
             // then
             assertThat(settlement.getStatus()).isEqualTo(SettlementStatus.HOLD);
-            SettlementHoldEvent event = (SettlementHoldEvent) settlement.getDomainEvents().get(0);
+            SettlementHoldEvent event = (SettlementHoldEvent) settlement.domainEvents().iterator().next();
             assertThat(event.reason()).isEqualTo("판매자 계좌 정보 없음");
         }
 
@@ -179,8 +179,8 @@ class SettlementTest {
             settlement.start();
 
             // then
-            assertThat(settlement.getDomainEvents()).hasSize(1);
-            assertThat(settlement.getDomainEvents().get(0)).isInstanceOf(SettlementStartedEvent.class);
+            assertThat(settlement.domainEvents()).hasSize(1);
+            assertThat(settlement.domainEvents().iterator().next()).isInstanceOf(SettlementStartedEvent.class);
         }
 
         @Test
@@ -195,8 +195,8 @@ class SettlementTest {
             settlement.complete();
 
             // then
-            assertThat(settlement.getDomainEvents()).hasSize(1);
-            assertThat(settlement.getDomainEvents().get(0))
+            assertThat(settlement.domainEvents()).hasSize(1);
+            assertThat(settlement.domainEvents().iterator().next())
                     .isInstanceOf(SettlementInternalCompletedEvent.class);
         }
 
@@ -211,8 +211,8 @@ class SettlementTest {
             settlement.hold("테스트 사유");
 
             // then
-            assertThat(settlement.getDomainEvents()).hasSize(1);
-            SettlementHoldEvent event = (SettlementHoldEvent) settlement.getDomainEvents().get(0);
+            assertThat(settlement.domainEvents()).hasSize(1);
+            SettlementHoldEvent event = (SettlementHoldEvent) settlement.domainEvents().iterator().next();
             assertThat(event.reason()).isEqualTo("테스트 사유");
         }
 
@@ -227,8 +227,8 @@ class SettlementTest {
             settlement.fail("실패 사유");
 
             // then
-            assertThat(settlement.getDomainEvents()).hasSize(1);
-            SettlementFailedEvent event = (SettlementFailedEvent) settlement.getDomainEvents().get(0);
+            assertThat(settlement.domainEvents()).hasSize(1);
+            SettlementFailedEvent event = (SettlementFailedEvent) settlement.domainEvents().iterator().next();
             assertThat(event.reason()).isEqualTo("실패 사유");
         }
 
@@ -238,13 +238,13 @@ class SettlementTest {
             // given
             Settlement settlement = SettlementFixture.createPendingSettlement(1L, 100L);
             settlement.start();
-            assertThat(settlement.getDomainEvents()).isNotEmpty();
+            assertThat(settlement.domainEvents()).isNotEmpty();
 
             // when
             settlement.clearDomainEvents();
 
             // then
-            assertThat(settlement.getDomainEvents()).isEmpty();
+            assertThat(settlement.domainEvents()).isEmpty();
         }
     }
 

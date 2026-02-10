@@ -8,7 +8,6 @@ import static org.mockito.Mockito.never;
 import com.back.common.event.Envelope;
 import com.back.settlement.adapter.out.SettlementRepository;
 import com.back.settlement.app.event.payload.PayoutResultPayload;
-import com.back.settlement.app.support.DomainEventPublisher;
 import com.back.settlement.domain.Settlement;
 import com.back.settlement.domain.SettlementStatus;
 import com.back.settlement.fixture.SettlementFixture;
@@ -31,14 +30,11 @@ class CashPayoutResultKafkaListenerTest {
     @Mock
     private SettlementRepository settlementRepository;
 
-    @Mock
-    private DomainEventPublisher domainEventPublisher;
-
     private CashPayoutResultKafkaListener listener;
 
     @BeforeEach
     void setUp() {
-        listener = new CashPayoutResultKafkaListener(settlementRepository, domainEventPublisher, jsonMapper);
+        listener = new CashPayoutResultKafkaListener(settlementRepository, jsonMapper);
     }
 
     private Settlement createSettlement(Long id, SettlementStatus status) {
@@ -62,8 +58,8 @@ class CashPayoutResultKafkaListenerTest {
     class WhenPayoutSuccess {
 
         @Test
-        @DisplayName("정산 상태를 COMPLETED로 변경하고 도메인 이벤트를 발행한다")
-        void completesSettlementAndPublishesEvents() throws Exception {
+        @DisplayName("정산 상태를 COMPLETED로 변경하고 저장한다")
+        void completesSettlementAndSaves() throws Exception {
             // given
             Long settlementId = 1L;
             Settlement settlement = createSettlement(settlementId, SettlementStatus.IN_PROGRESS);
@@ -74,7 +70,7 @@ class CashPayoutResultKafkaListenerTest {
 
             // then
             assertThat(settlement.getStatus()).isEqualTo(SettlementStatus.COMPLETED);
-            then(domainEventPublisher).should().publishEvents(settlement);
+            then(settlementRepository).should().save(settlement);
         }
     }
 
@@ -83,8 +79,8 @@ class CashPayoutResultKafkaListenerTest {
     class WhenPayoutFailure {
 
         @Test
-        @DisplayName("정산 상태를 FAILED로 변경하고 실패 사유와 함께 도메인 이벤트를 발행한다")
-        void failsSettlementWithReasonAndPublishesEvents() throws Exception {
+        @DisplayName("정산 상태를 FAILED로 변경하고 저장한다")
+        void failsSettlementWithReasonAndSaves() throws Exception {
             // given
             Long settlementId = 1L;
             String failReason = "잔액 부족";
@@ -96,7 +92,7 @@ class CashPayoutResultKafkaListenerTest {
 
             // then
             assertThat(settlement.getStatus()).isEqualTo(SettlementStatus.FAILED);
-            then(domainEventPublisher).should().publishEvents(settlement);
+            then(settlementRepository).should().save(settlement);
         }
     }
 
@@ -105,7 +101,7 @@ class CashPayoutResultKafkaListenerTest {
     class WhenSettlementNotFound {
 
         @Test
-        @DisplayName("도메인 이벤트를 발행하지 않고 조기 종료한다")
+        @DisplayName("저장하지 않고 조기 종료한다")
         void doesNothingWhenNotFound() throws Exception {
             // given
             Long settlementId = 999L;
@@ -115,7 +111,7 @@ class CashPayoutResultKafkaListenerTest {
             listener.listen(successMessage(settlementId));
 
             // then
-            then(domainEventPublisher).should(never()).publishEvents(org.mockito.ArgumentMatchers.any());
+            then(settlementRepository).should(never()).save(org.mockito.ArgumentMatchers.any());
         }
     }
 
@@ -136,7 +132,7 @@ class CashPayoutResultKafkaListenerTest {
 
             // then
             assertThat(settlement.getStatus()).isEqualTo(SettlementStatus.COMPLETED);
-            then(domainEventPublisher).should(never()).publishEvents(org.mockito.ArgumentMatchers.any());
+            then(settlementRepository).should(never()).save(org.mockito.ArgumentMatchers.any());
         }
 
         @Test
@@ -152,7 +148,7 @@ class CashPayoutResultKafkaListenerTest {
 
             // then
             assertThat(settlement.getStatus()).isEqualTo(SettlementStatus.FAILED);
-            then(domainEventPublisher).should(never()).publishEvents(org.mockito.ArgumentMatchers.any());
+            then(settlementRepository).should(never()).save(org.mockito.ArgumentMatchers.any());
         }
     }
 }
