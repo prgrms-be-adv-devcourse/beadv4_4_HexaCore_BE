@@ -25,7 +25,7 @@ public class ImageFacade {
     private final UploadImageUseCase uploadImageUseCase;
     private final FlushImageUseCase flushImageUseCase;
 
-    @Loggable
+    @Loggable(logArgs = false, logResult = false)
     public ImageUploadResponseDto uploadImage(List<MultipartFile> images, ImageCategory category) {
         List<File> allTemporaryFiles = new ArrayList<>();
 
