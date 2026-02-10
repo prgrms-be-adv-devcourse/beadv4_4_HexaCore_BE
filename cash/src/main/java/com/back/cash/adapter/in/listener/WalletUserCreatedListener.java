@@ -17,7 +17,7 @@ public class WalletUserCreatedListener {
 
     @KafkaListener(
             topics = "${custom.kafka.topic.wallet-create-requests}",
-            groupId = "${custom.kafka.consumer.group-id}"
+            groupId = "${spring.kafka.consumer.group-id}"
     )
     @Transactional
     public void on(WalletCreateRequestedEvent event) {
