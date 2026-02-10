@@ -67,7 +67,7 @@ class CashFacadeTest {
         // given
         TossConfirmRequest req = new TossConfirmRequest(PAYMENT_KEY, ORDER_ID, bd("18000"));
         PaymentFailedRequestDto failedDto = new PaymentFailedRequestDto(REL_TYPE, REL_ID);
-        ConfirmResultResponseDto failResult = ConfirmResultResponseDto.fail(failedDto, "TOSS_CONFIRM_REJECTED");
+        ConfirmResultResponseDto failResult = ConfirmResultResponseDto.fail(failedDto, "TOSS_CONFIRM_REJECTED", "결제 실패");
 
         given(confirmTossPaymentUseCase.execute(req)).willReturn(failResult);
 
@@ -76,7 +76,9 @@ class CashFacadeTest {
 
         // then
         assertThat(result.isSuccess()).isFalse();
-        assertThat(result.failReason()).isEqualTo("TOSS_CONFIRM_REJECTED");
+        assertThat(result.errorCode()).isEqualTo("TOSS_CONFIRM_REJECTED");
+        assertThat(result.failReason()).isEqualTo("결제 실패");
+        ;
     }
 
     @Test

@@ -2,6 +2,7 @@ package com.back.cash.app.usecase;
 
 import com.back.cash.adapter.out.PaymentRepository;
 import com.back.cash.adapter.out.TossPaymentsClient;
+import com.back.cash.adapter.out.exception.TossPaymentException;
 import com.back.cash.app.CashLogSupport;
 import com.back.cash.app.ConfirmPaymentSupport;
 import com.back.cash.app.WalletSupport;
@@ -397,6 +398,35 @@ class ConfirmTossPaymentUseCaseTest {
         // then
         assertThat(result.isSuccess()).isFalse();
         assertThat(result.failedDto()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("[실패-토스거부] TossPaymentException 발생 시 토스 에러 code/message가 failReason에 전달된다")
+    void execute_whenTossReject_thenErrorCodeAndMessagePropagated() {
+        // given
+        BigDecimal pgAmount = bd("30000");
+        TossConfirmRequest req = req(pgAmount);
+        Payment payment = Payment.builder()
+                .userId(USER_ID).relType(REL_TYPE).relId(REL_ID)
+                .tossOrderId(ORDER_ID)
+                .totalAmount(bd("30000"))
+                .walletUsedAmount(bd("0"))
+                .pgAmount(pgAmount)
+                .status(PaymentStatus.READY)
+                .build();
+
+        given(paymentRepository.findWithLockByTossOrderId(ORDER_ID)).willReturn(Optional.of(payment));
+        doThrow(new TossPaymentException("NOT_FOUND_PAYMENT", "존재하지 않는 결제 입니다."))
+                .when(tossPaymentsClient).confirm(PAYMENT_KEY, ORDER_ID, pgAmount);
+
+        // when
+        ConfirmResultResponseDto result = confirmTossPaymentUseCase.execute(req);
+
+        // then
+        assertThat(result.isSuccess()).isFalse();
+        assertThat(result.errorCode()).isEqualTo("NOT_FOUND_PAYMENT");
+        assertThat(result.failReason()).isEqualTo("존재하지 않는 결제 입니다.");
+        assertThat(payment.getStatus()).isEqualTo(PaymentStatus.FAIL);
     }
 
     // ========== 타임아웃/네트워크 오류 → PENDING ==========
