@@ -47,10 +47,10 @@ public class LoggingAspect {
             result = joinPoint.proceed(); // Execute the method
             return result;
         } catch (IllegalArgumentException e) {
-            log.error("#### {}.{}() 에서 잘못된 인자: {} in {}", className, methodName, argsString, e.getMessage());
+            log.error("#### {}.{}() 에서 잘못된 인자: {} in {}", className, methodName, argsString, e.getMessage(), e);
             throw e;
         } catch (Throwable e) {
-            log.error("#### {}.{}() 에서 예외 발생: {}", className, methodName, e.getMessage());
+            log.error("#### {}.{}() 에서 예외 발생: {}", className, methodName, e.getMessage(), e);
             throw e;
         } finally {
             long endTime = System.currentTimeMillis();
