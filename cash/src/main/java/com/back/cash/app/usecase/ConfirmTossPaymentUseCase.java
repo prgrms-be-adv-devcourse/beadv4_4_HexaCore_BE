@@ -1,6 +1,7 @@
 package com.back.cash.app.usecase;
 
 import com.back.cash.adapter.out.TossPaymentsClient;
+import com.back.cash.adapter.out.exception.TossPaymentException;
 import com.back.cash.app.ConfirmPaymentSupport;
 import com.back.cash.dto.request.TossConfirmRequest;
 import com.back.cash.dto.response.ConfirmResultResponseDto;
@@ -33,7 +34,7 @@ public class ConfirmTossPaymentUseCase {
         // 결과 반영
         return switch (tossResult.status()) {
             case SUCCESS -> confirmPaymentSupport.applySuccess(req.orderId(), req.paymentKey());
-            case FAIL -> confirmPaymentSupport.applyFailure(req.orderId(), tossResult.failReason());
+            case FAIL -> confirmPaymentSupport.applyFailure(req.orderId(), tossResult.errorCode(), tossResult.failReason());
             case UNKNOWN -> {
                 log.warn("[TOSS_CONFIRM_UNKNOWN] orderId={} - 결제 상태 불확실", req.orderId());
                 yield ConfirmResultResponseDto.pending();
@@ -57,19 +58,22 @@ public class ConfirmTossPaymentUseCase {
             log.error("[TOSS_CONFIRM_UNKNOWN] orderId={}, paymentKey={}, error={}",
                     req.orderId(), req.paymentKey(), e.getMessage(), e);
             return TossConfirmResult.unknown();
+        } catch (TossPaymentException e) {
+            log.error("[TOSS_CONFIRM_REJECT] orderId={}, code={}, msg={}", req.orderId(), e.getCode(), e.getMessage());
+            return TossConfirmResult.fail(e.getCode(), e.getMessage());
         } catch (Exception e) {
-            log.error("[TOSS_CONFIRM_FAIL] orderId={}, paymentKey={}, amount={}, error={}",
+            log.error("[TOSS_CONFIRM_ERROR] orderId={}, paymentKey={}, amount={}, error={}",
                     req.orderId(), req.paymentKey(), req.amount(), e.getMessage(), e);
-            return TossConfirmResult.fail(e.getMessage());
+            return TossConfirmResult.fail("SYSTEM_ERROR", "결제 시스템 내부 오류가 발생했습니다.");
         }
     }
 
     private enum TossConfirmStatus { SUCCESS, FAIL, UNKNOWN }
 
-    private record TossConfirmResult(TossConfirmStatus status, String failReason) {
-        static TossConfirmResult success() { return new TossConfirmResult(TossConfirmStatus.SUCCESS, null); }
-        static TossConfirmResult fail(String reason) { return new TossConfirmResult(TossConfirmStatus.FAIL, reason); }
-        static TossConfirmResult unknown() { return new TossConfirmResult(TossConfirmStatus.UNKNOWN, null); }
+    private record TossConfirmResult(TossConfirmStatus status, String errorCode, String failReason) {
+        static TossConfirmResult success() { return new TossConfirmResult(TossConfirmStatus.SUCCESS, null, null); }
+        static TossConfirmResult fail(String code, String reason) { return new TossConfirmResult(TossConfirmStatus.FAIL, code, reason); }
+        static TossConfirmResult unknown() { return new TossConfirmResult(TossConfirmStatus.UNKNOWN, null, null); }
     }
 
 }

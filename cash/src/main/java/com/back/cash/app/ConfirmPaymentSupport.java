@@ -92,7 +92,7 @@ public class ConfirmPaymentSupport {
      * 토스 실패 시 DB 반영 (트랜잭션)
      */
     @Transactional
-    public ConfirmResultResponseDto applyFailure(String orderId, String failReason) {
+    public ConfirmResultResponseDto applyFailure(String orderId, String errorCode, String failReason) {
         Payment payment = paymentRepository.findWithLockByTossOrderId(orderId)
                 .orElseThrow(() -> new EntityNotFoundException(FailureCode.PAYMENT_NOT_FOUND));
 
@@ -101,7 +101,7 @@ public class ConfirmPaymentSupport {
             return ConfirmResultResponseDto.success(PaymentMapper.toCompletedDto(payment));
         }
         if (payment.getStatus() == PaymentStatus.FAIL) {
-            return ConfirmResultResponseDto.fail(PaymentMapper.toFailedDto(payment), failReason);
+            return ConfirmResultResponseDto.fail(PaymentMapper.toFailedDto(payment), errorCode, failReason);
         }
 
         handleConfirmFail(payment);
@@ -110,7 +110,7 @@ public class ConfirmPaymentSupport {
                 payment.getRelType(), payment.getRelId()
         ));
 
-        return ConfirmResultResponseDto.fail(PaymentMapper.toFailedDto(payment), failReason);
+        return ConfirmResultResponseDto.fail(PaymentMapper.toFailedDto(payment), errorCode, failReason);
     }
 
     private void applyPgTopUpThenHold(Payment payment) {
