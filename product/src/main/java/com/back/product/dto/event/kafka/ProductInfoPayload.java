@@ -1,8 +1,11 @@
-package com.back.common.product.event.payload;
+package com.back.product.dto.event.kafka;
+
+import lombok.Builder;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+@Builder
 public record ProductInfoPayload(
         Long productInfoId,
         BrandPayload brand,

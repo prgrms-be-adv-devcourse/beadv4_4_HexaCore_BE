@@ -1,7 +1,7 @@
 package com.back.product.mapper;
 
-import com.back.common.product.event.payload.OptionPayload;
 import com.back.product.domain.OptionGroup;
+import com.back.product.dto.event.kafka.OptionPayload;
 import com.back.product.dto.model.OptionDto;
 import com.back.product.dto.response.OptionGroupModifyResponseDto;
 import org.springframework.stereotype.Component;
@@ -37,6 +37,13 @@ public class OptionGroupMapper {
     public OptionGroupModifyResponseDto toModifyResponseDto(OptionGroup group) {
         return OptionGroupModifyResponseDto.builder()
                 .group(toModifiedGroupDto(group))
+                .build();
+    }
+
+    public OptionPayload.GroupPayload toPayload(OptionDto.GroupDto group) {
+        return OptionPayload.GroupPayload.builder()
+                .groupId(group.id())
+                .groupName(group.name())
                 .build();
     }
 }

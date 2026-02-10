@@ -8,9 +8,9 @@ import com.back.product.dto.command.*;
 import com.back.product.dto.model.*;
 import com.back.product.dto.request.*;
 import com.back.product.dto.response.*;
-import com.back.product.dto.event.ProductCreationCompletedEvent;
-import com.back.product.dto.event.ProductDeletionCompletedEvent;
-import com.back.product.dto.event.ProductUpdateCompletedEvent;
+import com.back.product.dto.event.spring.ProductCreationCompletedEvent;
+import com.back.product.dto.event.spring.ProductDeletionCompletedEvent;
+import com.back.product.dto.event.spring.ProductUpdateCompletedEvent;
 import com.back.product.mapper.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +37,7 @@ public class ProductFacade {
     private final ProductInfoMapper productInfoMapper;
     private final ProductMapper productMapper;
     private final OptionMapper optionMapper;
+    private final SpringEventMapper springEventMapper;
 
     private final BrandDataCommandMapper brandDataCommandMapper;
     private final CategoryDataCommandMapper categoryDataCommandMapper;
@@ -156,8 +157,7 @@ public class ProductFacade {
 
         productInfoUseCase.deleteProductInfo(productInfoId);
 
-        ProductDeletionCompletedEvent event = new ProductDeletionCompletedEvent(productInfoId);
-        applicationEventPublisher.publishEvent(event);
+        publishProductDeleteEvent(productInfoId);
     }
 
     @Transactional(readOnly = true)
@@ -235,7 +235,7 @@ public class ProductFacade {
 
         String thumbnailUrl = findThumbnailUrl(productDtos);
 
-        ProductUpdateCompletedEvent event = new ProductUpdateCompletedEvent(productInfoDto, optionDtos, thumbnailUrl);
+        ProductUpdateCompletedEvent event = springEventMapper.toProductUpdatedEvent(productInfoDto, optionDtos, thumbnailUrl);
 
         applicationEventPublisher.publishEvent(event);
     }
@@ -247,7 +247,13 @@ public class ProductFacade {
 
         String thumbnailUrl = findThumbnailUrl(productDtos);
 
-        ProductCreationCompletedEvent event = new ProductCreationCompletedEvent(productInfoDto, optionDtos, thumbnailUrl);
+        ProductCreationCompletedEvent event = springEventMapper.toProductCreatedEvent(productInfoDto, optionDtos, thumbnailUrl);
+
+        applicationEventPublisher.publishEvent(event);
+    }
+
+    private void publishProductDeleteEvent(Long productInfoId) {
+        ProductDeletionCompletedEvent event = springEventMapper.toProductDeletedEvent(productInfoId);
 
         applicationEventPublisher.publishEvent(event);
     }

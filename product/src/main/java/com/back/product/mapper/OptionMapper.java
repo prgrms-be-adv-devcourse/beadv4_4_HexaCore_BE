@@ -1,8 +1,8 @@
 package com.back.product.mapper;
 
-import com.back.common.product.event.payload.OptionPayload;
 import com.back.product.domain.OptionGroup;
 import com.back.product.domain.OptionValue;
+import com.back.product.dto.event.kafka.OptionPayload;
 import com.back.product.dto.model.OptionDto;
 import com.back.product.dto.response.OptionListResponseDto;
 import com.back.product.dto.response.OptionResponseDto;
@@ -57,6 +57,18 @@ public class OptionMapper {
     public OptionResponseDto toResponseDto(OptionDto optionDto) {
         return OptionResponseDto.builder()
                 .option(optionDto)
+                .build();
+    }
+
+    public OptionPayload toPayload(OptionDto optionDto) {
+        OptionPayload.GroupPayload groupPayload = optionGroupMapper.toPayload(optionDto.group());
+        List<OptionPayload.ValuePayload> valuePayloads = optionDto.values().stream()
+                .map(optionValueMapper::toPayload)
+                .toList();
+
+        return OptionPayload.builder()
+                .group(groupPayload)
+                .values(valuePayloads)
                 .build();
     }
 }

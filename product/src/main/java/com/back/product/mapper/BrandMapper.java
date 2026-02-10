@@ -1,10 +1,9 @@
 package com.back.product.mapper;
 
-import com.back.common.product.event.payload.BrandPayload;
 import com.back.product.document.ProductDocument;
 import com.back.product.domain.Brand;
 import com.back.product.dto.command.BrandDataCommand;
-import com.back.product.dto.request.BrandDataRequestDto;
+import com.back.product.dto.event.kafka.BrandPayload;
 import com.back.product.dto.model.BrandDto;
 import com.back.product.dto.response.BrandListResponseDto;
 import com.back.product.dto.response.BrandResponseDto;
@@ -56,9 +55,9 @@ public class BrandMapper {
     }
 
     public BrandPayload toPayload(BrandDto brandDto) {
-        return new BrandPayload(
-                brandDto.brandId(),
-                brandDto.name()
-        );
+        return BrandPayload.builder()
+                .brandId(brandDto.brandId())
+                .name(brandDto.name())
+                .build();
     }
 }

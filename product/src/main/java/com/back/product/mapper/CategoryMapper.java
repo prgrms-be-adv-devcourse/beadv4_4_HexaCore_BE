@@ -1,11 +1,10 @@
 package com.back.product.mapper;
 
-import com.back.common.product.event.payload.CategoryPayload;
 import com.back.product.document.ProductDocument;
 import com.back.product.domain.Category;
 import com.back.product.dto.command.CategoryDataCommand;
+import com.back.product.dto.event.kafka.CategoryPayload;
 import com.back.product.dto.model.CategoryDto;
-import com.back.product.dto.request.CategoryDataRequestDto;
 import com.back.product.dto.response.CategoryListResponseDto;
 import com.back.product.dto.response.CategoryResponseDto;
 import org.springframework.stereotype.Component;
@@ -56,9 +55,9 @@ public class CategoryMapper {
     }
 
     public CategoryPayload toPayload(CategoryDto categoryDto) {
-        return new CategoryPayload(
-                categoryDto.categoryId(),
-                categoryDto.name()
-        );
+        return CategoryPayload.builder()
+                .categoryId(categoryDto.categoryId())
+                .name(categoryDto.name())
+                .build();
     }
 }

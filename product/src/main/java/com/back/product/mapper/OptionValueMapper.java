@@ -1,8 +1,8 @@
 package com.back.product.mapper;
 
-import com.back.common.product.event.payload.OptionPayload;
 import com.back.product.domain.OptionGroup;
 import com.back.product.domain.OptionValue;
+import com.back.product.dto.event.kafka.OptionPayload;
 import com.back.product.dto.model.OptionDto;
 import com.back.product.dto.response.OptionValueModifyResponseDto;
 import lombok.RequiredArgsConstructor;
@@ -48,6 +48,13 @@ public class OptionValueMapper {
     public OptionValueModifyResponseDto toModifyResponseDto(OptionValue value) {
         return OptionValueModifyResponseDto.builder()
                 .value(toModifiedValueDto(value))
+                .build();
+    }
+
+    public OptionPayload.ValuePayload toPayload(OptionDto.ValueDto value) {
+        return OptionPayload.ValuePayload.builder()
+                .valueId(value.id())
+                .valueName(value.name())
                 .build();
     }
 }

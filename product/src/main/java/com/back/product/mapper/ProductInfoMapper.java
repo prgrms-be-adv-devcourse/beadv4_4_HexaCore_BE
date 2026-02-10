@@ -1,17 +1,11 @@
 package com.back.product.mapper;
 
-import com.back.common.product.event.payload.ProductInfoPayload;
-import com.back.product.domain.Brand;
-import com.back.product.domain.Category;
 import com.back.product.domain.ProductInfo;
 import com.back.product.dto.command.ProductInfoDataCommand;
+import com.back.product.dto.event.kafka.ProductInfoPayload;
 import com.back.product.dto.model.ProductInfoDto;
-import com.back.product.dto.request.ProductInfoDataRequestDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 @Component
 @RequiredArgsConstructor
@@ -51,6 +45,18 @@ public class ProductInfoMapper {
                 .code(payload.code())
                 .releasePrice(payload.releasePrice())
                 .releaseDate(payload.releaseDate())
+                .build();
+    }
+
+    public ProductInfoPayload toPayload(ProductInfoDto productInfoDto) {
+        return ProductInfoPayload.builder()
+                .productInfoId(productInfoDto.productInfoId())
+                .brand(brandMapper.toPayload(productInfoDto.brand()))
+                .category(categoryMapper.toPayload(productInfoDto.category()))
+                .name(productInfoDto.name())
+                .code(productInfoDto.code())
+                .releasePrice(productInfoDto.releasePrice())
+                .releaseDate(productInfoDto.releaseDate())
                 .build();
     }
 }
