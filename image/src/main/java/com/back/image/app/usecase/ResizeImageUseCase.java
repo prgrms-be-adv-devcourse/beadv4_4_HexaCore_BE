@@ -1,5 +1,6 @@
 package com.back.image.app.usecase;
 
+import com.back.common.annotation.Loggable;
 import com.back.common.code.FailureCode;
 import com.back.common.exception.CustomException;
 import com.back.image.config.ImageResizeProperties;
@@ -23,6 +24,7 @@ public class ResizeImageUseCase {
     private final ImageUtility imageUtility;
     private final ImageResizeProperties imageResizeProperties;
 
+    @Loggable
     public List<File> resizeMultipleImage(List<File> convertedImages) {
         return convertedImages.stream().map(f -> {
             try {
@@ -34,6 +36,7 @@ public class ResizeImageUseCase {
         }).toList();
     }
 
+    @Loggable
     public File resizeImage(File convertedImage) {
         try {
             if (convertedImage == null || !convertedImage.exists()) {

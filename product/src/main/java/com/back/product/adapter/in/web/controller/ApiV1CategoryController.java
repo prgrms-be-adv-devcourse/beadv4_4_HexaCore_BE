@@ -1,5 +1,6 @@
 package com.back.product.adapter.in.web.controller;
 
+import com.back.common.annotation.Loggable;
 import com.back.common.code.SuccessCode;
 import com.back.common.response.CommonResponse;
 import com.back.product.adapter.in.web.api.CategoryApiController;
@@ -21,6 +22,7 @@ public class ApiV1CategoryController implements CategoryApiController {
     private final ProductFacade productFacade;
 
     @Override
+    @Loggable
     @GetMapping
     public CommonResponse<CategoryListResponseDto> getCategories() {
         CategoryListResponseDto response = CategoryListResponseDto.builder()
@@ -30,6 +32,7 @@ public class ApiV1CategoryController implements CategoryApiController {
     }
 
     @Override
+    @Loggable
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public CommonResponse<CategoryListResponseDto> createCategories(@RequestBody @Valid CategoryListCreateRequestDto request) {
@@ -38,6 +41,7 @@ public class ApiV1CategoryController implements CategoryApiController {
     }
 
     @Override
+    @Loggable
     @PutMapping("/{categoryId}")
     public CommonResponse<CategoryResponseDto> modifyCategory(
             @PathVariable Long categoryId,
@@ -47,6 +51,7 @@ public class ApiV1CategoryController implements CategoryApiController {
     }
 
     @Override
+    @Loggable
     @DeleteMapping("/{categoryId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public CommonResponse<?> deleteCategory(@PathVariable Long categoryId) {
