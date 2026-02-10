@@ -16,11 +16,11 @@ import com.back.common.code.FailureCode;
 import com.back.common.exception.BadRequestException;
 import com.back.common.exception.ConflictException;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -32,7 +32,7 @@ public class ChatReportMessageUseCase {
     private final ChatSupport chatSupport;
     private final ApplicationEventPublisher eventPublisher;
     private final ChatOutboxRepository chatOutboxRepository;
-    private final ObjectMapper objectMapper;
+    private final JsonMapper jsonMapper;
 
     public ChatMessageReportResponseDto reportMessage(Long reporterUserId, ChatMessageReportRequestDto requestDto) {
         Long messageId = requestDto.chatMessageId();
@@ -72,8 +72,8 @@ public class ChatReportMessageUseCase {
 
             String payloadJson;
             try {
-                payloadJson = objectMapper.writeValueAsString(payload);
-            } catch (JsonProcessingException e) {
+                payloadJson = jsonMapper.writeValueAsString(payload);
+            } catch (Exception e) {
                 throw new IllegalStateException("Outbox payload 직렬화 실패", e);
             }
 
