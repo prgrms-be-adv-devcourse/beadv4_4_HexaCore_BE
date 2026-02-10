@@ -36,8 +36,7 @@ public class ApiV1CashPaymentController {
         return ResponseEntity.ok(CommonResponse.success(SuccessCode.OK, TossConfirmResponseDto.from(result)));
     }
 
-    // todo: 경로 변경
-    @PostMapping("/fail")
+    @PostMapping("/fail/toss")
     public ResponseEntity<CommonResponse<?>> fail(@RequestBody TossFailRequestDto req) {
         log.info("[TOSS_FAIL] orderId={}, code={}, message={}", req.orderId(), req.code(), req.message());
         cashFacade.failTossPayment(req);
