@@ -4,6 +4,8 @@ import com.back.cash.domain.Payment;
 import com.back.cash.domain.enums.PaymentStatus;
 import com.back.common.dto.cash.enums.PayAndHoldStatus;
 import com.back.common.dto.cash.request.PayAndHoldRequestDto;
+import com.back.common.dto.cash.request.PaymentCompletedRequestDto;
+import com.back.common.dto.cash.request.PaymentFailedRequestDto;
 import com.back.common.dto.cash.response.PayAndHoldResponseDto;
 
 import java.math.BigDecimal;
@@ -50,4 +52,18 @@ public class  PaymentMapper {
         );
     }
 
+    public static PaymentCompletedRequestDto toCompletedDto(Payment payment) {
+        return new PaymentCompletedRequestDto(
+                payment.getRelType(),
+                payment.getRelId(),
+                payment.getTotalAmount()
+        );
+    }
+
+    public static PaymentFailedRequestDto toFailedDto(Payment payment) {
+        return new PaymentFailedRequestDto(
+                payment.getRelType(),
+                payment.getRelId()
+        );
+    }
 }
