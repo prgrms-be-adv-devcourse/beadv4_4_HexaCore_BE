@@ -1,10 +1,13 @@
 package com.back.product.app.usecase;
 
+import com.back.product.app.usecase.command.ProductDocumentUseCase;
+import com.back.product.app.usecase.query.ProductDocumentSupport;
 import com.back.product.document.ProductDocument;
+import com.back.product.dto.command.ProductSearchCommand;
 import com.back.product.dto.enums.ProductSortType;
 import com.back.product.dto.request.ProductSearchRequestDto;
-import com.back.product.dto.response.ProductSearchListResponseDto;
 import com.back.product.dto.response.ProductSearchResponseDto;
+import com.back.product.dto.model.ProductSearchDto;
 import com.back.product.mapper.ProductDocumentMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -47,29 +50,29 @@ class ProductDocumentUseCaseTest {
         @DisplayName("성공: 검색 조건으로 상품 페이지를 조회한다")
         void findProductPage_Success() {
             // given
-            ProductSearchRequestDto request = ProductSearchRequestDto.builder()
+            ProductSearchCommand command = ProductSearchCommand.builder()
                     .keyword("Test")
                     .brandIds(List.of(1L))
                     .categoryIds(List.of(1L))
                     .minPrice(BigDecimal.valueOf(10000))
                     .maxPrice(BigDecimal.valueOf(100000))
                     .sort(ProductSortType.PRICE_HIGH)
+                    .page(0L)
+                    .size(20L)
                     .build();
-            long page = 0L;
-            long size = 20L;
 
             ProductDocument document = ProductDocument.builder().productInfo(ProductDocument.ProductInfo.builder().productName("Test Product").build()).build();
             List<ProductDocument> documents = List.of(document);
-            PageImpl<ProductDocument> productPage = new PageImpl<>(documents, PageRequest.of((int) page, (int) size), documents.size());
+            PageImpl<ProductDocument> productPage = new PageImpl<>(documents, PageRequest.of(Math.toIntExact(command.page()), Math.toIntExact(command.size())), documents.size());
 
-            ProductSearchResponseDto dto = ProductSearchResponseDto.builder().productName("Test Product").build();
+            ProductSearchDto dto = ProductSearchDto.builder().productName("Test Product").build();
 
             given(productDocumentSupport.findProductPage(any(Query.class), any(ProductSortType.class), any(Long.class), any(Long.class)))
                     .willReturn(productPage);
             given(productDocumentMapper.toDto(document)).willReturn(dto);
 
             // when
-            ProductSearchListResponseDto result = productDocumentUseCase.findProductPage(request, page, size);
+            ProductSearchResponseDto result = productDocumentUseCase.findProductPage(command);
 
             // then
             ArgumentCaptor<Query> queryCaptor = ArgumentCaptor.forClass(Query.class);
@@ -88,24 +91,24 @@ class ProductDocumentUseCaseTest {
         @DisplayName("성공: 조건이 없는 경우에도 정상적으로 동작한다")
         void findProductPage_Success_NoConditions() {
             // given
-            ProductSearchRequestDto request = ProductSearchRequestDto.builder()
+            ProductSearchCommand command = ProductSearchCommand.builder()
                     .sort(ProductSortType.LATEST)
+                    .page(0L)
+                    .size(10L)
                     .build();
-            long page = 0L;
-            long size = 10L;
 
             ProductDocument document = ProductDocument.builder().productInfo(ProductDocument.ProductInfo.builder().productName("Another Product").build()).build();
             List<ProductDocument> documents = List.of(document);
-            PageImpl<ProductDocument> productPage = new PageImpl<>(documents, PageRequest.of((int) page, (int) size), documents.size());
+            PageImpl<ProductDocument> productPage = new PageImpl<>(documents, PageRequest.of(Math.toIntExact(command.page()), Math.toIntExact(command.size())), documents.size());
 
-            ProductSearchResponseDto dto = ProductSearchResponseDto.builder().productName("Another Product").build();
+            ProductSearchDto dto = ProductSearchDto.builder().productName("Another Product").build();
 
             given(productDocumentSupport.findProductPage(any(Query.class), any(ProductSortType.class), any(Long.class), any(Long.class)))
                     .willReturn(productPage);
             given(productDocumentMapper.toDto(document)).willReturn(dto);
 
             // when
-            ProductSearchListResponseDto result = productDocumentUseCase.findProductPage(request, page, size);
+            ProductSearchResponseDto result = productDocumentUseCase.findProductPage(command);
 
             // then
             ArgumentCaptor<Query> queryCaptor = ArgumentCaptor.forClass(Query.class);

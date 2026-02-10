@@ -2,20 +2,20 @@ package com.back.product.app.usecase;
 
 import com.back.common.code.FailureCode;
 import com.back.common.exception.CustomException;
-import com.back.product.adapter.out.OptionGroupRepository;
-import com.back.product.adapter.out.OptionValueRepository;
+import com.back.product.adapter.out.persistence.OptionGroupRepository;
+import com.back.product.adapter.out.persistence.OptionValueRepository;
+import com.back.product.app.usecase.command.OptionUseCase;
+import com.back.product.app.usecase.query.ProductSupport;
 import com.back.product.domain.OptionGroup;
 import com.back.product.domain.OptionValue;
-import com.back.product.dto.OptionDto;
-import com.back.product.dto.request.OptionAppendRequestDto;
-import com.back.product.dto.request.OptionCreateRequestDto;
-import com.back.product.dto.request.OptionGroupModifyRequestDto;
+import com.back.product.dto.command.OptionCreateCommand;
+import com.back.product.dto.model.OptionDto;
 import com.back.product.dto.request.OptionValueModifyRequestDto;
 import com.back.product.dto.response.OptionGroupModifyResponseDto;
-import com.back.product.dto.response.OptionListResponseDto;
-import com.back.product.dto.response.OptionResponseDto;
 import com.back.product.dto.response.OptionValueModifyResponseDto;
+import com.back.product.mapper.OptionGroupMapper;
 import com.back.product.mapper.OptionMapper;
+import com.back.product.mapper.OptionValueMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -27,9 +27,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -52,54 +50,16 @@ class OptionUseCaseTest {
     private OptionMapper optionMapper;
 
     @Mock
+    private OptionGroupMapper optionGroupMapper;
+
+    @Mock
+    private OptionValueMapper optionValueMapper;
+
+    @Mock
     private OptionGroupRepository optionGroupRepository;
 
     @Mock
     private OptionValueRepository optionValueRepository;
-
-    @Nested
-    @DisplayName("findOptionValuesAsMap 메서드")
-    class FindOptionValuesAsMapTest {
-
-        @Test
-        @DisplayName("성공: ID 목록으로 OptionValue 맵을 반환한다")
-        void findOptionValuesAsMap_Success() {
-            // given
-            List<Long> ids = List.of(1L, 2L);
-            OptionValue value1 = OptionValue.builder().id(1L).value("Black").build();
-            OptionValue value2 = OptionValue.builder().id(2L).value("95").build();
-            List<OptionValue> values = List.of(value1, value2);
-
-            given(productSupport.getAllOptionValues(ids)).willReturn(values);
-
-            // when
-            Map<Long, OptionValue> result = optionUseCase.findOptionValues(ids).stream()
-                    .collect(Collectors.toMap(OptionValue::getId, option -> option));
-
-            // then
-            assertThat(result).hasSize(2);
-            assertThat(result.get(1L).getValue()).isEqualTo("Black");
-            assertThat(result.get(2L).getValue()).isEqualTo("95");
-        }
-
-        @Test
-        @DisplayName("실패: 요청한 ID와 조회된 결과의 개수가 다르면 예외를 발생시킨다")
-        void findOptionValuesAsMap_Fail_NotFound() {
-            // given
-            List<Long> ids = List.of(1L, 2L, 99L); // 99L is not found
-            OptionValue value1 = OptionValue.builder().id(1L).value("Black").build();
-            OptionValue value2 = OptionValue.builder().id(2L).value("95").build();
-            List<OptionValue> foundValues = List.of(value1, value2);
-
-            given(productSupport.getAllOptionValues(ids)).willReturn(foundValues);
-
-            // when & then
-            CustomException exception = assertThrows(CustomException.class, () ->
-                    optionUseCase.findOptionValues(ids)
-            );
-            assertThat(exception.getFailureCode()).isEqualTo(FailureCode.OPTION_VALUE_NOT_FOUND);
-        }
-    }
 
     @Nested
     @DisplayName("findAllOptions 메서드")
@@ -136,15 +96,15 @@ class OptionUseCaseTest {
 
 
             // when
-            OptionListResponseDto result = optionUseCase.findAllOptions();
+            List<OptionDto> result = optionUseCase.findAllOptions();
 
             // then
             assertThat(result).isNotNull();
-            assertThat(result.options()).hasSize(2);
-            assertThat(result.options().get(0).group().name()).isEqualTo("Color");
-            assertThat(result.options().get(0).values()).hasSize(2);
-            assertThat(result.options().get(1).group().name()).isEqualTo("Size");
-            assertThat(result.options().get(1).values()).hasSize(1);
+            assertThat(result).hasSize(2);
+            assertThat(result.get(0).group().name()).isEqualTo("Color");
+            assertThat(result.get(0).values()).hasSize(2);
+            assertThat(result.get(1).group().name()).isEqualTo("Size");
+            assertThat(result.get(1).values()).hasSize(1);
         }
 
         @Test
@@ -154,11 +114,11 @@ class OptionUseCaseTest {
             given(productSupport.getAllProductOptionGroups()).willReturn(new ArrayList<>());
 
             // when
-            OptionListResponseDto result = optionUseCase.findAllOptions();
+            List<OptionDto> result = optionUseCase.findAllOptions();
 
             // then
             assertThat(result).isNotNull();
-            assertThat(result.options()).isNull();
+            assertThat(result).isEmpty();
         }
 
         @Test
@@ -177,13 +137,13 @@ class OptionUseCaseTest {
             given(optionMapper.toDto(eq(group1), any(List.class))).willReturn(optionDto1);
 
             // when
-            OptionListResponseDto result = optionUseCase.findAllOptions();
+            List<OptionDto> result = optionUseCase.findAllOptions();
 
             // then
             assertThat(result).isNotNull();
-            assertThat(result.options()).hasSize(1);
-            assertThat(result.options().get(0).group().name()).isEqualTo("Color");
-            assertThat(result.options().get(0).values()).isEmpty();
+            assertThat(result).hasSize(1);
+            assertThat(result.get(0).group().name()).isEqualTo("Color");
+            assertThat(result.get(0).values()).isEmpty();
         }
     }
 
@@ -196,9 +156,9 @@ class OptionUseCaseTest {
         void createOptions_success_newGroupAndValues() {
             // given
             // 1. 요청 DTO 생성
-            OptionCreateRequestDto.OptionDto requestOption1 = new OptionCreateRequestDto.OptionDto("color", List.of("red", "blue"));
-            OptionCreateRequestDto.OptionDto requestOption2 = new OptionCreateRequestDto.OptionDto("size", List.of("small", "large"));
-            OptionCreateRequestDto requestDto = new OptionCreateRequestDto(List.of(requestOption1, requestOption2));
+            OptionCreateCommand requestOption1 = new OptionCreateCommand("color", List.of("red", "blue"));
+            OptionCreateCommand requestOption2 = new OptionCreateCommand("size", List.of("small", "large"));
+            List<OptionCreateCommand> requestDto = List.of(requestOption1, requestOption2);
 
             // 2. Mocking ProductSupport for group lookup (returns null for new groups)
             given(productSupport.getOptionGroupByName(eq("color"))).willReturn(null);
@@ -207,18 +167,18 @@ class OptionUseCaseTest {
             // 3. Mocking OptionMapper for group and value entity conversion
             OptionGroup newGroup1 = OptionGroup.builder().id(1L).name("color").build();
             OptionGroup newGroup2 = OptionGroup.builder().id(2L).name("size").build();
-            given(optionMapper.toGroupEntity(eq("color"))).willReturn(newGroup1);
-            given(optionMapper.toGroupEntity(eq("size"))).willReturn(newGroup2);
+            given(optionGroupMapper.toGroupEntity(eq("color"))).willReturn(newGroup1);
+            given(optionGroupMapper.toGroupEntity(eq("size"))).willReturn(newGroup2);
 
             OptionValue newValue1_1 = OptionValue.builder().id(101L).optionGroup(newGroup1).value("red").build();
             OptionValue newValue1_2 = OptionValue.builder().id(102L).optionGroup(newGroup1).value("blue").build();
             OptionValue newValue2_1 = OptionValue.builder().id(201L).optionGroup(newGroup2).value("small").build();
             OptionValue newValue2_2 = OptionValue.builder().id(202L).optionGroup(newGroup2).value("large").build();
 
-            given(optionMapper.toValueEntity(eq(newGroup1), eq("red"))).willReturn(newValue1_1);
-            given(optionMapper.toValueEntity(eq(newGroup1), eq("blue"))).willReturn(newValue1_2);
-            given(optionMapper.toValueEntity(eq(newGroup2), eq("small"))).willReturn(newValue2_1);
-            given(optionMapper.toValueEntity(eq(newGroup2), eq("large"))).willReturn(newValue2_2);
+            given(optionValueMapper.toValueEntity(eq(newGroup1), eq("red"))).willReturn(newValue1_1);
+            given(optionValueMapper.toValueEntity(eq(newGroup1), eq("blue"))).willReturn(newValue1_2);
+            given(optionValueMapper.toValueEntity(eq(newGroup2), eq("small"))).willReturn(newValue2_1);
+            given(optionValueMapper.toValueEntity(eq(newGroup2), eq("large"))).willReturn(newValue2_2);
 
             // 4. Mocking OptionGroupRepository save
             given(optionGroupRepository.save(eq(newGroup1))).willReturn(newGroup1);
@@ -251,21 +211,21 @@ class OptionUseCaseTest {
 
 
             // when
-            OptionListResponseDto result = optionUseCase.createOptions(requestDto);
+            List<OptionDto> result = optionUseCase.createOptions(requestDto);
 
             // then
             assertThat(result).isNotNull();
-            assertThat(result.options()).hasSize(2);
-            assertThat(result.options().get(0).group().name()).isEqualTo("color");
-            assertThat(result.options().get(0).values()).hasSize(2);
-            assertThat(result.options().get(1).group().name()).isEqualTo("size");
-            assertThat(result.options().get(1).values()).hasSize(2);
+            assertThat(result).hasSize(2);
+            assertThat(result.get(0).group().name()).isEqualTo("color");
+            assertThat(result.get(0).values()).hasSize(2);
+            assertThat(result.get(1).group().name()).isEqualTo("size");
+            assertThat(result.get(1).values()).hasSize(2);
 
             // Verify interactions
             verify(productSupport, times(1)).getOptionGroupByName(eq("color"));
             verify(productSupport, times(1)).getOptionGroupByName(eq("size"));
-            verify(optionMapper, times(1)).toGroupEntity(eq("color"));
-            verify(optionMapper, times(1)).toGroupEntity(eq("size"));
+            verify(optionGroupMapper, times(1)).toGroupEntity(eq("color"));
+            verify(optionGroupMapper, times(1)).toGroupEntity(eq("size"));
             verify(optionGroupRepository, times(1)).save(eq(newGroup1));
             verify(optionGroupRepository, times(1)).save(eq(newGroup2));
             verify(optionValueRepository, times(2)).saveAll(any(List.class)); // saveAll is called twice, once for each option
@@ -278,8 +238,8 @@ class OptionUseCaseTest {
         void createOptions_success_existingGroupAndNewValues() {
             // given
             // 1. 요청 DTO 생성
-            OptionCreateRequestDto.OptionDto requestOption1 = new OptionCreateRequestDto.OptionDto("color", List.of("red", "blue"));
-            OptionCreateRequestDto requestDto = new OptionCreateRequestDto(List.of(requestOption1));
+            OptionCreateCommand requestOption1 = new OptionCreateCommand("color", List.of("red", "blue"));
+            List<OptionCreateCommand> requestDto = List.of(requestOption1);
 
             // 2. Mocking ProductSupport for group lookup (returns existing group)
             OptionGroup existingGroup1 = OptionGroup.builder().id(1L).name("color").build();
@@ -289,8 +249,8 @@ class OptionUseCaseTest {
             OptionValue newValue1_1 = OptionValue.builder().id(101L).optionGroup(existingGroup1).value("red").build();
             OptionValue newValue1_2 = OptionValue.builder().id(102L).optionGroup(existingGroup1).value("blue").build();
 
-            given(optionMapper.toValueEntity(eq(existingGroup1), eq("red"))).willReturn(newValue1_1);
-            given(optionMapper.toValueEntity(eq(existingGroup1), eq("blue"))).willReturn(newValue1_2);
+            given(optionValueMapper.toValueEntity(eq(existingGroup1), eq("red"))).willReturn(newValue1_1);
+            given(optionValueMapper.toValueEntity(eq(existingGroup1), eq("blue"))).willReturn(newValue1_2);
 
             // 4. OptionGroupRepository save should not be called
             verify(optionGroupRepository, never()).save(any(OptionGroup.class));
@@ -312,17 +272,17 @@ class OptionUseCaseTest {
             given(optionMapper.toDto(eq(existingGroup1), any(List.class))).willReturn(responseOptionDto1);
 
             // when
-            OptionListResponseDto result = optionUseCase.createOptions(requestDto);
+            List<OptionDto> result = optionUseCase.createOptions(requestDto);
 
             // then
             assertThat(result).isNotNull();
-            assertThat(result.options()).hasSize(1);
-            assertThat(result.options().get(0).group().name()).isEqualTo("color");
-            assertThat(result.options().get(0).values()).hasSize(2);
+            assertThat(result).hasSize(1);
+            assertThat(result.get(0).group().name()).isEqualTo("color");
+            assertThat(result.get(0).values()).hasSize(2);
 
             // Verify interactions
             verify(productSupport, times(1)).getOptionGroupByName(eq("color"));
-            verify(optionMapper, never()).toGroupEntity(any(String.class)); // Not called for existing group
+            verify(optionGroupMapper, never()).toGroupEntity(any(String.class)); // Not called for existing group
             verify(optionGroupRepository, never()).save(any(OptionGroup.class)); // Not called for existing group
             verify(optionValueRepository, times(1)).saveAll(any(List.class));
             verify(optionMapper, times(1)).toDto(eq(existingGroup1), any(List.class));
@@ -333,9 +293,9 @@ class OptionUseCaseTest {
         void createOptions_success_mixedGroupsAndValues() {
             // given
             // 1. 요청 DTO 생성
-            OptionCreateRequestDto.OptionDto requestOption1 = new OptionCreateRequestDto.OptionDto("color", List.of("red", "blue")); // Existing group
-            OptionCreateRequestDto.OptionDto requestOption2 = new OptionCreateRequestDto.OptionDto("pattern", List.of("stripe", "dot")); // New group
-            OptionCreateRequestDto requestDto = new OptionCreateRequestDto(List.of(requestOption1, requestOption2));
+            OptionCreateCommand requestOption1 = new OptionCreateCommand("color", List.of("red", "blue")); // Existing group
+            OptionCreateCommand requestOption2 = new OptionCreateCommand("pattern", List.of("stripe", "dot")); // New group
+            List<OptionCreateCommand> requestDto = List.of(requestOption1, requestOption2);
 
             // 2. Mocking ProductSupport for group lookup
             OptionGroup existingGroup1 = OptionGroup.builder().id(1L).name("color").build();
@@ -344,17 +304,17 @@ class OptionUseCaseTest {
 
             // 3. Mocking OptionMapper for group and value entity conversion
             OptionGroup newGroup2 = OptionGroup.builder().id(2L).name("pattern").build();
-            given(optionMapper.toGroupEntity(eq("pattern"))).willReturn(newGroup2); // Only for new group
+            given(optionGroupMapper.toGroupEntity(eq("pattern"))).willReturn(newGroup2); // Only for new group
 
             OptionValue newValue1_1 = OptionValue.builder().id(101L).optionGroup(existingGroup1).value("red").build();
             OptionValue newValue1_2 = OptionValue.builder().id(102L).optionGroup(existingGroup1).value("blue").build();
             OptionValue newValue2_1 = OptionValue.builder().id(201L).optionGroup(newGroup2).value("stripe").build();
             OptionValue newValue2_2 = OptionValue.builder().id(202L).optionGroup(newGroup2).value("dot").build();
 
-            given(optionMapper.toValueEntity(eq(existingGroup1), eq("red"))).willReturn(newValue1_1);
-            given(optionMapper.toValueEntity(eq(existingGroup1), eq("blue"))).willReturn(newValue1_2);
-            given(optionMapper.toValueEntity(eq(newGroup2), eq("stripe"))).willReturn(newValue2_1);
-            given(optionMapper.toValueEntity(eq(newGroup2), eq("dot"))).willReturn(newValue2_2);
+            given(optionValueMapper.toValueEntity(eq(existingGroup1), eq("red"))).willReturn(newValue1_1);
+            given(optionValueMapper.toValueEntity(eq(existingGroup1), eq("blue"))).willReturn(newValue1_2);
+            given(optionValueMapper.toValueEntity(eq(newGroup2), eq("stripe"))).willReturn(newValue2_1);
+            given(optionValueMapper.toValueEntity(eq(newGroup2), eq("dot"))).willReturn(newValue2_2);
 
             // 4. Mocking OptionGroupRepository save
             given(optionGroupRepository.save(eq(newGroup2))).willReturn(newGroup2); // Only for new group
@@ -384,21 +344,21 @@ class OptionUseCaseTest {
             given(optionMapper.toDto(eq(newGroup2), any(List.class))).willReturn(responseOptionDto2);
 
             // when
-            OptionListResponseDto result = optionUseCase.createOptions(requestDto);
+            List<OptionDto> result = optionUseCase.createOptions(requestDto);
 
             // then
             assertThat(result).isNotNull();
-            assertThat(result.options()).hasSize(2);
-            assertThat(result.options().get(0).group().name()).isEqualTo("color");
-            assertThat(result.options().get(0).values()).hasSize(2);
-            assertThat(result.options().get(1).group().name()).isEqualTo("pattern");
-            assertThat(result.options().get(1).values()).hasSize(2);
+            assertThat(result).hasSize(2);
+            assertThat(result.get(0).group().name()).isEqualTo("color");
+            assertThat(result.get(0).values()).hasSize(2);
+            assertThat(result.get(1).group().name()).isEqualTo("pattern");
+            assertThat(result.get(1).values()).hasSize(2);
 
             // Verify interactions
             verify(productSupport, times(1)).getOptionGroupByName(eq("color"));
             verify(productSupport, times(1)).getOptionGroupByName(eq("pattern"));
-            verify(optionMapper, never()).toGroupEntity(eq("color")); // Not called for existing group
-            verify(optionMapper, times(1)).toGroupEntity(eq("pattern")); // Called for new group
+            verify(optionGroupMapper, never()).toGroupEntity(eq("color")); // Not called for existing group
+            verify(optionGroupMapper, times(1)).toGroupEntity(eq("pattern")); // Called for new group
             verify(optionGroupRepository, never()).save(eq(existingGroup1)); // Not called for existing group
             verify(optionGroupRepository, times(1)).save(eq(newGroup2)); // Called for new group
             verify(optionValueRepository, times(2)).saveAll(any(List.class));
@@ -416,9 +376,7 @@ class OptionUseCaseTest {
         void appendOptions_success() {
             // given
             Long optionGroupId = 1L;
-            OptionAppendRequestDto requestDto = OptionAppendRequestDto.builder()
-                    .values(List.of("새로운값1", "새로운값2"))
-                    .build();
+            List<String> appendValues = List.of("새로운값1", "새로운값2");
 
             OptionGroup existingGroup = OptionGroup.builder()
                     .id(optionGroupId)
@@ -440,8 +398,8 @@ class OptionUseCaseTest {
                     .build();
             List<OptionValue> createdValues = List.of(newValue1, newValue2);
 
-            given(optionMapper.toValueEntity(existingGroup, "새로운값1")).willReturn(newValue1);
-            given(optionMapper.toValueEntity(existingGroup, "새로운값2")).willReturn(newValue2);
+            given(optionValueMapper.toValueEntity(existingGroup, "새로운값1")).willReturn(newValue1);
+            given(optionValueMapper.toValueEntity(existingGroup, "새로운값2")).willReturn(newValue2);
             given(optionValueRepository.saveAll(any(List.class))).willReturn(createdValues);
 
             OptionDto.GroupDto responseGroupDto = OptionDto.GroupDto.builder()
@@ -460,13 +418,13 @@ class OptionUseCaseTest {
             given(optionMapper.toDto(existingGroup, createdValues)).willReturn(finalOptionDto);
 
             // when
-            OptionResponseDto result = optionUseCase.appendOptions(optionGroupId, requestDto);
+            OptionDto result = optionUseCase.appendOptions(optionGroupId, appendValues);
 
             // then
             assertThat(result).isNotNull();
-            assertThat(result.option().group().name()).isEqualTo("색상");
-            assertThat(result.option().values()).hasSize(2);
-            assertThat(result.option().values().get(0).name()).isEqualTo("새로운값1");
+            assertThat(result.group().name()).isEqualTo("색상");
+            assertThat(result.values()).hasSize(2);
+            assertThat(result.values().get(0).name()).isEqualTo("새로운값1");
 
             // verify interactions
             verify(productSupport, times(1)).getOptionGroupById(optionGroupId);
@@ -479,15 +437,13 @@ class OptionUseCaseTest {
         void appendOptions_fail_groupNotFound() {
             // given
             Long nonExistentGroupId = 99L;
-            OptionAppendRequestDto requestDto = OptionAppendRequestDto.builder()
-                    .values(List.of("새로운값"))
-                    .build();
+            List<String> appendValues = List.of("새로운값");
 
             given(productSupport.getOptionGroupById(nonExistentGroupId)).willReturn(Optional.empty());
 
             // when & then
             CustomException exception = assertThrows(CustomException.class, () ->
-                    optionUseCase.appendOptions(nonExistentGroupId, requestDto)
+                    optionUseCase.appendOptions(nonExistentGroupId, appendValues)
             );
 
             assertThat(exception.getFailureCode()).isEqualTo(FailureCode.OPTION_GROUP_NOT_FOUND);
@@ -506,35 +462,40 @@ class OptionUseCaseTest {
         void modifyOptionGroup_success() {
             // given
             Long optionGroupId = 1L;
+            String initialName = "oldcolor";
             String newName = "newcolor";
-            OptionGroupModifyRequestDto requestDto = OptionGroupModifyRequestDto.builder()
-                    .name(newName)
-                    .build();
 
-            // Use a real object for the entity to test the actual state change
-            // but since it's a unit test, we can mock it as well to verify interactions.
-            OptionGroup existingGroup = mock(OptionGroup.class);
+            // 실제 OptionGroup 인스턴스를 생성하고 스파이로 모니터링
+            OptionGroup realOptionGroup = OptionGroup.builder()
+                    .id(optionGroupId)
+                    .name(initialName)
+                    .build();
+            OptionGroup existingGroup = spy(realOptionGroup);
 
             given(productSupport.getOptionGroupById(optionGroupId)).willReturn(Optional.of(existingGroup));
 
-            // Stubbing the getters that will be used in convertToModifyGroupDto
-            given(existingGroup.getId()).willReturn(optionGroupId);
-            given(existingGroup.getName()).willReturn(newName); // Assume name is updated
-            given(existingGroup.getLastModifiedAt()).willReturn(LocalDateTime.now());
+            // DTO 변환 시 사용될 updatedAt 값을 고정 (테스트 일관성을 위해)
+            LocalDateTime now = LocalDateTime.now();
 
+            // Mock 객체인 optionGroupMapper의 toModifyResponseDto 메소드 스터빙
+            OptionGroupModifyResponseDto expectedResponse = OptionGroupModifyResponseDto.builder()
+                    .group(OptionGroupModifyResponseDto.OptionGroupDto.builder()
+                            .id(optionGroupId)
+                            .name(newName)
+                            .updatedAt(now) // 스터빙된 시간과 동일하게 설정
+                            .build())
+                    .build();
+            given(optionGroupMapper.toModifyResponseDto(eq(existingGroup))).willReturn(expectedResponse);
 
             // when
-            OptionGroupModifyResponseDto result = optionUseCase.modifyOptionGroup(optionGroupId, requestDto);
+            OptionGroupModifyResponseDto result = optionUseCase.modifyOptionGroup(optionGroupId, newName);
 
             // then
-            // Verify that the entity's state-changing method was called
             verify(existingGroup, times(1)).modifyName(newName);
-
-            // Assert the response DTO
             assertThat(result).isNotNull();
             assertThat(result.group().id()).isEqualTo(optionGroupId);
             assertThat(result.group().name()).isEqualTo(newName);
-            assertThat(result.group().updatedAt()).isNotNull();
+            assertThat(result.group().updatedAt()).isEqualTo(now);
         }
 
         @Test
@@ -543,15 +504,12 @@ class OptionUseCaseTest {
             // given
             Long nonExistentGroupId = 99L;
             String newName = "newcolor";
-            OptionGroupModifyRequestDto requestDto = OptionGroupModifyRequestDto.builder()
-                    .name(newName)
-                    .build();
 
             given(productSupport.getOptionGroupById(nonExistentGroupId)).willReturn(Optional.empty());
 
             // when & then
             CustomException exception = assertThrows(CustomException.class, () ->
-                    optionUseCase.modifyOptionGroup(nonExistentGroupId, requestDto)
+                    optionUseCase.modifyOptionGroup(nonExistentGroupId, newName)
             );
 
             assertThat(exception.getFailureCode()).isEqualTo(FailureCode.OPTION_GROUP_NOT_FOUND);
@@ -568,46 +526,59 @@ class OptionUseCaseTest {
             // given
             Long optionValueId = 1L;
             Long currentGroupId = 10L;
-            String newName = "newvalue";
+            String initialValue = "oldvalue";
+            String newValue = "newvalue";
 
             // DTO에는 현재 그룹 ID와 새 이름이 포함됨
             OptionValueModifyRequestDto requestDto = OptionValueModifyRequestDto.builder()
                     .optionGroupId(currentGroupId)
-                    .name(newName)
+                    .name(newValue)
                     .build();
 
             OptionGroup currentGroup = OptionGroup.builder()
                     .id(currentGroupId)
                     .name("color")
                     .build();
-            OptionValue existingValue = mock(OptionValue.class);
+
+            // 실제 OptionValue 인스턴스를 생성하고 스파이로 모니터링
+            OptionValue realOptionValue = OptionValue.builder()
+                    .id(optionValueId)
+                    .optionGroup(currentGroup)
+                    .value(initialValue)
+                    .build();
+            OptionValue existingValue = spy(realOptionValue);
 
             given(productSupport.getOptionValueById(optionValueId)).willReturn(Optional.of(existingValue));
-            // willChangeGroup이 false를 반환하도록 설정 (그룹 변경 없음)
+            // willChangeGroup은 로직이 포함되어 있으므로 실제 동작을 스파이로 따르거나 스터빙합니다.
             given(existingValue.willChangeGroup(currentGroupId)).willReturn(false);
 
-            // DTO 변환을 위한 getter 스터빙
-            given(existingValue.getId()).willReturn(optionValueId);
-            given(existingValue.getValue()).willReturn(newName);
-            given(existingValue.getOptionGroup()).willReturn(currentGroup);
-            given(existingValue.getLastModifiedAt()).willReturn(LocalDateTime.now());
+            LocalDateTime now = LocalDateTime.now();
+            // given(existingValue.getLastModifiedAt()).willReturn(now);
+
+            // Mock 객체인 optionValueMapper의 toModifyResponseDto 메소드 스터빙
+            OptionValueModifyResponseDto expectedResponse = OptionValueModifyResponseDto.builder()
+                    .value(OptionValueModifyResponseDto.OptionValueDto.builder()
+                            .id(optionValueId)
+                            .optionGroupId(currentGroupId)
+                            .value(newValue)
+                            .updatedAt(now) // 스터빙된 시간과 동일하게 설정
+                            .build())
+                    .build();
+            given(optionValueMapper.toModifyResponseDto(eq(existingValue))).willReturn(expectedResponse);
 
             // when
-            OptionValueModifyResponseDto result = optionUseCase.modifyOptionValue(optionValueId, requestDto);
+            OptionValueModifyResponseDto result = optionUseCase.modifyOptionValue(currentGroupId, optionValueId, newValue);
 
             // then
-            // 이름 변경 메서드만 호출되었는지 검증
-            verify(existingValue, times(1)).modifyName(newName);
-            // 그룹 변경 메서드는 호출되지 않았는지 검증
+            verify(existingValue, times(1)).modifyName(newValue);
             verify(existingValue, never()).changeGroup(any(OptionGroup.class));
-            // productSupport에서 다른 그룹을 찾는 로직이 호출되지 않았는지 검증
             verify(productSupport, never()).getOptionGroupById(anyLong());
 
-            // 응답 DTO 검증
             assertThat(result).isNotNull();
             assertThat(result.value().id()).isEqualTo(optionValueId);
-            assertThat(result.value().value()).isEqualTo(newName);
+            assertThat(result.value().value()).isEqualTo(newValue);
             assertThat(result.value().optionGroupId()).isEqualTo(currentGroupId);
+            assertThat(result.value().updatedAt()).isEqualTo(now);
         }
 
         @Test
@@ -617,43 +588,56 @@ class OptionUseCaseTest {
             Long optionValueId = 1L;
             Long currentGroupId = 10L;
             Long newGroupId = 20L;
-            String currentName = "currentvalue";
+            String valueName = "currentvalue"; // 값 이름은 변경되지 않음
 
             OptionValueModifyRequestDto requestDto = OptionValueModifyRequestDto.builder()
                     .optionGroupId(newGroupId)
-                    .name(currentName)
+                    .name(valueName)
                     .build();
 
-            OptionGroup newGroup = OptionGroup.builder()
-                    .id(newGroupId)
-                    .name("size")
+            // 실제 OptionGroup 인스턴스 생성
+            OptionGroup oldGroup = OptionGroup.builder().id(currentGroupId).name("old_size").build();
+            OptionGroup newGroup = OptionGroup.builder().id(newGroupId).name("new_size").build();
+
+            // 실제 OptionValue 인스턴스를 생성하고 스파이로 모니터링
+            OptionValue realOptionValue = OptionValue.builder()
+                    .id(optionValueId)
+                    .optionGroup(oldGroup) // 초기 그룹 설정
+                    .value(valueName)
                     .build();
-            OptionValue existingValue = mock(OptionValue.class);
+            OptionValue existingValue = spy(realOptionValue);
 
             given(productSupport.getOptionValueById(optionValueId)).willReturn(Optional.of(existingValue));
-            // willChangeGroup이 true를 반환하도록 설정 (그룹 변경 필요)
-            given(existingValue.willChangeGroup(newGroupId)).willReturn(true);
-            // 새로운 그룹을 조회하는 로직 모킹
+            given(existingValue.willChangeGroup(newGroupId)).willReturn(true); // Group change needed
             given(productSupport.getOptionGroupById(newGroupId)).willReturn(Optional.of(newGroup));
 
-            // DTO 변환을 위한 getter 스터빙
-            given(existingValue.getId()).willReturn(optionValueId);
-            given(existingValue.getValue()).willReturn(currentName);
-            given(existingValue.getOptionGroup()).willReturn(newGroup); // 변경된 그룹을 반환하도록 설정
-            given(existingValue.getLastModifiedAt()).willReturn(LocalDateTime.now());
+            LocalDateTime now = LocalDateTime.now();
+            // given(existingValue.getLastModifiedAt()).willReturn(now);
+
+            // Mock 객체인 optionValueMapper의 toModifyResponseDto 메소드 스터빙
+            OptionValueModifyResponseDto expectedResponse = OptionValueModifyResponseDto.builder()
+                    .value(OptionValueModifyResponseDto.OptionValueDto.builder()
+                            .id(optionValueId)
+                            .optionGroupId(newGroupId) // 변경된 그룹 ID 반영
+                            .value(valueName)
+                            .updatedAt(now) // 스터빙된 시간과 동일하게 설정
+                            .build())
+                    .build();
+            given(optionValueMapper.toModifyResponseDto(eq(existingValue))).willReturn(expectedResponse);
 
             // when
-            OptionValueModifyResponseDto result = optionUseCase.modifyOptionValue(optionValueId, requestDto);
+            OptionValueModifyResponseDto result = optionUseCase.modifyOptionValue(newGroupId, optionValueId, valueName);
 
             // then
-            verify(existingValue, times(1)).modifyName(currentName);
-            verify(existingValue, times(1)).changeGroup(newGroup); // 새 그룹으로 변경되었는지 검증
-            verify(productSupport, times(1)).getOptionGroupById(newGroupId); // 새 그룹을 조회했는지 검증
+            verify(existingValue, times(1)).modifyName(valueName);
+            verify(existingValue, times(1)).changeGroup(newGroup);
+            verify(productSupport, times(1)).getOptionGroupById(newGroupId);
 
             assertThat(result).isNotNull();
             assertThat(result.value().id()).isEqualTo(optionValueId);
-            assertThat(result.value().value()).isEqualTo(currentName);
-            assertThat(result.value().optionGroupId()).isEqualTo(newGroupId); // 그룹 ID가 변경되었는지 확인
+            assertThat(result.value().value()).isEqualTo(valueName);
+            assertThat(result.value().optionGroupId()).isEqualTo(newGroupId);
+            assertThat(result.value().updatedAt()).isEqualTo(now);
         }
 
         @Test
@@ -661,16 +645,14 @@ class OptionUseCaseTest {
         void modifyOptionValue_fail_valueNotFound() {
             // given
             Long nonExistentValueId = 99L;
-            OptionValueModifyRequestDto requestDto = OptionValueModifyRequestDto.builder()
-                    .optionGroupId(1L)
-                    .name("anyname")
-                    .build();
+            Long currentGroupId = 1L;
+            String valueName = "anyname";
 
             given(productSupport.getOptionValueById(nonExistentValueId)).willReturn(Optional.empty());
 
             // when & then
             CustomException exception = assertThrows(CustomException.class, () ->
-                    optionUseCase.modifyOptionValue(nonExistentValueId, requestDto)
+                    optionUseCase.modifyOptionValue(currentGroupId, nonExistentValueId, valueName)
             );
             assertThat(exception.getFailureCode()).isEqualTo(FailureCode.OPTION_VALUE_NOT_FOUND);
         }
@@ -681,11 +663,7 @@ class OptionUseCaseTest {
             // given
             Long optionValueId = 1L;
             Long nonExistentGroupId = 99L;
-
-            OptionValueModifyRequestDto requestDto = OptionValueModifyRequestDto.builder()
-                    .optionGroupId(nonExistentGroupId)
-                    .name("anyname")
-                    .build();
+            String valueName = "anyname";
 
             OptionValue existingValue = mock(OptionValue.class);
 
@@ -696,7 +674,7 @@ class OptionUseCaseTest {
 
             // when & then
             CustomException exception = assertThrows(CustomException.class, () ->
-                    optionUseCase.modifyOptionValue(optionValueId, requestDto)
+                    optionUseCase.modifyOptionValue(nonExistentGroupId, optionValueId, valueName)
             );
             assertThat(exception.getFailureCode()).isEqualTo(FailureCode.OPTION_GROUP_NOT_FOUND);
 

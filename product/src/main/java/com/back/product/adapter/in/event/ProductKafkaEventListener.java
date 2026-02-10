@@ -1,69 +1,114 @@
 package com.back.product.adapter.in.event;
 
-import com.back.common.product.event.ProductCreatedEvent;
-import com.back.common.product.event.ProductDeletedEvent;
-import com.back.common.product.event.ProductUpdatedEvent;
-import com.back.product.app.usecase.ProductDocumentUseCase;
-import com.back.product.dto.OptionDto;
-import com.back.product.dto.ProductInfoDto;
+import com.back.common.event.Envelope;
+import com.back.product.app.usecase.command.ProductDocumentUseCase;
+import com.back.product.dto.event.kafka.ProductCreatedPayload;
+import com.back.product.dto.event.kafka.ProductDeletedPayload;
+import com.back.product.dto.event.kafka.ProductUpdatedPayload;
+import com.back.product.dto.model.OptionDto;
+import com.back.product.dto.model.ProductInfoDto;
 import com.back.product.mapper.OptionMapper;
 import com.back.product.mapper.ProductInfoMapper;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.List;
 
 @Slf4j
 @Service
+@Validated
 @RequiredArgsConstructor
 public class ProductKafkaEventListener {
+    private final JsonMapper jsonMapper;
     private final ProductDocumentUseCase productDocumentUseCase;
     private final ProductInfoMapper productInfoMapper;
     private final OptionMapper optionMapper;
 
     @KafkaListener(
-            topics = "${custom.kafka.topic.product-created}",
-            groupId = "${custom.kafka.consumer.group-id}"
+            topics = "${custom.kafka.topic.product-item-created}",
+            groupId = "${spring.kafka.consumer.group-id}"
     )
     @Transactional
-    public void handleProductCreate(ProductCreatedEvent event) {
-        ProductInfoDto productInfoDto = productInfoMapper.toDto(event.productInfo());
+    public void handleProductCreate(String message) {
+        try {
+            Envelope<ProductCreatedPayload> event = jsonMapper.readValue(message, new TypeReference<>() {});
 
-        List<OptionDto> optionDtos = event.options().stream()
-                .map(optionMapper::toDto).toList();
+            ProductCreatedPayload payload = event.payload();
 
-        String thumbnailUrl = event.thumbnailUrl();
+            processSyncCreatedProduct(payload);
+        } catch (JacksonException e) {
+            log.error("[KafkaListenerFailed] ProductCreatedPayload 역직렬화 중 에러 발생 : {}", e.getMessage(), e);
+        }
+    }
+
+    @KafkaListener(
+            topics = "${custom.kafka.topic.product-item-updated}",
+            groupId = "${spring.kafka.consumer.group-id}"
+    )
+    @Transactional
+    public void handleProductUpdate(String message) {
+        try {
+            Envelope<ProductUpdatedPayload> event = jsonMapper.readValue(message, new TypeReference<>() {});
+
+            ProductUpdatedPayload payload = event.payload();
+
+            processSyncUpdatedProduct(payload);
+        } catch (JacksonException e) {
+            log.error("[KafkaListenerFailed] ProductUpdatedPayload 역직렬화 중 에러 발생 : {}", e.getMessage(), e);
+        }
+    }
+
+    @KafkaListener(
+            topics = "${custom.kafka.topic.product-item-deleted}",
+            groupId = "${spring.kafka.consumer.group-id}"
+    )
+    @Transactional
+    public void handleProductDelete(String message) {
+        try {
+            Envelope<ProductDeletedPayload> event = jsonMapper.readValue(message, new TypeReference<>() {});
+
+            ProductDeletedPayload payload = event.payload();
+
+            processSyncDeletedProduct(payload);
+        } catch (JacksonException e) {
+            log.error("[KafkaListenerFailed] ProductDeletedEvent 역직렬화 중 에러 발생 : {}", e.getMessage(), e);
+        }
+    }
+
+    @Transactional
+    public void processSyncCreatedProduct(@Valid ProductCreatedPayload payload) {
+        log.info("[KafkaListenerSuccess] ProductCreatedEvent 수신 : productInfo = {}", payload.productInfo());
+
+        ProductInfoDto productInfoDto = productInfoMapper.toDto(payload.productInfo());
+        List<OptionDto> optionDtos = payload.options().stream().map(optionMapper::toDto).toList();
+        String thumbnailUrl = payload.thumbnailUrl();
 
         productDocumentUseCase.syncProduct(productInfoDto, optionDtos, thumbnailUrl);
     }
 
-    @KafkaListener(
-            topics = "${custom.kafka.topic.product-updated}",
-            groupId = "${custom.kafka.consumer.group-id}"
-    )
     @Transactional
-    public void handleProductUpdate(ProductUpdatedEvent event) {
-        ProductInfoDto productInfoDto = productInfoMapper.toDto(event.productInfo());
+    public void processSyncUpdatedProduct(@Valid ProductUpdatedPayload payload) {
+        log.info("[KafkaListenerSuccess] ProductUpdatedEvent 수신 : productInfo = {}", payload.productInfo());
 
-        List<OptionDto> optionDtos = event.options().stream()
-                .map(optionMapper::toDto).toList();
-
-        String thumbnailUrl = event.thumbnailUrl();
+        ProductInfoDto productInfoDto = productInfoMapper.toDto(payload.productInfo());
+        List<OptionDto> optionDtos = payload.options().stream().map(optionMapper::toDto).toList();
+        String thumbnailUrl = payload.thumbnailUrl();
 
         productDocumentUseCase.syncProduct(productInfoDto, optionDtos, thumbnailUrl);
     }
 
-    @KafkaListener(
-            topics = "${custom.kafka.topic.product-deleted}",
-            groupId = "${custom.kafka.consumer.group-id}"
-    )
     @Transactional
-    public void handleProductDelete(ProductDeletedEvent event) {
-        Long productInfoId = event.productInfoId();
+    public void processSyncDeletedProduct(@Valid ProductDeletedPayload payload) {
+        log.info("[KafkaListenerSuccess] ProductDeletedEvent 수신 : productInfoId = {}", payload.productInfoId());
 
-        productDocumentUseCase.deleteProduct(productInfoId);
+        productDocumentUseCase.deleteProduct(payload.productInfoId());
     }
 }

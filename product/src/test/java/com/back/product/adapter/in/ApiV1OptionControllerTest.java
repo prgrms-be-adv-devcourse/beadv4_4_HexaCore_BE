@@ -3,9 +3,11 @@ package com.back.product.adapter.in;
 import com.back.common.code.FailureCode;
 import com.back.common.code.SuccessCode;
 import com.back.common.exception.CustomException;
-import com.back.product.app.ProductFacade;
-import com.back.product.dto.OptionDto;
+import com.back.product.adapter.in.web.controller.ApiV1OptionController;
+import com.back.product.app.facade.ProductFacade;
+import com.back.product.dto.model.OptionDto;
 import com.back.product.dto.request.OptionAppendRequestDto;
+import com.back.product.dto.request.OptionListCreateRequestDto;
 import com.back.product.dto.request.OptionCreateRequestDto;
 import com.back.product.dto.request.OptionGroupModifyRequestDto;
 import com.back.product.dto.request.OptionValueModifyRequestDto;
@@ -97,15 +99,15 @@ public class ApiV1OptionControllerTest {
         @DisplayName("상품 옵션 생성 컨트롤러 단위 테스트 - 성공")
         void createOptions_unit_test_success() throws Exception {
             // given
-            OptionCreateRequestDto.OptionDto requestOption1 = OptionCreateRequestDto.OptionDto.builder()
+            OptionCreateRequestDto requestOption1 = OptionCreateRequestDto.builder()
                     .group("color")
                     .values(List.of("red", "blue"))
                     .build();
-            OptionCreateRequestDto.OptionDto requestOption2 = OptionCreateRequestDto.OptionDto.builder()
+            OptionCreateRequestDto requestOption2 = OptionCreateRequestDto.builder()
                     .group("size")
                     .values(List.of("small", "large"))
                     .build();
-            OptionCreateRequestDto requestDto = OptionCreateRequestDto.builder()
+            OptionListCreateRequestDto requestDto = OptionListCreateRequestDto.builder()
                     .options(List.of(requestOption1, requestOption2))
                     .build();
 
@@ -126,7 +128,7 @@ public class ApiV1OptionControllerTest {
                     ))
                     .build();
 
-            given(productFacade.createOptions(any(OptionCreateRequestDto.class))).willReturn(expectedResponseDto);
+            given(productFacade.createOptions(any(OptionListCreateRequestDto.class))).willReturn(expectedResponseDto);
 
             // when & then
             mockMvc.perform(post("/api/v1/products/options")
@@ -141,13 +143,13 @@ public class ApiV1OptionControllerTest {
                     .andExpect(jsonPath("$.data.options[1].group.name").value("size"))
                     .andExpect(jsonPath("$.data.options[1].values[1].name").value("large"));
 
-            verify(productFacade).createOptions(any(OptionCreateRequestDto.class));
+            verify(productFacade).createOptions(any(OptionListCreateRequestDto.class));
         }
 
         @Test
         @DisplayName("상품 옵션 생성 컨트롤러 단위 테스트 - 유효성 검사 실패 (빈 Options 리스트)")
         void createOptions_unit_test_validation_failure_empty_options() throws Exception {
-            OptionCreateRequestDto requestDto = OptionCreateRequestDto.builder()
+            OptionListCreateRequestDto requestDto = OptionListCreateRequestDto.builder()
                     .options(List.of())
                     .build();
 
@@ -157,7 +159,7 @@ public class ApiV1OptionControllerTest {
                     .andDo(print())
                     .andExpect(status().isBadRequest());
 
-            verify(productFacade, never()).createOptions(any(OptionCreateRequestDto.class));
+            verify(productFacade, never()).createOptions(any(OptionListCreateRequestDto.class));
         }
     }
 

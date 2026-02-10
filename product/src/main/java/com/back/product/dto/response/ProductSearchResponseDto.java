@@ -1,16 +1,29 @@
 package com.back.product.dto.response;
 
+import com.back.product.dto.model.ProductSearchDto;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 
-import java.math.BigDecimal;
+import java.util.List;
 
 @Builder
 public record ProductSearchResponseDto(
-        Long productInfoId,
-        String productName,
-        String thumbnailUrl,
-        String brandName,
-        String categoryName,
-        BigDecimal releasePrice
+        @NotNull(message = "상품 검색 결과 목록은 null 일 수 없습니다.")
+        @Valid
+        List<ProductSearchDto> products,
+
+        @NotNull(message = "총 페이지 수는 필수입니다.")
+        @Min(value = 0, message = "총 페이지 수는 0 이상이어야 합니다.")
+        Long totalPages,
+
+        @NotNull(message = "총 요소 수는 필수입니다.")
+        @Min(value = 0, message = "총 요소 수는 0 이상이어야 합니다.")
+        Long totalElements,
+
+        @NotNull(message = "현재 페이지는 필수입니다.")
+        @Min(value = 0, message = "현재 페이지는 0 이상이어야 합니다.")
+        Long currentPage
 ) {
 }

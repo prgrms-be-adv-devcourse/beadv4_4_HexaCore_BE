@@ -2,17 +2,19 @@ package com.back.product.app.usecase;
 
 import com.back.common.code.FailureCode;
 import com.back.common.exception.CustomException;
-import com.back.product.adapter.out.ProductImageRepository;
-import com.back.product.adapter.out.ProductOptionValuesRepository;
-import com.back.product.adapter.out.ProductRepository;
-import com.back.product.domain.OptionValue;
-import com.back.product.domain.Product;
-import com.back.product.domain.ProductInfo;
-import com.back.product.domain.ProductOptionValues;
-import com.back.product.dto.ProductDto;
-import com.back.product.dto.request.ProductVariantCreateRequestDto;
-import com.back.product.dto.request.ProductVariantUpdateRequestDto;
+import com.back.product.adapter.out.persistence.ProductImageRepository;
+import com.back.product.adapter.out.persistence.ProductOptionValuesRepository;
+import com.back.product.adapter.out.persistence.ProductRepository;
+import com.back.product.app.usecase.command.ProductUseCase;
+import com.back.product.app.usecase.query.ProductSupport;
+import com.back.product.domain.*;
+import com.back.product.dto.command.ProductVariantCreateCommand;
+import com.back.product.dto.command.ProductVariantUpdateCommand;
+import com.back.product.dto.model.ProductDetailDto;
+import com.back.product.dto.model.ProductDto;
+import com.back.product.dto.model.ProductInfoDto;
 import com.back.product.mapper.ProductImageMapper;
+import com.back.product.mapper.ProductInfoMapper;
 import com.back.product.mapper.ProductMapper;
 import com.back.product.mapper.ProductOptionValuesMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,11 +29,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -60,7 +61,7 @@ class ProductUseCaseTest {
     private ProductSupport productSupport; // Though not used in create, good to have for other methods
 
     @Mock
-    private com.back.product.mapper.ProductInfoMapper productInfoMapper;
+    private ProductInfoMapper productInfoMapper;
 
     private ProductInfo productInfo;
     private OptionValue optionValue1, optionValue2;
@@ -80,9 +81,9 @@ class ProductUseCaseTest {
         @DisplayName("성공: 여러 상품(variant)을 생성하고 DTO로 변환하여 반환한다")
         void createMultipleProduct_Success() {
             // given
-            ProductVariantCreateRequestDto variantDto1 = new ProductVariantCreateRequestDto(List.of(10L, 20L), 100L, List.of("img1.jpg"));
-            ProductVariantCreateRequestDto variantDto2 = new ProductVariantCreateRequestDto(List.of(10L), 50L, List.of("img2.jpg"));
-            List<ProductVariantCreateRequestDto> variants = List.of(variantDto1, variantDto2);
+            ProductVariantCreateCommand variantDto1 = new ProductVariantCreateCommand(List.of(10L, 20L), 100L, List.of("img1.jpg"));
+            ProductVariantCreateCommand variantDto2 = new ProductVariantCreateCommand(List.of(10L), 50L, List.of("img2.jpg"));
+            List<ProductVariantCreateCommand> variants = List.of(variantDto1, variantDto2);
             List<OptionValue> optionValues = List.of(optionValue1, optionValue2);
 
             Product product1 = Product.builder().id(1L).inventory(100L).build();
@@ -109,6 +110,9 @@ class ProductUseCaseTest {
             given(productOptionValuesRepository.saveAll(any(List.class))).willAnswer(invocation -> invocation.getArgument(0));
             given(productImageRepository.saveAll(any(List.class))).willAnswer(invocation -> invocation.getArgument(0));
             
+            // findOptionValuesAsMap 내부에서 호출되는 getAllOptionValues 스터빙 추가
+            given(productSupport.getAllOptionValues(anyList())).willReturn(optionValues);
+            
             // Mocking final DTO conversion
             given(productMapper.toDto(any(Product.class), any(List.class), any(List.class)))
                     .willAnswer(invocation -> {
@@ -118,7 +122,7 @@ class ProductUseCaseTest {
 
 
             // when
-            List<ProductDto> resultDtos = productUseCase.createMultipleProduct(productInfo, variants, optionValues);
+            List<ProductDto> resultDtos = productUseCase.createMultipleProduct(productInfo, variants);
 
             // then
             // Verify mappers were called correctly
@@ -157,15 +161,17 @@ class ProductUseCaseTest {
             Product existProductToDelete = Product.builder().id(2L).inventory(200L).productInfo(productInfo).build();
             List<Product> existProducts = List.of(existProductToUpdate, existProductToDelete);
 
-            ProductVariantUpdateRequestDto updateDto = new ProductVariantUpdateRequestDto(1L, List.of(10L), 150L, List.of("update.jpg"));
-            ProductVariantUpdateRequestDto createDto = new ProductVariantUpdateRequestDto(null, List.of(20L), 300L, List.of("new.jpg"));
-            List<ProductVariantUpdateRequestDto> variants = List.of(updateDto, createDto);
+            ProductVariantUpdateCommand updateDto = new ProductVariantUpdateCommand(1L, List.of(10L), 150L, List.of("update.jpg"));
+            ProductVariantUpdateCommand createDto = new ProductVariantUpdateCommand(null, List.of(20L), 300L, List.of("new.jpg"));
+            List<ProductVariantUpdateCommand> variants = List.of(updateDto, createDto);
 
             List<OptionValue> optionValues = List.of(optionValue1, optionValue2);
             Product newProduct = Product.builder().inventory(300L).productInfo(productInfo).build();
 
             // Mocking for the first part of the method
             given(productSupport.getAllProductsByProductInfo(productInfo)).willReturn(existProducts);
+            // findOptionValuesAsMap 내부에서 호출되는 getAllOptionValues 스터빙 추가
+            given(productSupport.getAllOptionValues(anyList())).willReturn(optionValues);
 
             // Mocking for mappers called during update AND creation
             given(productMapper.toEntity(productInfo, 300L)).willReturn(newProduct);
@@ -189,7 +195,7 @@ class ProductUseCaseTest {
 
 
             // when
-            productUseCase.updateMultipleProduct(productInfo, variants, optionValues);
+            productUseCase.updateMultipleProduct(productInfo, variants);
 
             // then
             // 1. Verify deletions
@@ -297,7 +303,7 @@ class ProductUseCaseTest {
     class FindMultipleProductTest {
 
         @Test
-        @DisplayName("성공: 여러 상품 ID로 조회하여 ProductListResponseDto를 반환한다")
+        @DisplayName("성공: 여러 상품 ID로 조회하여 ProductDetailDto 목록을 반환한다")
         void findMultipleProduct_Success() {
             // given
             List<Long> productIds = List.of(1L, 2L);
@@ -305,35 +311,50 @@ class ProductUseCaseTest {
             Product product2 = Product.builder().id(2L).productInfo(productInfo).inventory(20L).build();
             List<Product> foundProducts = List.of(product1, product2);
 
-            com.back.product.domain.ProductImage image1 = com.back.product.domain.ProductImage.builder().product(product1).imageUrl("img1.jpg").build();
+            ProductImage image1 = ProductImage.builder().product(product1).imageUrl("img1.jpg").build();
             ProductOptionValues option1 = ProductOptionValues.builder().product(product1).optionValue(optionValue1).build();
 
             given(productSupport.findMultipleProductByIds(productIds)).willReturn(foundProducts);
             given(productSupport.getAllProductImagesByProductsIn(foundProducts)).willReturn(List.of(image1));
             given(productSupport.getAllProductOptionValuesByProductsIn(foundProducts)).willReturn(List.of(option1));
 
-            com.back.product.dto.ProductInfoDto productInfoDto = com.back.product.dto.ProductInfoDto.builder().productInfoId(productInfo.getId()).name(productInfo.getName()).build();
-            given(productInfoMapper.toDto(productInfo)).willReturn(productInfoDto);
+            // productInfoMapper.toDto 스터빙 변경: willAnswer를 사용하여 호출된 ProductInfo로부터 DTO 생성
+            ProductInfoDto expectedProductInfoDto = ProductInfoDto.builder().productInfoId(productInfo.getId()).name(productInfo.getName()).build();
+            given(productInfoMapper.toDto(any(ProductInfo.class))).willReturn(expectedProductInfoDto);
 
-            com.back.product.dto.ProductDto productDto1 = com.back.product.dto.ProductDto.builder().productId(1L).build();
-            com.back.product.dto.ProductDto productDto2 = com.back.product.dto.ProductDto.builder().productId(2L).build();
-            given(productMapper.toDto(org.mockito.ArgumentMatchers.eq(product1), any(), any())).willReturn(productDto1);
-            given(productMapper.toDto(org.mockito.ArgumentMatchers.eq(product2), any(), any())).willReturn(productDto2);
+            // productMapper.toDto 스터빙 (findMultipleProduct 내부에서 호출됨)
+            ProductDto productDto1 = ProductDto.builder().productId(1L).inventory(10L).build();
+            ProductDto productDto2 = ProductDto.builder().productId(2L).inventory(20L).build();
+            // any(Product.class)를 사용하여 Product 파라미터에 대한 구체적인 인스턴스 매칭 회피
+            given(productMapper.toDto(any(Product.class), anyList(), anyList()))
+                    .willReturn(productDto1) // 첫 번째 호출 시 productDto1 반환
+                    .willReturn(productDto2); // 두 번째 호출 시 productDto2 반환
+
+            given(productMapper.toDetailDto(any(ProductInfoDto.class), anyList()))
+                    .willAnswer(invocation -> {
+                        ProductInfoDto infoDto = invocation.getArgument(0);
+                        List<ProductDto> dtos = invocation.getArgument(1);
+                        return ProductDetailDto.builder()
+                                .productInfo(infoDto)
+                                .products(dtos)
+                                .build();
+                    });
 
             // when
-            com.back.product.dto.response.ProductListResponseDto result = productUseCase.findMultipleProduct(productIds);
+            List<ProductDetailDto> result = productUseCase.findMultipleProduct(productIds);
 
             // then
             assertThat(result).isNotNull();
-            assertThat(result.products()).hasSize(1);
-            com.back.product.dto.response.ProductResponseDto productResponse = result.products().get(0);
-            assertThat(productResponse.productInfo()).isEqualTo(productInfoDto);
-            assertThat(productResponse.products()).containsExactlyInAnyOrder(productDto1, productDto2);
+            assertThat(result).hasSize(1); // 하나의 ProductInfo에 대한 ProductDetailDto가 반환됨
+            ProductDetailDto productDetail = result.getFirst();
+            assertThat(productDetail).isNotNull(); // productDetail이 null이 아님을 방어적으로 확인
+            assertThat(productDetail.productInfo()).isEqualTo(expectedProductInfoDto); // 비교할 객체를 변경
+            assertThat(productDetail.products()).containsExactlyInAnyOrder(productDto1, productDto2);
 
             verify(productSupport).findMultipleProductByIds(productIds);
             verify(productSupport).getAllProductImagesByProductsIn(foundProducts);
             verify(productSupport).getAllProductOptionValuesByProductsIn(foundProducts);
-            verify(productInfoMapper).toDto(productInfo);
+            verify(productInfoMapper, times(1)).toDto(productInfo); // productInfo는 한 번만 매핑됨
             verify(productMapper, times(2)).toDto(any(Product.class), any(), any());
         }
 

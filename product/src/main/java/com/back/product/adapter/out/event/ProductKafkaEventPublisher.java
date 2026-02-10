@@ -1,91 +1,54 @@
 package com.back.product.adapter.out.event;
 
+import com.back.common.event.Envelope;
 import com.back.common.event.KafkaEventPublisher;
-import com.back.common.product.event.ProductCreatedEvent;
-import com.back.common.product.event.ProductDeletedEvent;
-import com.back.common.product.event.ProductUpdatedEvent;
-import com.back.common.product.event.payload.BrandPayload;
-import com.back.common.product.event.payload.CategoryPayload;
-import com.back.common.product.event.payload.OptionPayload;
-import com.back.common.product.event.payload.ProductInfoPayload;
-import com.back.product.dto.OptionDto;
-import com.back.product.dto.ProductInfoDto;
+import com.back.product.dto.event.kafka.ProductCreatedPayload;
+import com.back.product.dto.event.kafka.ProductDeletedPayload;
+import com.back.product.dto.event.kafka.ProductUpdatedPayload;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.validation.annotation.Validated;
 
-import java.util.List;
-
+@Slf4j
 @Service
+@Validated
 @RequiredArgsConstructor
 public class ProductKafkaEventPublisher {
     private final KafkaEventPublisher kafkaEventPublisher;
 
-    @Value("${custom.kafka.topic.product-created}")
+    @Value("${custom.kafka.topic.product-item-created}")
     private String productCreatedTopic;
 
-    @Value("${custom.kafka.topic.product-updated}")
+    @Value("${custom.kafka.topic.product-item-updated}")
     private String productUpdatedTopic;
 
-    @Value("${custom.kafka.topic.product-deleted}")
+    @Value("${custom.kafka.topic.product-item-deleted}")
     private String productDeletedTopic;
 
-    public void sendCreatedEvent(ProductInfoDto productInfoDto, List<OptionDto> optionDtos, String thumbnailUrl) {
-        ProductCreatedEvent event = new ProductCreatedEvent(
-                toProductInfoPayload(productInfoDto),
-                toOptionPayload(optionDtos),
-                thumbnailUrl
-        );
+    public void sendCreatedEvent(@Valid ProductCreatedPayload payload) {
+        Envelope<ProductCreatedPayload> event = Envelope.of(productCreatedTopic, payload);
 
         kafkaEventPublisher.publish(productCreatedTopic, event);
+
+        log.info("[ProductKafkaEventPublisher] Sent ProductCreatedPayload for productInfoId: {}", payload.productInfo().productInfoId());
     }
 
-    public void sendModifiedEvent(ProductInfoDto productInfoDto, List<OptionDto> optionDtos, String thumbnailUrl) {
-        ProductUpdatedEvent event = new ProductUpdatedEvent(
-                toProductInfoPayload(productInfoDto),
-                toOptionPayload(optionDtos),
-                thumbnailUrl
-        );
+    public void sendModifiedEvent(@Valid ProductUpdatedPayload payload) {
+        Envelope<ProductUpdatedPayload> event = Envelope.of(productUpdatedTopic, payload);
 
         kafkaEventPublisher.publish(productUpdatedTopic, event);
+
+        log.info("[ProductKafkaEventPublisher] Sent ProductUpdatedPayload for productInfoId: {}", payload.productInfo().productInfoId());
     }
 
-    public void sendDeletedEvent(Long productInfoId) {
-        ProductDeletedEvent event = new ProductDeletedEvent(productInfoId);
+    public void sendDeletedEvent(@Valid ProductDeletedPayload payload) {
+        Envelope<ProductDeletedPayload> event = Envelope.of(productDeletedTopic, payload);
 
         kafkaEventPublisher.publish(productDeletedTopic, event);
-    }
 
-    private ProductInfoPayload toProductInfoPayload(ProductInfoDto productInfoDto) {
-        return new ProductInfoPayload(
-                productInfoDto.productInfoId(),
-                new BrandPayload(
-                        productInfoDto.brand().brandId(),
-                        productInfoDto.brand().name()
-                ),
-                new CategoryPayload(
-                        productInfoDto.category().categoryId(),
-                        productInfoDto.category().name()
-                ),
-                productInfoDto.name(),
-                productInfoDto.code(),
-                productInfoDto.releasePrice(),
-                productInfoDto.releaseDate()
-        );
-    }
-
-    private List<OptionPayload> toOptionPayload(List<OptionDto> optionDtos) {
-        return optionDtos.stream().map(optionDto -> {
-            OptionPayload.GroupPayload groupPayload = new OptionPayload.GroupPayload(
-                    optionDto.group().id(),
-                    optionDto.group().name()
-            );
-
-            List<OptionPayload.ValuePayload> valuePayloads = optionDto.values().stream()
-                    .map(value -> new OptionPayload.ValuePayload(value.id(), value.name()))
-                    .toList();
-
-            return new OptionPayload(groupPayload, valuePayloads);
-        }).toList();
+        log.info("[ProductKafkaEventPublisher] Sent ProductDeletedPayload for productInfoId: {}", payload.productInfoId());
     }
 }
