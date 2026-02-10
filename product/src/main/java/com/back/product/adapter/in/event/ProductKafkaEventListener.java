@@ -83,7 +83,8 @@ public class ProductKafkaEventListener {
         }
     }
 
-    private void processSyncCreatedProduct(@Valid ProductCreatedPayload payload) {
+    @Transactional
+    public void processSyncCreatedProduct(@Valid ProductCreatedPayload payload) {
         log.info("[KafkaListenerSuccess] ProductCreatedEvent 수신 : productInfo = {}", payload.productInfo());
 
         ProductInfoDto productInfoDto = productInfoMapper.toDto(payload.productInfo());
@@ -93,7 +94,8 @@ public class ProductKafkaEventListener {
         productDocumentUseCase.syncProduct(productInfoDto, optionDtos, thumbnailUrl);
     }
 
-    private void processSyncUpdatedProduct(@Valid ProductUpdatedPayload payload) {
+    @Transactional
+    public void processSyncUpdatedProduct(@Valid ProductUpdatedPayload payload) {
         log.info("[KafkaListenerSuccess] ProductUpdatedEvent 수신 : productInfo = {}", payload.productInfo());
 
         ProductInfoDto productInfoDto = productInfoMapper.toDto(payload.productInfo());
@@ -103,7 +105,8 @@ public class ProductKafkaEventListener {
         productDocumentUseCase.syncProduct(productInfoDto, optionDtos, thumbnailUrl);
     }
 
-    private void processSyncDeletedProduct(@Valid ProductDeletedPayload payload) {
+    @Transactional
+    public void processSyncDeletedProduct(@Valid ProductDeletedPayload payload) {
         log.info("[KafkaListenerSuccess] ProductDeletedEvent 수신 : productInfoId = {}", payload.productInfoId());
 
         productDocumentUseCase.deleteProduct(payload.productInfoId());
