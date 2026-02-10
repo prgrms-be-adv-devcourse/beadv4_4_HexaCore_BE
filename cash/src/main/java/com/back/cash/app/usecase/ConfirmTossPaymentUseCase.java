@@ -10,6 +10,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.ResourceAccessException;
 
+import java.util.Optional;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -23,9 +25,10 @@ public class ConfirmTossPaymentUseCase {
      */
     public ConfirmResultResponseDto execute(TossConfirmRequest req) {
         // 검증 (이미 DONE이면 바로 반환)
-        ConfirmResultResponseDto alreadyDone = confirmPaymentSupport.validatePayment(req);
-        if (alreadyDone != null) {
-            return alreadyDone;
+        Optional<ConfirmResultResponseDto> alreadyDone = confirmPaymentSupport.validatePayment(req);
+
+        if (alreadyDone.isPresent()) {
+            return alreadyDone.get();
         }
 
         // 토스 confirm 호출

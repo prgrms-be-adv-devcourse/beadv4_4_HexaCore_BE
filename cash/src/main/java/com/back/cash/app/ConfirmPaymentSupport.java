@@ -4,12 +4,12 @@ import com.back.cash.adapter.out.PaymentRepository;
 import com.back.cash.domain.Payment;
 import com.back.cash.domain.Wallet;
 import com.back.cash.domain.enums.PaymentStatus;
+import com.back.cash.domain.event.PaymentCompletedEvent;
+import com.back.cash.domain.event.PaymentFailedEvent;
 import com.back.cash.dto.request.TossConfirmRequest;
 import com.back.cash.dto.response.ConfirmResultResponseDto;
 import com.back.cash.mapper.PaymentMapper;
 import com.back.common.code.FailureCode;
-import com.back.cash.domain.event.PaymentCompletedEvent;
-import com.back.cash.domain.event.PaymentFailedEvent;
 import com.back.common.exception.BadRequestException;
 import com.back.common.exception.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -34,13 +35,13 @@ public class ConfirmPaymentSupport {
      * Payment 조회 및 검증 (트랜잭션)
      */
     @Transactional
-    public ConfirmResultResponseDto validatePayment(TossConfirmRequest req) {
+    public Optional<ConfirmResultResponseDto> validatePayment(TossConfirmRequest req) {
         Payment payment = paymentRepository.findWithLockByTossOrderId(req.orderId())
                 .orElseThrow(() -> new EntityNotFoundException(FailureCode.PAYMENT_NOT_FOUND));
 
         // 이미 DONE이면 바로 성공 응답 반환
         if (payment.getStatus() == PaymentStatus.DONE) {
-            return ConfirmResultResponseDto.success(PaymentMapper.toCompletedDto(payment));
+            return Optional.of(ConfirmResultResponseDto.success(PaymentMapper.toCompletedDto(payment)));
         }
 
         // FAIL이나 CANCELED면 처리 불가
@@ -56,7 +57,7 @@ public class ConfirmPaymentSupport {
             throw new BadRequestException(FailureCode.AMOUNT_MISMATCH);
         }
 
-        return null;
+        return Optional.empty();
     }
 
     /**
