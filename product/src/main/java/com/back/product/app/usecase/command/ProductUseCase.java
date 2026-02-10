@@ -110,7 +110,7 @@ public class ProductUseCase {
     }
 
     @Loggable
-    private void handleCreations(ProductInfo productInfo, List<ProductVariantUpdateCommand> variantsToCreate, Map<Long, OptionValue> optionValueMap) {
+    public void handleCreations(ProductInfo productInfo, List<ProductVariantUpdateCommand> variantsToCreate, Map<Long, OptionValue> optionValueMap) {
         List<Product> createdProducts = new ArrayList<>();
         List<ProductOptionValues> createdProductOptionValues = new ArrayList<>();
         List<ProductImage> createdImages = new ArrayList<>();
@@ -136,7 +136,7 @@ public class ProductUseCase {
     }
 
     @Loggable
-    private void handleUpdates(ProductInfo productInfo, List<ProductVariantUpdateCommand> variantsToUpdate, Map<Long, OptionValue> optionValueMap, List<Product> existProducts) {
+    public void handleUpdates(ProductInfo productInfo, List<ProductVariantUpdateCommand> variantsToUpdate, Map<Long, OptionValue> optionValueMap, List<Product> existProducts) {
         Map<Long, Product> existProductsMap = existProducts.stream()
                 .collect(Collectors.toMap(Product::getId, p -> p));
 
@@ -166,7 +166,7 @@ public class ProductUseCase {
     }
 
     @Loggable
-    private void handleDeletes(List<Product> existProducts, List<ProductVariantUpdateCommand> variants) {
+    public void handleDeletes(List<Product> existProducts, List<ProductVariantUpdateCommand> variants) {
         Set<Long> requestIds = variants.stream()
                 .map(ProductVariantUpdateCommand::productId)
                 .filter(Objects::nonNull)
