@@ -8,6 +8,7 @@ public record ConfirmResultResponseDto(
         Status status,
         PaymentCompletedRequestDto completedDto,
         PaymentFailedRequestDto failedDto,
+        String errorCode,
         String failReason
 ) {
     public enum Status { SUCCESS, FAIL, PENDING }
@@ -16,12 +17,12 @@ public record ConfirmResultResponseDto(
     public boolean isPending() { return status == Status.PENDING; }
 
     public static ConfirmResultResponseDto success(PaymentCompletedRequestDto dto) {
-        return new ConfirmResultResponseDto(Status.SUCCESS, dto, null, null);
+        return new ConfirmResultResponseDto(Status.SUCCESS, dto, null, null, null);
     }
-    public static ConfirmResultResponseDto fail(PaymentFailedRequestDto dto, String failReason) {
-        return new ConfirmResultResponseDto(Status.FAIL, null, dto, failReason);
+    public static ConfirmResultResponseDto fail(PaymentFailedRequestDto dto, String errorCode, String failReason) {
+        return new ConfirmResultResponseDto(Status.FAIL, null, dto, errorCode, failReason);
     }
     public static ConfirmResultResponseDto pending() {
-        return new ConfirmResultResponseDto(Status.PENDING, null, null, null);
+        return new ConfirmResultResponseDto(Status.PENDING, null, null, null, null);
     }
 }
