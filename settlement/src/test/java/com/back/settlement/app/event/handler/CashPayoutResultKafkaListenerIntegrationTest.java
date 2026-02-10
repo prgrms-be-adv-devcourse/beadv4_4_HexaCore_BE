@@ -11,7 +11,6 @@ import com.back.common.event.Envelope;
 import com.back.common.event.EventName;
 import com.back.settlement.adapter.out.SettlementRepository;
 import com.back.settlement.app.event.payload.PayoutResultPayload;
-import com.back.settlement.app.support.DomainEventPublisher;
 import com.back.settlement.domain.Settlement;
 import com.back.settlement.domain.SettlementStatus;
 import com.back.settlement.fixture.SettlementFixture;
@@ -150,10 +149,10 @@ class CashPayoutResultKafkaListenerIntegrationTest {
             Settlement settlement = createSettlement(settlementId, SettlementStatus.IN_PROGRESS);
 
             SettlementRepository repository = mock(SettlementRepository.class);
-            DomainEventPublisher eventPublisher = mock(DomainEventPublisher.class);
             given(repository.findById(settlementId)).willReturn(Optional.of(settlement));
+            given(repository.save(any(Settlement.class))).willAnswer(inv -> inv.getArgument(0));
 
-            CashPayoutResultKafkaListener listener = new CashPayoutResultKafkaListener(repository, eventPublisher, jsonMapper);
+            CashPayoutResultKafkaListener listener = new CashPayoutResultKafkaListener(repository, jsonMapper);
             log.info("[테스트 시작] 캐시 지급 성공 메시지 처리 테스트");
 
             // when
@@ -168,7 +167,7 @@ class CashPayoutResultKafkaListenerIntegrationTest {
             assertThat(settlement.getStatus()).isEqualTo(SettlementStatus.COMPLETED);
 
             ArgumentCaptor<Settlement> captor = ArgumentCaptor.forClass(Settlement.class);
-            then(eventPublisher).should().publishEvents(captor.capture());
+            then(repository).should().save(captor.capture());
             assertThat(captor.getValue().getId()).isEqualTo(settlementId);
             log.info("테스트 완료");
         }
@@ -187,10 +186,10 @@ class CashPayoutResultKafkaListenerIntegrationTest {
             Settlement settlement = createSettlement(settlementId, SettlementStatus.IN_PROGRESS);
 
             SettlementRepository repository = mock(SettlementRepository.class);
-            DomainEventPublisher eventPublisher = mock(DomainEventPublisher.class);
             given(repository.findById(settlementId)).willReturn(Optional.of(settlement));
+            given(repository.save(any(Settlement.class))).willAnswer(inv -> inv.getArgument(0));
 
-            CashPayoutResultKafkaListener listener = new CashPayoutResultKafkaListener(repository, eventPublisher, jsonMapper);
+            CashPayoutResultKafkaListener listener = new CashPayoutResultKafkaListener(repository, jsonMapper);
             log.info("[테스트 시작] 캐시 지급 실패 메시지 처리 테스트");
 
             // when
@@ -206,7 +205,7 @@ class CashPayoutResultKafkaListenerIntegrationTest {
             assertThat(settlement.getStatus()).isEqualTo(SettlementStatus.FAILED);
 
             ArgumentCaptor<Settlement> captor = ArgumentCaptor.forClass(Settlement.class);
-            then(eventPublisher).should().publishEvents(captor.capture());
+            then(repository).should().save(captor.capture());
             assertThat(captor.getValue().getId()).isEqualTo(settlementId);
             log.info("테스트 완료");
         }
@@ -223,10 +222,9 @@ class CashPayoutResultKafkaListenerIntegrationTest {
             Long settlementId = 999L;
 
             SettlementRepository repository = mock(SettlementRepository.class);
-            DomainEventPublisher eventPublisher = mock(DomainEventPublisher.class);
             given(repository.findById(settlementId)).willReturn(Optional.empty());
 
-            CashPayoutResultKafkaListener listener = new CashPayoutResultKafkaListener(repository, eventPublisher, jsonMapper);
+            CashPayoutResultKafkaListener listener = new CashPayoutResultKafkaListener(repository, jsonMapper);
             log.info("[테스트 시작] 정산서가 없는 경우 메시지 처리 테스트");
 
             // when
@@ -237,8 +235,8 @@ class CashPayoutResultKafkaListenerIntegrationTest {
             listener.listen(received);
 
             // then
-            log.info("[처리 결과] 정산서를 찾을 수 없음 (settlementId={}), 도메인 이벤트 발행 안 함", settlementId);
-            then(eventPublisher).should(never()).publishEvents(any());
+            log.info("[처리 결과] 정산서를 찾을 수 없음 (settlementId={}), save 호출 안 함", settlementId);
+            then(repository).should(never()).save(any());
             log.info("테스트 완료");
         }
     }
