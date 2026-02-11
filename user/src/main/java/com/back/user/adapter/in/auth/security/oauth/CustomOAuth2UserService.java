@@ -1,7 +1,7 @@
 package com.back.user.adapter.in.auth.security.oauth;
 
-import com.back.common.user.event.UserCreatedEvent;
-import com.back.common.user.event.WalletCreateRequestedEvent;
+import com.back.user.domain.event.UserCreatedEvent;
+import com.back.user.domain.event.WalletCreateRequestedEvent;
 import com.back.user.adapter.in.auth.security.oauth.principal.CustomOAuth2User;
 import com.back.user.adapter.in.auth.security.oauth.userinfo.GoogleResponse;
 import com.back.user.adapter.in.auth.security.oauth.userinfo.KakaoResponse;
@@ -89,7 +89,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                     user.getPhone(),
                     user.getProfileImageUrl()
                     ));
-            log.info("회원 가입 후 이벤트 발행 완료: userId={}", user.getId());
         }
 
         return new CustomOAuth2User(user.getRole(), user.getId(), oAuth2User.getAttributes());
