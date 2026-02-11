@@ -87,7 +87,7 @@ subprojects {
 }
 
 // common, security, image 모듈 bootJar 비활성화
-configure(subprojects.findAll { it.name in ['common', 'security', 'image'] }) {
+configure(subprojects.findAll { it.name in ['common', 'security', 'image', "ai"] }) {
     bootJar.enabled = false
     jar.enabled = true
 }
