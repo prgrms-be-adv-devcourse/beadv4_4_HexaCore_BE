@@ -24,7 +24,6 @@ public class DetectorEventHandler {
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void publishHijackSuspected(HijackDetectedEvent event) {
-        log.info("========== 핸들러 진입 확인 ==========");
         log.info("이벤트 수신: userId={}, email={}", event.userId(), event.email());
         Envelope<HijackSuspectedPayload> kafkaEvent = Envelope.of(
                 "detector.hijack.detected",
@@ -64,7 +63,6 @@ public class DetectorEventHandler {
             log.error("[계정 탈취 의심 이메일 발송 실패] userId: {}, email: {}",
                     event.userId(), event.email(), e);
         }
-        System.out.print("durl " + kafkaEvent);
         kafkaEventPublisher.publish(hijackDetectedTopic, kafkaEvent);
     }
 }

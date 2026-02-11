@@ -183,9 +183,7 @@ public class HijackDetector {
                 currentAmount,
                 reason
         );
-        log.info("========== 이벤트 발행 시작 ==========");
         log.info("발행할 이벤트: userId={}, email={}", userId, userEmail);
         applicationEventPublisher.publishEvent(event);
-        log.info("========== 이벤트 발행 완료 ==========");
     }
 }
