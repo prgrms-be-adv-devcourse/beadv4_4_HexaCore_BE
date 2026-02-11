@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -13,18 +14,28 @@ public class OutboxStatusUpdater {
 
     @Transactional
     public void markSent(Long outboxId, LocalDateTime now) {
-        chatOutboxRepository.updateSent(outboxId, now);
+        chatOutboxRepository.markSent(outboxId, now);
     }
 
     @Transactional
     public void markFailed(Long outboxId, String error, LocalDateTime now,
-                           int retryBaseDelaySeconds, int retryMaxDelaySeconds) {
-        // nextAttemptAt 계산을 DB에서 하거나(추천) 자바에서 계산해서 넘겨도 됨
-        chatOutboxRepository.updateFailed(outboxId, error, retryBaseDelaySeconds, retryMaxDelaySeconds);
+                           int retryBaseDelaySeconds) {
+        chatOutboxRepository.markInitialFailed(outboxId, error, retryBaseDelaySeconds);
     }
 
     @Transactional
-    public void markDead(Long outboxId, String reason, LocalDateTime now) {
-        chatOutboxRepository.updateDead(outboxId, reason, now);
+    public String markFailedOrDead(
+            Long outboxId,
+            String error,
+            LocalDateTime now
+    ) {
+        return chatOutboxRepository.markFailedOrDeadAtomic(
+                outboxId,
+                error,
+                now,
+                OutboxPollingProperties.MAX_RETRY,
+                OutboxPollingProperties.RETRY_BASE_DELAY_SECONDS,
+                OutboxPollingProperties.RETRY_MAX_DELAY_SECONDS
+        );
     }
 }

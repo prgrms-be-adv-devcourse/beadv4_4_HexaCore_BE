@@ -16,4 +16,12 @@ public record EventHeader(
                 LocalDateTime.now()
         );
     }
+
+    public static EventHeader create(String eventId, String eventType) {
+        return new EventHeader(
+                eventId,
+                eventType,
+                LocalDateTime.now()
+        );
+    }
 }
