@@ -17,7 +17,7 @@ public record EventHeader(
         );
     }
 
-    public static EventHeader create(String eventId, String eventType){
+    public static EventHeader create(String eventId, String eventType) {
         return new EventHeader(
                 eventId,
                 eventType,

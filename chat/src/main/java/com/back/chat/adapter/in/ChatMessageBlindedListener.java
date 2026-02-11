@@ -1,6 +1,6 @@
 package com.back.chat.adapter.in;
 
-import com.back.chat.adapter.out.outbox.*;
+import com.back.chat.adapter.out.outbox.OutboxPublisher;
 import com.back.chat.adapter.out.redis.RedisChatEventPublisher;
 import com.back.chat.event.ChatMessageBlindedEvent;
 import com.back.chat.event.ChatOutboxSavedEvent;
