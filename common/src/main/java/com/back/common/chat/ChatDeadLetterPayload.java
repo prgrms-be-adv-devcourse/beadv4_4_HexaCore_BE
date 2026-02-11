@@ -1,5 +1,7 @@
 package com.back.common.chat;
 
+import com.back.common.event.KafkaPayload;
+
 import java.time.LocalDateTime;
 
 public record ChatDeadLetterPayload(
@@ -11,5 +13,5 @@ public record ChatDeadLetterPayload(
         String lastError,
         LocalDateTime deadAt,
         String originalPayload
-) {
+) implements KafkaPayload {
 }
