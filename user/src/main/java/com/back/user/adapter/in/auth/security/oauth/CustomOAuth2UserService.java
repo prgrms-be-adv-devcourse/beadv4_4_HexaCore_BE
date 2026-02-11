@@ -40,7 +40,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
 
         OAuth2User oAuth2User = super.loadUser(userRequest);
-        log.info("소셜 로그인한 사용자 정보 : {}", oAuth2User.getAttributes());
 
         String provider = userRequest.getClientRegistration().getRegistrationId();
 
@@ -50,6 +49,9 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             case "kakao" -> new KakaoResponse(oAuth2User.getAttributes());
             default -> throw new OAuth2AuthenticationException("지원하지 않는 소셜 로그인입니다: " + provider);
         };
+
+        log.info("[SOCIAL_LOGIN_ATTEMPT] provider: {}, email: {}, providerId: {}",
+                provider, response.getEmail(), response.getProviderId());
 
         Provider authProvider = response.getProvider();
         String providerId = response.getProviderId();
