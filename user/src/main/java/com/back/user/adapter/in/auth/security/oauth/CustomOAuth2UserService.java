@@ -2,6 +2,7 @@ package com.back.user.adapter.in.auth.security.oauth;
 
 import com.back.user.domain.event.UserCreatedEvent;
 import com.back.user.domain.event.WalletCreateRequestedEvent;
+import com.back.common.util.IpAddressExtractor;
 import com.back.user.adapter.in.auth.security.oauth.principal.CustomOAuth2User;
 import com.back.user.adapter.in.auth.security.oauth.userinfo.GoogleResponse;
 import com.back.user.adapter.in.auth.security.oauth.userinfo.KakaoResponse;
@@ -13,6 +14,7 @@ import com.back.user.app.auth.GenerateNicknameUseCase;
 import com.back.user.domain.User;
 import com.back.user.domain.UserSetting;
 import com.back.user.domain.enums.Provider;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +24,8 @@ import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.util.Optional;
 
@@ -81,6 +85,14 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 .orElseGet(() -> userSettingRepository.save(UserSetting.of(user)));
 
         if (isNewUser) {
+            // 회원가입 IP 등록
+            String clientIp = getClientIp();
+            if (clientIp != null) {
+                log.info("[OAuth2 회원가입 IP 등록] userId: {}, IP: {}", user.getId(), clientIp);
+            } else {
+                log.warn("[OAuth2 회원가입 IP 추출 실패] userId: {}", user.getId());
+            }
+
             eventPublisher.publishEvent(new WalletCreateRequestedEvent(user.getId()));
             eventPublisher.publishEvent(new UserCreatedEvent(
                     user.getId(),
@@ -89,11 +101,33 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                     user.getEmail(),
                     user.getAddress(),
                     user.getPhone(),
-                    user.getProfileImageUrl()
+                    user.getProfileImageUrl(),
+                    clientIp
                     ));
         }
 
         return new CustomOAuth2User(user.getRole(), user.getId(), oAuth2User.getAttributes());
+    }
+
+    /**
+     * 클라이언트 IP 추출
+     * RequestContextHolder를 사용하여 현재 HTTP 요청에서 IP 가져오기
+     */
+    private String getClientIp() {
+        try {
+            ServletRequestAttributes attributes = 
+                (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+            
+            if (attributes == null) {
+                return null;
+            }
+            
+            HttpServletRequest request = attributes.getRequest();
+            return IpAddressExtractor.extractClientIp(request);
+        } catch (Exception e) {
+            log.error("IP 추출 중 오류 발생", e);
+            return null;
+        }
     }
 }
 

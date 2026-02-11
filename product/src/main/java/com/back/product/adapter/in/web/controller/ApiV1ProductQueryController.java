@@ -1,5 +1,6 @@
 package com.back.product.adapter.in.web.controller;
 
+import com.back.common.annotation.Loggable;
 import com.back.common.code.SuccessCode;
 import com.back.common.response.CommonResponse;
 import com.back.product.adapter.in.web.api.ProductQueryApiController;
@@ -21,6 +22,7 @@ public class ApiV1ProductQueryController implements ProductQueryApiController {
     private final ProductFacade productFacade;
 
     @Override
+    @Loggable
     @GetMapping("/{productInfoId}")
     public CommonResponse<ProductDetailResponseDto> getProductDetail(@PathVariable Long productInfoId) {
         ProductDetailResponseDto response = productFacade.getProductDetail(productInfoId);
@@ -28,6 +30,7 @@ public class ApiV1ProductQueryController implements ProductQueryApiController {
     }
 
     @Override
+    @Loggable
     @GetMapping
     public CommonResponse<ProductSearchResponseDto> searchProducts(
        @ModelAttribute @Valid ProductSearchRequestDto request,
@@ -39,6 +42,7 @@ public class ApiV1ProductQueryController implements ProductQueryApiController {
     }
 
     @Override
+    @Loggable
     @GetMapping("/variants")
     public CommonResponse<ProductDetailListResponseDto> getProducts(@Valid @ModelAttribute ProductQueryRequestDto request) {
         ProductDetailListResponseDto response = productFacade.getProducts(request);

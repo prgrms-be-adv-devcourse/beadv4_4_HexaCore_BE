@@ -1,5 +1,6 @@
 package com.back.product.adapter.in.web.controller;
 
+import com.back.common.annotation.Loggable;
 import com.back.common.code.SuccessCode;
 import com.back.common.response.CommonResponse;
 import com.back.product.adapter.in.web.api.BrandApiController;
@@ -21,6 +22,7 @@ public class ApiV1BrandController implements BrandApiController {
     private final ProductFacade productFacade;
 
     @Override
+    @Loggable
     @GetMapping
     public CommonResponse<BrandListResponseDto> getBrands() {
         BrandListResponseDto response = BrandListResponseDto.builder()
@@ -30,6 +32,7 @@ public class ApiV1BrandController implements BrandApiController {
     }
 
     @Override
+    @Loggable
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public CommonResponse<BrandListResponseDto> createBrands(@RequestBody @Valid BrandListCreateRequestDto request) {
@@ -38,6 +41,7 @@ public class ApiV1BrandController implements BrandApiController {
     }
 
     @Override
+    @Loggable
     @PutMapping("/{brandId}")
     public CommonResponse<BrandResponseDto> modifyBrand(
             @PathVariable Long brandId,
@@ -47,6 +51,7 @@ public class ApiV1BrandController implements BrandApiController {
     }
 
     @Override
+    @Loggable
     @DeleteMapping("/{brandId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public CommonResponse<?> deleteBrand(@PathVariable Long brandId) {

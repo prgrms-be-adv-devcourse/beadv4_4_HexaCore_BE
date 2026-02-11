@@ -1,5 +1,6 @@
 package com.back.product.app.usecase.command;
 
+import com.back.common.annotation.Loggable;
 import com.back.common.code.FailureCode;
 import com.back.common.exception.CustomException;
 import com.back.product.adapter.out.persistence.ProductImageRepository;
@@ -32,6 +33,7 @@ public class ProductUseCase {
     private final ProductImageRepository productImageRepository;
     private final ProductSupport productSupport;
 
+    @Loggable
     @Transactional
     public List<ProductDto> createMultipleProduct(ProductInfo productInfo, List<ProductVariantCreateCommand> variants) {
         List<Long> allOptionValueIds = variants.stream()
@@ -62,6 +64,7 @@ public class ProductUseCase {
         return buildProductDto(newProducts, newProductOptionValues, newProductImages);
     }
 
+    @Loggable
     @Transactional
     public List<ProductDto> updateMultipleProduct(ProductInfo productInfo, List<ProductVariantUpdateCommand> variants) {
         List<Product> existProducts = productSupport.getAllProductsByProductInfo(productInfo);
@@ -84,12 +87,14 @@ public class ProductUseCase {
         return findAllProduct(productInfo);
     }
 
+    @Loggable
     @Transactional
     public void deleteMultipleProduct(Long productInfoId) {
         List<Product> deletedProducts = productSupport.getAllProductsByProductInfoId(productInfoId);
         deleteProducts(deletedProducts);
     }
 
+    @Loggable
     @Transactional(readOnly = true)
     public List<ProductDto> findAllProduct(ProductInfo productInfo) {
         List<Product> products = productSupport.getAllProductsByProductInfo(productInfo);
@@ -104,7 +109,8 @@ public class ProductUseCase {
         return buildProductDto(products, productOptionValues, productImages);
     }
 
-    private void handleCreations(ProductInfo productInfo, List<ProductVariantUpdateCommand> variantsToCreate, Map<Long, OptionValue> optionValueMap) {
+    @Loggable
+    public void handleCreations(ProductInfo productInfo, List<ProductVariantUpdateCommand> variantsToCreate, Map<Long, OptionValue> optionValueMap) {
         List<Product> createdProducts = new ArrayList<>();
         List<ProductOptionValues> createdProductOptionValues = new ArrayList<>();
         List<ProductImage> createdImages = new ArrayList<>();
@@ -129,7 +135,8 @@ public class ProductUseCase {
         productImageRepository.saveAll(createdImages);
     }
 
-    private void handleUpdates(ProductInfo productInfo, List<ProductVariantUpdateCommand> variantsToUpdate, Map<Long, OptionValue> optionValueMap, List<Product> existProducts) {
+    @Loggable
+    public void handleUpdates(ProductInfo productInfo, List<ProductVariantUpdateCommand> variantsToUpdate, Map<Long, OptionValue> optionValueMap, List<Product> existProducts) {
         Map<Long, Product> existProductsMap = existProducts.stream()
                 .collect(Collectors.toMap(Product::getId, p -> p));
 
@@ -158,7 +165,8 @@ public class ProductUseCase {
         productImageRepository.saveAll(updatedProductImages);
     }
 
-    private void handleDeletes(List<Product> existProducts, List<ProductVariantUpdateCommand> variants) {
+    @Loggable
+    public void handleDeletes(List<Product> existProducts, List<ProductVariantUpdateCommand> variants) {
         Set<Long> requestIds = variants.stream()
                 .map(ProductVariantUpdateCommand::productId)
                 .filter(Objects::nonNull)
@@ -236,16 +244,19 @@ public class ProductUseCase {
         ).toList();
     }
 
+    @Loggable
     @Transactional
     public Boolean isOptionGroupInUse(Long optionGroupId) {
         return productSupport.existsProductByOptionGroupId(optionGroupId);
     }
 
+    @Loggable
     @Transactional
     public Boolean isOptionValueInUse(Long optionValueId) {
         return productSupport.existsProductByOptionValueId(optionValueId);
     }
 
+    @Loggable
     @Transactional(readOnly = true)
     public List<ProductDetailDto> findMultipleProduct(List<Long> productIds) {
         List<Product> products = productSupport.findMultipleProductByIds(productIds);

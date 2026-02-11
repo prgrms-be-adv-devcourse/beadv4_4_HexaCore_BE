@@ -1,5 +1,6 @@
 package com.back.product.adapter.in.web.controller;
 
+import com.back.common.annotation.Loggable;
 import com.back.image.app.ImageFacade;
 import com.back.image.dto.enums.ImageCategory;
 import com.back.common.code.SuccessCode;
@@ -20,6 +21,7 @@ public class ApiV1ImageController implements ImageApiController {
     private final ImageFacade imageFacade;
 
     @Override
+    @Loggable
     @PostMapping(path = "/upload/{category}", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     public CommonResponse<ImageUploadResponseDto> uploadImages(
             @PathVariable ImageCategory category,

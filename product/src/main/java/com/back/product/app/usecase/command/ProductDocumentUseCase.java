@@ -2,6 +2,7 @@ package com.back.product.app.usecase.command;
 
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.query_dsl.*;
+import com.back.common.annotation.Loggable;
 import com.back.product.adapter.out.document.ProductDocumentRepository;
 import com.back.product.app.usecase.query.ProductDocumentSupport;
 import com.back.product.document.ProductDocument;
@@ -31,6 +32,7 @@ public class ProductDocumentUseCase {
     private final ProductDocumentMapper productDocumentMapper;
     private final ProductDocumentRepository productDocumentRepository;
 
+    @Loggable
     @Transactional
     public void syncProduct(ProductInfoDto productInfoDto, List<OptionDto> optionDtos, String thumbnailUrl) {
         ProductDocument documentToSync = productDocumentMapper.toDocument(productInfoDto, optionDtos, thumbnailUrl);
@@ -40,11 +42,13 @@ public class ProductDocumentUseCase {
         productDocumentRepository.save(documentToSync);
     }
 
+    @Loggable
     @Transactional
     public void deleteProduct(Long productInfoId) {
         productDocumentRepository.deleteById(productInfoId.toString());
     }
 
+    @Loggable
     @Transactional(readOnly = true)
     public ProductSearchResponseDto findProductPage(ProductSearchCommand search) {
         Query query = buildSearchQuery(

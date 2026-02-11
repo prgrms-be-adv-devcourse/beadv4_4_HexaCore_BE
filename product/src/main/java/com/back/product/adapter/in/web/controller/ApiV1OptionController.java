@@ -1,5 +1,6 @@
 package com.back.product.adapter.in.web.controller;
 
+import com.back.common.annotation.Loggable;
 import com.back.common.code.SuccessCode;
 import com.back.common.response.CommonResponse;
 import com.back.product.adapter.in.web.api.OptionApiController;
@@ -25,6 +26,7 @@ public class ApiV1OptionController implements OptionApiController {
     private final ProductFacade productFacade;
 
     @Override
+    @Loggable
     @GetMapping
     public CommonResponse<OptionListResponseDto> getOptions() {
         OptionListResponseDto response = productFacade.getOptions();
@@ -32,6 +34,7 @@ public class ApiV1OptionController implements OptionApiController {
     }
 
     @Override
+    @Loggable
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public CommonResponse<OptionListResponseDto> createOptions(@Valid @RequestBody OptionListCreateRequestDto request) {
@@ -40,6 +43,7 @@ public class ApiV1OptionController implements OptionApiController {
     }
 
     @Override
+    @Loggable
     @PostMapping(path = "/{optionGroupId}")
     @ResponseStatus(HttpStatus.CREATED)
     public CommonResponse<OptionResponseDto> appendOptions(
@@ -50,6 +54,7 @@ public class ApiV1OptionController implements OptionApiController {
     }
 
     @Override
+    @Loggable
     @PutMapping("/groups/{optionGroupId}")
     public CommonResponse<OptionGroupModifyResponseDto> modifyOptionGroup(
             @PathVariable Long optionGroupId,
@@ -59,6 +64,7 @@ public class ApiV1OptionController implements OptionApiController {
     }
 
     @Override
+    @Loggable
     @PutMapping("/values/{optionValueId}")
     public CommonResponse<OptionValueModifyResponseDto> modifyOptionValue(
             @PathVariable Long optionValueId,
@@ -68,6 +74,7 @@ public class ApiV1OptionController implements OptionApiController {
     }
 
     @Override
+    @Loggable
     @DeleteMapping("/groups/{optionGroupId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public CommonResponse<?> deleteOptionGroup(@PathVariable Long optionGroupId) {
@@ -76,6 +83,7 @@ public class ApiV1OptionController implements OptionApiController {
     }
 
     @Override
+    @Loggable
     @DeleteMapping("/values/{optionValueId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public CommonResponse<?> deleteOptionValue(@PathVariable Long optionValueId) {

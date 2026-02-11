@@ -1,5 +1,6 @@
 package com.back.image.app.usecase;
 
+import com.back.common.annotation.Loggable;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -14,6 +15,8 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class FlushImageUseCase {
+
+    @Loggable(logArgs = false)
     public void flushMultipleFile(List<File> tempFiles) {
         if (tempFiles == null || tempFiles.isEmpty()) {
             return;
@@ -31,6 +34,7 @@ public class FlushImageUseCase {
         }
     }
 
+    @Loggable(logArgs = false)
     public boolean flushFile(File tempFile) {
         if (tempFile == null) return true;
 

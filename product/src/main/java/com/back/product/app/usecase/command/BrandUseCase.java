@@ -1,5 +1,6 @@
 package com.back.product.app.usecase.command;
 
+import com.back.common.annotation.Loggable;
 import com.back.common.code.FailureCode;
 import com.back.common.exception.CustomException;
 import com.back.common.exception.InvalidValueException;
@@ -27,11 +28,13 @@ public class BrandUseCase {
     private final ProductSupport productSupport;
     private final BrandRepository brandRepository;
 
+    @Loggable
     @Transactional(readOnly = true)
     public List<BrandDto> getBrands() {
         return productSupport.getAllBrands().stream().map(brandMapper::toDto).toList();
     }
 
+    @Loggable
     @Transactional
     public List<BrandDto> createBrands(List<BrandDataCommand> brands) {
         Map<String, Brand> existsBrands = productSupport.getAllBrands().stream()
@@ -52,12 +55,14 @@ public class BrandUseCase {
         return createdBrands.stream().map(brandMapper::toDto).toList();
     }
 
+    @Loggable
     @Transactional(readOnly = true)
     public Brand findBrandExists(Long brandId) {
         return productSupport.findBrandById(brandId)
                 .orElseThrow(() -> new CustomException(FailureCode.BRAND_NOT_FOUND));
     }
 
+    @Loggable
     @Transactional
     public BrandDto modifyBrand(Long brandId, BrandDataCommand brand) {
         Brand brandToModify = findBrandExists(brandId);
@@ -78,6 +83,7 @@ public class BrandUseCase {
         return brandMapper.toDto(brandToModify);
     }
 
+    @Loggable
     @Transactional
     public void deleteBrand(Long brandId) {
         brandRepository.deleteById(brandId);

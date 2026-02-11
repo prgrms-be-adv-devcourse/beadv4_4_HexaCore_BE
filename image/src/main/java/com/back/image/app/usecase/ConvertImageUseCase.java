@@ -1,5 +1,6 @@
 package com.back.image.app.usecase;
 
+import com.back.common.annotation.Loggable;
 import com.back.common.code.FailureCode;
 import com.back.common.exception.CustomException;
 import com.back.image.utils.ImageUtility;
@@ -20,6 +21,7 @@ import java.util.UUID;
 public class ConvertImageUseCase {
     private final ImageUtility imageUtility;
 
+    @Loggable(logArgs = false)
     public List<File> convertMultipleFile(List<MultipartFile> multipartFiles) {
         return multipartFiles.stream().map(mf -> {
             try {
@@ -31,6 +33,7 @@ public class ConvertImageUseCase {
         }).toList();
     }
 
+    @Loggable(logArgs = false)
     public File convertFile(MultipartFile multipartFile) {
         try {
             if (multipartFile == null || multipartFile.isEmpty()) {

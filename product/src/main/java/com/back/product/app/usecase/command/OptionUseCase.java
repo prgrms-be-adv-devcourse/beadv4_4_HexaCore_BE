@@ -1,5 +1,6 @@
 package com.back.product.app.usecase.command;
 
+import com.back.common.annotation.Loggable;
 import com.back.common.code.FailureCode;
 import com.back.common.exception.CustomException;
 import com.back.product.adapter.out.persistence.OptionGroupRepository;
@@ -41,6 +42,7 @@ public class OptionUseCase {
     private final OptionGroupRepository optionGroupRepository;
     private final OptionValueRepository optionValueRepository;
 
+    @Loggable
     @Transactional(readOnly = true)
     public List<OptionDto> findAllOptions() {
         List<OptionGroup> optionGroups = productSupport.getAllProductOptionGroups();
@@ -58,6 +60,7 @@ public class OptionUseCase {
         }).toList();
     }
 
+    @Loggable
     @Transactional
     public List<OptionDto> createOptions(List<OptionCreateCommand> options) {
         return options.stream()
@@ -65,6 +68,7 @@ public class OptionUseCase {
                 .toList();
     }
 
+    @Loggable
     @Transactional
     public OptionDto createOption(String groupName, List<String> valueNames) {
         OptionGroup group = productSupport.getOptionGroupByName(groupName.toLowerCase());
@@ -80,6 +84,7 @@ public class OptionUseCase {
         return optionMapper.toDto(group, createdValues);
     }
 
+    @Loggable
     @Transactional
     public OptionDto appendOptions(Long optionGroupId, List<String> values) {
         OptionGroup group = productSupport.getOptionGroupById(optionGroupId)
@@ -92,6 +97,7 @@ public class OptionUseCase {
         return optionMapper.toDto(group, createdValues);
     }
 
+    @Loggable
     @Transactional
     public OptionGroupModifyResponseDto modifyOptionGroup(Long optionGroupId, String name) {
         OptionGroup existsGroup = productSupport.getOptionGroupById(optionGroupId)
@@ -102,6 +108,7 @@ public class OptionUseCase {
         return optionGroupMapper.toModifyResponseDto(existsGroup);
     }
 
+    @Loggable
     @Transactional
     public OptionValueModifyResponseDto modifyOptionValue(Long optionGroupId, Long optionValueId, String name) {
         OptionValue existsValue = productSupport.getOptionValueById(optionValueId)
@@ -119,6 +126,7 @@ public class OptionUseCase {
         return optionValueMapper.toModifyResponseDto(existsValue);
     }
 
+    @Loggable
     @Transactional
     public void deleteOptions(Long optionGroupId) {
         optionValueRepository.deleteAllByOptionGroup_Id(optionGroupId);
@@ -126,6 +134,7 @@ public class OptionUseCase {
         optionGroupRepository.deleteById(optionGroupId);
     }
 
+    @Loggable
     @Transactional
     public void deleteOption(Long optionValueId) {
         optionValueRepository.deleteById(optionValueId);
