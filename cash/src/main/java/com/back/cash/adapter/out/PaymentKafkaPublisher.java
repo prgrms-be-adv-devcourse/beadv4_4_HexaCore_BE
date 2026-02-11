@@ -29,7 +29,7 @@ public class PaymentKafkaPublisher {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void publishCompleted(PaymentCompletedEvent event) {
         Envelope<PaymentCompletedPayload> envelope = Envelope.of(
-                "cash.payment-completed",
+                "cash.payment.completed",
                 new PaymentCompletedPayload(event.relType(), event.relId(), event.totalAmount())
         );
 
@@ -43,7 +43,7 @@ public class PaymentKafkaPublisher {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void publishFailed(PaymentFailedEvent event) {
         Envelope<PaymentFailPayload> envelope = Envelope.of(
-                "cash.payment-failed",
+                "cash.payment.failed",
                 new PaymentFailPayload(event.relType(), event.relId())
         );
 
