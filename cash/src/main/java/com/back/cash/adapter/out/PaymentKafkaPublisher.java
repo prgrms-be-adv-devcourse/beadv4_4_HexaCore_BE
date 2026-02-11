@@ -29,27 +29,27 @@ public class PaymentKafkaPublisher {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void publishCompleted(PaymentCompletedEvent event) {
         Envelope<PaymentCompletedPayload> envelope = Envelope.of(
-                "PAYMENT_COMPLETED",
+                "cash.payment-completed",
                 new PaymentCompletedPayload(event.relType(), event.relId(), event.totalAmount())
         );
 
         kafkaEventPublisher.publish(paymentCompletedTopic, envelope);
 
-        log.info("[PAYMENT_KAFKA_SENT] topic={}, relType={}, relId={}",
-                paymentCompletedTopic, event.relType(), event.relId());
+        log.info("[PAYMENT_COMPLETED_KAFKA_PUBLISH] eventId={}, occurredAt={}, topic={}, relType={}, relId={}",
+                envelope.header().eventId(), envelope.header().occurrenceAt(), paymentCompletedTopic, event.relType(), event.relId());
     }
 
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void publishFailed(PaymentFailedEvent event) {
         Envelope<PaymentFailPayload> envelope = Envelope.of(
-                "PAYMENT_FAILED",
+                "cash.payment-failed",
                 new PaymentFailPayload(event.relType(), event.relId())
         );
 
         kafkaEventPublisher.publish(paymentFailedTopic, envelope);
 
-        log.info("[PAYMENT_KAFKA_SENT] topic={}, relType={}, relId={}",
-                paymentFailedTopic, event.relType(), event.relId());
+        log.info("[PAYMENT_FAILED_KAFKA_PUBLISH] eventId={}, occurredAt={}, topic={}, relType={}, relId={}",
+                envelope.header().eventId(), envelope.header().occurrenceAt(), paymentFailedTopic, event.relType(), event.relId());
     }
 }
