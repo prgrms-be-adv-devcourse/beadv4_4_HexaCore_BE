@@ -45,6 +45,8 @@ jobs:
             all:
               - 'common/**'
               - 'security/**'
+              - './build.gradle'
+              - './settings.gradle'
 
   # Job 2: 변경된 각 모듈에 대해 이미지를 빌드하고 푸시하는 작업
   build-and-push:
