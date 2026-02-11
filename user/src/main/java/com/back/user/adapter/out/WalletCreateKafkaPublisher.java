@@ -23,7 +23,7 @@ public class WalletCreateKafkaPublisher {
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void publishWalletCreate(WalletCreateRequestedEvent event) {
-        Envelope<WalletCreateRequestedPayload> envelope = Envelope.of("user.wallet.created", new WalletCreateRequestedPayload(event.userId()));
+        Envelope<WalletCreateRequestedPayload> envelope = Envelope.of(walletCreateRequestsTopic, new WalletCreateRequestedPayload(event.userId()));
 
         kafkaEventPublisher.publish(walletCreateRequestsTopic, envelope);
 

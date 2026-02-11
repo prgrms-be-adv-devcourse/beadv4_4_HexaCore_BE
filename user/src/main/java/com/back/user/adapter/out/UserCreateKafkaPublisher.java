@@ -23,7 +23,7 @@ public class UserCreateKafkaPublisher {
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void publish(UserCreatedEvent event) {
-        Envelope<UserCreatedPayload> envelope = Envelope.of("user.account.created", new UserCreatedPayload(
+        Envelope<UserCreatedPayload> envelope = Envelope.of(userCreatedTopic, new UserCreatedPayload(
                 event.id(),
                 event.nickname(),
                 event.name(),
