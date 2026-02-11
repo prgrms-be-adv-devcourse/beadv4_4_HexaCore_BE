@@ -42,6 +42,8 @@ jobs:
               - 'notification/**'
             settlement:
               - 'settlement/**'
+            detector:
+              - 'detector/**'
             all:
               - 'common/**'
               - 'security/**'
@@ -63,7 +65,7 @@ jobs:
       matrix:
         # 'changes' job의 출력(JSON 배열)을 사용하여 'module' 변수를 설정합니다.
         # 만약 'all' 필터가 감지되었다면, 모든 서비스 목록으로 매트릭스를 구성합니다.
-        module: ${{ contains(needs.changes.outputs.modules, '"all"') && fromJson('["user", "product", "market", "chat", "cash", "notification", "settlement"]') || fromJson(needs.changes.outputs.modules) }}
+        module: ${{ contains(needs.changes.outputs.modules, '"all"') && fromJson('["user", "product", "market", "chat", "cash", "notification", "settlement", "detector"]') || fromJson(needs.changes.outputs.modules) }}
 
     steps:
       - name: Checkout code
@@ -139,7 +141,7 @@ jobs:
           MODULES_JSON:
             ${{ 
               contains(needs.changes.outputs.modules, '"all"') && 
-              '["user", "product", "market", "chat", "cash", "notification", "settlement"]' ||
+              '["user", "product", "market", "chat", "cash", "notification", "settlement", "detector"]' ||
               needs.changes.outputs.modules 
             }}
         run: |
@@ -169,7 +171,7 @@ jobs:
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git add .
-          # 변경 사항이 있을 때만 커밋하고 푸시합니다. (오타 수정: --staded -> --staged)
+          # 변경 사항이 있을 때만 커밋하고 푸시합니다. 
           if ! git diff --staged --quiet; then
             git commit -m "Update image tags to ${{ github.sha }} for changed services"
             git push
