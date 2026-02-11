@@ -29,27 +29,27 @@ public class PaymentKafkaPublisher {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void publishCompleted(PaymentCompletedEvent event) {
         Envelope<PaymentCompletedPayload> envelope = Envelope.of(
-                "PAYMENT_COMPLETED",
+                paymentCompletedTopic,
                 new PaymentCompletedPayload(event.relType(), event.relId(), event.totalAmount())
         );
 
         kafkaEventPublisher.publish(paymentCompletedTopic, envelope);
 
-        log.info("[PAYMENT_KAFKA_SENT] topic={}, relType={}, relId={}",
-                paymentCompletedTopic, event.relType(), event.relId());
+        log.info("[PAYMENT_COMPLETED_KAFKA_PUBLISH] 결제 검증 완료 이벤트 발행 eventId={}, occurredAt={}, topic={}, relType={}, relId={}",
+                envelope.header().eventId(), envelope.header().occurrenceAt(), paymentCompletedTopic, event.relType(), event.relId());
     }
 
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void publishFailed(PaymentFailedEvent event) {
         Envelope<PaymentFailPayload> envelope = Envelope.of(
-                "PAYMENT_FAILED",
+                paymentFailedTopic,
                 new PaymentFailPayload(event.relType(), event.relId())
         );
 
         kafkaEventPublisher.publish(paymentFailedTopic, envelope);
 
-        log.info("[PAYMENT_KAFKA_SENT] topic={}, relType={}, relId={}",
-                paymentFailedTopic, event.relType(), event.relId());
+        log.info("[PAYMENT_FAILED_KAFKA_PUBLISH] 결제 검증 실패 이벤트 발행 eventId={}, occurredAt={}, topic={}, relType={}, relId={}",
+                envelope.header().eventId(), envelope.header().occurrenceAt(), paymentFailedTopic, event.relType(), event.relId());
     }
 }
