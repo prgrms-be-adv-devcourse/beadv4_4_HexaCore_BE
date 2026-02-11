@@ -15,7 +15,6 @@ import com.back.common.chat.ChatMessageBlindedKafkaEvent;
 import com.back.common.code.FailureCode;
 import com.back.common.exception.BadRequestException;
 import com.back.common.exception.ConflictException;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -63,6 +62,15 @@ public class ChatReportMessageUseCase {
         boolean blindedNow = chatSupport.blindIfReached(messageId, ChatMessageBlindPolicy.MESSAGE_BLIND_THRESHOLD) == 1;
 
         if (blindedNow) {
+
+            eventPublisher.publishEvent(
+                    new ChatMessageBlindedEvent(
+                            message.getId(),
+                            message.getRoomId(),
+                            message.getUserId()
+                    )
+            );
+        }
             ChatMessageBlindedKafkaEvent payload =
                     new ChatMessageBlindedKafkaEvent(
                             UUID.randomUUID().toString(),
@@ -77,7 +85,7 @@ public class ChatReportMessageUseCase {
                 throw new IllegalStateException("Outbox payload 직렬화 실패", e);
             }
 
-            ChatOutbox outbox = chatOutboxRepository.save(
+                ChatOutbox outbox = chatOutboxRepository.save(
                     ChatOutbox.pending(
                             UUID.fromString(payload.eventId()),
                             "CHAT_MESSAGE",
@@ -87,17 +95,7 @@ public class ChatReportMessageUseCase {
                             LocalDateTime.now()
                     )
             );
-
-            eventPublisher.publishEvent(
-                    new ChatMessageBlindedEvent(
-                            message.getId(),
-                            message.getRoomId(),
-                            message.getUserId()
-                    )
-            );
-
-            eventPublisher.publishEvent(new ChatOutboxSavedEvent(outbox.getId()));
-        }
+                eventPublisher.publishEvent(new ChatOutboxSavedEvent(outbox.getId()));
 
         return ChatMessageMapper.toReportResponseDto(message);
     }
