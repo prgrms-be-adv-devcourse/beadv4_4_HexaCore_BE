@@ -27,7 +27,7 @@ public class WalletCreateKafkaPublisher {
 
         kafkaEventPublisher.publish(walletCreateRequestsTopic, envelope);
 
-        log.info("[WALLET_CREATED_KAFKA_PUBLISH] eventId={}, occurredAt={}, topic={}, userId={}",
+        log.info("[WALLET_CREATED_KAFKA_PUBLISH] 지갑 생성 이벤트 발행 eventId={}, occurredAt={}, topic={}, userId={}",
                 envelope.header().eventId(), envelope.header().occurrenceAt(), walletCreateRequestsTopic, event.userId());
     }
 

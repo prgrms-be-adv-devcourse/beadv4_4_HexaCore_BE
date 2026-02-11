@@ -35,7 +35,7 @@ public class UserCreateKafkaPublisher {
 
         kafkaEventPublisher.publish(userCreatedTopic, envelope);
 
-        log.info("[USER_CREATED_KAFKA_PUBLISH eventId={}, occurredAt={}, topic={}, userId={}",
+        log.info("[USER_CREATED_KAFKA_PUBLISH] 회원 복제 이벤트 생성 eventId={}, occurredAt={}, topic={}, userId={}",
                 envelope.header().eventId(), envelope.header().occurrenceAt(), userCreatedTopic, event.id());
     }
 }

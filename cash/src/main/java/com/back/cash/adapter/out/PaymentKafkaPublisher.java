@@ -35,7 +35,7 @@ public class PaymentKafkaPublisher {
 
         kafkaEventPublisher.publish(paymentCompletedTopic, envelope);
 
-        log.info("[PAYMENT_COMPLETED_KAFKA_PUBLISH] eventId={}, occurredAt={}, topic={}, relType={}, relId={}",
+        log.info("[PAYMENT_COMPLETED_KAFKA_PUBLISH] 결제 검증 완료 이벤트 발행 eventId={}, occurredAt={}, topic={}, relType={}, relId={}",
                 envelope.header().eventId(), envelope.header().occurrenceAt(), paymentCompletedTopic, event.relType(), event.relId());
     }
 
@@ -49,7 +49,7 @@ public class PaymentKafkaPublisher {
 
         kafkaEventPublisher.publish(paymentFailedTopic, envelope);
 
-        log.info("[PAYMENT_FAILED_KAFKA_PUBLISH] eventId={}, occurredAt={}, topic={}, relType={}, relId={}",
+        log.info("[PAYMENT_FAILED_KAFKA_PUBLISH] 결제 검증 실패 이벤트 발행 eventId={}, occurredAt={}, topic={}, relType={}, relId={}",
                 envelope.header().eventId(), envelope.header().occurrenceAt(), paymentFailedTopic, event.relType(), event.relId());
     }
 }
