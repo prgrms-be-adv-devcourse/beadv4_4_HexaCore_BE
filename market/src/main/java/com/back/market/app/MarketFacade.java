@@ -1,6 +1,5 @@
 package com.back.market.app;
 
-import com.back.detector.annotation.CheckBidSpam;
 import com.back.market.app.usecase.CancelBidUseCase;
 import com.back.market.app.usecase.GetInstantPriceUseCase;
 import com.back.market.app.usecase.MatchInstantTradeUseCase;
@@ -41,7 +40,6 @@ public class MarketFacade {
      * @param requestDto BiddingRequestDto
      * @return PayAndHoldResponseDto (결제/홀딩 상태 포함)
      */
-    @CheckBidSpam
     @Transactional
     public MarketPaymentResponseDto registerBuyBid(Long userId, BiddingRequestDto requestDto) {
         return registerBidUseCase.registerBuyBid(userId, requestDto);
@@ -53,7 +51,6 @@ public class MarketFacade {
      * @param requestDto BiddingRequestDto
      * @return PayAndHoldResponseDto (결제 불필요, PAID 상태)
      */
-    @CheckBidSpam
     @Transactional
     public MarketPaymentResponseDto registerSellBid(Long userId, BiddingRequestDto requestDto) {
         return registerBidUseCase.registerSellBid(userId, requestDto);
@@ -85,7 +82,6 @@ public class MarketFacade {
      * @param requestDto BiddingRequestDto
      * @return 생성된 주문(Order)의 ID
      */
-    @CheckBidSpam
     public MarketPaymentResponseDto purchaseNow(Long buyerId, BiddingRequestDto requestDto) {
         return matchInstantTradeUseCase.buyNow(buyerId, requestDto);
     }
@@ -96,7 +92,6 @@ public class MarketFacade {
      * @param requestDto BiddingRequestDto
      * @return 생성된 주문(Order)의 ID
      */
-    @CheckBidSpam
     public MarketPaymentResponseDto sellNow(Long sellerId, BiddingRequestDto requestDto) {
         return matchInstantTradeUseCase.sellNow(sellerId, requestDto);
     }

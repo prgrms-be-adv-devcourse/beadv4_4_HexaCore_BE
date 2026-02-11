@@ -106,6 +106,11 @@ public enum FailureCode {
     PAYMENT_REJECTED(HttpStatus.UNPROCESSABLE_ENTITY, "PAYMENT_REJECTED", "PG사에서 결제를 거부했습니다."),
 
     /**
+     * 429 Too Many Requests
+     */
+    TOO_MANY_REQUESTS(HttpStatus.TOO_MANY_REQUESTS, "TOO_MANY_REQUESTS", "요청이 너무 많습니다. 잠시 후 다시 시도해주세요."),
+
+    /**
      * 500 Internal Server Error
      */
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR", "서버 내부 오류가 발생했습니다."),

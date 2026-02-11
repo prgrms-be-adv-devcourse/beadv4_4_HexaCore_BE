@@ -37,9 +37,11 @@ public class GlobalException {
     public ResponseEntity<CommonResponse<?>> handleCustomException(CustomException ex) {
         log.error(">>> handle: CustomException ", ex);
         FailureCode failureCode = ex.getFailureCode();
+        // CustomException의 실제 메시지 우선 사용 (커스텀 메시지가 있는 경우)
+        String message = ex.getMessage() != null ? ex.getMessage() : failureCode.getMessage();
         return ResponseEntity
                 .status(failureCode.getHttpStatus())
-                .body(CommonResponse.createError(failureCode.getHttpStatus(), failureCode.getCode(), failureCode.getMessage()));
+                .body(CommonResponse.createError(failureCode.getHttpStatus(), failureCode.getCode(), message));
     }
 
     @ExceptionHandler(Exception.class)
