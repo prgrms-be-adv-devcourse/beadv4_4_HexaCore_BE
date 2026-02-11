@@ -13,6 +13,7 @@ ext {
     set('jjwtVersion', '0.12.3')
     set('querydslVersion', '5.1.0')
     set('springdocVersion', '3.0.1')
+    set('springAiVersion', '2.0.0-M2')
 }
 
 allprojects {
@@ -42,6 +43,7 @@ subprojects {
     dependencyManagement {
         imports {
             mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+            mavenBom "org.springframework.ai:spring-ai-bom:${springAiVersion}"
         }
     }
 
@@ -87,7 +89,7 @@ subprojects {
 }
 
 // common, security, image 모듈 bootJar 비활성화
-configure(subprojects.findAll { it.name in ['common', 'security', 'image', "ai"] }) {
+configure(subprojects.findAll { it.name in ['common', 'security', 'image', 'ai'] }) {
     bootJar.enabled = false
     jar.enabled = true
 }
