@@ -11,7 +11,7 @@ import java.util.List;
 public record ProductUpdateRequestDto(
         @NotNull(message = "Product info cannot be null")
         @Valid
-        ProductInfoUpdateRequestDto productInfo,
+        ProductInfoDataRequestDto productInfo,
 
         @NotEmpty(message = "Product variants cannot be empty")
         @Valid

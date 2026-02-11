@@ -2,10 +2,11 @@ package com.back.product.adapter.in;
 
 import com.back.common.code.FailureCode;
 import com.back.common.exception.CustomException;
-import com.back.product.app.ProductFacade;
-import com.back.product.dto.CategoryDto;
-import com.back.product.dto.request.CategoryCreateRequestDto;
-import com.back.product.dto.request.CategoryModifyRequestDto;
+import com.back.product.adapter.in.web.controller.ApiV1CategoryController;
+import com.back.product.app.facade.ProductFacade;
+import com.back.product.dto.model.CategoryDto;
+import com.back.product.dto.request.CategoryListCreateRequestDto;
+import com.back.product.dto.request.CategoryDataRequestDto;
 import com.back.product.dto.response.CategoryListResponseDto;
 import com.back.product.dto.response.CategoryResponseDto;
 import com.back.security.jwt.JWTUtil;
@@ -78,9 +79,9 @@ class ApiV1CategoryControllerTest {
         @WithMockUser
         void createCategories_Success() throws Exception {
             // given
-            CategoryCreateRequestDto.CategoryDto newCategory1 = new CategoryCreateRequestDto.CategoryDto("Tops", "https://example.com/image1.png");
-            CategoryCreateRequestDto.CategoryDto newCategory2 = new CategoryCreateRequestDto.CategoryDto("Bottoms", "https://example.com/image2.png");
-            CategoryCreateRequestDto requestDto = new CategoryCreateRequestDto(List.of(newCategory1, newCategory2));
+            CategoryDataRequestDto newCategory1 = new CategoryDataRequestDto("Tops", "https://example.com/image1.png");
+            CategoryDataRequestDto newCategory2 = new CategoryDataRequestDto("Bottoms", "https://example.com/image2.png");
+            CategoryListCreateRequestDto requestDto = new CategoryListCreateRequestDto(List.of(newCategory1, newCategory2));
 
             CategoryListResponseDto responseDto = CategoryListResponseDto.builder()
                     .categories(List.of(
@@ -88,7 +89,7 @@ class ApiV1CategoryControllerTest {
                             new CategoryDto(2L, "Bottoms", "https://example.com/image2.png")
                     )).build();
 
-            given(productFacade.createCategories(any(CategoryCreateRequestDto.class))).willReturn(responseDto);
+            given(productFacade.createCategories(any(CategoryListCreateRequestDto.class))).willReturn(responseDto);
 
             // when & then
             mockMvc.perform(
@@ -102,7 +103,7 @@ class ApiV1CategoryControllerTest {
                     .andExpect(jsonPath("$.data.categories[0].name").value("Tops"))
                     .andExpect(jsonPath("$.data.categories[1].name").value("Bottoms"));
 
-            verify(productFacade).createCategories(any(CategoryCreateRequestDto.class));
+            verify(productFacade).createCategories(any(CategoryListCreateRequestDto.class));
         }
 
         @Test
@@ -110,16 +111,16 @@ class ApiV1CategoryControllerTest {
         @WithMockUser
         void createCategories_Filter_DuplicateName() throws Exception {
             // given
-            CategoryCreateRequestDto.CategoryDto existingCategory = new CategoryCreateRequestDto.CategoryDto("Existed", "https://example.com/image_exist.png");
-            CategoryCreateRequestDto.CategoryDto newCategory = new CategoryCreateRequestDto.CategoryDto("New", "https://example.com/image_new.png");
-            CategoryCreateRequestDto requestDto = new CategoryCreateRequestDto(List.of(existingCategory, newCategory));
+            CategoryDataRequestDto existingCategory = new CategoryDataRequestDto("Existed", "https://example.com/image_exist.png");
+            CategoryDataRequestDto newCategory = new CategoryDataRequestDto("New", "https://example.com/image_new.png");
+            CategoryListCreateRequestDto requestDto = new CategoryListCreateRequestDto(List.of(existingCategory, newCategory));
 
             CategoryListResponseDto responseDto = CategoryListResponseDto.builder()
                     .categories(List.of(
                             new CategoryDto(1L, "New", "https://example.com/image_new.png")
                     )).build();
 
-            given(productFacade.createCategories(any(CategoryCreateRequestDto.class)))
+            given(productFacade.createCategories(any(CategoryListCreateRequestDto.class)))
                     .willReturn(responseDto);
 
             // when & then
@@ -132,7 +133,7 @@ class ApiV1CategoryControllerTest {
                     .andExpect(jsonPath("$.data.categories.length()").value(1))
                     .andExpect(jsonPath("$.data.categories[0].name").value("New"));
 
-            verify(productFacade).createCategories(any(CategoryCreateRequestDto.class));
+            verify(productFacade).createCategories(any(CategoryListCreateRequestDto.class));
         }
 
         @Test
@@ -140,8 +141,8 @@ class ApiV1CategoryControllerTest {
         @WithMockUser
         void createCategories_Fail_Validation() throws Exception {
             // given
-            CategoryCreateRequestDto.CategoryDto invalidCategory = new CategoryCreateRequestDto.CategoryDto("123", "invalid-url");
-            CategoryCreateRequestDto requestDto = new CategoryCreateRequestDto(List.of(invalidCategory));
+            CategoryDataRequestDto invalidCategory = new CategoryDataRequestDto("123", "invalid-url");
+            CategoryListCreateRequestDto requestDto = new CategoryListCreateRequestDto(List.of(invalidCategory));
 
             // when & then
             mockMvc.perform(
@@ -151,7 +152,7 @@ class ApiV1CategoryControllerTest {
                     ).andDo(print())
                     .andExpect(status().isBadRequest());
 
-            verify(productFacade, never()).createCategories(any(CategoryCreateRequestDto.class));
+            verify(productFacade, never()).createCategories(any(CategoryListCreateRequestDto.class));
         }
     }
 
@@ -166,7 +167,7 @@ class ApiV1CategoryControllerTest {
         @WithMockUser
         void modifyCategory_Success() throws Exception {
             // given
-            CategoryModifyRequestDto requestDto = CategoryModifyRequestDto.builder()
+            CategoryDataRequestDto requestDto = CategoryDataRequestDto.builder()
                     .name("ModifiedCategory")
                     .imageUrl("https://example.com/modified_image.png")
                     .build();
@@ -174,7 +175,7 @@ class ApiV1CategoryControllerTest {
                     .category(new CategoryDto(CATEGORY_ID, "Modified Category", "https://example.com/modified_image.png"))
                     .build();
 
-            given(productFacade.modifyCategory(eq(CATEGORY_ID), any(CategoryModifyRequestDto.class))).willReturn(responseDto);
+            given(productFacade.modifyCategory(eq(CATEGORY_ID), any(CategoryDataRequestDto.class))).willReturn(responseDto);
 
             // when & then
             mockMvc.perform(
@@ -187,7 +188,7 @@ class ApiV1CategoryControllerTest {
                     .andExpect(jsonPath("$.data.category.categoryId").value(CATEGORY_ID))
                     .andExpect(jsonPath("$.data.category.name").value("Modified Category"));
 
-            verify(productFacade).modifyCategory(eq(CATEGORY_ID), any(CategoryModifyRequestDto.class));
+            verify(productFacade).modifyCategory(eq(CATEGORY_ID), any(CategoryDataRequestDto.class));
         }
 
         @Test
@@ -195,12 +196,12 @@ class ApiV1CategoryControllerTest {
         @WithMockUser
         void modifyCategory_Fail_CategoryNotFound() throws Exception {
             // given
-            CategoryModifyRequestDto requestDto = CategoryModifyRequestDto.builder()
+            CategoryDataRequestDto requestDto = CategoryDataRequestDto.builder()
                     .name("NonExistentCategory")
                     .imageUrl("https://example.com/non_existent.png")
                     .build();
 
-            given(productFacade.modifyCategory(eq(CATEGORY_ID), any(CategoryModifyRequestDto.class)))
+            given(productFacade.modifyCategory(eq(CATEGORY_ID), any(CategoryDataRequestDto.class)))
                     .willThrow(new CustomException(FailureCode.CATEGORY_NOT_FOUND));
 
             // when & then
@@ -212,7 +213,7 @@ class ApiV1CategoryControllerTest {
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.code").value("CATEGORY_NOT_FOUND"));
 
-            verify(productFacade).modifyCategory(eq(CATEGORY_ID), any(CategoryModifyRequestDto.class));
+            verify(productFacade).modifyCategory(eq(CATEGORY_ID), any(CategoryDataRequestDto.class));
         }
 
         @Test
@@ -220,12 +221,12 @@ class ApiV1CategoryControllerTest {
         @WithMockUser
         void modifyCategory_Fail_DuplicateName() throws Exception {
             // given
-            CategoryModifyRequestDto requestDto = CategoryModifyRequestDto.builder()
+            CategoryDataRequestDto requestDto = CategoryDataRequestDto.builder()
                     .name("ExistingCategoryName")
                     .imageUrl("https://example.com/existing.png")
                     .build();
 
-            given(productFacade.modifyCategory(eq(CATEGORY_ID), any(CategoryModifyRequestDto.class)))
+            given(productFacade.modifyCategory(eq(CATEGORY_ID), any(CategoryDataRequestDto.class)))
                     .willThrow(new CustomException(FailureCode.CATEGORY_NAME_DUPLICATE));
 
             // when & then
@@ -237,7 +238,7 @@ class ApiV1CategoryControllerTest {
                     .andExpect(status().isConflict())
                     .andExpect(jsonPath("$.code").value("CATEGORY_NAME_DUPLICATE"));
 
-            verify(productFacade).modifyCategory(eq(CATEGORY_ID), any(CategoryModifyRequestDto.class));
+            verify(productFacade).modifyCategory(eq(CATEGORY_ID), any(CategoryDataRequestDto.class));
         }
 
         @Test
@@ -246,7 +247,7 @@ class ApiV1CategoryControllerTest {
         void modifyCategory_Fail_Validation() throws Exception {
             // given
             // Invalid name (blank or non-alphabet) and invalid URL
-            CategoryModifyRequestDto requestDto = CategoryModifyRequestDto.builder()
+            CategoryDataRequestDto requestDto = CategoryDataRequestDto.builder()
                     .name("123") // Fails @Pattern(regexp = "^[a-zA-Z]+$")
                     .imageUrl("invalid-url")
                     .build();
@@ -259,7 +260,7 @@ class ApiV1CategoryControllerTest {
                     ).andDo(print())
                     .andExpect(status().isBadRequest());
 
-            verify(productFacade, never()).modifyCategory(eq(CATEGORY_ID), any(CategoryModifyRequestDto.class));
+            verify(productFacade, never()).modifyCategory(eq(CATEGORY_ID), any(CategoryDataRequestDto.class));
         }
     }
 

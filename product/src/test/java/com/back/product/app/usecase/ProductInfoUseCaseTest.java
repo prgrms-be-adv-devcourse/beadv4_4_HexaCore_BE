@@ -2,12 +2,14 @@ package com.back.product.app.usecase;
 
 import com.back.common.code.FailureCode;
 import com.back.common.exception.CustomException;
-import com.back.product.adapter.out.ProductInfoRepository;
+import com.back.product.adapter.out.persistence.ProductInfoRepository;
+import com.back.product.app.usecase.command.ProductInfoUseCase;
+import com.back.product.app.usecase.query.ProductSupport;
 import com.back.product.domain.Brand;
 import com.back.product.domain.Category;
 import com.back.product.domain.ProductInfo;
-import com.back.product.dto.request.ProductInfoCreateRequestDto;
-import com.back.product.dto.request.ProductInfoUpdateRequestDto;
+import com.back.product.dto.command.ProductInfoDataCommand;
+import com.back.product.dto.request.ProductInfoDataRequestDto;
 import com.back.product.mapper.ProductInfoMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -72,21 +74,26 @@ class ProductInfoUseCaseTest {
         @Test
         @DisplayName("성공: 새로운 상품 정보를 생성한다")
         void createProductInfo_Success() {
+            String name = "New Product";
+            String code = "NP-01";
+            BigDecimal releasePrice = BigDecimal.valueOf(20000);
+            LocalDateTime releasedDate = LocalDateTime.now();
+
             // given
-            ProductInfoCreateRequestDto request = ProductInfoCreateRequestDto.builder()
-                    .brandId(brand.getId())
-                    .categoryId(category.getId())
-                    .name("New Product")
-                    .code("NP-01")
-                    .releasePrice(BigDecimal.valueOf(20000))
-                    .releasedDate(LocalDateTime.now())
+            ProductInfoDataCommand command = ProductInfoDataCommand.builder()
+                    .brand(brand)
+                    .category(category)
+                    .name(name)
+                    .code(code)
+                    .releasePrice(releasePrice)
+                    .releasedDate(releasedDate)
                     .build();
             given(productSupport.existsProductInfoByBrandAndCode(any(Brand.class), anyString())).willReturn(false);
-            given(productInfoMapper.toEntity(brand, category, request)).willReturn(productInfo);
+            given(productInfoMapper.toEntity(command)).willReturn(productInfo);
             given(productInfoRepository.save(productInfo)).willReturn(productInfo);
 
             // when
-            ProductInfo result = productInfoUseCase.createProductInfo(brand, category, request);
+            ProductInfo result = productInfoUseCase.createProductInfo(command);
 
             // then
             assertThat(result).isNotNull();
@@ -99,9 +106,9 @@ class ProductInfoUseCaseTest {
         @DisplayName("실패: 동일한 브랜드 내에 상품 코드가 중복되면 예외를 발생시킨다")
         void createProductInfo_Fail_DuplicateCode() {
             // given
-            ProductInfoCreateRequestDto request = ProductInfoCreateRequestDto.builder()
-                    .brandId(brand.getId())
-                    .categoryId(category.getId())
+            ProductInfoDataCommand command = ProductInfoDataCommand.builder()
+                    .brand(brand)
+                    .category(category)
                     .name("New Product")
                     .code("TP-01")
                     .releasePrice(BigDecimal.valueOf(20000))
@@ -111,7 +118,7 @@ class ProductInfoUseCaseTest {
 
             // when & then
             CustomException exception = assertThrows(CustomException.class, () ->
-                    productInfoUseCase.createProductInfo(brand, category, request)
+                    productInfoUseCase.createProductInfo(command)
             );
             assertThat(exception.getFailureCode()).isEqualTo(FailureCode.DUPLICATE_PRODUCT_INFO);
             verify(productInfoRepository, never()).save(any(ProductInfo.class));
@@ -125,9 +132,9 @@ class ProductInfoUseCaseTest {
         @DisplayName("성공: 상품 정보를 수정한다")
         void updateProductInfo_Success() {
             // given
-            ProductInfoUpdateRequestDto request = ProductInfoUpdateRequestDto.builder()
-                    .brandId(brand.getId())
-                    .categoryId(category.getId())
+            ProductInfoDataCommand command = ProductInfoDataCommand.builder()
+                    .brand(brand)
+                    .category(category)
                     .name("Updated Name")
                     .code("UTP-01")
                     .releasePrice(BigDecimal.valueOf(12000))
@@ -137,7 +144,7 @@ class ProductInfoUseCaseTest {
             given(productSupport.findProductInfoById(1L)).willReturn(Optional.of(productInfo));
 
             // when
-            ProductInfo result = productInfoUseCase.updateProductInfo(1L, brand, category, request);
+            ProductInfo result = productInfoUseCase.updateProductInfo(1L, command);
 
             // then
             assertThat(result.getName()).isEqualTo("Updated Name");
@@ -148,9 +155,9 @@ class ProductInfoUseCaseTest {
         @DisplayName("실패: 존재하지 않는 상품 정보 ID이면 예외를 발생시킨다")
         void updateProductInfo_Fail_NotFound() {
             // given
-            ProductInfoUpdateRequestDto request = ProductInfoUpdateRequestDto.builder()
-                    .brandId(brand.getId())
-                    .categoryId(category.getId())
+            ProductInfoDataCommand command = ProductInfoDataCommand.builder()
+                    .brand(brand)
+                    .category(category)
                     .name("Updated Name")
                     .code("UTP-01")
                     .releasePrice(BigDecimal.valueOf(12000))
@@ -160,7 +167,7 @@ class ProductInfoUseCaseTest {
 
             // when & then
             CustomException exception = assertThrows(CustomException.class, () ->
-                    productInfoUseCase.updateProductInfo(99L, brand, category, request)
+                    productInfoUseCase.updateProductInfo(99L, command)
             );
             assertThat(exception.getFailureCode()).isEqualTo(FailureCode.PRODUCT_NOT_FOUND);
         }

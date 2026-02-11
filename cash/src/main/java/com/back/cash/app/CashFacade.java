@@ -1,6 +1,5 @@
 package com.back.cash.app;
 
-import com.back.cash.adapter.out.market.MarketPaymentsClient;
 import com.back.cash.app.usecase.CancelPaymentUseCase;
 import com.back.cash.app.usecase.ConfirmTossPaymentUseCase;
 import com.back.cash.app.usecase.FailTossPaymentUseCase;
@@ -10,22 +9,20 @@ import com.back.cash.dto.request.TossFailRequestDto;
 import com.back.cash.dto.response.ConfirmResultResponseDto;
 import com.back.common.dto.cash.request.PayAndHoldRequestDto;
 import com.back.common.dto.cash.request.PaymentCancelRequestDto;
-import com.back.common.dto.cash.request.PaymentFailedRequestDto;
 import com.back.common.dto.cash.response.PayAndHoldResponseDto;
 import com.back.common.dto.cash.response.PaymentCancelResponseDto;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class CashFacade {
 
     private final PayAndHoldUseCase payAndHoldUseCase;
     private final ConfirmTossPaymentUseCase confirmTossPaymentUseCase;
-    private final MarketPaymentsClient marketPaymentsClient;
     private final FailTossPaymentUseCase failTossPaymentUseCase;
     private final CancelPaymentUseCase cancelPaymentUseCase;
 
@@ -34,35 +31,17 @@ public class CashFacade {
         return payAndHoldUseCase.execute(dto);
     }
 
-    @Transactional
+    /**
+     * 토스 결제 확인 처리
+     * 마켓 통보는 트랜잭션 커밋 후 Kafka로 발행
+     */
     public ConfirmResultResponseDto confirmTossPayment(TossConfirmRequest req) {
-        ConfirmResultResponseDto result = confirmTossPaymentUseCase.execute(req);
-
-        TransactionSynchronizationManager.registerSynchronization(
-                new TransactionSynchronization() {
-                    @Override
-                    public void afterCommit() {
-                        if (result.isSuccess()) {
-                            marketPaymentsClient.notifyPaymentCompleted(result.completedDto());
-                        } else {
-                            marketPaymentsClient.notifyPaymentFailed(result.failedDto());
-                        }
-                    }
-                }
-        );
-        return result;
+        return confirmTossPaymentUseCase.execute(req);
     }
 
     @Transactional
     public void failTossPayment(TossFailRequestDto req) {
-        PaymentFailedRequestDto failedDto = failTossPaymentUseCase.execute(req);
-
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCommit() {
-                marketPaymentsClient.notifyPaymentFailed(failedDto);
-            }
-        });
+        failTossPaymentUseCase.execute(req);
     }
 
     @Transactional

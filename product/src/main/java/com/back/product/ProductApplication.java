@@ -7,6 +7,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
         "com.back.product",
         "com.back.common",
         "com.back.security",
+        "com.back.image",
+        "com.back.security",
         "com.back.detector"
 })
 public class ProductApplication {

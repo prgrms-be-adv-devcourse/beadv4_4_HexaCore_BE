@@ -8,10 +8,12 @@ import com.back.cash.domain.Wallet;
 import com.back.cash.domain.enums.PaymentStatus;
 import com.back.cash.dto.request.TossFailRequestDto;
 import com.back.common.code.FailureCode;
+import com.back.cash.domain.event.PaymentFailedEvent;
 import com.back.common.dto.cash.request.PaymentFailedRequestDto;
 import com.back.common.exception.BadRequestException;
 import com.back.common.exception.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -21,6 +23,7 @@ import java.math.BigDecimal;
 public class FailTossPaymentUseCase {
 
     private final PaymentRepository paymentRepository;
+    private final ApplicationEventPublisher eventPublisher;
     private final WalletSupport walletSupport;
     private final CashLogSupport cashLogSupport;
 
@@ -43,6 +46,8 @@ public class FailTossPaymentUseCase {
 
         // 선홀딩이 있었다면 release
         releaseIfHeld(payment);
+
+        eventPublisher.publishEvent(new PaymentFailedEvent(payment.getRelType(), payment.getRelId()));
 
         return new PaymentFailedRequestDto(payment.getRelType(), payment.getRelId());
     }

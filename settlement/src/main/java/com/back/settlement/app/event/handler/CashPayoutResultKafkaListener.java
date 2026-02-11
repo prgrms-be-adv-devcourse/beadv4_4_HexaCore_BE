@@ -3,28 +3,36 @@ package com.back.settlement.app.event.handler;
 import com.back.common.event.Envelope;
 import com.back.settlement.adapter.out.SettlementRepository;
 import com.back.settlement.app.event.payload.PayoutResultPayload;
-import com.back.settlement.app.support.DomainEventPublisher;
 import com.back.settlement.domain.Settlement;
+import tools.jackson.core.type.TypeReference;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.databind.json.JsonMapper;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class CashPayoutResultKafkaListener {
     private final SettlementRepository settlementRepository;
-    private final DomainEventPublisher domainEventPublisher;
+    private final JsonMapper jsonMapper;
 
     @KafkaListener(
             topics = "${custom.kafka.topic.cash-payout-completed}",
-            groupId = "${custom.kafka.consumer.group-id}",
-            properties = "spring.json.value.default.type=com.back.common.event.Envelope"
+            groupId = "${spring.kafka.consumer.group-id}"
     )
     @Transactional
-    public void listen(Envelope<PayoutResultPayload> event) {
+    public void listen(String message) {
+        Envelope<PayoutResultPayload> event;
+        try {
+            event = jsonMapper.readValue(message, new TypeReference<Envelope<PayoutResultPayload>>() {});
+        } catch (Exception e) {
+            log.error("캐시 지급 결과 메시지 역직렬화 실패. message={}", message, e);
+            return;
+        }
+
         PayoutResultPayload data = event.payload();
         log.info("캐시 지급 결과 수신. eventId={}, settlementId={}, success={}", event.header().eventId(), data.settlementId(), data.success());
 
@@ -41,12 +49,9 @@ public class CashPayoutResultKafkaListener {
 
         if (data.success()) {
             settlement.complete();
-            domainEventPublisher.publishEvents(settlement);
-            log.info("정산 완료 처리. settlementId={}", data.settlementId());
         } else {
             settlement.fail(data.failReason());
-            domainEventPublisher.publishEvents(settlement);
-            log.info("정산 실패 처리. settlementId={}, reason={}", data.settlementId(), data.failReason());
         }
+        settlementRepository.save(settlement);
     }
 }

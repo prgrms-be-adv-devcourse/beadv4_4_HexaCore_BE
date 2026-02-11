@@ -15,10 +15,6 @@ public record SettlementStartedEvent(
         LocalDateTime occurredAt
 ) implements SettlementStatusChangedEvent {
 
-    public SettlementStartedEvent(Long settlementId, SettlementStatus previousStatus) {
-        this(settlementId, previousStatus, "정산 처리 시작", null, null, null, null, LocalDateTime.now());
-    }
-
     public SettlementStartedEvent(Long settlementId, SettlementStatus previousStatus, Long sellerId, BigDecimal totalGrossAmount, BigDecimal totalNetAmount, BigDecimal totalFeeAmount) {
         this(settlementId, previousStatus, "정산 캐시 지급 요청", sellerId, totalGrossAmount, totalNetAmount, totalFeeAmount, LocalDateTime.now());
     }

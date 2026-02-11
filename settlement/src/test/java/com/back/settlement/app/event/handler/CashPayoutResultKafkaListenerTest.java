@@ -8,57 +8,48 @@ import static org.mockito.Mockito.never;
 import com.back.common.event.Envelope;
 import com.back.settlement.adapter.out.SettlementRepository;
 import com.back.settlement.app.event.payload.PayoutResultPayload;
-import com.back.settlement.app.support.DomainEventPublisher;
 import com.back.settlement.domain.Settlement;
 import com.back.settlement.domain.SettlementStatus;
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import com.back.settlement.fixture.SettlementFixture;
+import tools.jackson.databind.json.JsonMapper;
 import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("캐시 지급 요청 결과를 받는 단위 테스트")
 class CashPayoutResultKafkaListenerTest {
 
+    private static final JsonMapper jsonMapper = new JsonMapper();
+
     @Mock
     private SettlementRepository settlementRepository;
 
-    @Mock
-    private DomainEventPublisher domainEventPublisher;
-
-    @InjectMocks
     private CashPayoutResultKafkaListener listener;
 
+    @BeforeEach
+    void setUp() {
+        listener = new CashPayoutResultKafkaListener(settlementRepository, jsonMapper);
+    }
+
     private Settlement createSettlement(Long id, SettlementStatus status) {
-        Settlement settlement = Settlement.create(
-                new com.back.settlement.app.dto.request.SettlementRequest(
-                        1L, "판매자", LocalDateTime.now().minusDays(7), LocalDateTime.now(),
-                        BigDecimal.valueOf(100000), BigDecimal.valueOf(10000), BigDecimal.valueOf(90000)
-                )
-        );
-        ReflectionTestUtils.setField(settlement, "id", id);
-        ReflectionTestUtils.setField(settlement, "status", status);
-        return settlement;
+        return SettlementFixture.createSettlement(id, 1L, "판매자", status);
     }
 
-    private Envelope<PayoutResultPayload> successEvent(Long settlementId) {
-        return Envelope.of(
-                "settlement.payout.result",
-                new PayoutResultPayload(settlementId, true, null)
+    private String successMessage(Long settlementId) {
+        return jsonMapper.writeValueAsString(
+                Envelope.of("settlement.payout.result", new PayoutResultPayload(settlementId, true, null))
         );
     }
 
-    private Envelope<PayoutResultPayload> failureEvent(Long settlementId, String reason) {
-        return Envelope.of(
-                "settlement.payout.result",
-                new PayoutResultPayload(settlementId, false, reason)
+    private String failureMessage(Long settlementId, String reason) {
+        return jsonMapper.writeValueAsString(
+                Envelope.of("settlement.payout.result", new PayoutResultPayload(settlementId, false, reason))
         );
     }
 
@@ -67,19 +58,19 @@ class CashPayoutResultKafkaListenerTest {
     class WhenPayoutSuccess {
 
         @Test
-        @DisplayName("정산 상태를 COMPLETED로 변경하고 도메인 이벤트를 발행한다")
-        void completesSettlementAndPublishesEvents() {
+        @DisplayName("정산 상태를 COMPLETED로 변경하고 저장한다")
+        void completesSettlementAndSaves() throws Exception {
             // given
             Long settlementId = 1L;
             Settlement settlement = createSettlement(settlementId, SettlementStatus.IN_PROGRESS);
             given(settlementRepository.findById(settlementId)).willReturn(Optional.of(settlement));
 
             // when
-            listener.listen(successEvent(settlementId));
+            listener.listen(successMessage(settlementId));
 
             // then
             assertThat(settlement.getStatus()).isEqualTo(SettlementStatus.COMPLETED);
-            then(domainEventPublisher).should().publishEvents(settlement);
+            then(settlementRepository).should().save(settlement);
         }
     }
 
@@ -88,8 +79,8 @@ class CashPayoutResultKafkaListenerTest {
     class WhenPayoutFailure {
 
         @Test
-        @DisplayName("정산 상태를 FAILED로 변경하고 실패 사유와 함께 도메인 이벤트를 발행한다")
-        void failsSettlementWithReasonAndPublishesEvents() {
+        @DisplayName("정산 상태를 FAILED로 변경하고 저장한다")
+        void failsSettlementWithReasonAndSaves() throws Exception {
             // given
             Long settlementId = 1L;
             String failReason = "잔액 부족";
@@ -97,11 +88,11 @@ class CashPayoutResultKafkaListenerTest {
             given(settlementRepository.findById(settlementId)).willReturn(Optional.of(settlement));
 
             // when
-            listener.listen(failureEvent(settlementId, failReason));
+            listener.listen(failureMessage(settlementId, failReason));
 
             // then
             assertThat(settlement.getStatus()).isEqualTo(SettlementStatus.FAILED);
-            then(domainEventPublisher).should().publishEvents(settlement);
+            then(settlementRepository).should().save(settlement);
         }
     }
 
@@ -110,17 +101,17 @@ class CashPayoutResultKafkaListenerTest {
     class WhenSettlementNotFound {
 
         @Test
-        @DisplayName("도메인 이벤트를 발행하지 않고 조기 종료한다")
-        void doesNothingWhenNotFound() {
+        @DisplayName("저장하지 않고 조기 종료한다")
+        void doesNothingWhenNotFound() throws Exception {
             // given
             Long settlementId = 999L;
             given(settlementRepository.findById(settlementId)).willReturn(Optional.empty());
 
             // when
-            listener.listen(successEvent(settlementId));
+            listener.listen(successMessage(settlementId));
 
             // then
-            then(domainEventPublisher).should(never()).publishEvents(org.mockito.ArgumentMatchers.any());
+            then(settlementRepository).should(never()).save(org.mockito.ArgumentMatchers.any());
         }
     }
 
@@ -130,34 +121,34 @@ class CashPayoutResultKafkaListenerTest {
 
         @Test
         @DisplayName("COMPLETED 상태 → 중복 처리 방지, 아무 변경 없이 종료한다")
-        void ignoresAlreadyCompletedSettlement() {
+        void ignoresAlreadyCompletedSettlement() throws Exception {
             // given
             Long settlementId = 1L;
             Settlement settlement = createSettlement(settlementId, SettlementStatus.COMPLETED);
             given(settlementRepository.findById(settlementId)).willReturn(Optional.of(settlement));
 
             // when
-            listener.listen(successEvent(settlementId));
+            listener.listen(successMessage(settlementId));
 
             // then
             assertThat(settlement.getStatus()).isEqualTo(SettlementStatus.COMPLETED);
-            then(domainEventPublisher).should(never()).publishEvents(org.mockito.ArgumentMatchers.any());
+            then(settlementRepository).should(never()).save(org.mockito.ArgumentMatchers.any());
         }
 
         @Test
         @DisplayName("FAILED 상태 → 중복 처리 방지, 아무 변경 없이 종료한다")
-        void ignoresAlreadyFailedSettlement() {
+        void ignoresAlreadyFailedSettlement() throws Exception {
             // given
             Long settlementId = 1L;
             Settlement settlement = createSettlement(settlementId, SettlementStatus.FAILED);
             given(settlementRepository.findById(settlementId)).willReturn(Optional.of(settlement));
 
             // when
-            listener.listen(failureEvent(settlementId, "잔액 부족"));
+            listener.listen(failureMessage(settlementId, "잔액 부족"));
 
             // then
             assertThat(settlement.getStatus()).isEqualTo(SettlementStatus.FAILED);
-            then(domainEventPublisher).should(never()).publishEvents(org.mockito.ArgumentMatchers.any());
+            then(settlementRepository).should(never()).save(org.mockito.ArgumentMatchers.any());
         }
     }
 }

@@ -80,14 +80,14 @@ public class SettlementMonthlyStepConfig {
     @Bean
     @StepScope
     public ItemProcessor<Long, SettlementWithItems> createSettlementProcessor(@Value("#{jobParameters['targetMonth']}") String targetMonthStr) {
-        return payeeId -> settlementCreateUseCase.createSettlementForPayee(payeeId, LocalDateUtils.parseYearMonthOrDefault(targetMonthStr));
+        return payeeId -> settlementCreateUseCase.createSettlement(payeeId, LocalDateUtils.parseYearMonthOrDefault(targetMonthStr));
     }
 
     @Bean
     public ItemWriter<SettlementWithItems> saveSettlementWriter() {
         return chunk -> {
             for (SettlementWithItems item : chunk) {
-                settlementCreateUseCase.saveSettlementWithItems(item.settlement(), item.items());
+                settlementCreateUseCase.saveSettlement(item.settlement(), item.items());
             }
             log.info("정산 완료. 건수={}", chunk.size());
         };

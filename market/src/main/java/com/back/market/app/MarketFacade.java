@@ -9,12 +9,12 @@ import com.back.common.market.event.OrderCompletedEvent;
 import com.back.market.app.usecase.*;
 import com.back.market.domain.Order;
 import com.back.market.dto.request.BiddingRequestDto;
-import com.back.market.dto.response.InstantBuyPriceResponseDto;
-import com.back.market.dto.response.InstantSellPriceResponseDto;
+import com.back.market.dto.response.*;
 import com.back.common.dto.cash.response.PaymentCancelResponseDto;
-import com.back.market.dto.response.MarketPaymentResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +28,7 @@ public class MarketFacade {
     private final MatchInstantTradeUseCase matchInstantTradeUseCase;
     private final CancelBidUseCase cancelBidUseCase;
     private final CompleteOrderUseCase completeOrderUseCase;
+    private final GetOrdersUseCase getOrdersUseCase;
 
     @Value("${custom.kafka.topic.market-order-completed}")
     private String orderCompletedTopic;
@@ -124,5 +125,38 @@ public class MarketFacade {
                 LocalDateTime.now()
         );
         kafkaEventPublisher.publish(orderCompletedTopic, event);
+    }
+
+    /**
+     * MARKET: 구매 내역 조회
+     * @param userId 사용자ID
+     * @param pageable 페이징 정보
+     * @return Page<OrderListResponseDto>
+     */
+    @Transactional(readOnly = true)
+    public Page<OrderListResponseDto> getBuyingList(Long userId, Pageable pageable) {
+        return getOrdersUseCase.getBuyingList(userId, pageable);
+    }
+
+    /**
+     * MARKET: 판매 내역 조회
+     * @param userId 사용자ID
+     * @param pageable 페이징 정보
+     * @return Page<OrderListResponseDto>
+     */
+    @Transactional(readOnly = true)
+    public Page<OrderListResponseDto> getSellingList(Long userId, Pageable pageable) {
+        return getOrdersUseCase.getSellingList(userId, pageable);
+    }
+
+    /**
+     * MARKET: 주문 상세 조회
+     * @param userId 사용자ID
+     * @param orderId 주문ID
+     * @return OrderDetailResponseDto
+     */
+    @Transactional(readOnly = true)
+    public OrderDetailResponseDto getOrderDetail(Long userId, Long orderId) {
+        return getOrdersUseCase.getOrderDetail(userId, orderId);
     }
 }

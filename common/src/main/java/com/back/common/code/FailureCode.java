@@ -35,6 +35,7 @@ public enum FailureCode {
     CANNOT_CANCEL_BID(HttpStatus.BAD_REQUEST, "CANNOT_CANCEL_BID", "이미 체결되었거나 취소할 수 없는 상태입니다."),
     WALLET_REFUND_FAILED(HttpStatus.BAD_REQUEST, "WALLET_REFUND_FAILED", "예치금 환불에 실패하였습니다"),
     CONSTRAINT_VIOLATION(HttpStatus.BAD_REQUEST, "CONSTRAINT_VIOLATION", "제약 조건 위반으로 작업을 수행할 수 없습니다."),
+    ORDER_ACCESS_DENIED(HttpStatus.BAD_REQUEST, "ORDER_ACCESS_DENIED", "해당 주문에 대한 접근 권한이 없습니다."),
 
     /**
      * 401 Unauthorized
@@ -98,6 +99,12 @@ public enum FailureCode {
     BRAND_IN_USE(HttpStatus.CONFLICT, "BRAND_IN_USE", "해당 브랜드를 사용하는 상품이 있어 삭제할 수 없습니다."),
     CATEGORY_IN_USE(HttpStatus.CONFLICT, "CATEGORY_IN_USE", "해당 카테고리를 사용하는 상품이 있어 삭제할 수 없습니다."),
     NICKNAME_ALREADY_EXISTS(HttpStatus.CONFLICT, "NICKNAME_ALREADY_EXISTS","닉네임이 이미 존재합니다." ),
+
+    /**
+     * 422 Unprocessable Entity
+     */
+    PAYMENT_REJECTED(HttpStatus.UNPROCESSABLE_ENTITY, "PAYMENT_REJECTED", "PG사에서 결제를 거부했습니다."),
+
     /**
      * 429 Too Many Requests
      */
@@ -110,7 +117,8 @@ public enum FailureCode {
     CASH_MODULE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "CASH_MODULE_ERROR", "CASH 모듈과의 통신 중 오류가 발생했습니다."),
     PAYMENT_TOTAL_AMOUNT_MISSING(HttpStatus.INTERNAL_SERVER_ERROR, "PAYMENT_TOTAL_AMOUNT_MISSING","결제 데이터에 totalAmount가 없습니다."),
     PAYMENT_STATE_INCONSISTENT(HttpStatus.INTERNAL_SERVER_ERROR, "PAYMENT_STATE_INCONSISTENT", "결제 상태가 일관되지 않습니다."),
-    BATCH_EXECUTION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "BATCH_EXECUTION_FAILED", "배치 실행에 실패했습니다.");
+    BATCH_EXECUTION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "BATCH_EXECUTION_FAILED", "배치 실행에 실패했습니다."),
+    IMAGE_PROCESSING_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "IMAGE_PROCESSING_FAILED", "이미지 처리에 실패했습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

@@ -1,31 +1,26 @@
 package com.back.product.mapper;
 
-import com.back.common.product.event.payload.OptionPayload;
 import com.back.product.domain.OptionGroup;
 import com.back.product.domain.OptionValue;
-import com.back.product.dto.OptionDto;
+import com.back.product.dto.event.kafka.OptionPayload;
+import com.back.product.dto.model.OptionDto;
+import com.back.product.dto.response.OptionListResponseDto;
+import com.back.product.dto.response.OptionResponseDto;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
+@RequiredArgsConstructor
 public class OptionMapper {
-    public OptionGroup toGroupEntity(String name) {
-        return OptionGroup.builder().name(name).build();
-    }
-
-    public OptionValue toValueEntity(String group, String value) {
-        OptionGroup groupEntity = toGroupEntity(group);
-        return toValueEntity(groupEntity, value);
-    }
-
-    public OptionValue toValueEntity(OptionGroup group, String value) {
-        return OptionValue.builder().optionGroup(group).value(value).build();
-    }
+    private final OptionGroupMapper optionGroupMapper;
+    private final OptionValueMapper optionValueMapper;
 
     public OptionDto toDto(OptionGroup group, List<OptionValue> values) {
-        OptionDto.GroupDto optionGroup = toGroupDto(group);
-        List<OptionDto.ValueDto> optionValues = values.stream().map(this::toValueDto).toList();
+        OptionDto.GroupDto optionGroup = optionGroupMapper.toGroupDto(group);
+        List<OptionDto.ValueDto> optionValues = values.stream().map(optionValueMapper::toValueDto).toList();
 
         return OptionDto.builder()
                 .group(optionGroup)
@@ -34,8 +29,8 @@ public class OptionMapper {
     }
 
     public OptionDto toDto(OptionPayload payload) {
-        OptionDto.GroupDto groupDto = toGroupDto(payload.group());
-        List<OptionDto.ValueDto> valueDtos = payload.values().stream().map(this::toValueDto).toList();
+        OptionDto.GroupDto groupDto = optionGroupMapper.toGroupDto(payload.group());
+        List<OptionDto.ValueDto> valueDtos = payload.values().stream().map(optionValueMapper::toValueDto).toList();
 
         return OptionDto.builder()
                 .group(groupDto)
@@ -43,31 +38,37 @@ public class OptionMapper {
                 .build();
     }
 
-    private OptionDto.GroupDto toGroupDto(OptionGroup group) {
-        return OptionDto.GroupDto.builder()
-                .id(group.getId())
-                .name(group.getName())
+    public List<OptionDto> toDtoList(List<OptionValue> optionValues) {
+        return optionValues.stream()
+                .collect(Collectors.groupingBy(OptionValue::getOptionGroup))
+                .entrySet().stream().map(entry -> {
+                    OptionGroup group = entry.getKey();
+                    List<OptionValue> values = entry.getValue();
+                    return toDto(group, values);
+                }).toList();
+    }
+
+    public OptionListResponseDto toListResponseDto(List<OptionDto> optionDtos) {
+        return OptionListResponseDto.builder()
+                .options(optionDtos)
                 .build();
     }
 
-    private OptionDto.ValueDto toValueDto(OptionValue value) {
-        return OptionDto.ValueDto.builder()
-                .id(value.getId())
-                .name(value.getValue())
+    public OptionResponseDto toResponseDto(OptionDto optionDto) {
+        return OptionResponseDto.builder()
+                .option(optionDto)
                 .build();
     }
 
-    private OptionDto.GroupDto toGroupDto(OptionPayload.GroupPayload payload) {
-        return OptionDto.GroupDto.builder()
-                .id(payload.groupId())
-                .name(payload.groupName())
-                .build();
-    }
+    public OptionPayload toPayload(OptionDto optionDto) {
+        OptionPayload.GroupPayload groupPayload = optionGroupMapper.toPayload(optionDto.group());
+        List<OptionPayload.ValuePayload> valuePayloads = optionDto.values().stream()
+                .map(optionValueMapper::toPayload)
+                .toList();
 
-    private OptionDto.ValueDto toValueDto(OptionPayload.ValuePayload payload) {
-        return OptionDto.ValueDto.builder()
-                .id(payload.valueId())
-                .name(payload.valueName())
+        return OptionPayload.builder()
+                .group(groupPayload)
+                .values(valuePayloads)
                 .build();
     }
 }

@@ -1,11 +1,9 @@
 package com.back.product.mapper;
 
-import com.back.common.product.event.payload.ProductInfoPayload;
-import com.back.product.domain.Brand;
-import com.back.product.domain.Category;
 import com.back.product.domain.ProductInfo;
-import com.back.product.dto.ProductInfoDto;
-import com.back.product.dto.request.ProductInfoCreateRequestDto;
+import com.back.product.dto.command.ProductInfoDataCommand;
+import com.back.product.dto.event.kafka.ProductInfoPayload;
+import com.back.product.dto.model.ProductInfoDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -15,14 +13,14 @@ public class ProductInfoMapper {
     private final BrandMapper brandMapper;
     private final CategoryMapper categoryMapper;
 
-    public ProductInfo toEntity(Brand brand, Category category, ProductInfoCreateRequestDto request) {
+    public ProductInfo toEntity(ProductInfoDataCommand command) {
         return ProductInfo.builder()
-                .brand(brand)
-                .category(category)
-                .name(request.name())
-                .productCode(request.code())
-                .releasePrice(request.releasePrice())
-                .releasedDate(request.releasedDate())
+                .brand(command.brand())
+                .category(command.category())
+                .name(command.name())
+                .productCode(command.code())
+                .releasePrice(command.releasePrice())
+                .releasedDate(command.releasedDate())
                 .build();
     }
 
@@ -47,6 +45,18 @@ public class ProductInfoMapper {
                 .code(payload.code())
                 .releasePrice(payload.releasePrice())
                 .releaseDate(payload.releaseDate())
+                .build();
+    }
+
+    public ProductInfoPayload toPayload(ProductInfoDto productInfoDto) {
+        return ProductInfoPayload.builder()
+                .productInfoId(productInfoDto.productInfoId())
+                .brand(brandMapper.toPayload(productInfoDto.brand()))
+                .category(categoryMapper.toPayload(productInfoDto.category()))
+                .name(productInfoDto.name())
+                .code(productInfoDto.code())
+                .releasePrice(productInfoDto.releasePrice())
+                .releaseDate(productInfoDto.releaseDate())
                 .build();
     }
 }

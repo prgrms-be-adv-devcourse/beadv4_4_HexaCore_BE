@@ -1,0 +1,21 @@
+package com.back.product.dto.event.kafka;
+
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+import lombok.Builder;
+
+@Builder
+public record CategoryPayload(
+        @NotNull(message = "카테고리 ID는 필수입니다.")
+        @Min(value = 1, message = "카테고리 ID는 1 이상의 정수여야 합니다.")
+        Long categoryId,
+
+        @NotBlank(message = "카테고리 이름은 필수입니다.")
+        @Size(min=1, max=50, message = "카테고리 이름은 1자 이상 50자 이하여야 합니다.")
+        @Pattern(regexp = "^[a-zA-Z]+$", message = "카테고리 명은 영문만 허용됩니다.")
+        String name
+) {
+}

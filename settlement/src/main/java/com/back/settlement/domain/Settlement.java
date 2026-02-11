@@ -1,11 +1,9 @@
 package com.back.settlement.domain;
 
 import static com.back.common.code.FailureCode.*;
+import static com.back.settlement.domain.SettlementEventType.SETTLEMENT_PRODUCT_SALES_AMOUNT;
 
-import com.back.common.entity.BaseTimeEntity;
 import com.back.common.exception.BadRequestException;
-import com.back.settlement.app.dto.request.SettlementRequest;
-import com.back.settlement.domain.event.SettlementEvent;
 import com.back.settlement.domain.event.SettlementFailedEvent;
 import com.back.settlement.domain.event.SettlementHoldEvent;
 import com.back.settlement.domain.event.SettlementInternalCompletedEvent;
@@ -19,25 +17,23 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.util.StringUtils;
 
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED) @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder(access = AccessLevel.PRIVATE)
 @Getter
 @Table(name = "settlement")
-public class Settlement extends BaseTimeEntity {
+public class Settlement extends BaseAggregateEntity<Settlement> {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -81,29 +77,30 @@ public class Settlement extends BaseTimeEntity {
     @Column(name = "total_net_amount", precision = 15, scale = 2)
     private BigDecimal totalNetAmount;
 
-    @Transient
-    private final List<SettlementEvent> domainEvents = new ArrayList<>();
+    private static final String SYSTEM_NAME = "SYSTEM";
 
-    public static Settlement create(SettlementRequest request) {
+    public static Settlement create(Long sellerId, List<SettlementItem> items, LocalDateTime startAt, LocalDateTime endAt) {
+        SettlementAmounts amounts = SettlementAmounts.fromItems(items);
         return Settlement.builder()
-                .sellerId(request.sellerId())
-                .sellerName(request.sellerName())
-                .status(SettlementStatus.IN_PROGRESS)
-                .startAt(request.startAt())
-                .endAt(request.endAt())
-                .expectedAt(calculateExpectedDate(request.endAt()))
-                .completedAt(null)
-                .totalSalesAmount(request.totalSalesAmount())
-                .totalFeeAmount(request.totalFeeAmount())
-                .totalNetAmount(request.totalNetAmount())
+                .sellerId(sellerId)
+                .sellerName(extractSellerName(items))
+                .status(SettlementStatus.PENDING)
+                .startAt(startAt)
+                .endAt(endAt)
+                .expectedAt(calculateExpectedDate(endAt))
+                .totalSalesAmount(amounts.totalSalesAmount())
+                .totalFeeAmount(amounts.totalFeeAmount())
+                .totalNetAmount(amounts.totalNetAmount())
                 .build();
     }
 
-    public void registerCreatedEvent() {
-        registerEvent(new SettlementStartedEvent(
-                this.id, null,
-                this.sellerId, this.totalSalesAmount, this.totalNetAmount, this.totalFeeAmount
-        ));
+    private static String extractSellerName(List<SettlementItem> items) {
+        return items.stream()
+                .filter(item -> item.getEventType() == SETTLEMENT_PRODUCT_SALES_AMOUNT)
+                .map(SettlementItem::getSellerName)
+                .filter(StringUtils::hasText)
+                .findFirst()
+                .orElse(SYSTEM_NAME);
     }
 
     private static LocalDateTime calculateExpectedDate(LocalDateTime endAt) {
@@ -122,7 +119,7 @@ public class Settlement extends BaseTimeEntity {
         SettlementStatus previousStatus = this.status;
         this.status = SettlementStatus.IN_PROGRESS;
 
-        registerEvent(new SettlementStartedEvent(this.id, previousStatus));
+        registerEvent(new SettlementStartedEvent(this.id, previousStatus, this.sellerId, this.totalSalesAmount, this.totalNetAmount, this.totalFeeAmount));
     }
 
     // 정산 완료 처리
@@ -177,18 +174,4 @@ public class Settlement extends BaseTimeEntity {
         }
     }
 
-    // 도메인 이벤트 등록
-    private void registerEvent(SettlementEvent event) {
-        this.domainEvents.add(event);
-    }
-
-    // 등록된 도메인 이벤트 목록 조회
-    public List<SettlementEvent> getDomainEvents() {
-        return Collections.unmodifiableList(domainEvents);
-    }
-
-    // 등록된 도메인 이벤트 제거
-    public void clearDomainEvents() {
-        this.domainEvents.clear();
-    }
 }

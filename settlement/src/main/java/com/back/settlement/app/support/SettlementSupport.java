@@ -45,7 +45,7 @@ public class SettlementSupport {
         return settlementCustomRepository.findDistinctUnsettledSellerIds(startAt, endAt, systemPayeeId);
     }
 
-    public List<SettlementItem> findUnsettledItemsByPayeeId(Long payeeId, LocalDateTime startAt, LocalDateTime endAt) {
+    public List<SettlementItem> findUnsettledItems(Long payeeId, LocalDateTime startAt, LocalDateTime endAt) {
         return settlementCustomRepository.findUnsettledItemsByPayeeId(payeeId, startAt, endAt);
     }
 
