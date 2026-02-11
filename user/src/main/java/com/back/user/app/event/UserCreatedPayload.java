@@ -9,6 +9,7 @@ public record UserCreatedPayload(
         String email,
         String address,
         String phone,
-        String profileImageUrl
+        String profileImageUrl,
+        String ipAddress
 ) implements KafkaPayload
 {}

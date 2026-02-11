@@ -30,7 +30,8 @@ public class UserCreateKafkaPublisher {
                 event.email(),
                 event.address(),
                 event.phone(),
-                event.profileImageUrl()
+                event.profileImageUrl(),
+                event.ipAddress()
         ));
 
         kafkaEventPublisher.publish(userCreatedTopic, envelope);
