@@ -10,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.time.LocalDateTime;
@@ -28,6 +30,7 @@ public class OutboxPublisher {
 
     private final JsonMapper jsonMapper;
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void publish(ChatOutboxSavedEvent event){
         ChatOutbox outbox = outboxRepository.findById(event.outboxId()).orElseThrow(()->new BadRequestException(FailureCode.CHAT_OUTBOX_NOT_FOUND));
 
