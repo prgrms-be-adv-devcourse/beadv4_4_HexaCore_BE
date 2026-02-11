@@ -52,6 +52,7 @@ public class HijackDetector {
      * - 신뢰 IP: 제한 없음
      * - 모든 거래는 항상 허용됨 (차단 없음)
      */
+    @Transactional
     public void checkHijack(Long userId, String userEmail, String currentIp, BigDecimal transactionAmount) {
         String trustedIpSetKey = DetectorRedisKey.TRUSTED_IP.getKey(userId);
         String ipTimestampKey = DetectorRedisKey.NEW_IP_TIMESTAMP.getKey(userId, currentIp);
