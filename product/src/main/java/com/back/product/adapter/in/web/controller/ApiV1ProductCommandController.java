@@ -1,5 +1,6 @@
 package com.back.product.adapter.in.web.controller;
 
+import com.back.common.annotation.Loggable;
 import com.back.common.code.SuccessCode;
 import com.back.common.response.CommonResponse;
 import com.back.product.adapter.in.web.api.ProductCommandApiController;
@@ -20,6 +21,7 @@ public class ApiV1ProductCommandController implements ProductCommandApiControlle
     private final ProductFacade productFacade;
 
     @Override
+    @Loggable
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public CommonResponse<ProductDetailResponseDto> createProduct(@Valid @RequestBody ProductCreateRequestDto request) {
@@ -28,6 +30,7 @@ public class ApiV1ProductCommandController implements ProductCommandApiControlle
     }
 
     @Override
+    @Loggable
     @PutMapping("/{productInfoId}")
     public CommonResponse<ProductDetailResponseDto> updateProduct(
             @PathVariable Long productInfoId,
@@ -38,6 +41,7 @@ public class ApiV1ProductCommandController implements ProductCommandApiControlle
     }
 
     @Override
+    @Loggable
     @DeleteMapping("/{productInfoId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public CommonResponse<?> deleteProduct(@PathVariable Long productInfoId) {

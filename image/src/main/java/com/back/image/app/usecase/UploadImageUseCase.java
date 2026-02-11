@@ -3,6 +3,7 @@ package com.back.image.app.usecase;
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.back.common.annotation.Loggable;
 import com.back.common.code.FailureCode;
 import com.back.common.exception.CustomException;
 import com.back.image.config.AwsS3Properties;
@@ -25,6 +26,7 @@ public class UploadImageUseCase {
     private final AmazonS3Client amazonS3Client;
     private final AwsS3Properties awsS3Properties;
 
+    @Loggable(logArgs = false)
     public List<String> uploadMultipleImage(List<File> resizedFiles, String dirName) {
         return resizedFiles.stream().map(f -> {
             try {
@@ -36,6 +38,7 @@ public class UploadImageUseCase {
         }).toList();
     }
 
+    @Loggable(logArgs = false)
     public String uploadImage(File resizedFile, String dirName) {
         try {
             if (resizedFile == null || !resizedFile.exists()) {

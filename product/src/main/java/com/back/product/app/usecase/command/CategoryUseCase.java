@@ -1,5 +1,6 @@
 package com.back.product.app.usecase.command;
 
+import com.back.common.annotation.Loggable;
 import com.back.common.code.FailureCode;
 import com.back.common.exception.CustomException;
 import com.back.common.exception.InvalidValueException;
@@ -27,11 +28,13 @@ public class CategoryUseCase {
     private final ProductSupport productSupport;
     private final CategoryRepository categoryRepository;
 
+    @Loggable
     @Transactional(readOnly = true)
     public List<CategoryDto> getCategories() {
         return productSupport.getAllCategories().stream().map(categoryMapper::toDto).toList();
     }
 
+    @Loggable
     @Transactional
     public List<CategoryDto> createCategories(List<CategoryDataCommand> categories) {
         Map<String, Category> existsCategories = productSupport.getAllCategories().stream()
@@ -53,12 +56,14 @@ public class CategoryUseCase {
         return newCategories.stream().map(categoryMapper::toDto).toList();
     }
 
+    @Loggable
     @Transactional(readOnly = true)
     public Category findCategoryExists(Long categoryId) {
         return productSupport.findCategoryById(categoryId)
                 .orElseThrow(() -> new CustomException(FailureCode.CATEGORY_NOT_FOUND));
     }
 
+    @Loggable
     @Transactional
     public CategoryDto modifyCategory(Long categoryId, CategoryDataCommand category) {
         Category categoryToModify = findCategoryExists(categoryId);
@@ -79,6 +84,7 @@ public class CategoryUseCase {
         return categoryMapper.toDto(categoryToModify);
     }
 
+    @Loggable
     @Transactional
     public void deleteCategory(Long categoryId) {
         categoryRepository.deleteById(categoryId);

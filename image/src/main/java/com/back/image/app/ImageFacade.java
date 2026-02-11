@@ -1,5 +1,6 @@
 package com.back.image.app;
 
+import com.back.common.annotation.Loggable;
 import com.back.image.app.usecase.ConvertImageUseCase;
 import com.back.image.app.usecase.FlushImageUseCase;
 import com.back.image.app.usecase.ResizeImageUseCase;
@@ -24,6 +25,7 @@ public class ImageFacade {
     private final UploadImageUseCase uploadImageUseCase;
     private final FlushImageUseCase flushImageUseCase;
 
+    @Loggable(logArgs = false, logResult = false)
     public ImageUploadResponseDto uploadImage(List<MultipartFile> images, ImageCategory category) {
         List<File> allTemporaryFiles = new ArrayList<>();
 
