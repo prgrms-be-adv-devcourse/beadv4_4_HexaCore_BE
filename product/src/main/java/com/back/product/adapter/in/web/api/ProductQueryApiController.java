@@ -16,8 +16,6 @@ public interface ProductQueryApiController {
             ex. A 상품(ProductInfo)의 색상, 사이즈(ProductOptionValues)에 따른 개별 상품(Product) 조회
     """)
     @ApiResponse(responseCode = "200", description = "상품 상세 조회 성공")
-    @ApiResponse(responseCode = "401", description = "인증 실패", content = @Content)
-    @ApiResponse(responseCode = "403", description = "권한 없음", content = @Content)
     @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
     CommonResponse<?> getProductDetail(Long productInfoId);
 
@@ -29,8 +27,6 @@ public interface ProductQueryApiController {
             5. 페이징 : page (페이지 번호), size (항목 개수)
     """)
     @ApiResponse(responseCode = "200", description = "상품 목록 조회 성공")
-    @ApiResponse(responseCode = "401", description = "인증 실패", content = @Content)
-    @ApiResponse(responseCode = "403", description = "권한 없음", content = @Content)
     @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
     CommonResponse<?> searchProducts(ProductSearchRequestDto request, Long page, Long size);
 
@@ -41,8 +37,6 @@ public interface ProductQueryApiController {
             ex. 상품의 기본 정보 + 재고 + 옵션 (사이즈 + 색상 + ...) + ... 
     """)
     @ApiResponse(responseCode = "200", description = "단일 항목 상품 다중 조회 성공")
-    @ApiResponse(responseCode = "401", description = "인증 실패", content = @Content)
-    @ApiResponse(responseCode = "403", description = "권한 없음", content = @Content)
     @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
     CommonResponse<?> getProducts(ProductQueryRequestDto request);
 }
