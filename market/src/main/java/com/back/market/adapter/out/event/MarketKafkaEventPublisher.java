@@ -44,8 +44,12 @@ public class MarketKafkaEventPublisher {
 
             kafkaEventPublisher.publish(orderCompletedTopic, envelope);
 
-            log.info("[MarketKafkaEventPublisher] OrderCompletedEvent 생성, 카프카로 발행됨 eventId={}, occurredAt={}, topic={}, orderId={}",
-                    envelope.header().eventId(), envelope.header().occurrenceAt(), orderCompletedTopic, event.orderId());
+            log.info("[MarketKafkaEventPublisher] 카프카 이벤트 발행 완료. | Topic: {} | OrderID: {} | Seller: {} | Price: {} | EventID: {}",
+                    orderCompletedTopic,
+                    event.orderId(),
+                    event.sellerId(),
+                    event.price(),
+                    envelope.header().eventId());
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
