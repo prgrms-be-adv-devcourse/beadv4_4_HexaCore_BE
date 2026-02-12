@@ -193,6 +193,12 @@ public class ProductFacade {
     }
 
     @Loggable
+    @Transactional(readOnly = true)
+    public ProductSearchResponseDto findSimilarProducts(Long productInfoId, Long count) {
+        return productDocumentUseCase.findSimilarProducts(productInfoId, count);
+    }
+
+    @Loggable
     @Transactional
     public OptionListResponseDto createOptions(@Valid OptionListCreateRequestDto request) {
         List<OptionCreateCommand> optionCreateCommands = request.options().stream().map(optionCreateCommandMapper::toCommand).toList();

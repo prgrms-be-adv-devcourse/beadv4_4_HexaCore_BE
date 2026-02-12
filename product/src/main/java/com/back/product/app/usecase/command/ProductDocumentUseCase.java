@@ -5,6 +5,8 @@ import co.elastic.clients.elasticsearch._types.KnnSearch;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import com.back.ai.app.usecase.EmbeddingUseCase;
 import com.back.common.annotation.Loggable;
+import com.back.common.code.FailureCode;
+import com.back.common.exception.CustomException;
 import com.back.product.adapter.out.document.ProductDocumentRepository;
 import com.back.product.app.usecase.query.ProductDocumentSupport;
 import com.back.product.document.ProductDocument;
@@ -30,6 +32,7 @@ import org.springframework.util.StringUtils;
 import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -74,6 +77,36 @@ public class ProductDocumentUseCase {
                 (long) productPage.getTotalPages(),
                 productPage.getTotalElements(),
                 search.page()
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public ProductSearchResponseDto findSimilarProducts(Long productInfoId, Long count) {
+        ProductDocument targetProduct = productDocumentRepository.findById(productInfoId.toString())
+                .orElseThrow(() -> new CustomException(FailureCode.PRODUCT_INFO_NOT_FOUND));
+
+        float[] embedding = targetProduct.getEmbedding();
+
+        KnnSearch knnSearch = buildKnnSearch(embedding, count + 1, count * 10L);
+
+        NativeQuery query = NativeQuery.builder()
+                .withKnnSearches(knnSearch)
+                .withPageable(PageRequest.of(0, count.intValue() + 1))
+                .build();
+
+        PageImpl<ProductDocument> productPage = productDocumentSupport.findProductPage(query);
+
+        // 자기 자신 제외
+        List<ProductDocument> similarProducts = productPage.getContent().stream()
+                .filter(doc -> !Objects.requireNonNull(doc.getId()).equals(productInfoId.toString()))
+                .limit(count)
+                .toList();
+
+        return convertToDto(
+                similarProducts,
+                1L,
+                (long) similarProducts.size(),
+                0L
         );
     }
 

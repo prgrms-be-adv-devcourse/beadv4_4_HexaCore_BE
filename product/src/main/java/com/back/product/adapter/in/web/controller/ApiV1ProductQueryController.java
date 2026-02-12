@@ -44,6 +44,17 @@ public class ApiV1ProductQueryController implements ProductQueryApiController {
 
     @Override
     @Loggable
+    @GetMapping("/{productInfoId}/similar")
+    public CommonResponse<ProductSearchResponseDto> findSimilarProducts(
+            @PathVariable Long productInfoId,
+            @RequestParam(defaultValue = "5") @Max(10) Long count
+    ) {
+        ProductSearchResponseDto response = productFacade.findSimilarProducts(productInfoId, count);
+        return CommonResponse.success(SuccessCode.OK, response);
+    }
+
+    @Override
+    @Loggable
     @GetMapping("/variants")
     public CommonResponse<ProductDetailListResponseDto> getProducts(@Valid @ModelAttribute ProductQueryRequestDto request) {
         ProductDetailListResponseDto response = productFacade.getProducts(request);

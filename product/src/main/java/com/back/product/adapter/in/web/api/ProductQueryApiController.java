@@ -30,6 +30,15 @@ public interface ProductQueryApiController {
     @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
     CommonResponse<?> searchProducts(ProductSearchRequestDto request, Long page, Long size);
 
+    @Operation(summary = "유사 상품 조회", description = """
+            특정 상품과 유사한 상품들을 조회합니다.
+            KNN 알고리즘을 활용하여 유사한 상품들을 추천합니다.
+            추천할 상품 수는 'count' 파라미터로 지정할 수 있습니다.
+    """)
+    @ApiResponse(responseCode = "200", description = "상품 목록 조회 성공")
+    @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
+    CommonResponse<?> findSimilarProducts(Long productInfoId, Long count);
+
     @Operation(summary = "단일 항목 상품 다중 조회", description = """
             단일 항목 상품의 정보를 다중 조회합니다.
             한 상품의 기본 정보(ProductInfo)를 포함한 단일 상품의 정보를 조회합니다.
