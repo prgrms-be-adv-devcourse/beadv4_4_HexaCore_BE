@@ -1,13 +1,15 @@
 package com.back.product.app.usecase.command;
 
 import co.elastic.clients.elasticsearch._types.FieldValue;
-import co.elastic.clients.elasticsearch._types.query_dsl.*;
+import co.elastic.clients.elasticsearch._types.KnnSearch;
+import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import com.back.ai.app.usecase.EmbeddingUseCase;
 import com.back.common.annotation.Loggable;
 import com.back.product.adapter.out.document.ProductDocumentRepository;
 import com.back.product.app.usecase.query.ProductDocumentSupport;
 import com.back.product.document.ProductDocument;
 import com.back.product.dto.command.ProductSearchCommand;
+import com.back.product.dto.enums.ProductSortType;
 import com.back.product.dto.model.OptionDto;
 import com.back.product.dto.model.ProductInfoDto;
 import com.back.product.dto.response.ProductSearchResponseDto;
@@ -15,7 +17,11 @@ import com.back.product.dto.model.ProductSearchDto;
 import com.back.product.mapper.ProductDocumentMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.elasticsearch.client.elc.NativeQuery;
+import org.springframework.data.elasticsearch.client.elc.NativeQueryBuilder;
 import org.springframework.data.elasticsearch.core.query.Query;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +31,7 @@ import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Service
 @RequiredArgsConstructor
@@ -58,15 +65,9 @@ public class ProductDocumentUseCase {
     @Loggable
     @Transactional(readOnly = true)
     public ProductSearchResponseDto findProductPage(ProductSearchCommand search) {
-        Query query = buildSearchQuery(
-                search.keyword(),
-                search.brandIds(),
-                search.categoryIds(),
-                search.minPrice(),
-                search.maxPrice()
-        );
+        Query query = buildSearchQuery(search);
 
-        PageImpl<ProductDocument> productPage = productDocumentSupport.findProductPage(query, search.sort(), search.page(), search.size());
+        PageImpl<ProductDocument> productPage = productDocumentSupport.findProductPage(query);
 
         return convertToDto(
                 productPage.getContent(),
@@ -76,16 +77,37 @@ public class ProductDocumentUseCase {
         );
     }
 
-    private Query buildSearchQuery(
-            String keyword,
-            List<Long> brands,
-            List<Long> categories,
-            BigDecimal minPrice,
-            BigDecimal maxPrice
-    ) {
-        var boolQuery = new BoolQuery.Builder();
+    private Query buildSearchQuery(ProductSearchCommand search) {
+        BoolQuery.Builder boolQuery = new BoolQuery.Builder();
 
         // 1. 키워드 검색 (should: 점수 기반 검색)
+        buildKeywordSearchQuery(boolQuery, search.keyword());
+
+        // 2. 필터링 조건 (filter: 정확한 매칭, 캐싱 가능)
+        filterByBrands(boolQuery, search.brandIds());
+        filterByCategories(boolQuery, search.categoryIds());
+        filterByMinPrice(boolQuery, search.minPrice());
+        filterByMaxPrice(boolQuery, search.maxPrice());
+
+        // 3. 임베딩 유사도 검색 (should: 점수 기반 검색)
+        KnnSearch knnSearch = buildKnnSearchQuery(search.keyword(), search.size());
+
+        // 4. 페이징 및 정렬
+        Pageable pageable = buildPageable(search.sort(), search.page(), search.size());
+
+        NativeQueryBuilder queryBuilder = NativeQuery.builder()
+                .withQuery(boolQuery.build()._toQuery())
+                .withPageable(pageable);
+
+        if (knnSearch != null) {
+            queryBuilder.withKnnSearches(knnSearch);
+        }
+
+        return queryBuilder.build();
+    }
+
+    private void buildKeywordSearchQuery(BoolQuery.Builder boolQuery, String keyword) {
+
         if (StringUtils.hasText(keyword)) {
             // (1) 일반 및 MultiField 검색 경로
             boolQuery.should(m -> m.match(mt -> mt.field("productInfo.productName").query(keyword)));
@@ -112,40 +134,75 @@ public class ProductDocumentUseCase {
 
             boolQuery.minimumShouldMatch("1");
         }
+    }
 
-        // 2. 필터링 조건 (filter: 정확한 매칭, 캐싱 가능)
-
-        // 브랜드 ID 필터
+    private void filterByBrands(BoolQuery.Builder boolQuery, List<Long> brands) {
         if (brands != null && !brands.isEmpty()) {
             boolQuery.filter(f -> f.terms(t -> t
                     .field("productInfo.brand.brandId")
                     .terms(v -> v.value(brands.stream().map(FieldValue::of).toList()))
             ));
         }
+    }
 
-        // 카테고리 ID 필터
+    private void filterByCategories(BoolQuery.Builder boolQuery, List<Long> categories) {
         if (categories != null && !categories.isEmpty()) {
             boolQuery.filter(f -> f.terms(t -> t
                     .field("productInfo.category.categoryId")
                     .terms(v -> v.value(categories.stream().map(FieldValue::of).toList()))
             ));
         }
+    }
 
-        // 3. 가격 범위 필터 (컴파일 에러 해결 지점)
+    private void filterByMinPrice(BoolQuery.Builder boolQuery, BigDecimal minPrice) {
         if (minPrice != null) {
             boolQuery.filter(f -> f.range(r -> r
                     .number(n -> n.field("productInfo.releasePrice").gte(minPrice.doubleValue()))
             ));
         }
+    }
+
+    private void filterByMaxPrice(BoolQuery.Builder boolQuery, BigDecimal maxPrice) {
         if (maxPrice != null) {
             boolQuery.filter(f -> f.range(r -> r
                     .number(n -> n.field("productInfo.releasePrice").lte(maxPrice.doubleValue()))
             ));
         }
+    }
 
-        return NativeQuery.builder()
-                .withQuery(boolQuery.build()._toQuery())
-                .build();
+    private KnnSearch buildKnnSearchQuery(String keyword, Long size) {
+        KnnSearch knnSearch = null;
+
+        if (StringUtils.hasText(keyword)) {
+            float[] embedding = embeddingUseCase.generateEmbeddings(keyword);
+
+            List<Float> vectors = IntStream.range(0, embedding.length)
+                    .mapToObj(i -> embedding[i])
+                    .toList();
+
+            knnSearch = KnnSearch.of(knn -> knn
+                    .queryVector(vectors)
+                    .field("embedding")
+                    .k(size.intValue()) // 최종 결과 수
+                    .numCandidates(size.intValue() * 3) // 후보 수 (k * 2 ~ k * 10 권장)
+            );
+        }
+
+        return knnSearch;
+    }
+
+    private Pageable buildPageable(ProductSortType sortType, Long page, Long size) {
+        // 정렬 조건 (기본 정렬: 최신순)
+        Sort sort = Sort.by(
+                ProductSortType.LATEST.getDirection(),
+                ProductSortType.LATEST.getFieldName()
+        );
+        if (sortType != null) {
+            sort = Sort.by(sortType.getDirection(), sortType.getFieldName());
+        }
+
+        // 페이징
+        return PageRequest.of(page.intValue(), size.intValue(), sort);
     }
 
     private ProductSearchResponseDto convertToDto(List<ProductDocument> productList, Long totalPages, Long totalElements, Long currentPage) {
