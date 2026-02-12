@@ -2,6 +2,7 @@ package com.back.product.app.usecase.command;
 
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.query_dsl.*;
+import com.back.ai.app.usecase.EmbeddingUseCase;
 import com.back.common.annotation.Loggable;
 import com.back.product.adapter.out.document.ProductDocumentRepository;
 import com.back.product.app.usecase.query.ProductDocumentSupport;
@@ -9,11 +10,9 @@ import com.back.product.document.ProductDocument;
 import com.back.product.dto.command.ProductSearchCommand;
 import com.back.product.dto.model.OptionDto;
 import com.back.product.dto.model.ProductInfoDto;
-import com.back.product.dto.request.ProductSearchRequestDto;
 import com.back.product.dto.response.ProductSearchResponseDto;
 import com.back.product.dto.model.ProductSearchDto;
 import com.back.product.mapper.ProductDocumentMapper;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.elasticsearch.client.elc.NativeQuery;
@@ -23,19 +22,27 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class ProductDocumentUseCase {
-    private final ProductDocumentSupport productDocumentSupport;
     private final ProductDocumentMapper productDocumentMapper;
+    private final ProductDocumentSupport productDocumentSupport;
     private final ProductDocumentRepository productDocumentRepository;
+
+    private final EmbeddingUseCase embeddingUseCase;
 
     @Loggable
     @Transactional
     public void syncProduct(ProductInfoDto productInfoDto, List<OptionDto> optionDtos, String thumbnailUrl) {
-        ProductDocument documentToSync = productDocumentMapper.toDocument(productInfoDto, optionDtos, thumbnailUrl);
+        String description = buildProductInfo(productInfoDto, optionDtos);
+
+        float[] embedding = embeddingUseCase.generateEmbeddings(description);
+
+        ProductDocument documentToSync = productDocumentMapper.toDocument(productInfoDto, optionDtos, thumbnailUrl, embedding);
 
         documentToSync.assignId(productInfoDto.productInfoId().toString());
 
@@ -150,5 +157,42 @@ public class ProductDocumentUseCase {
                 .totalPages(totalPages)
                 .currentPage(currentPage)
                 .build();
+    }
+
+    // ex. "Brand: Nike. Category: Shoes. Product Code: NK12345. Product Name: Air Max. Release Price: 199.99. Release Date: 2023/10/15. Color: Red, Blue, Green; Size: 8, 9, 10."
+    private String buildProductInfo(ProductInfoDto productInfoDto, List<OptionDto> optionDtos) {
+        StringBuilder productInfo = new StringBuilder();
+
+        productInfo.append("Brand: ").append(productInfoDto.brand().name()).append(". ");
+        productInfo.append("Category: ").append(productInfoDto.category().name()).append(". ");
+        productInfo.append("Product Code: ").append(productInfoDto.code()).append(". ");
+        productInfo.append("Product Name: ").append(productInfoDto.name()).append(". ");
+        productInfo.append("Release Price: ").append(productInfoDto.releasePrice()).append(". ");
+        productInfo.append("Release Date: ").append(
+                DateTimeFormatter.ofPattern("yyyy/MM/dd")
+                        .format(productInfoDto.releaseDate())
+        ).append(". ");
+
+        productInfo.append(
+                optionDtos.stream()
+                        .map(this::buildOptionInfo)
+                        .collect(Collectors.joining("; "))
+        ).append(". ");
+
+        return productInfo.toString().trim();
+    }
+
+    // ex. "Color: Red, Blue, Green."
+    private String buildOptionInfo(OptionDto optionDto) {
+        StringBuilder optionInfo = new StringBuilder();
+
+        optionInfo.append(optionDto.group().name()).append(": ");
+        optionInfo.append(
+                optionDto.values().stream()
+                        .map(OptionDto.ValueDto::name)
+                        .collect(Collectors.joining(", "))
+        ).append(". ");
+
+        return optionInfo.toString();
     }
 }
