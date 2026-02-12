@@ -11,6 +11,7 @@ import com.back.product.dto.response.ProductDetailListResponseDto;
 import com.back.product.dto.response.ProductDetailResponseDto;
 import com.back.product.dto.response.ProductSearchResponseDto;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -35,7 +36,7 @@ public class ApiV1ProductQueryController implements ProductQueryApiController {
     public CommonResponse<ProductSearchResponseDto> searchProducts(
        @ModelAttribute @Valid ProductSearchRequestDto request,
        @RequestParam(defaultValue = "0") Long page,
-       @RequestParam(defaultValue = "10") Long size
+       @RequestParam(defaultValue = "10") @Max(50) Long size
      ) {
         ProductSearchResponseDto response = productFacade.findProductPage(request, page, size);
         return CommonResponse.success(SuccessCode.OK, response);
