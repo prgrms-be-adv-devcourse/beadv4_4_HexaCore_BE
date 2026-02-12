@@ -1,10 +1,10 @@
-package com.back.market.adapter.in.kafka;
+package com.back.market.adapter.in.event;
 
 import com.back.common.code.FailureCode;
 import com.back.common.event.Envelope;
 import com.back.common.exception.CustomException;
 import com.back.market.app.MarketInternalFacade;
-import com.back.market.dto.payload.UserCreatedPayload;
+import com.back.market.event.payload.UserCreatedPayload;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -15,7 +15,7 @@ import tools.jackson.databind.json.JsonMapper;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class MarketUserEventListener {
+public class MarketKafkaEventListener {
 
     private final MarketInternalFacade marketInternalFacade;
     private final JsonMapper jsonMapper;
@@ -24,13 +24,14 @@ public class MarketUserEventListener {
             topics = "${custom.kafka.topic.user-account-created}",
             groupId = "${spring.kafka.consumer.group-id}"
     )
-    public void consume(String message) {
+    public void consumeUserCreatedEvent(String message) {
         log.info("[MarketUserEventListener] UserCreatedEvent 수신: {}", message);
 
         Envelope<UserCreatedPayload> event;
 
         try {
-            event = jsonMapper.readValue(message, new TypeReference<Envelope<UserCreatedPayload>>() {});
+            event = jsonMapper.readValue(message, new TypeReference<>() {
+            });
         } catch (Exception e) {
             log.error("[MarketUserEventListener] UserCreatedEvent 파싱 중 오류 발생: {}", e.getMessage());
             throw new CustomException(FailureCode.INTERNAL_SERVER_ERROR);
