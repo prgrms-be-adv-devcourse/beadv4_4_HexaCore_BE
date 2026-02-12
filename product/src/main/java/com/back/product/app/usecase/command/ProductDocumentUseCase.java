@@ -89,17 +89,19 @@ public class ProductDocumentUseCase {
         filterByMinPrice(boolQuery, search.minPrice());
         filterByMaxPrice(boolQuery, search.maxPrice());
 
-        // 3. 임베딩 유사도 검색 (should: 점수 기반 검색)
-        KnnSearch knnSearch = buildKnnSearchQuery(search.keyword(), search.size());
-
-        // 4. 페이징 및 정렬
+        // 3. 페이징 및 정렬
         Pageable pageable = buildPageable(search.sort(), search.page(), search.size());
 
         NativeQueryBuilder queryBuilder = NativeQuery.builder()
                 .withQuery(boolQuery.build()._toQuery())
                 .withPageable(pageable);
 
-        if (knnSearch != null) {
+        // 4. 임베딩 유사도 검색 (should: 점수 기반 검색)
+        if (StringUtils.hasText(search.keyword())) {
+            float[] embedding = embeddingUseCase.generateEmbeddings(search.keyword());
+
+            KnnSearch knnSearch = buildKnnSearch(embedding, search.size(), search.size() * 5L);
+
             queryBuilder.withKnnSearches(knnSearch);
         }
 
@@ -170,27 +172,6 @@ public class ProductDocumentUseCase {
         }
     }
 
-    private KnnSearch buildKnnSearchQuery(String keyword, Long size) {
-        KnnSearch knnSearch = null;
-
-        if (StringUtils.hasText(keyword)) {
-            float[] embedding = embeddingUseCase.generateEmbeddings(keyword);
-
-            List<Float> vectors = IntStream.range(0, embedding.length)
-                    .mapToObj(i -> embedding[i])
-                    .toList();
-
-            knnSearch = KnnSearch.of(knn -> knn
-                    .queryVector(vectors)
-                    .field("embedding")
-                    .k(size.intValue()) // 최종 결과 수
-                    .numCandidates(size.intValue() * 3) // 후보 수 (k * 2 ~ k * 10 권장)
-            );
-        }
-
-        return knnSearch;
-    }
-
     private Pageable buildPageable(ProductSortType sortType, Long page, Long size) {
         // 정렬 조건 (기본 정렬: 최신순)
         Sort sort = Sort.by(
@@ -203,6 +184,17 @@ public class ProductDocumentUseCase {
 
         // 페이징
         return PageRequest.of(page.intValue(), size.intValue(), sort);
+    }
+
+    private KnnSearch buildKnnSearch(float[] embedding, Long k, Long candidate) {
+        List<Float> vectors = embeddingUseCase.convertArrayToList(embedding);
+
+        return KnnSearch.of(knn -> knn
+                .queryVector(vectors)
+                .field("embedding")
+                .k(k.intValue()) // 최종 결과 수
+                .numCandidates(candidate.intValue()) // 후보 수 (k * 2 ~ k * 10 권장)
+        );
     }
 
     private ProductSearchResponseDto convertToDto(List<ProductDocument> productList, Long totalPages, Long totalElements, Long currentPage) {
