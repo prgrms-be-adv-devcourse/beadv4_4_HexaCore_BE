@@ -116,8 +116,8 @@ public interface SettlementAdminApi {
                                                       "logId": 2,
                                                       "settlementId": 1,
                                                       "previousStatus": "PENDING",
-                                                      "newStatus": "IN_PROGRESS",
-                                                      "reason": "정산 처리 시작",
+                                                      "newStatus": "COMPLETED",
+                                                      "reason": "정산 완료",
                                                       "actorType": "BATCH",
                                                       "actorId": null,
                                                       "createdAt": "2024-03-15T02:00:00"

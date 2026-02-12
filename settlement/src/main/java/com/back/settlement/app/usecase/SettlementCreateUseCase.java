@@ -27,6 +27,7 @@ public class SettlementCreateUseCase {
     public SettlementWithItems createSettlement(Long payeeId, YearMonth targetMonth) {
         LocalDateTime startAt = LocalDateUtils.startOfMonth(targetMonth);
         LocalDateTime endAt = LocalDateUtils.endOfMonth(targetMonth);
+
         List<SettlementItem> items = settlementSupport.findUnsettledItems(payeeId, startAt, endAt);
 
         Settlement settlement = Settlement.create(payeeId, items, startAt, endAt);
@@ -43,7 +44,8 @@ public class SettlementCreateUseCase {
             item.included();
         });
         settlementItemRepository.saveAll(items);
-        saved.start();
+        saved.complete(); // PENDING -> COMPLETED
         settlementRepository.save(saved);
+        log.info("정산 생성 및 확정 완료. settlementId={}", saved.getId());
     }
 }
