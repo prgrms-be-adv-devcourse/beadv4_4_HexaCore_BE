@@ -4,7 +4,7 @@ import com.back.common.event.Envelope;
 import com.back.market.adapter.out.CartRepository;
 import com.back.market.adapter.out.MarketUserRepository;
 import com.back.market.domain.MarketUser;
-import com.back.market.dto.payload.UserCreatedPayload;
+import com.back.market.event.payload.UserCreatedPayload;
 import tools.jackson.databind.json.JsonMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
