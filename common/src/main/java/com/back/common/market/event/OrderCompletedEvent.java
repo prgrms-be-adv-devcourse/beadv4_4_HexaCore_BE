@@ -10,7 +10,7 @@ public record OrderCompletedEvent (
         Long productId,
         Long buyerId,
         Long sellerId,
-        String sellerName, // 판매자 이름(닉네임)
+        String sellerName, // 판매자 이름
         BigDecimal price,
         LocalDateTime confirmedAt
 ) implements EventName {
