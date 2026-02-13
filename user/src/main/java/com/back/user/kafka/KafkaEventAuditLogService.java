@@ -12,39 +12,40 @@ public class KafkaEventAuditLogService {
     private final KafkaChatDltPublishedLogRepository kafkaChatDltPublishedLogRepository;
 
     @Transactional
-    public void saveLog(KafkaConsumeFailLogCommand dto){
+    public void saveLog(KafkaConsumeFailLogCommand command){
         KafkaConsumeFailLog log = KafkaConsumeFailLog.builder()
-                .eventId(dto.eventId())
-                .eventType(dto.eventType())
-                .consumerGroupId(dto.consumerGroupId())
-                .topic(dto.topic())
-                .partition(dto.partition())
-                .offset(dto.offset())
-                .recordTimestamp(dto.recordTimestamp())
-                .errorClass(dto.errorClass())
-                .errorMessage(dto.errorMessage())
-                .payloadJson(dto.payload())
-                .stacktrace(dto.stacktrace())
-                .loggedAt(dto.loggedAt())
+                .eventId(command.eventId())
+                .eventType(command.eventType())
+                .consumerGroupId(command.consumerGroupId())
+                .topic(command.topic())
+                .partition(command.partition())
+                .offset(command.offset())
+                .recordTimestamp(command.recordTimestamp())
+                .errorClass(command.errorClass())
+                .errorMessage(command.errorMessage())
+                .payloadJson(command.payload())
+                .stacktrace(command.stacktrace())
+                .loggedAt(command.loggedAt())
                 .build();
 
         kafkaConsumeFailLogRepository.save(log);
     }
 
     @Transactional
-    public void saveLog(KafkaChatDltPublishedLogCommand dto){
+    public void saveLog(KafkaChatDltPublishedLogCommand command){
         KafkaChatDltPublishedLog log = KafkaChatDltPublishedLog.builder()
-                .eventId(dto.eventId())
-                .eventType(dto.eventType())
-                .outboxId(dto.outboxId())
-                .source(dto.source())
-                .dltTopic(dto.dltTopic())
-                .publishedPartition(dto.publishedPartition())
-                .publishedOffset(dto.publishedOffset())
-                .recordTimestamp(dto.recordTimestamp())
-                .success(dto.success())
-                .payloadJson(dto.payloadJson())
-                .errorMessage(dto.errorMessage())
+                .eventId(command.eventId())
+                .eventType(command.eventType())
+                .outboxId(command.outboxId())
+                .source(command.source())
+                .dltTopic(command.dltTopic())
+                .publishedPartition(command.publishedPartition())
+                .publishedOffset(command.publishedOffset())
+                .recordTimestamp(command.recordTimestamp())
+                .success(command.success())
+                .payloadJson(command.payloadJson())
+                .errorMessage(command.errorMessage())
+                .loggedAt(command.loggedAt())
                 .build();
 
         kafkaChatDltPublishedLogRepository.save(log);

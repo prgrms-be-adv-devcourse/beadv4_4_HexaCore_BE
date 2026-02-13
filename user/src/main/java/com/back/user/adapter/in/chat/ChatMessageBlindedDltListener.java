@@ -39,7 +39,7 @@ public class ChatMessageBlindedDltListener {
 
             UUID eventUuid = safeUuid(envelope.header().eventId());
 
-            KafkaChatDltPublishedLogCommand dto = new KafkaChatDltPublishedLogCommand(
+            KafkaChatDltPublishedLogCommand command = new KafkaChatDltPublishedLogCommand(
                     eventUuid,
                     envelope.header().eventType(),
                     payload.outboxId(),
@@ -54,7 +54,7 @@ public class ChatMessageBlindedDltListener {
                     LocalDateTime.now()
             );
 
-            kafkaEventAuditLogService.saveLog(dto);
+            kafkaEventAuditLogService.saveLog(command);
 
         } catch (Exception e) {
             // DLT는 재시도 루프 방지: 로그만 남기고 삼킴

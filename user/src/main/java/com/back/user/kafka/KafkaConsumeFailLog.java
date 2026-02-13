@@ -10,9 +10,9 @@ import java.util.UUID;
 @Table(
         name = "kafka_consume_fail_log",
         indexes = {
-                @Index(name = "idx_kcfl_event_id", columnList = "eventId"),
-                @Index(name = "idx_kcfl_logged_at", columnList = "loggedAt"),
-                @Index(name = "idx_kcfl_consume_pos", columnList = "consumerGroupId,topic,topic_partition,topic_offset")
+                @Index(name = "idx_kcfl_event_id", columnList = "event_id"),
+                @Index(name = "idx_kcfl_logged_at", columnList = "logged_at"),
+                @Index(name = "idx_kcfl_consume_pos", columnList = "consumer_group_id,topic,topic_partition,topic_offset")
         }
 )
 @Getter

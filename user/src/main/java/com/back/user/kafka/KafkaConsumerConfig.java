@@ -20,6 +20,8 @@ import org.springframework.util.backoff.BackOff;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -209,12 +211,11 @@ public class KafkaConsumerConfig {
         return String.valueOf(value);
     }
 
-    private String stackTraceToString(Throwable ex) {
-        try {
-            return org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace(ex);
-        } catch (Exception ignore) {
-            return ex.toString();
-        }
+    private static String stackTraceToString(Throwable e) {
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        e.printStackTrace(pw);
+        return sw.toString();
     }
 
     private String truncate(String s, int max) {
