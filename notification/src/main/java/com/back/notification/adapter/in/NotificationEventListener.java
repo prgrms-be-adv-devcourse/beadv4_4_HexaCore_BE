@@ -34,7 +34,9 @@ public class NotificationEventListener {
             log.info("[KafkaListenerSuccess] BiddingCompletedPayload 수신 : biddingId = {}", payload.biddingId());
         } catch (JacksonException e) {
             log.error("[KafkaListenerFailed] BiddingCompletedPayload 역직렬화 중 에러 발생 : {}", e.getMessage(), e);
+            throw new RuntimeException("Deserialization failed", e);
         }
+        // TODO: DLQ 등 추가
     }
 
     @KafkaListener(
@@ -50,6 +52,7 @@ public class NotificationEventListener {
             log.info("[KafkaListenerSuccess] PurchaseCanceledPayload 수신 : biddingId = {}", payload.biddingId());
         } catch (JacksonException e) {
             log.error("[KafkaListenerFailed] PurchaseCanceledPayload 역직렬화 중 에러 발생 : {}", e.getMessage(), e);
+            throw new RuntimeException("Deserialization failed", e);
         }
     }
 
@@ -67,6 +70,7 @@ public class NotificationEventListener {
             log.info("[KafkaListenerSuccess] BiddingFailedPayload 수신 : productId = {}", payload.productId());
         } catch (JacksonException e) {
             log.error("[KafkaListenerFailed] BiddingFailedPayload 역직렬화 중 에러 발생 : {}", e.getMessage(), e);
+            throw new RuntimeException("Deserialization failed", e);
         }
     }
 
@@ -83,6 +87,7 @@ public class NotificationEventListener {
             log.info("[KafkaListenerSuccess] InspectionCompletedPayload 수신 : productId = {}", payload.productId());
         } catch (JacksonException e) {
             log.error("[KafkaListenerFailed] InspectionCompletedPayload 역직렬화 중 에러 발생 : {}", e.getMessage(), e);
+            throw new RuntimeException("Deserialization failed", e);
         }
     }
 
@@ -99,6 +104,7 @@ public class NotificationEventListener {
             log.info("[KafkaListenerSuccess] SettlementCompletedPayload 수신 : sellerId = {}", payload.sellerId());
         } catch (JacksonException e) {
             log.error("[KafkaListenerFailed] SettlementCompletedPayload 역직렬화 중 에러 발생 : {}", e.getMessage(), e);
+            throw new RuntimeException("Deserialization failed", e);
         }
     }
 
@@ -115,6 +121,7 @@ public class NotificationEventListener {
             log.info("[KafkaListenerSuccess] SellBiddingCreatedPayload 수신 : productId = {}", payload.productId());
         } catch (JacksonException e) {
             log.error("[KafkaListenerFailed] SellBiddingCreatedPayload 역직렬화 중 에러 발생 : {}", e.getMessage(), e);
+            throw new RuntimeException("Deserialization failed", e);
         }
     }
 
@@ -126,11 +133,12 @@ public class NotificationEventListener {
         try {
             Envelope<FcmTokenChangedPayload> envelope = jsonMapper.readValue(message, new TypeReference<>() {});
             FcmTokenChangedPayload payload = envelope.payload();
-            
+
             notificationUserUsecase.updateFcmToken(payload.userId(), payload.fcmToken());
             log.info("[KafkaListenerSuccess] FcmTokenChangedPayload 수신 : userId = {}", payload.userId());
         } catch (JacksonException e) {
             log.error("[KafkaListenerFailed] FcmTokenChangedPayload 역직렬화 중 에러 발생 : {}", e.getMessage(), e);
+            throw new RuntimeException("Deserialization failed", e);
         }
     }
 }
