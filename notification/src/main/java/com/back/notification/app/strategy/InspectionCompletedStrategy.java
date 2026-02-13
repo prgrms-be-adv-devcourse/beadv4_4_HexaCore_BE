@@ -14,6 +14,7 @@ import java.util.List;
 public class InspectionCompletedStrategy implements NotificationStrategy<InspectionCompletedPayload> {
     private final NotificationMapper mapper;
 
+    @Override
     public Type type(){
         return Type.INSPECTION_COMPLETED;
     }

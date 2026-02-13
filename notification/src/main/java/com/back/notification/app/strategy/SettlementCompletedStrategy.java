@@ -14,6 +14,7 @@ import java.util.List;
 public class SettlementCompletedStrategy implements NotificationStrategy<SettlementCompletedPayload> {
     private final NotificationMapper mapper;
 
+    @Override
     public Type type(){
         return Type.SETTLEMENT_COMPLETED;
     }
