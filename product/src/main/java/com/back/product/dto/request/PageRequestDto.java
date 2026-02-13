@@ -15,7 +15,7 @@ public record PageRequestDto(
     // 기본값 설정 용 컴팩트 생성자
     public PageRequestDto {
         if (size == null) {
-            size = 10L;
+            size = 5L;
         }
 
         if (page == null) {

@@ -1,7 +1,6 @@
 package com.back.product.dto.request;
 
 import com.back.product.dto.enums.ProductSortType;
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.Builder;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -35,7 +34,40 @@ public record ProductSearchRequestDto(
         ProductSortType sort,
 
         // 5. 페이징
-        @Valid
-        PageRequestDto pageRequest
+        @Min(value = 0, message = "Page must be greater than or equal to 0")
+        Long page,
+
+        @Min(value = 10, message = "Size must be greater than or equal to 10")
+        @Max(value = 50, message = "Size must be less than or equal to 50")
+        Long size
 ) {
+    public ProductSearchRequestDto {
+        if (minPrice == null) {
+            minPrice = BigDecimal.ZERO;
+        }
+
+        if (maxPrice == null) {
+            maxPrice = BigDecimal.ZERO;
+        }
+
+        if (brandIds == null) {
+            brandIds = List.of();
+        }
+
+        if (categoryIds == null) {
+            categoryIds = List.of();
+        }
+
+        if (page == null) {
+            page = 0L;
+        }
+
+        if (size == null) {
+            size = 20L;
+        }
+
+        if (sort == null) {
+            sort = ProductSortType.LATEST;
+        }
+    }
 }

@@ -14,8 +14,8 @@ public class ProductSearchCommandMapper {
                 .minPrice(request.minPrice())
                 .maxPrice(request.maxPrice())
                 .sort(request.sort())
-                .page(request.pageRequest().page())
-                .size(request.pageRequest().size())
+                .page(request.page())
+                .size(request.size())
                 .build();
     }
 }

@@ -176,8 +176,8 @@ class ApiV1ProductQueryControllerTest {
                                     .param("brandIds", "")
                                     .param("categoryIds", "")
                                     .param("sort", "LATEST")
-                                    .param("pageRequest.page", "0")
-                                    .param("pageRequest.size", "100") // Exceeds max size of 50
+                                    .param("page", "0")
+                                    .param("size", "100") // Exceeds max size of 50
                     ).andDo(print())
                     .andExpect(status().isBadRequest());
 
@@ -190,7 +190,7 @@ class ApiV1ProductQueryControllerTest {
     class FindSimilarProductsTest {
 
         private final Long PRODUCT_INFO_ID = 1L;
-        private final Long DEFAULT_COUNT = 10L;
+        private final Long DEFAULT_COUNT = 5L;
         private final Long CUSTOM_COUNT = 8L;
         private final Long INVALID_COUNT = 51L;
 
