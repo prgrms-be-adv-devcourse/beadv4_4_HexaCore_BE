@@ -23,11 +23,6 @@ public class KafkaTestConsumerConfig {
     }
 
     @Bean
-    SettlementCashPayoutEventHandler handler(KafkaEventPublisher publisher) {
-        return new SettlementCashPayoutEventHandler(publisher, "settlement-payout-request");
-    }
-
-    @Bean
     ProducerFactory<String, EventName> producerFactory(EmbeddedKafkaBroker broker) {
         Map<String, Object> props = new HashMap<>(KafkaTestUtils.producerProps(broker));
         props.put(org.apache.kafka.clients.producer.ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);

@@ -7,7 +7,6 @@ import com.back.common.exception.BadRequestException;
 import com.back.settlement.domain.event.SettlementFailedEvent;
 import com.back.settlement.domain.event.SettlementHoldEvent;
 import com.back.settlement.domain.event.SettlementInternalCompletedEvent;
-import com.back.settlement.domain.event.SettlementStartedEvent;
 import com.back.settlement.domain.exception.InvalidSettlementStateException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -110,16 +109,6 @@ public class Settlement extends BaseAggregateEntity<Settlement> {
                 .withMinute(0)
                 .withSecond(0)
                 .withNano(0);
-    }
-
-    // 정산 시작 처리
-    public void start() {
-        validateStatusTransition(SettlementStatus.IN_PROGRESS);
-
-        SettlementStatus previousStatus = this.status;
-        this.status = SettlementStatus.IN_PROGRESS;
-
-        registerEvent(new SettlementStartedEvent(this.id, previousStatus, this.sellerId, this.totalSalesAmount, this.totalNetAmount, this.totalFeeAmount));
     }
 
     // 정산 완료 처리

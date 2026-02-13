@@ -4,13 +4,13 @@ import com.back.chat.event.ChatEventEnvelope;
 import com.back.chat.event.payload.ChatMessageBlindedPayload;
 import com.back.chat.event.payload.ChatMessageDeletedPayload;
 import com.back.chat.event.payload.ChatMessagePayload;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.nio.charset.StandardCharsets;
 
@@ -21,7 +21,7 @@ public class RedisChatMessageSubscriber implements MessageListener {
 
     private static final String ROOM_TOPIC_PREFIX = "/topic/chat/room/";
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper jsonMapper;
     private final SimpMessagingTemplate messagingTemplate;
 
     @Override
@@ -30,12 +30,12 @@ public class RedisChatMessageSubscriber implements MessageListener {
         String rawBody = new String(message.getBody(), StandardCharsets.UTF_8);
 
         try {
-            ChatEventEnvelope envelope = objectMapper.readValue(rawBody, ChatEventEnvelope.class);
+            ChatEventEnvelope envelope = jsonMapper.readValue(rawBody, ChatEventEnvelope.class);
 
             switch (envelope.type()) {
                 case CHAT_MESSAGE -> {
                     ChatMessagePayload payload =
-                            objectMapper.treeToValue(envelope.data(), ChatMessagePayload.class);
+                            jsonMapper.treeToValue(envelope.data(), ChatMessagePayload.class);
 
                     String destination = roomTopic(payload.roomId());
                     messagingTemplate.convertAndSend(destination, payload);
@@ -46,7 +46,7 @@ public class RedisChatMessageSubscriber implements MessageListener {
 
                 case MESSAGE_BLINDED -> {
                     ChatMessageBlindedPayload payload =
-                            objectMapper.treeToValue(envelope.data(), ChatMessageBlindedPayload.class);
+                            jsonMapper.treeToValue(envelope.data(), ChatMessageBlindedPayload.class);
 
                     String destination = roomTopic(payload.roomId());
                     messagingTemplate.convertAndSend(destination, payload);
@@ -57,7 +57,7 @@ public class RedisChatMessageSubscriber implements MessageListener {
 
                 case MESSAGE_DELETED -> {
                     ChatMessageDeletedPayload payload =
-                            objectMapper.treeToValue(envelope.data(), ChatMessageDeletedPayload.class);
+                            jsonMapper.treeToValue(envelope.data(), ChatMessageDeletedPayload.class);
 
                     String destination = roomTopic(payload.roomId());
                     messagingTemplate.convertAndSend(destination,payload);

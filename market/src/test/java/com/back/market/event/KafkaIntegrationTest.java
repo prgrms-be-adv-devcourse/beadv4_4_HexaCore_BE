@@ -1,9 +1,11 @@
 package com.back.market.event;
 
-import com.back.common.user.event.UserCreatedEvent;
+import com.back.common.event.Envelope;
 import com.back.market.adapter.out.CartRepository;
 import com.back.market.adapter.out.MarketUserRepository;
 import com.back.market.domain.MarketUser;
+import com.back.market.dto.payload.UserCreatedPayload;
+import tools.jackson.databind.json.JsonMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,26 +23,36 @@ public class KafkaIntegrationTest {
     private MarketUserRepository marketUserRepository;
     @Autowired
     private CartRepository cartRepository;
+    @Autowired
+    private JsonMapper jsonMapper;
 
     @Value("${custom.kafka.topic.user-account-created}")
     private String topic;
 
     @Test
-    void test1() throws InterruptedException {
+    void test1() throws Exception {
         long testId = 300L;
-        UserCreatedEvent event = new UserCreatedEvent(
+        
+        // 1. 페이로드 생성
+        UserCreatedPayload userCreatedPayload = new UserCreatedPayload(
                 testId,
-                "테스트유저2",
-                "김테스트",
-                "test2@example.com",
-                "서울시 강남구2",
-                "010-1234-5678",
-                "https://dummyimage.com/100x100/000/fff&text=Test2"
+                "김테스트", // 이름
+                "test2@example.com", // 이메일
+                "서울시 강남구2", // 주소
+                "010-1234-5678" // 전화번호
         );
-        kafkaTemplate.send(topic, event);
-        log.info("Event sent to Kafka topic: UserCreatedEvent (id: {})", testId);
 
-        Thread.sleep(3000);
+        // 2. 페이로드를 envelope에 담음
+        Envelope<UserCreatedPayload> envelope = Envelope.of("UserCreatedEvent", userCreatedPayload);
+
+        // 3. envelope를 json 문자열로 직렬화
+        String message = jsonMapper.writeValueAsString(envelope);
+        
+        // 4. kafka로 메시지 전송
+        kafkaTemplate.send(topic, message);
+        log.info("Event sent to Kafka topic: UserCreatedPayload (id: {})", testId);
+
+        Thread.sleep(3000); // 시간차 두기
 
         MarketUser user = marketUserRepository.findById(testId).orElse(null);
 

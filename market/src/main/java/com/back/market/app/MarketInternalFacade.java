@@ -1,13 +1,14 @@
 package com.back.market.app;
 
 import com.back.common.dto.settlement.SettlementTargetOrder;
-import com.back.common.user.event.UserCreatedEvent;
 import com.back.market.app.usecase.ConfirmPaymentUseCase;
 import com.back.common.dto.cash.request.PaymentCompletedRequestDto;
 import com.back.market.app.usecase.CreateCartUseCase;
 import com.back.market.app.usecase.CreateMarketMemberUseCase;
 import com.back.market.app.usecase.GetSettlementDataUseCase;
 import com.back.market.domain.MarketUser;
+import com.back.market.dto.payload.UserCreatedPayload;
+import com.back.market.event.UserCreatedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -50,7 +51,16 @@ public class MarketInternalFacade {
      * 회원 가입 이벤트 수신 시 market_member 복제와 cart 생성
      */
     @Transactional
-    public void handleUserCreatedEvent(UserCreatedEvent event) {
+    public void handleUserCreatedEvent(UserCreatedPayload payload) {
+        // payload의 값을 사용해 이벤트 생성
+        UserCreatedEvent event = new UserCreatedEvent(
+                payload.id(),
+                payload.name(),
+                payload.email(),
+                payload.address(),
+                payload.phone()
+        );
+
         // 회원 정보 복제
         MarketUser user = createMarketMemberUseCase.createMarketMember(event);
 

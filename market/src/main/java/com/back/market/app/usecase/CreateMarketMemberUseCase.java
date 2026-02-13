@@ -2,10 +2,10 @@ package com.back.market.app.usecase;
 
 import com.back.common.code.FailureCode;
 import com.back.common.exception.CustomException;
-import com.back.common.user.event.UserCreatedEvent;
 import com.back.market.adapter.out.MarketUserRepository;
 import com.back.market.app.MarketSupport;
 import com.back.market.domain.MarketUser;
+import com.back.market.event.UserCreatedEvent;
 import com.back.market.mapper.MarketUserMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -5,15 +5,13 @@ import com.back.chat.event.ChatEventType;
 import com.back.chat.event.payload.ChatMessageBlindedPayload;
 import com.back.chat.event.payload.ChatMessageDeletedPayload;
 import com.back.chat.event.payload.ChatMessagePayload;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
-import java.time.LocalDateTime;
 
 @Component
 @RequiredArgsConstructor
@@ -23,18 +21,18 @@ public class RedisChatEventPublisher {
     private static final String CHANNEL_PREFIX = "chatroom:";
 
     private final StringRedisTemplate stringRedisTemplate;
-    private final ObjectMapper objectMapper;
+    private final JsonMapper jsonMapper;
 
     public void publishChatMessage(Long roomId, ChatMessagePayload payload) {
-        publish(roomId, ChatEventType.CHAT_MESSAGE, objectMapper.valueToTree(payload));
+        publish(roomId, ChatEventType.CHAT_MESSAGE, jsonMapper.valueToTree(payload));
     }
 
     public void publishMessageBlinded(Long roomId, ChatMessageBlindedPayload payload) {
-        publish(roomId, ChatEventType.MESSAGE_BLINDED, objectMapper.valueToTree(payload));
+        publish(roomId, ChatEventType.MESSAGE_BLINDED, jsonMapper.valueToTree(payload));
     }
 
     public void publishMessageDeleted(Long roomId, ChatMessageDeletedPayload payload){
-        publish(roomId, ChatEventType.MESSAGE_DELETED, objectMapper.valueToTree(payload));
+        publish(roomId, ChatEventType.MESSAGE_DELETED, jsonMapper.valueToTree(payload));
     }
 
     private void publish(Long roomId, ChatEventType type, JsonNode data) {
@@ -42,7 +40,7 @@ public class RedisChatEventPublisher {
         ChatEventEnvelope envelope = new ChatEventEnvelope(type, data);
 
         try {
-            String message = objectMapper.writeValueAsString(envelope);
+            String message = jsonMapper.writeValueAsString(envelope);
             stringRedisTemplate.convertAndSend(channel, message);
             log.info("[CHAT][REDIS-PUB] channel={}, type={}, roomId={}", channel, type, roomId);
         } catch (Exception e) {

@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.MappedSuperclass;
 import java.time.LocalDateTime;
+import java.util.Collection;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -35,4 +36,14 @@ public abstract class BaseAggregateEntity<A extends BaseAggregateEntity<A>> exte
 
     @Column
     private LocalDateTime deletedAt;
+
+    @Override
+    public Collection<Object> domainEvents() {
+        return super.domainEvents();
+    }
+
+    @Override
+    public void clearDomainEvents() {
+        super.clearDomainEvents();
+    }
 }
