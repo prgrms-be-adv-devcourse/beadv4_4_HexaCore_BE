@@ -22,8 +22,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ChatMessageBlindedEventListener {
 
-    private static final String EVENT_TYPE = "MESSAGE_BLINDED";
-
     private final UserConsumedEventRepository userConsumedEventRepository;
     private final UserFacade userFacade;
     private final JsonMapper jsonMapper;
@@ -53,19 +51,27 @@ public class ChatMessageBlindedEventListener {
         }
 
         String eventId = envelope.header().eventId();
+        String eventType = envelope.header().eventType();
         ChatMessageBlindedKafkaEvent event = envelope.payload();
+
+        UUID eventUuid = safeUuid(eventId);
+        if (eventUuid == null) {
+            throw new IllegalArgumentException("eventId is missing/invalid: " + eventId);
+        }
+
 
         // 1) 멱등 게이트 (insert 시도)
         int updated = userConsumedEventRepository.insertIfAbsent(
-                UUID.fromString(eventId),
-                EVENT_TYPE,
+                eventUuid,
+                eventType,
                 now
         );
 
         if (updated == 0) {
             log.info("[USER][KAFKA] DUPLICATE ignore eventId={}, userId={}, topic={}, partition={}, offset={}",
                     eventId, event.authorUserId(), record.topic(), record.partition(), record.offset());
-            ack.acknowledge();
+
+            TxAfterCommit.run(ack::acknowledge);
             return;
         }
 
@@ -77,5 +83,11 @@ public class ChatMessageBlindedEventListener {
             log.info("[USER][KAFKA] SUCCESS eventId={}, userId={}, topic={}, partition={}, offset={}",
                     eventId, event.authorUserId(), record.topic(), record.partition(), record.offset());
         });
+    }
+
+    private static UUID safeUuid(String s) {
+        if (s == null || s.isBlank()) return null;
+        try { return UUID.fromString(s); }
+        catch (IllegalArgumentException e) { return null; }
     }
 }

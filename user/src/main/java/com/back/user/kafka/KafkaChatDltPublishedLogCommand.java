@@ -3,7 +3,7 @@ package com.back.user.kafka;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-public record KafkaChatDltPublishedLogDto(
+public record KafkaChatDltPublishedLogCommand(
 
         // ===== Envelope =====
         UUID eventId,
@@ -17,6 +17,7 @@ public record KafkaChatDltPublishedLogDto(
         // ===== Publish Result =====
         Integer publishedPartition,
         Long publishedOffset,
+        Long recordTimestamp,
         boolean success,
 
         // ===== Error / Payload =====

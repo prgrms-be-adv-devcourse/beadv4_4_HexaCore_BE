@@ -42,12 +42,15 @@ public class KafkaChatDltPublishedLog {
     @Column(name = "dlt_topic", nullable = false, length = 250)
     private String dltTopic;
 
-    // ===== 발행 결과 =====
+    // ===== DLT 발행 결과 =====
     @Column(name = "published_partition")
     private Integer publishedPartition;
 
     @Column(name = "published_offset")
     private Long publishedOffset;
+
+    @Column(name = "record_timestamp")
+    private Long recordTimestamp;
 
     @Column(name = "success", nullable = false)
     private boolean success;

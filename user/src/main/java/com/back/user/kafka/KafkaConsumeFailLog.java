@@ -25,7 +25,7 @@ public class KafkaConsumeFailLog {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // ===== Envelope 정보 (가능하면 세팅) =====
+    // ===== Envelope 정보 =====
     @Column(name = "event_id")
     private UUID eventId;
 
@@ -45,9 +45,10 @@ public class KafkaConsumeFailLog {
     @Column(name = "offset", nullable = false)
     private Long offset;
 
+    @Column(name = "record_timestamp")
+    private Long recordTimestamp;
+
     // ===== 실패 정보 =====
-    @Column(name = "retry_exhausted", nullable = false)
-    private boolean retryExhausted;
 
     @Column(name = "error_class", nullable = false, length = 300)
     private String errorClass;

@@ -2,7 +2,7 @@ package com.back.user.adapter.in.chat;
 
 import com.back.common.chat.ChatDeadLetterPayload;
 import com.back.common.event.Envelope;
-import com.back.user.kafka.KafkaChatDltPublishedLogDto;
+import com.back.user.kafka.KafkaChatDltPublishedLogCommand;
 import com.back.user.kafka.KafkaEventAuditLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -10,10 +10,10 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.json.JsonMapper;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Slf4j
@@ -29,7 +29,6 @@ public class ChatMessageBlindedDltListener {
             topics = "${custom.kafka.topic.chat-blind-dlt-requested:chat.blind.dlt.requested}",
             containerFactory = "stringKafkaListenerContainerFactory"
     )
-    @Transactional
     public void onDlt(String json, Acknowledgment ack, ConsumerRecord<String, String> record) {
 
         try {
@@ -40,7 +39,7 @@ public class ChatMessageBlindedDltListener {
 
             UUID eventUuid = safeUuid(envelope.header().eventId());
 
-            KafkaChatDltPublishedLogDto dto = new KafkaChatDltPublishedLogDto(
+            KafkaChatDltPublishedLogCommand dto = new KafkaChatDltPublishedLogCommand(
                     eventUuid,
                     envelope.header().eventType(),
                     payload.outboxId(),
@@ -48,10 +47,11 @@ public class ChatMessageBlindedDltListener {
                     record.topic(),
                     record.partition(),
                     record.offset(),
+                    record.timestamp(),
                     true,
                     payload.originalPayload(),
                     payload.lastError(),
-                    null
+                    LocalDateTime.now()
             );
 
             kafkaEventAuditLogService.saveLog(dto);
@@ -62,7 +62,7 @@ public class ChatMessageBlindedDltListener {
                     record.topic(), record.partition(), record.offset(), e.toString(), e);
 
         } finally {
-            TxAfterCommit.run(() -> { ack.acknowledge(); });
+            ack.acknowledge();
         }
     }
 

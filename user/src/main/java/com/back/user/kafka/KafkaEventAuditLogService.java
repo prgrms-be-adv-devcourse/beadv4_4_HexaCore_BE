@@ -12,11 +12,11 @@ public class KafkaEventAuditLogService {
     private final KafkaChatDltPublishedLogRepository kafkaChatDltPublishedLogRepository;
 
     @Transactional
-    public void saveLog(KafkaConsumeFailLogDto dto){
+    public void saveLog(KafkaConsumeFailLogCommand dto){
         KafkaConsumeFailLog log = KafkaConsumeFailLog.builder()
                 .eventId(dto.eventId())
                 .eventType(dto.eventType())
-                .consumerGroupId(dto.groupId())
+                .consumerGroupId(dto.consumerGroupId())
                 .topic(dto.topic())
                 .partition(dto.partition())
                 .offset(dto.offset())
@@ -25,14 +25,14 @@ public class KafkaEventAuditLogService {
                 .errorMessage(dto.errorMessage())
                 .payloadJson(dto.payload())
                 .stacktrace(dto.stacktrace())
-                .loggedAt(dto.failedAt())
+                .loggedAt(dto.loggedAt())
                 .build();
 
         kafkaConsumeFailLogRepository.save(log);
     }
 
     @Transactional
-    public void saveLog(KafkaChatDltPublishedLogDto dto){
+    public void saveLog(KafkaChatDltPublishedLogCommand dto){
         KafkaChatDltPublishedLog log = KafkaChatDltPublishedLog.builder()
                 .eventId(dto.eventId())
                 .eventType(dto.eventType())

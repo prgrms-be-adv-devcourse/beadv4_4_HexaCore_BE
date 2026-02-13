@@ -126,11 +126,11 @@ public class KafkaConsumerConfig {
             String exceptionClass = rc.getClass().getName();
             String safePayload = truncate(payload, 50_000);        // 50KB
             String safeStack = truncate(stack, 50_000);            // 50KB
-            String safeErrMsg = truncate(safeMsg(ex), 2_000);      // 컬럼(2000) 맞춤
+            String safeErrMsg = truncate(safeMsg(rc), 2_000);      // 컬럼(2000) 맞춤
 
             // 4) DB 저장 (여기서 실패해도 컨슈머 멈추면 안 됨)
             try {
-                auditLogService.saveLog(new KafkaConsumeFailLogDto(
+                auditLogService.saveLog(new KafkaConsumeFailLogCommand(
                         eventId,
                         eventType,
 
@@ -138,8 +138,7 @@ public class KafkaConsumerConfig {
                         record.topic(),
                         record.partition(),
                         record.offset(),
-
-                        true,          // recoverer는 기본적으로 "재시도 후 최종 실패"에서 호출됨
+                        record.timestamp(),
 
                         safePayload,
                         exceptionClass,

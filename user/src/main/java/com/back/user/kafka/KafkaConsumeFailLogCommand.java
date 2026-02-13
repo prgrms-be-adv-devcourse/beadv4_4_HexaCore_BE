@@ -3,7 +3,7 @@ package com.back.user.kafka;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-public record KafkaConsumeFailLogDto(
+public record KafkaConsumeFailLogCommand(
         UUID eventId,
         String eventType,
 
@@ -11,8 +11,7 @@ public record KafkaConsumeFailLogDto(
         String topic,
         Integer partition,
         Long offset,
-
-        boolean retryExhausted,
+        Long recordTimestamp,
 
         String payload,
         String errorClass,
