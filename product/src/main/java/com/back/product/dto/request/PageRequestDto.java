@@ -9,7 +9,7 @@ public record PageRequestDto(
         @Min(value = 0, message = "page는 0 이상의 값이어야 합니다.")
         Long page,
 
-        @Range(min = 1, max = 50, message = "count는 1에서 50 사이의 값이어야 합니다.")
+        @Range(min = 5, max = 50, message = "size는 5에서 50 사이의 값이어야 합니다.")
         Long size
 ) {
     // 기본값 설정 용 컴팩트 생성자

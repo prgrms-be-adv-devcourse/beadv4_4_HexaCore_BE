@@ -37,7 +37,7 @@ public record ProductSearchRequestDto(
         @Min(value = 0, message = "Page must be greater than or equal to 0")
         Long page,
 
-        @Min(value = 10, message = "Size must be greater than or equal to 10")
+        @Min(value = 5, message = "Size must be greater than or equal to 5")
         @Max(value = 50, message = "Size must be less than or equal to 50")
         Long size
 ) {
