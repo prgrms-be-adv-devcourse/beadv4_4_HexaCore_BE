@@ -56,8 +56,7 @@ public class KafkaChatDltPublishedLog {
     private boolean success;
 
     // ===== 에러 / payload =====
-    @Lob
-    @Column(name = "payload_json")
+    @Column(name = "payload_json", columnDefinition = "TEXT")
     private String payloadJson;
 
     @Column(name = "error_message", length = 2000)

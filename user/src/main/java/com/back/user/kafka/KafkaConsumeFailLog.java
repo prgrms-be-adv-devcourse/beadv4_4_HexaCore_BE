@@ -12,7 +12,7 @@ import java.util.UUID;
         indexes = {
                 @Index(name = "idx_kcfl_event_id", columnList = "eventId"),
                 @Index(name = "idx_kcfl_logged_at", columnList = "loggedAt"),
-                @Index(name = "idx_kcfl_consume_pos", columnList = "consumerGroupId,topic,partition,offset")
+                @Index(name = "idx_kcfl_consume_pos", columnList = "consumerGroupId,topic,topic_partition,topic_offset")
         }
 )
 @Getter
@@ -39,10 +39,10 @@ public class KafkaConsumeFailLog {
     @Column(name = "topic", nullable = false, length = 250)
     private String topic;
 
-    @Column(name = "partition", nullable = false)
+    @Column(name = "topic_partition", nullable = false)
     private Integer partition;
 
-    @Column(name = "offset", nullable = false)
+    @Column(name = "topic_offset", nullable = false)
     private Long offset;
 
     @Column(name = "record_timestamp")
@@ -56,12 +56,10 @@ public class KafkaConsumeFailLog {
     @Column(name = "error_message", length = 2000)
     private String errorMessage;
 
-    @Lob
-    @Column(name = "payload_json")
+    @Column(name = "payload_json", columnDefinition = "TEXT")
     private String payloadJson;
 
-    @Lob
-    @Column(name = "stacktrace")
+    @Column(name = "stacktrace", columnDefinition = "TEXT")
     private String stacktrace;
 
     @Column(name = "logged_at", nullable = false)
