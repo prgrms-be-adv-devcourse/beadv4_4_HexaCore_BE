@@ -1,0 +1,23 @@
+package com.back.user.kafka;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+public record KafkaConsumeFailLogDto(
+        UUID eventId,
+        String eventType,
+
+        String consumerGroupId,
+        String topic,
+        Integer partition,
+        Long offset,
+
+        boolean retryExhausted,
+
+        String payload,
+        String errorClass,
+        String errorMessage,
+        String stacktrace,
+
+        LocalDateTime loggedAt
+) {}
