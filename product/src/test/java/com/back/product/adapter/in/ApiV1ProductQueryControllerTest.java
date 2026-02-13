@@ -1,12 +1,14 @@
 package com.back.product.adapter.in;
 
 import com.back.common.code.FailureCode;
+import com.back.common.code.SuccessCode;
 import com.back.common.exception.CustomException;
 import com.back.product.adapter.in.web.controller.ApiV1ProductQueryController;
 import com.back.product.app.facade.ProductFacade;
 import com.back.product.dto.model.*;
 import com.back.product.dto.request.ProductQueryRequestDto;
 import com.back.product.dto.request.ProductSearchRequestDto;
+import com.back.product.dto.request.PageRequestDto;
 import com.back.product.dto.response.ProductDetailListResponseDto;
 import com.back.product.dto.response.ProductDetailResponseDto;
 import com.back.product.dto.response.ProductSearchResponseDto;
@@ -28,6 +30,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.mockito.BDDMockito.*;
@@ -123,7 +126,7 @@ class ApiV1ProductQueryControllerTest {
                     .products(List.of(productSearchDto))
                     .build();
 
-            given(productFacade.findProductPage(any(ProductSearchRequestDto.class), anyLong(), anyLong())).willReturn(responseDto);
+            given(productFacade.findProductPage(any(ProductSearchRequestDto.class))).willReturn(responseDto);
 
             // when & then
             mockMvc.perform(
@@ -142,7 +145,7 @@ class ApiV1ProductQueryControllerTest {
                     .andExpect(jsonPath("$.code").value("OK"))
                     .andExpect(jsonPath("$.data.products[0].productName").value("Test Product"));
 
-            verify(productFacade).findProductPage(any(ProductSearchRequestDto.class), eq(0L), eq(10L));
+            verify(productFacade).findProductPage(any(ProductSearchRequestDto.class));
         }
 
         @Test
@@ -152,13 +155,119 @@ class ApiV1ProductQueryControllerTest {
             // when & then
             mockMvc.perform(
                             get("/api/v1/products")
+                                    .param("brandIds", "")
+                                    .param("categoryIds", "")
                                     .param("sort", "INVALID_SORT")
                                     .param("page", "0")
                                     .param("size", "10")
                     ).andDo(print())
                     .andExpect(status().isBadRequest());
 
-            verify(productFacade, never()).findProductPage(any(), anyLong(), anyLong());
+            verify(productFacade, never()).findProductPage(any());
+        }
+
+        @Test
+        @DisplayName("페이지 크기가 최대값을 초과할 경우 400 Bad Request를 반환한다")
+        @WithMockUser
+        void searchProducts_Fail_PageSizeExceedsMax() throws Exception {
+            // when & then
+            mockMvc.perform(
+                            get("/api/v1/products")
+                                    .param("brandIds", "")
+                                    .param("categoryIds", "")
+                                    .param("sort", "LATEST")
+                                    .param("pageRequest.page", "0")
+                                    .param("pageRequest.size", "100") // Exceeds max size of 50
+                    ).andDo(print())
+                    .andExpect(status().isBadRequest());
+
+            verify(productFacade, never()).findProductPage(any());
+        }
+    }
+
+    @Nested
+    @DisplayName("GET /api/v1/products/{productInfoId}/similar")
+    class FindSimilarProductsTest {
+
+        private final Long PRODUCT_INFO_ID = 1L;
+        private final Long DEFAULT_COUNT = 10L;
+        private final Long CUSTOM_COUNT = 8L;
+        private final Long INVALID_COUNT = 51L;
+
+        private ProductSearchResponseDto createMockProductSearchResponseDto(Long count) {
+            return ProductSearchResponseDto.builder()
+                    .products(Collections.singletonList(ProductSearchDto.builder().productName("Similar Product").build()))
+                    .totalElements(count)
+                    .totalPages(1L)
+                    .currentPage(0L)
+                    .build();
+        }
+
+        @Test
+        @DisplayName("성공: count 파라미터 없이 유사 상품을 조회한다 (기본값 사용)")
+        void findSimilarProducts_success_defaultCount() throws Exception {
+            PageRequestDto request = PageRequestDto.builder()
+                    .page(0L)
+                    .size(DEFAULT_COUNT)
+                    .build();
+
+            // given
+            ProductSearchResponseDto mockResponseDto = createMockProductSearchResponseDto(DEFAULT_COUNT);
+            given(productFacade.findSimilarProducts(PRODUCT_INFO_ID, request))
+                    .willReturn(mockResponseDto);
+
+            // when & then
+            mockMvc.perform(get("/api/v1/products/{productInfoId}/similar", PRODUCT_INFO_ID)
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.code").value(SuccessCode.OK.getCode()))
+                    .andExpect(jsonPath("$.data.totalElements").value(DEFAULT_COUNT));
+
+            verify(productFacade).findSimilarProducts(PRODUCT_INFO_ID, request);
+        }
+
+        @Test
+        @DisplayName("성공: count 파라미터를 지정하여 유사 상품을 조회한다")
+        void findSimilarProducts_success_customCount() throws Exception {
+            PageRequestDto request = PageRequestDto.builder()
+                    .page(0L)
+                    .size(CUSTOM_COUNT)
+                    .build();
+
+            // given
+            ProductSearchResponseDto mockResponseDto = createMockProductSearchResponseDto(CUSTOM_COUNT);
+            given(productFacade.findSimilarProducts(PRODUCT_INFO_ID, request))
+                    .willReturn(mockResponseDto);
+
+            // when & then
+            mockMvc.perform(get("/api/v1/products/{productInfoId}/similar", PRODUCT_INFO_ID)
+                            .param("size", String.valueOf(CUSTOM_COUNT))
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.code").value(SuccessCode.OK.getCode()))
+                    .andExpect(jsonPath("$.data.totalElements").value(CUSTOM_COUNT));
+
+            verify(productFacade).findSimilarProducts(PRODUCT_INFO_ID, request);
+        }
+
+        @Test
+        @DisplayName("실패: count 파라미터가 @Max(10)을 초과하면 400 Bad Request를 반환한다")
+        void findSimilarProducts_failure_invalidCount() throws Exception {
+            // given - no need to mock facade as validation happens before facade call
+            PageRequestDto request = PageRequestDto.builder()
+                    .page(0L)
+                    .size(INVALID_COUNT)
+                    .build();
+
+            // when & then
+            mockMvc.perform(get("/api/v1/products/{productInfoId}/similar", PRODUCT_INFO_ID)
+                            .param("page", "0")
+                            .param("size", String.valueOf(INVALID_COUNT))
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isBadRequest());
+
+
+            verify(productFacade, never()).findSimilarProducts(PRODUCT_INFO_ID, request);
         }
     }
 
