@@ -42,14 +42,6 @@ public record ProductSearchRequestDto(
         Long size
 ) {
     public ProductSearchRequestDto {
-        if (minPrice == null) {
-            minPrice = BigDecimal.ZERO;
-        }
-
-        if (maxPrice == null) {
-            maxPrice = BigDecimal.ZERO;
-        }
-
         if (brandIds == null) {
             brandIds = List.of();
         }
