@@ -1,9 +1,9 @@
 package com.back.notification.app.strategy;
 
-import com.back.common.market.event.BiddingCompletedEvent;
 import com.back.notification.domain.Notification;
 import com.back.notification.domain.enums.NotificationTargetRole;
 import com.back.notification.domain.enums.Type;
+import com.back.notification.dto.payload.BiddingCompletedPayload;
 import com.back.notification.mapper.NotificationMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -13,7 +13,7 @@ import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
-public class BiddingCompletedStrategy implements NotificationStrategy<BiddingCompletedEvent> {
+public class BiddingCompletedStrategy implements NotificationStrategy<BiddingCompletedPayload> {
     private final NotificationMapper mapper;
 
     @Override
@@ -22,21 +22,21 @@ public class BiddingCompletedStrategy implements NotificationStrategy<BiddingCom
     }
 
     @Override
-    public List<Notification> create(BiddingCompletedEvent event) {
-        return findTargets(event).entrySet().stream()
+    public List<Notification> create(BiddingCompletedPayload payload) {
+        return findTargets(payload).entrySet().stream()
                 .map(entry ->
                         mapper.toBidCompletedNotification(type(),
-                                event,
+                                payload,
                                 entry.getValue(),   // userId
                                 entry.getKey())     // BUYER / SELLER
                 )
                 .toList();
     }
 
-    private Map<NotificationTargetRole, Long> findTargets(BiddingCompletedEvent event) {
+    private Map<NotificationTargetRole, Long> findTargets(BiddingCompletedPayload payload) {
         return Map.of(
-                NotificationTargetRole.BUYER, event.buyerUserId(),
-                NotificationTargetRole.SELLER, event.sellerUserId()
+                NotificationTargetRole.BUYER, payload.buyerUserId(),
+                NotificationTargetRole.SELLER, payload.sellerUserId()
         );
     }
 }

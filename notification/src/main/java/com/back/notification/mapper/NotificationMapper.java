@@ -1,17 +1,12 @@
 package com.back.notification.mapper;
 
-import com.back.common.settlement.event.SettlementCompletedEvent;
-import com.back.common.market.event.BiddingFailedEvent;
-import com.back.common.market.event.SellBiddingCreatedEvent;
-import com.back.common.market.event.PurchaseCanceledEvent;
-import com.back.common.market.event.BiddingCompletedEvent;
-import com.back.common.product.event.InspectionCompletedEvent;
 import com.back.notification.domain.Notification;
 import com.back.notification.domain.enums.NotificationTargetRole;
 import com.back.notification.domain.enums.Type;
 import com.back.notification.dto.NotificationCreatedEvent;
 import com.back.notification.dto.NotificationIdResponseDto;
 import com.back.notification.dto.PushDispatchMessage;
+import com.back.notification.dto.payload.*;
 import com.back.notification.dto.response.NotificationListResponseDto;
 import com.back.notification.dto.response.NotificationResponseDto;
 import org.springframework.data.domain.Slice;
@@ -23,108 +18,108 @@ import java.util.Map;
 @Component
 public class NotificationMapper {
 
-    public Notification toBidCompletedNotification(Type type, BiddingCompletedEvent event,
+    public Notification toBidCompletedNotification(Type type, BiddingCompletedPayload payload,
                                                    Long userId, NotificationTargetRole role) {
         return Notification.builder()
                 .userId(userId)
                 .type(type)
                 .content(Map.of(
-                        "biddingId", event.biddingId(),
-                        "productId", event.productId(),
-                        "productName", event.productName(),
-                        "productSize", event.productSize(),
-                        "brandName", event.brandName(),
-                        "thumbnailImage", event.thumbnailImage(),
-                        "price", event.price(),
-                        "biddingPosition", event.biddingPosition(),
+                        "biddingId", payload.biddingId(),
+                        "productId", payload.productId(),
+                        "productName", payload.productName(),
+                        "productSize", payload.productSize(),
+                        "brandName", payload.brandName(),
+                        "thumbnailImage", payload.thumbnailImage(),
+                        "price", payload.price(),
+                        "biddingPosition", payload.biddingPosition(),
                         "role", role
                 ))
-                .deepLink("/biddings/" + event.biddingId())   // Todo : 실제 딥링크로 수정
+                .deepLink("/biddings/" + payload.biddingId())   // Todo : 실제 딥링크로 수정
                 .isRead(false)
                 .build();
     }
 
-    public Notification toPurchaseCanceledNotification(Type type, PurchaseCanceledEvent event,
+    public Notification toPurchaseCanceledNotification(Type type, PurchaseCanceledPayload payload,
                                                        Long userId, NotificationTargetRole role) {
         return Notification.builder()
                 .userId(userId)
                 .type(type)
                 .content(Map.of(
-                        "biddingId", event.biddingId(),
-                        "productId", event.productId(),
-                        "productName", event.productName(),
-                        "productSize", event.productSize(),
-                        "price", event.price(),
-                        "biddingPosition", event.biddingPosition(),
+                        "biddingId", payload.biddingId(),
+                        "productId", payload.productId(),
+                        "productName", payload.productName(),
+                        "productSize", payload.productSize(),
+                        "price", payload.price(),
+                        "biddingPosition", payload.biddingPosition(),
                         "role", role
                 ))
-                .deepLink("/biddings/" + event.biddingId())     // Todo : 실제 딥링크로 수정
+                .deepLink("/biddings/" + payload.biddingId())     // Todo : 실제 딥링크로 수정
                 .isRead(false)
                 .build();
     }
 
-    public Notification toBidFailedNotification(Type type, BiddingFailedEvent event,
+    public Notification toBidFailedNotification(Type type, BiddingFailedPayload payload,
                                                 Long userId, NotificationTargetRole role) {
         return Notification.builder()
                 .userId(userId)
                 .type(type)
                 .content(Map.of(
-                        "productId", event.productId(),
-                        "productName", event.productName(),
-                        "productSize", event.productSize(),
-                        "price", event.price(),
-                        "biddingPosition", event.biddingPosition(),
+                        "productId", payload.productId(),
+                        "productName", payload.productName(),
+                        "productSize", payload.productSize(),
+                        "price", payload.price(),
+                        "biddingPosition", payload.biddingPosition(),
                         "role", role
                 ))
-                .deepLink("/products/" + event.productId())     // Todo : 실제 딥링크로 수정
+                .deepLink("/products/" + payload.productId())     // Todo : 실제 딥링크로 수정
                 .isRead(false)
                 .build();
     }
 
-    public Notification toInspectionCompletedNotification(Type type, InspectionCompletedEvent event, Long sellerId) {
+    public Notification toInspectionCompletedNotification(Type type, InspectionCompletedPayload payload, Long sellerId) {
         return Notification.builder()
                 .userId(sellerId)
                 .type(type)
                 .content(Map.of(
-                        "requestedAt", event.requestedAt(),
-                        "productId", event.productId(),
-                        "productName", event.productName(),
-                        "productSize", event.productSize(),
-                        "price", event.price(),
-                        "productNumber", event.productNumber()
+                        "requestedAt", payload.requestedAt(),
+                        "productId", payload.productId(),
+                        "productName", payload.productName(),
+                        "productSize", payload.productSize(),
+                        "price", payload.price(),
+                        "productNumber", payload.productNumber()
                 ))
-                .deepLink("/biddings/" + event.productId())     // Todo : 실제 딥링크로 수정
+                .deepLink("/biddings/" + payload.productId())     // Todo : 실제 딥링크로 수정
                 .isRead(false)
                 .build();
     }
 
-    public Notification toSettlementCompletedNotification(Type type, SettlementCompletedEvent event, Long sellerId) {
+    public Notification toSettlementCompletedNotification(Type type, SettlementCompletedPayload payload, Long sellerId) {
         return Notification.builder()
                 .userId(sellerId)
                 .type(type)
                 .content(Map.of(
-                        "startAt", event.startAt(),
-                        "endAt", event.endAt(),
-                        "totalNetAmount", event.totalNetAmount()
+                        "startAt", payload.startAt(),
+                        "endAt", payload.endAt(),
+                        "totalNetAmount", payload.totalNetAmount()
                 ))
-                .deepLink("/settlements/" + event.sellerId())     // Todo : 실제 딥링크로 수정
+                .deepLink("/settlements/" + payload.sellerId())     // Todo : 실제 딥링크로 수정
                 .isRead(false)
                 .build();
     }
 
-    public Notification toPriceDroppedNotification(Type type, SellBiddingCreatedEvent event, Long userId) {
+    public Notification toPriceDroppedNotification(Type type, SellBiddingCreatedPayload payload, Long userId) {
         return Notification.builder()
                 .userId(userId)
                 .type(type)
                 .content(Map.of(
-                        "targetPrice", event.currentPrice(),
-                        "productId", event.productId(),
-                        "productName", event.productName(),
-                        "productSize", event.productOption(),
-                        "thumbnailImage", event.thumbnailImage(),
-                        "brandName", event.brandName()
+                        "targetPrice", payload.currentPrice(),
+                        "productId", payload.productId(),
+                        "productName", payload.productName(),
+                        "productSize", payload.productOption(),
+                        "thumbnailImage", payload.thumbnailImage(),
+                        "brandName", payload.brandName()
                 ))
-                .deepLink("/products/" + event.productId())     // Todo : 실제 딥링크로 수정
+                .deepLink("/products/" + payload.productId())     // Todo : 실제 딥링크로 수정
                 .isRead(false)
                 .build();
     }

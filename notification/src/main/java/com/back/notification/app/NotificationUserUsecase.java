@@ -33,7 +33,6 @@ public class NotificationUserUsecase {
     public void updateFcmToken(Long userId, String fcmToken) {
         NotificationUser user = notificationUserRepository.findById(userId)
                 .orElseThrow(NotificationUserNotFoundException::new);
-        
         user.updateFcmToken(fcmToken);
     }
 }
