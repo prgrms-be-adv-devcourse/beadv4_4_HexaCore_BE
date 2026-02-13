@@ -85,6 +85,9 @@ public class ProductDocumentUseCase {
                 .orElseThrow(() -> new CustomException(FailureCode.PRODUCT_INFO_NOT_FOUND));
 
         float[] embedding = targetProduct.getEmbedding();
+        if (embedding == null || embedding.length == 0) {
+            throw new CustomException(FailureCode.EMBEDDING_NOT_FOUND);
+        }
 
         KnnSearch knnSearch = buildKnnSearch(embedding, size + 1, size * 10L);
 
