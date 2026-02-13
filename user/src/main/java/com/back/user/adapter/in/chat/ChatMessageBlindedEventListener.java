@@ -47,6 +47,11 @@ public class ChatMessageBlindedEventListener {
                             new TypeReference<Envelope<ChatMessageBlindedKafkaEvent>>() {}
                     );
         } catch (Exception e) {
+            log.error(
+                    "[USER][KAFKA][BLIND][DESERIALIZE_FAIL] 블라인드 요청 역직렬화 실패. payload={}",
+                    json,
+                    e
+            );
             throw new IllegalArgumentException("블라인드 요청 역직렬화 실패", e);
         }
 

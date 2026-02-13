@@ -68,7 +68,7 @@ public class ChatMessageBlindedDltListener {
 
     private static UUID safeUuid(String s) {
         if (s == null || s.isBlank()) return null;
-        try { return UUID.fromString(s); }
+        try { return UUID.fromString(s.trim()); }
         catch (IllegalArgumentException e) { return null; }
     }
 }
