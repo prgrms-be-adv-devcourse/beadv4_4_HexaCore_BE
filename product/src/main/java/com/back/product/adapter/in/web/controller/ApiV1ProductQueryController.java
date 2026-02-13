@@ -7,11 +7,11 @@ import com.back.product.adapter.in.web.api.ProductQueryApiController;
 import com.back.product.app.facade.ProductFacade;
 import com.back.product.dto.request.ProductQueryRequestDto;
 import com.back.product.dto.request.ProductSearchRequestDto;
+import com.back.product.dto.request.PageRequestDto;
 import com.back.product.dto.response.ProductDetailListResponseDto;
 import com.back.product.dto.response.ProductDetailResponseDto;
 import com.back.product.dto.response.ProductSearchResponseDto;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Max;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -33,12 +33,8 @@ public class ApiV1ProductQueryController implements ProductQueryApiController {
     @Override
     @Loggable
     @GetMapping
-    public CommonResponse<ProductSearchResponseDto> searchProducts(
-       @ModelAttribute @Valid ProductSearchRequestDto request,
-       @RequestParam(defaultValue = "0") Long page,
-       @RequestParam(defaultValue = "10") @Max(50) Long size
-     ) {
-        ProductSearchResponseDto response = productFacade.findProductPage(request, page, size);
+    public CommonResponse<ProductSearchResponseDto> searchProducts(@ModelAttribute @Valid ProductSearchRequestDto request) {
+        ProductSearchResponseDto response = productFacade.findProductPage(request);
         return CommonResponse.success(SuccessCode.OK, response);
     }
 
@@ -47,9 +43,9 @@ public class ApiV1ProductQueryController implements ProductQueryApiController {
     @GetMapping("/{productInfoId}/similar")
     public CommonResponse<ProductSearchResponseDto> findSimilarProducts(
             @PathVariable Long productInfoId,
-            @RequestParam(defaultValue = "5") @Max(10) Long count
+            @Valid @ModelAttribute PageRequestDto request
     ) {
-        ProductSearchResponseDto response = productFacade.findSimilarProducts(productInfoId, count);
+        ProductSearchResponseDto response = productFacade.findSimilarProducts(productInfoId, request);
         return CommonResponse.success(SuccessCode.OK, response);
     }
 

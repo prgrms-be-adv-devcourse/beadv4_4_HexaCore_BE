@@ -34,7 +34,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 @Service
 @RequiredArgsConstructor
@@ -81,17 +80,19 @@ public class ProductDocumentUseCase {
     }
 
     @Transactional(readOnly = true)
-    public ProductSearchResponseDto findSimilarProducts(Long productInfoId, Long count) {
+    public ProductSearchResponseDto findSimilarProducts(Long productInfoId, Long page, Long size) {
         ProductDocument targetProduct = productDocumentRepository.findById(productInfoId.toString())
                 .orElseThrow(() -> new CustomException(FailureCode.PRODUCT_INFO_NOT_FOUND));
 
         float[] embedding = targetProduct.getEmbedding();
 
-        KnnSearch knnSearch = buildKnnSearch(embedding, count + 1, count * 10L);
+        KnnSearch knnSearch = buildKnnSearch(embedding, size + 1, size * 10L);
+
+        Pageable pageable = buildPageable(ProductSortType.LATEST, page, size);
 
         NativeQuery query = NativeQuery.builder()
                 .withKnnSearches(knnSearch)
-                .withPageable(PageRequest.of(0, count.intValue() + 1))
+                .withPageable(pageable)
                 .build();
 
         PageImpl<ProductDocument> productPage = productDocumentSupport.findProductPage(query);
@@ -99,14 +100,14 @@ public class ProductDocumentUseCase {
         // 자기 자신 제외
         List<ProductDocument> similarProducts = productPage.getContent().stream()
                 .filter(doc -> !Objects.requireNonNull(doc.getId()).equals(productInfoId.toString()))
-                .limit(count)
+                .limit(size)
                 .toList();
 
         return convertToDto(
                 similarProducts,
-                1L,
-                (long) similarProducts.size(),
-                0L
+                (long) productPage.getTotalPages(),
+                productPage.getTotalElements(),
+                page
         );
     }
 

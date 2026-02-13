@@ -3,6 +3,7 @@ package com.back.product.adapter.in.web.api;
 import com.back.common.response.CommonResponse;
 import com.back.product.dto.request.ProductQueryRequestDto;
 import com.back.product.dto.request.ProductSearchRequestDto;
+import com.back.product.dto.request.PageRequestDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -28,7 +29,7 @@ public interface ProductQueryApiController {
     """)
     @ApiResponse(responseCode = "200", description = "상품 목록 조회 성공")
     @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
-    CommonResponse<?> searchProducts(ProductSearchRequestDto request, Long page, Long size);
+    CommonResponse<?> searchProducts(ProductSearchRequestDto request);
 
     @Operation(summary = "유사 상품 조회", description = """
             특정 상품과 유사한 상품들을 조회합니다.
@@ -37,7 +38,7 @@ public interface ProductQueryApiController {
     """)
     @ApiResponse(responseCode = "200", description = "상품 목록 조회 성공")
     @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
-    CommonResponse<?> findSimilarProducts(Long productInfoId, Long count);
+    CommonResponse<?> findSimilarProducts(Long productInfoId, PageRequestDto request);
 
     @Operation(summary = "단일 항목 상품 다중 조회", description = """
             단일 항목 상품의 정보를 다중 조회합니다.
