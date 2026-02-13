@@ -1,38 +1,74 @@
 package com.back.user.adapter.in.chat;
 
 import com.back.common.chat.ChatDeadLetterPayload;
+import com.back.common.event.Envelope;
+import com.back.user.kafka.KafkaChatDltPublishedLogCommand;
+import com.back.user.kafka.KafkaEventAuditLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Component;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class ChatMessageBlindedDltListener {
 
+    private final JsonMapper jsonMapper;
+
+    private final KafkaEventAuditLogService kafkaEventAuditLogService;
+
     @KafkaListener(
             topics = "${custom.kafka.topic.chat-blind-dlt-requested:chat.blind.dlt.requested}",
-            containerFactory = "chatDeadLetterKafkaListenerContainerFactory"
+            containerFactory = "stringKafkaListenerContainerFactory"
     )
-    public void onDlt(ChatDeadLetterPayload payload,
-                      Acknowledgment ack,
-                      ConsumerRecord<String, ChatDeadLetterPayload> record) {
+    public void onDlt(String json, Acknowledgment ack, ConsumerRecord<String, String> record) {
 
         try {
-            log.error("[USER][DLT] source={}, eventType={}, eventId={}, outboxId={}, retryCount={}, deadAt={}, lastError={}",
-                    payload.source(), payload.eventType(), payload.eventId(), payload.outboxId(),
-                    payload.retryCount(), payload.deadAt(), payload.lastError());
+            Envelope<ChatDeadLetterPayload> envelope = jsonMapper.readValue(
+                    json, new TypeReference<Envelope<ChatDeadLetterPayload>>() {});
 
-            // TODO: DB 적재 / Slack 알림 / 재처리 큐 적재 등 (여기서 예외 나면 ack 하지 않음)
+            ChatDeadLetterPayload payload = envelope.payload();
 
-            ack.acknowledge();
+            UUID eventUuid = safeUuid(envelope.header().eventId());
+
+            KafkaChatDltPublishedLogCommand command = new KafkaChatDltPublishedLogCommand(
+                    eventUuid,
+                    envelope.header().eventType(),
+                    payload.outboxId(),
+                    payload.source(),
+                    record.topic(),
+                    record.partition(),
+                    record.offset(),
+                    record.timestamp(),
+                    true,
+                    payload.originalPayload(),
+                    payload.lastError(),
+                    LocalDateTime.now()
+            );
+
+            kafkaEventAuditLogService.saveLog(command);
+
         } catch (Exception e) {
-            log.error("[USER][DLT] handling failed. topic={}, partition={}, offset={}",
-                    record.topic(), record.partition(), record.offset(), e);
-            throw e;
+            // DLT는 재시도 루프 방지: 로그만 남기고 삼킴
+            log.error("[USER][KAFKA][DLT] failed to audit. topic={}, partition={}, offset={}, err={}",
+                    record.topic(), record.partition(), record.offset(), e.toString(), e);
+
+        } finally {
+            ack.acknowledge();
         }
+    }
+
+    private static UUID safeUuid(String s) {
+        if (s == null || s.isBlank()) return null;
+        try { return UUID.fromString(s.trim()); }
+        catch (IllegalArgumentException e) { return null; }
     }
 }

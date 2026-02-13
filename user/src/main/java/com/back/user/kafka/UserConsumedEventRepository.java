@@ -11,7 +11,6 @@ import java.util.UUID;
 
 public interface UserConsumedEventRepository extends JpaRepository<UserConsumedEvent, UUID> {
 
-    @Transactional
     @Modifying
     @Query(value = """
         INSERT INTO user_consumed_event (event_id, event_type, consumed_at)
