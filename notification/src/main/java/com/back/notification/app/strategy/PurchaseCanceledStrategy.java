@@ -1,9 +1,9 @@
 package com.back.notification.app.strategy;
 
-import com.back.common.market.event.PurchaseCanceledEvent;
 import com.back.notification.domain.Notification;
 import com.back.notification.domain.enums.NotificationTargetRole;
 import com.back.notification.domain.enums.Type;
+import com.back.notification.dto.payload.PurchaseCanceledPayload;
 import com.back.notification.mapper.NotificationMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -13,7 +13,7 @@ import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
-public class PurchaseCanceledStrategy implements NotificationStrategy<PurchaseCanceledEvent> {
+public class PurchaseCanceledStrategy implements NotificationStrategy<PurchaseCanceledPayload> {
     private final NotificationMapper mapper;
 
     @Override
@@ -21,21 +21,21 @@ public class PurchaseCanceledStrategy implements NotificationStrategy<PurchaseCa
         return Type.PURCHASE_CANCELED;
     }
 
-    public List<Notification> create(PurchaseCanceledEvent event) {
-        return findTargets(event).entrySet()
+    public List<Notification> create(PurchaseCanceledPayload payload) {
+        return findTargets(payload).entrySet()
                 .stream()
                 .map(entry ->
                         mapper.toPurchaseCanceledNotification(type(),
-                                event,
+                                payload,
                                 entry.getValue(),
                                 entry.getKey())
                 ).toList();
     }
 
-    private Map<NotificationTargetRole, Long> findTargets(PurchaseCanceledEvent event) {
+    private Map<NotificationTargetRole, Long> findTargets(PurchaseCanceledPayload payload) {
         return Map.of(
-                NotificationTargetRole.BUYER, event.buyerUserId(),
-                NotificationTargetRole.SELLER, event.sellerUserId()
+                NotificationTargetRole.BUYER, payload.buyerUserId(),
+                NotificationTargetRole.SELLER, payload.sellerUserId()
         );
     }
 }

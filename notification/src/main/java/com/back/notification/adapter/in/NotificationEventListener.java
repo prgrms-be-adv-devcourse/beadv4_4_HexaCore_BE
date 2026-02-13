@@ -1,59 +1,144 @@
 package com.back.notification.adapter.in;
 
-import com.back.common.settlement.event.SettlementCompletedEvent;
-import com.back.common.market.event.BiddingFailedEvent;
-import com.back.common.market.event.SellBiddingCreatedEvent;
-import com.back.common.market.event.PurchaseCanceledEvent;
-import com.back.common.market.event.BiddingCompletedEvent;
-import com.back.common.product.event.InspectionCompletedEvent;
-import com.back.common.user.event.FcmTokenChangedEvent;
+import com.back.common.event.Envelope;
 import com.back.notification.app.NotificationFacade;
 import com.back.notification.app.NotificationUserUsecase;
 import com.back.notification.domain.enums.Type;
+import com.back.notification.dto.payload.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class NotificationEventListener {
     private final NotificationFacade notificationFacade;
     private final NotificationUserUsecase notificationUserUsecase;
+    private final JsonMapper jsonMapper;
 
-    @KafkaListener(topics = "BiddingCompletedEvent", groupId = "PostEventListener__handle__1")
-    public void handle(BiddingCompletedEvent event) {
-        notificationFacade.notify(Type.BID_COMPLETED, event);
+    @KafkaListener(
+            topics = "${custom.kafka.topic.market-order-completed}",
+            groupId = "${spring.kafka.consumer.group-id}"
+    )
+    public void handleBiddingCompleted(String message) {
+        try {
+            Envelope<BiddingCompletedPayload> envelope = jsonMapper.readValue(message, new TypeReference<>() {});
+            BiddingCompletedPayload payload = envelope.payload();
+            
+            notificationFacade.notify(Type.BID_COMPLETED, payload);
+            log.info("[KafkaListenerSuccess] BiddingCompletedPayload 수신 : biddingId = {}", payload.biddingId());
+        } catch (JacksonException e) {
+            log.error("[KafkaListenerFailed] BiddingCompletedPayload 역직렬화 중 에러 발생 : {}", e.getMessage(), e);
+            throw new RuntimeException("Deserialization failed", e);
+        }
+        // TODO: DLQ 등 추가
     }
 
-    @KafkaListener(topics = "PurchaseCanceledEvent", groupId = "PostEventListener__handle__2")
-    public void handle(PurchaseCanceledEvent event) {
-        notificationFacade.notify(Type.PURCHASE_CANCELED, event);
+    @KafkaListener(
+            topics = "${custom.kafka.topic.market-order-deleted}",
+            groupId = "${spring.kafka.consumer.group-id}"
+    )
+    public void handlePurchaseCanceled(String message) {
+        try {
+            Envelope<PurchaseCanceledPayload> envelope = jsonMapper.readValue(message, new TypeReference<>() {});
+            PurchaseCanceledPayload payload = envelope.payload();
+            
+            notificationFacade.notify(Type.PURCHASE_CANCELED, payload);
+            log.info("[KafkaListenerSuccess] PurchaseCanceledPayload 수신 : biddingId = {}", payload.biddingId());
+        } catch (JacksonException e) {
+            log.error("[KafkaListenerFailed] PurchaseCanceledPayload 역직렬화 중 에러 발생 : {}", e.getMessage(), e);
+            throw new RuntimeException("Deserialization failed", e);
+        }
     }
 
     // 30일 초과되어 입찰에 실패
-    @KafkaListener(topics = "BiddingFailedEvent", groupId = "PostEventListener__handle__3")
-    public void handle(BiddingFailedEvent event) {
-        notificationFacade.notify(Type.BID_FAILED, event);
+    @KafkaListener(
+            topics = "${custom.kafka.topic.market-bidding-deleted}",
+            groupId = "${spring.kafka.consumer.group-id}"
+    )
+    public void handleBiddingFailed(String message) {
+        try {
+            Envelope<BiddingFailedPayload> envelope = jsonMapper.readValue(message, new TypeReference<>() {});
+            BiddingFailedPayload payload = envelope.payload();
+            
+            notificationFacade.notify(Type.BID_FAILED, payload);
+            log.info("[KafkaListenerSuccess] BiddingFailedPayload 수신 : productId = {}", payload.productId());
+        } catch (JacksonException e) {
+            log.error("[KafkaListenerFailed] BiddingFailedPayload 역직렬화 중 에러 발생 : {}", e.getMessage(), e);
+            throw new RuntimeException("Deserialization failed", e);
+        }
     }
 
-    @KafkaListener(topics = "InspectionCompletedEvent", groupId = "PostEventListener__handle__1")
-    public void handle(InspectionCompletedEvent event) {
-        notificationFacade.notify(Type.INSPECTION_COMPLETED, event);
+    @KafkaListener(
+            topics = "${custom.kafka.topic.product-inspect-completed}",
+            groupId = "${spring.kafka.consumer.group-id}"
+    )
+    public void handleInspectionCompleted(String message) {
+        try {
+            Envelope<InspectionCompletedPayload> envelope = jsonMapper.readValue(message, new TypeReference<>() {});
+            InspectionCompletedPayload payload = envelope.payload();
+            
+            notificationFacade.notify(Type.INSPECTION_COMPLETED, payload);
+            log.info("[KafkaListenerSuccess] InspectionCompletedPayload 수신 : productId = {}", payload.productId());
+        } catch (JacksonException e) {
+            log.error("[KafkaListenerFailed] InspectionCompletedPayload 역직렬화 중 에러 발생 : {}", e.getMessage(), e);
+            throw new RuntimeException("Deserialization failed", e);
+        }
     }
 
-    // 정산 완료
-    @KafkaListener(topics = "SettlementCompletedEvent", groupId = "PostEventListener__handle__4")
-    public void handle(SettlementCompletedEvent event) {
-        notificationFacade.notify(Type.SETTLEMENT_COMPLETED, event);
+    @KafkaListener(
+            topics = "${custom.kafka.topic.settlement-payout-completed}",
+            groupId = "${spring.kafka.consumer.group-id}"
+    )
+    public void handleSettlementCompleted(String message) {
+        try {
+            Envelope<SettlementCompletedPayload> envelope = jsonMapper.readValue(message, new TypeReference<>() {});
+            SettlementCompletedPayload payload = envelope.payload();
+            
+            notificationFacade.notify(Type.SETTLEMENT_COMPLETED, payload);
+            log.info("[KafkaListenerSuccess] SettlementCompletedPayload 수신 : sellerId = {}", payload.sellerId());
+        } catch (JacksonException e) {
+            log.error("[KafkaListenerFailed] SettlementCompletedPayload 역직렬화 중 에러 발생 : {}", e.getMessage(), e);
+            throw new RuntimeException("Deserialization failed", e);
+        }
     }
 
-    @KafkaListener(topics = "SellBiddingCreatedEvent", groupId = "PostEventListener__handle__5")
-    public void handle(SellBiddingCreatedEvent event) {
-        notificationFacade.notify(Type.PRICE_DROPPED, event);
+    @KafkaListener(
+            topics = "${custom.kafka.topic.market-bidding-sell-created}",
+            groupId = "${spring.kafka.consumer.group-id}"
+    )
+    public void handleSellBiddingCreated(String message) {
+        try {
+            Envelope<SellBiddingCreatedPayload> envelope = jsonMapper.readValue(message, new TypeReference<>() {});
+            SellBiddingCreatedPayload payload = envelope.payload();
+            
+            notificationFacade.notify(Type.PRICE_DROPPED, payload);
+            log.info("[KafkaListenerSuccess] SellBiddingCreatedPayload 수신 : productId = {}", payload.productId());
+        } catch (JacksonException e) {
+            log.error("[KafkaListenerFailed] SellBiddingCreatedPayload 역직렬화 중 에러 발생 : {}", e.getMessage(), e);
+            throw new RuntimeException("Deserialization failed", e);
+        }
     }
 
-    @KafkaListener(topics = "fcmTokenChangedEvent", groupId = "PostEventListener__handle__6")
-    public void handle(FcmTokenChangedEvent event) {
-        notificationUserUsecase.updateFcmToken(event.userId(), event.fcmToken());
+    @KafkaListener(
+            topics = "${custom.kafka.topic.user-account-updated}",
+            groupId = "${spring.kafka.consumer.group-id}"
+    )
+    public void handleFcmTokenChanged(String message) {
+        try {
+            Envelope<FcmTokenChangedPayload> envelope = jsonMapper.readValue(message, new TypeReference<>() {});
+            FcmTokenChangedPayload payload = envelope.payload();
+
+            notificationUserUsecase.updateFcmToken(payload.userId(), payload.fcmToken());
+            log.info("[KafkaListenerSuccess] FcmTokenChangedPayload 수신 : userId = {}", payload.userId());
+        } catch (JacksonException e) {
+            log.error("[KafkaListenerFailed] FcmTokenChangedPayload 역직렬화 중 에러 발생 : {}", e.getMessage(), e);
+            throw new RuntimeException("Deserialization failed", e);
+        }
     }
 }
