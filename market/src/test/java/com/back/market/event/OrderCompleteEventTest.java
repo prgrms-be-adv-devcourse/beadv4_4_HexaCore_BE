@@ -1,5 +1,6 @@
 package com.back.market.event;
 
+import com.back.common.event.Envelope;
 import com.back.common.event.KafkaEventPublisher;
 import com.back.common.market.event.OrderCompletedEvent;
 import com.back.market.app.MarketFacade;
@@ -56,7 +57,7 @@ public class OrderCompleteEventTest {
         verify(completeOrderUseCase, times(1)).completeOrder(userId, orderId);
 
         // 2. 카프카 퍼블리셔가 '특정 토픽'과 '이벤트'를 가지고 호출되었는지 확인
-        verify(kafkaEventPublisher, times(1)).publish(anyString(), any(OrderCompletedEvent.class));
+        verify(kafkaEventPublisher, times(1)).publish(anyString(), any(Envelope.class));
     }
     /**
      * 테스트용 가짜 Order 객체를 생성하는 헬퍼 메서드

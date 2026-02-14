@@ -17,7 +17,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.kafka.test.context.EmbeddedKafka;
+import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.transaction.TestTransaction;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -25,9 +28,14 @@ import java.math.BigDecimal;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Slf4j
-@SpringBootTest
+@Rollback(false)
+@SpringBootTest(properties = "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}") // 가상 브로커 주소를 자동 주입
 @ActiveProfiles("test")
 @Transactional
+@EmbeddedKafka(
+        partitions = 1,
+        topics = {"market.order.completed"} // 토픽만 지정하면 포트는 랜덤으로 잡힙니다.
+)
 public class OrderCompletedIntegrationTests {
 
     @Autowired
@@ -96,6 +104,16 @@ public class OrderCompletedIntegrationTests {
         // 6. 검증: DB 상태 변경 확인
         Order updatedOrder = orderRepository.findById(order.getId()).orElseThrow();
         assertThat(updatedOrder.getOrderStatus()).isEqualTo(OrderStatus.COMPLETED);
+
+        log.info(">>>> 트랜잭션 커밋을 시작합니다.");
+        TestTransaction.flagForCommit();
+        TestTransaction.end();
+        log.info(">>>> 트랜잭션 커밋 완료.");
+
+
+        // [추가] 카프카 발행은 비동기이므로 로그가 찍힐 때까지 잠시 기다림
+        log.info(">>>> 비동기 카프카 발행 로그 확인을 위해 5초간 대기합니다...");
+        Thread.sleep(5000);
 
         log.info("통합 테스트 성공: 주문상태={}", updatedOrder.getOrderStatus());
     }
