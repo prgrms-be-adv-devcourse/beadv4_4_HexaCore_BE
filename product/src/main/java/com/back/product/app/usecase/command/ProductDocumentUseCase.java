@@ -3,6 +3,7 @@ package com.back.product.app.usecase.command;
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.KnnSearch;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.TermQuery;
 import com.back.ai.app.usecase.EmbeddingUseCase;
 import com.back.common.annotation.Loggable;
 import com.back.common.code.FailureCode;
@@ -89,7 +90,13 @@ public class ProductDocumentUseCase {
             throw new CustomException(FailureCode.EMBEDDING_NOT_FOUND);
         }
 
-        KnnSearch knnSearch = buildKnnSearch(embedding, size + 1, size * 10L);
+        // 자기 자신을 제외하는 필터 생성
+        TermQuery excludeSelfFilter = new TermQuery.Builder()
+                .field("_id")
+                .value(productInfoId.toString())
+                .build();
+
+        KnnSearch knnSearch = buildKnnSearch(embedding, size, size * 10L, excludeSelfFilter);
 
         Pageable pageable = buildPageable(ProductSortType.LATEST, page, size);
 
@@ -100,14 +107,8 @@ public class ProductDocumentUseCase {
 
         PageImpl<ProductDocument> productPage = productDocumentSupport.findProductPage(query);
 
-        // 자기 자신 제외
-        List<ProductDocument> similarProducts = productPage.getContent().stream()
-                .filter(doc -> !Objects.requireNonNull(doc.getId()).equals(productInfoId.toString()))
-                .limit(size)
-                .toList();
-
         return convertToDto(
-                similarProducts,
+                productPage.getContent(),
                 (long) productPage.getTotalPages(),
                 productPage.getTotalElements(),
                 page
@@ -224,14 +225,24 @@ public class ProductDocumentUseCase {
     }
 
     private KnnSearch buildKnnSearch(float[] embedding, Long k, Long candidate) {
+        return buildKnnSearch(embedding, k, candidate, null);
+    }
+
+    private KnnSearch buildKnnSearch(float[] embedding, Long k, Long candidate, TermQuery mustNotFilter) {
         List<Float> vectors = embeddingUseCase.convertArrayToList(embedding);
 
-        return KnnSearch.of(knn -> knn
-                .queryVector(vectors)
-                .field("embedding")
-                .k(k.intValue()) // 최종 결과 수
-                .numCandidates(candidate.intValue()) // 후보 수 (k * 2 ~ k * 10 권장)
-        );
+        return KnnSearch.of(knn -> {
+            knn.queryVector(vectors)
+                    .field("embedding")
+                    .k(k.intValue()) // 최종 결과 수
+                    .numCandidates(candidate.intValue()); // 후보 수 (k * 2 ~ k * 10 권장)
+
+            if (mustNotFilter != null) {
+                knn.filter(f -> f.bool(b -> b.mustNot(mustNotFilter)));
+            }
+
+            return knn;
+        });
     }
 
     private ProductSearchResponseDto convertToDto(List<ProductDocument> productList, Long totalPages, Long totalElements, Long currentPage) {
