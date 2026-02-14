@@ -204,7 +204,7 @@ class ApiV1ProductQueryControllerTest {
         }
 
         @Test
-        @DisplayName("성공: count 파라미터 없이 유사 상품을 조회한다 (기본값 사용)")
+        @DisplayName("성공: size 파라미터 없이 유사 상품을 조회한다 (기본값 사용)")
         void findSimilarProducts_success_defaultCount() throws Exception {
             PageRequestDto request = PageRequestDto.builder()
                     .page(0L)
@@ -227,7 +227,7 @@ class ApiV1ProductQueryControllerTest {
         }
 
         @Test
-        @DisplayName("성공: count 파라미터를 지정하여 유사 상품을 조회한다")
+        @DisplayName("성공: size 파라미터를 지정하여 유사 상품을 조회한다")
         void findSimilarProducts_success_customCount() throws Exception {
             PageRequestDto request = PageRequestDto.builder()
                     .page(0L)
@@ -251,7 +251,7 @@ class ApiV1ProductQueryControllerTest {
         }
 
         @Test
-        @DisplayName("실패: count 파라미터가 @Max(10)을 초과하면 400 Bad Request를 반환한다")
+        @DisplayName("실패: size 파라미터가 @Max(10)을 초과하면 400 Bad Request를 반환한다")
         void findSimilarProducts_failure_invalidCount() throws Exception {
             // given - no need to mock facade as validation happens before facade call
             PageRequestDto request = PageRequestDto.builder()
