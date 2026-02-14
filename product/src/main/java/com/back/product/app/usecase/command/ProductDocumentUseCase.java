@@ -80,6 +80,7 @@ public class ProductDocumentUseCase {
         );
     }
 
+    @Loggable
     @Transactional(readOnly = true)
     public ProductSearchResponseDto findSimilarProducts(Long productInfoId, Long page, Long size) {
         ProductDocument targetProduct = productDocumentRepository.findById(productInfoId.toString())
