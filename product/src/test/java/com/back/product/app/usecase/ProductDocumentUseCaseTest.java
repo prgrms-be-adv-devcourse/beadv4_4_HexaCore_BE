@@ -1,6 +1,9 @@
 package com.back.product.app.usecase;
 
 import com.back.ai.app.usecase.EmbeddingUseCase;
+import com.back.common.code.FailureCode;
+import com.back.common.exception.CustomException;
+import com.back.product.adapter.out.document.ProductDocumentRepository;
 import com.back.product.app.usecase.command.ProductDocumentUseCase;
 import com.back.product.app.usecase.query.ProductDocumentSupport;
 import com.back.product.document.ProductDocument;
@@ -36,6 +39,9 @@ class ProductDocumentUseCaseTest {
 
     @InjectMocks
     private ProductDocumentUseCase productDocumentUseCase;
+
+    @Mock
+    private ProductDocumentRepository productDocumentRepository;
 
     @Mock
     private ProductDocumentSupport productDocumentSupport;
@@ -143,5 +149,170 @@ class ProductDocumentUseCaseTest {
             assertThat(result.totalPages()).isEqualTo(1);
             assertThat(result.currentPage()).isEqualTo(0);
         }
+        }
+
+    @Nested
+    @DisplayName("findSimilarProducts 메서드")
+    class FindSimilarProductsTest {
+        private final Long PRODUCT_INFO_ID = 1L;
+        private final Long OTHER_PRODUCT_INFO_ID_1 = 2L;
+        private final Long OTHER_PRODUCT_INFO_ID_2 = 3L;
+        private final float[] DUMMY_EMBEDDING = {0.1f, 0.2f, 0.3f};
+
+        @Test
+        @DisplayName("성공: 유사 상품을 정상적으로 조회한다 (자기 자신 제외)")
+        void findSimilarProducts_Success_ExcludesSelf() {
+            // given
+            Long page = 0L;
+            Long size = 5L;
+
+            ProductDocument targetProduct = ProductDocument.builder()
+                    .productInfo(
+                            ProductDocument.ProductInfo.builder()
+                                    .productInfoId(PRODUCT_INFO_ID)
+                                    .build()
+                    )
+                    .embedding(DUMMY_EMBEDDING)
+                    .productInfo(ProductDocument.ProductInfo.builder().productName("Target Product").build())
+                    .build();
+
+            ProductDocument similarProduct1 = ProductDocument.builder()
+                    .productInfo(
+                            ProductDocument.ProductInfo.builder()
+                                    .productInfoId(OTHER_PRODUCT_INFO_ID_1)
+                                    .build()
+                    )
+                    .productInfo(ProductDocument.ProductInfo.builder().productName("Similar Product 1").build())
+                    .build();
+            ProductDocument similarProduct2 = ProductDocument.builder()
+                    .productInfo(
+                            ProductDocument.ProductInfo.builder()
+                                    .productInfoId(OTHER_PRODUCT_INFO_ID_2)
+                                    .build()
+                    )
+                    .productInfo(ProductDocument.ProductInfo.builder().productName("Similar Product 2").build())
+                    .build();
+
+            List<ProductDocument> searchResults = List.of(similarProduct1, similarProduct2); // Expect only similar products
+            PageImpl<ProductDocument> productPage = new PageImpl<>(searchResults, PageRequest.of(page.intValue(), size.intValue()), searchResults.size());
+
+            ProductSearchDto dto1 = ProductSearchDto.builder().productName("Similar Product 1").build();
+            ProductSearchDto dto2 = ProductSearchDto.builder().productName("Similar Product 2").build();
+
+
+            given(productDocumentSupport.findProductPage(any(Query.class))).willReturn(productPage);
+            given(productDocumentRepository.findById(PRODUCT_INFO_ID.toString())).willReturn(java.util.Optional.of(targetProduct));
+            given(productDocumentMapper.toDto(similarProduct1)).willReturn(dto1);
+            given(productDocumentMapper.toDto(similarProduct2)).willReturn(dto2);
+
+            // when
+            ProductSearchResponseDto result = productDocumentUseCase.findSimilarProducts(PRODUCT_INFO_ID, page, size);
+
+            // then
+            ArgumentCaptor<NativeQuery> queryCaptor = ArgumentCaptor.forClass(NativeQuery.class);
+            verify(productDocumentSupport).findProductPage(queryCaptor.capture());
+            verify(productDocumentRepository).findById(PRODUCT_INFO_ID.toString());
+            verify(productDocumentMapper).toDto(similarProduct1);
+            verify(productDocumentMapper).toDto(similarProduct2);
+
+            NativeQuery capturedQuery = queryCaptor.getValue();
+            assertThat(capturedQuery.getKnnSearches()).hasSize(1);
+            // Verify that the filter to exclude self was applied
+            assertThat(capturedQuery.getKnnSearches().getFirst().filter()).isNotNull();
+            // A more detailed check for the filter would involve parsing the query, which is complex for unit tests.
+            // Rely on integration tests for full query verification.
+
+            assertThat(result).isNotNull();
+            assertThat(result.products()).hasSize(2); // Should not include the target product itself
+            assertThat(result.products().getFirst().productName()).isEqualTo("Similar Product 1");
+            assertThat(result.totalElements()).isEqualTo(2);
+            assertThat(result.totalPages()).isEqualTo(1);
+            assertThat(result.currentPage()).isEqualTo(0);
+        }
+
+        @Test
+        @DisplayName("실패: 대상 상품의 임베딩이 없을 경우 CustomException 발생")
+        void findSimilarProducts_Fail_EmbeddingNotFound() {
+            // given
+            Long page = 0L;
+            Long size = 5L;
+
+            ProductDocument targetProduct = ProductDocument.builder()
+                    .productInfo(
+                            ProductDocument.ProductInfo.builder()
+                                    .productInfoId(PRODUCT_INFO_ID)
+                                    .build()
+                    )
+                    .embedding(new float[]{}) // Empty embedding
+                    .productInfo(ProductDocument.ProductInfo.builder().productName("Target Product").build())
+                    .build();
+
+            given(productDocumentRepository.findById(PRODUCT_INFO_ID.toString())).willReturn(java.util.Optional.of(targetProduct));
+
+            // when
+            org.assertj.core.api.Assertions.assertThatThrownBy(() ->
+                            productDocumentUseCase.findSimilarProducts(PRODUCT_INFO_ID, page, size))
+                    .isInstanceOf(CustomException.class)
+                    .hasMessage(FailureCode.EMBEDDING_NOT_FOUND.getMessage());
+
+            // then
+            verify(productDocumentRepository).findById(PRODUCT_INFO_ID.toString());
+            verify(productDocumentSupport, org.mockito.Mockito.never()).findProductPage(any(Query.class));
+        }
+
+        @Test
+        @DisplayName("실패: 대상 상품을 찾을 수 없을 경우 CustomException 발생")
+        void findSimilarProducts_Fail_ProductNotFound() {
+            // given
+            Long page = 0L;
+            Long size = 5L;
+
+            given(productDocumentRepository.findById(PRODUCT_INFO_ID.toString())).willReturn(java.util.Optional.empty());
+
+            // when
+            org.assertj.core.api.Assertions.assertThatThrownBy(() ->
+                            productDocumentUseCase.findSimilarProducts(PRODUCT_INFO_ID, page, size))
+                    .isInstanceOf(CustomException.class)
+                    .hasMessage(FailureCode.PRODUCT_INFO_NOT_FOUND.getMessage());
+
+            // then
+            verify(productDocumentRepository).findById(PRODUCT_INFO_ID.toString());
+            verify(productDocumentSupport, org.mockito.Mockito.never()).findProductPage(any(Query.class));
+        }
+        
+        @Test
+        @DisplayName("성공: 유사 상품이 없을 경우 빈 리스트 반환")
+        void findSimilarProducts_Success_NoSimilarProducts() {
+            // given
+            Long page = 0L;
+            Long size = 5L;
+
+            ProductDocument targetProduct = ProductDocument.builder()
+                    .productInfo(
+                            ProductDocument.ProductInfo.builder()
+                                    .productInfoId(PRODUCT_INFO_ID)
+                                    .build()
+                    )
+                    .embedding(DUMMY_EMBEDDING)
+                    .productInfo(ProductDocument.ProductInfo.builder().productName("Target Product").build())
+                    .build();
+            
+            List<ProductDocument> searchResults = List.of(); // No similar products found
+            PageImpl<ProductDocument> productPage = new PageImpl<>(searchResults, PageRequest.of(page.intValue(), size.intValue()), 0);
+
+            given(productDocumentSupport.findProductPage(any(Query.class))).willReturn(productPage);
+            given(productDocumentRepository.findById(PRODUCT_INFO_ID.toString())).willReturn(java.util.Optional.of(targetProduct));
+
+            // when
+            ProductSearchResponseDto result = productDocumentUseCase.findSimilarProducts(PRODUCT_INFO_ID, page, size);
+
+            // then
+            assertThat(result).isNotNull();
+            assertThat(result.products()).isEmpty();
+            assertThat(result.totalElements()).isEqualTo(0);
+            assertThat(result.totalPages()).isEqualTo(0);
+            assertThat(result.currentPage()).isEqualTo(0);
+        }
     }
 }
+
