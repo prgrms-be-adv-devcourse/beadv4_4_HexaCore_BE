@@ -3,7 +3,6 @@ package com.back.product.dto.request;
 import com.back.product.dto.enums.ProductSortType;
 import jakarta.validation.constraints.*;
 import lombok.Builder;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import java.math.BigDecimal;
 import java.util.List;
