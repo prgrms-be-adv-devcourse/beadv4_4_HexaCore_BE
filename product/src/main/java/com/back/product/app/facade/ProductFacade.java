@@ -84,6 +84,8 @@ public class ProductFacade {
         }
 
         brandUseCase.deleteBrand(brandId);
+
+        brandSpringEventPublisher.sendDeletedEvent(brandId);
     }
 
     @Loggable

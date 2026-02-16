@@ -2,8 +2,10 @@ package com.back.product.adapter.in.event;
 
 import com.back.product.adapter.out.event.BrandKafkaEventPublisher;
 import com.back.product.event.kafka.BrandCreatedPayload;
+import com.back.product.event.kafka.BrandDeletedPayload;
 import com.back.product.event.kafka.BrandUpdatedPayload;
 import com.back.product.event.spring.BrandCreationCompletedEvent;
+import com.back.product.event.spring.BrandDeletionCompletedEvent;
 import com.back.product.event.spring.BrandUpdateCompletedEvent;
 import com.back.product.mapper.BrandPayloadMapper;
 import lombok.RequiredArgsConstructor;
@@ -29,5 +31,12 @@ public class BrandSpringEventListener {
         BrandUpdatedPayload payload = brandPayloadMapper.toUpdatePayload(event.brand());
 
         eventPublisher.sendUpdatedEvent(payload);
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleBrandDeletion(BrandDeletionCompletedEvent event) {
+        BrandDeletedPayload payload = brandPayloadMapper.toDeletedPayload(event.brandId());
+
+        eventPublisher.sendDeletedEvent(payload);
     }
 }

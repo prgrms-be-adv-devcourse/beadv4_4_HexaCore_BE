@@ -2,9 +2,11 @@ package com.back.product.mapper;
 
 import com.back.product.dto.model.BrandDto;
 import com.back.product.event.kafka.BrandCreatedPayload;
+import com.back.product.event.kafka.BrandDeletedPayload;
 import com.back.product.event.kafka.BrandPayload;
 import com.back.product.event.kafka.BrandUpdatedPayload;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -29,6 +31,12 @@ public class BrandPayloadMapper {
 
         return BrandUpdatedPayload.builder()
                 .brandPayload(brandPayload)
+                .build();
+    }
+
+    public BrandDeletedPayload toDeletedPayload(Long brandId) {
+        return BrandDeletedPayload.builder()
+                .brandId(brandId)
                 .build();
     }
 }

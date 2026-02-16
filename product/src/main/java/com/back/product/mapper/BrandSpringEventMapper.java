@@ -2,6 +2,7 @@ package com.back.product.mapper;
 
 import com.back.product.dto.model.BrandDto;
 import com.back.product.event.spring.BrandCreationCompletedEvent;
+import com.back.product.event.spring.BrandDeletionCompletedEvent;
 import com.back.product.event.spring.BrandUpdateCompletedEvent;
 import jakarta.validation.Valid;
 import org.springframework.stereotype.Component;
@@ -16,9 +17,15 @@ public class BrandSpringEventMapper {
                 .build();
     }
 
-    public BrandUpdateCompletedEvent toBrandUpdatedEvent(@Valid BrandDto brandDto) {
+    public BrandUpdateCompletedEvent toBrandUpdatedEvent(BrandDto brandDto) {
         return BrandUpdateCompletedEvent.builder()
                 .brand(brandDto)
+                .build();
+    }
+
+    public BrandDeletionCompletedEvent toBrandDeletedEvent(Long brandId) {
+        return BrandDeletionCompletedEvent.builder()
+                .brandId(brandId)
                 .build();
     }
 }

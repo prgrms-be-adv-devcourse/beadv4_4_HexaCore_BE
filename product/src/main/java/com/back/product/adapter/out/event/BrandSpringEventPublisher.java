@@ -4,6 +4,7 @@ package com.back.product.adapter.out.event;
 import com.back.common.annotation.Loggable;
 import com.back.product.dto.model.BrandDto;
 import com.back.product.event.spring.BrandCreationCompletedEvent;
+import com.back.product.event.spring.BrandDeletionCompletedEvent;
 import com.back.product.event.spring.BrandUpdateCompletedEvent;
 import com.back.product.mapper.BrandSpringEventMapper;
 import com.back.product.mapper.ProductSpringEventMapper;
@@ -38,6 +39,14 @@ public class BrandSpringEventPublisher {
     @Transactional
     public void sendUpdatedEvent(@Valid BrandDto brandDto) {
         BrandUpdateCompletedEvent event = brandSpringEventMapper.toBrandUpdatedEvent(brandDto);
+
+        applicationEventPublisher.publishEvent(event);
+    }
+
+    @Loggable
+    @Transactional
+    public void sendDeletedEvent(@Valid Long brandId) {
+        BrandDeletionCompletedEvent event = brandSpringEventMapper.toBrandDeletedEvent(brandId);
 
         applicationEventPublisher.publishEvent(event);
     }

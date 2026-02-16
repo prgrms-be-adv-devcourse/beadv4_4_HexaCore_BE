@@ -2,10 +2,7 @@ package com.back.product.adapter.out.event;
 
 import com.back.common.event.Envelope;
 import com.back.common.event.KafkaEventPublisher;
-import com.back.product.event.kafka.BrandCreatedPayload;
-import com.back.product.event.kafka.BrandPayload;
-import com.back.product.event.kafka.BrandUpdatedPayload;
-import com.back.product.event.kafka.ProductCreatedPayload;
+import com.back.product.event.kafka.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +25,9 @@ public class BrandKafkaEventPublisher {
     @Value("${custom.kafka.topic.product-brand-updated}")
     private String brandUpdatedTopic;
 
+    @Value("${custom.kafka.topic.product-brand-deleted}")
+    private String brandDeletedTopic;
+
     public void sendCreatedEvent(@Valid BrandCreatedPayload payload) {
         Envelope<BrandCreatedPayload> event = Envelope.of(brandCreatedTopic, payload);
 
@@ -47,5 +47,13 @@ public class BrandKafkaEventPublisher {
         kafkaEventPublisher.publish(brandUpdatedTopic, event);
 
         log.info("[BrandKafkaEventPublisher] Sent BrandUpdatedPayload brandName: {}", payload.brandPayload().name());
+    }
+
+    public void sendDeletedEvent(@Valid BrandDeletedPayload payload) {
+        Envelope<BrandDeletedPayload> event = Envelope.of(brandDeletedTopic, payload);
+
+        kafkaEventPublisher.publish(brandDeletedTopic, event);
+
+        log.info("[BrandKafkaEventPublisher] Sent BrandDeletedPayload brandId : {}", payload.brandId());
     }
 }
