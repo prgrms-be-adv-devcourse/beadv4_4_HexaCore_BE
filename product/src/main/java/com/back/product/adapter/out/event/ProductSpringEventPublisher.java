@@ -13,7 +13,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
@@ -28,7 +27,6 @@ public class ProductSpringEventPublisher {
     private final ProductSpringEventMapper productSpringEventMapper;
 
     @Loggable
-    @Transactional
     public void sendCreatedEvent(@Valid ProductInfoDto productInfoDto, @Valid List<ProductDto> productDtos, @Valid String thumbnailUrl) {
         List<OptionDto> optionDtos = productDtos.stream()
                 .flatMap(productDto -> productDto.options().stream())
@@ -40,7 +38,6 @@ public class ProductSpringEventPublisher {
     }
 
     @Loggable
-    @Transactional
     public void sendModifiedEvent(@Valid ProductInfoDto productInfoDto, @Valid List<ProductDto> productDtos, @Valid String thumbnailUrl) {
         List<OptionDto> optionDtos = productDtos.stream()
                 .flatMap(productDto -> productDto.options().stream())
@@ -52,7 +49,6 @@ public class ProductSpringEventPublisher {
     }
 
     @Loggable
-    @Transactional
     public void sendDeletedEvent(@Valid Long productInfoId) {
         ProductDeletionCompletedEvent event = productSpringEventMapper.toProductDeletedEvent(productInfoId);
 
