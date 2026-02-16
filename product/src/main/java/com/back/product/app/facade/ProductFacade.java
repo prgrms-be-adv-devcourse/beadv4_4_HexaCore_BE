@@ -3,6 +3,7 @@ package com.back.product.app.facade;
 import com.back.common.annotation.Loggable;
 import com.back.common.code.FailureCode;
 import com.back.common.exception.CustomException;
+import com.back.product.adapter.out.event.BrandSpringEventPublisher;
 import com.back.product.adapter.out.event.ProductSpringEventPublisher;
 import com.back.product.app.usecase.command.*;
 import com.back.product.domain.*;
@@ -26,6 +27,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ProductFacade {
     private final ProductSpringEventPublisher productSpringEventPublisher;
+    private final BrandSpringEventPublisher brandSpringEventPublisher;
 
     private final BrandUseCase brandUseCase;
     private final CategoryUseCase categoryUseCase;
@@ -59,6 +61,7 @@ public class ProductFacade {
     public BrandListResponseDto createBrands(@Valid BrandListCreateRequestDto request) {
         List<BrandDataCommand> brandsCommands = request.brands().stream().map(brandDataCommandMapper::toCommand).toList();
         List<BrandDto> brandDtos = brandUseCase.createBrands(brandsCommands);
+        brandSpringEventPublisher.sendCreatedEvent(brandDtos);
         return brandMapper.toListResponseDto(brandDtos);
     }
 
