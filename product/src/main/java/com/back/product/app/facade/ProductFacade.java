@@ -70,6 +70,7 @@ public class ProductFacade {
     public BrandResponseDto modifyBrand(Long brandId, @Valid BrandDataRequestDto request) {
         BrandDataCommand brandCommand = brandDataCommandMapper.toCommand(request);
         BrandDto brandDto = brandUseCase.modifyBrand(brandId, brandCommand);
+        brandSpringEventPublisher.sendUpdatedEvent(brandDto);
         return brandMapper.toResponseDto(brandDto);
     }
 

@@ -4,6 +4,7 @@ import com.back.common.event.Envelope;
 import com.back.common.event.KafkaEventPublisher;
 import com.back.product.event.kafka.BrandCreatedPayload;
 import com.back.product.event.kafka.BrandPayload;
+import com.back.product.event.kafka.BrandUpdatedPayload;
 import com.back.product.event.kafka.ProductCreatedPayload;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,9 @@ public class BrandKafkaEventPublisher {
     @Value("${custom.kafka.topic.product-brand-created}")
     private String brandCreatedTopic;
 
+    @Value("${custom.kafka.topic.product-brand-updated}")
+    private String brandUpdatedTopic;
+
     public void sendCreatedEvent(@Valid BrandCreatedPayload payload) {
         Envelope<BrandCreatedPayload> event = Envelope.of(brandCreatedTopic, payload);
 
@@ -35,5 +39,13 @@ public class BrandKafkaEventPublisher {
                         .map(BrandPayload::name)
                         .collect(Collectors.joining(", "))
         );
+    }
+
+    public void sendUpdatedEvent(@Valid BrandUpdatedPayload payload) {
+        Envelope<BrandUpdatedPayload> event = Envelope.of(brandUpdatedTopic, payload);
+
+        kafkaEventPublisher.publish(brandUpdatedTopic, event);
+
+        log.info("[BrandKafkaEventPublisher] Sent BrandUpdatedPayload brandName: {}", payload.brandPayload().name());
     }
 }
