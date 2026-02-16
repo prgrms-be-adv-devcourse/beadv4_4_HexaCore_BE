@@ -3,7 +3,7 @@ package com.back.product.mapper;
 import com.back.product.document.ProductDocument;
 import com.back.product.domain.Category;
 import com.back.product.dto.command.CategoryDataCommand;
-import com.back.product.dto.event.kafka.CategoryPayload;
+import com.back.product.event.kafka.CategoryPayload;
 import com.back.product.dto.model.CategoryDto;
 import com.back.product.dto.response.CategoryListResponseDto;
 import com.back.product.dto.response.CategoryResponseDto;

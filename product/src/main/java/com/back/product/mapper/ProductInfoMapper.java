@@ -2,7 +2,7 @@ package com.back.product.mapper;
 
 import com.back.product.domain.ProductInfo;
 import com.back.product.dto.command.ProductInfoDataCommand;
-import com.back.product.dto.event.kafka.ProductInfoPayload;
+import com.back.product.event.kafka.ProductInfoPayload;
 import com.back.product.dto.model.ProductInfoDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

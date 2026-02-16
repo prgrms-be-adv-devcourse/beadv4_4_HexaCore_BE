@@ -1,7 +1,7 @@
 package com.back.product.mapper;
 
 import com.back.product.domain.OptionGroup;
-import com.back.product.dto.event.kafka.OptionPayload;
+import com.back.product.event.kafka.OptionPayload;
 import com.back.product.dto.model.OptionDto;
 import com.back.product.dto.response.OptionGroupModifyResponseDto;
 import org.springframework.stereotype.Component;

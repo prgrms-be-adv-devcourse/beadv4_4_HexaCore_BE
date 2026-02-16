@@ -2,9 +2,9 @@ package com.back.product.adapter.in.event;
 
 import com.back.common.event.Envelope;
 import com.back.product.app.usecase.command.ProductDocumentUseCase;
-import com.back.product.dto.event.kafka.ProductCreatedPayload;
-import com.back.product.dto.event.kafka.ProductDeletedPayload;
-import com.back.product.dto.event.kafka.ProductUpdatedPayload;
+import com.back.product.event.kafka.ProductCreatedPayload;
+import com.back.product.event.kafka.ProductDeletedPayload;
+import com.back.product.event.kafka.ProductUpdatedPayload;
 import com.back.product.dto.model.OptionDto;
 import com.back.product.dto.model.ProductInfoDto;
 import com.back.product.mapper.OptionMapper;

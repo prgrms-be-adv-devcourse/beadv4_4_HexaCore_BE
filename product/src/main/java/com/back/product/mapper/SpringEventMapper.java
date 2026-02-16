@@ -1,8 +1,8 @@
 package com.back.product.mapper;
 
-import com.back.product.dto.event.spring.ProductCreationCompletedEvent;
-import com.back.product.dto.event.spring.ProductDeletionCompletedEvent;
-import com.back.product.dto.event.spring.ProductUpdateCompletedEvent;
+import com.back.product.event.spring.ProductCreationCompletedEvent;
+import com.back.product.event.spring.ProductDeletionCompletedEvent;
+import com.back.product.event.spring.ProductUpdateCompletedEvent;
 import com.back.product.dto.model.OptionDto;
 import com.back.product.dto.model.ProductInfoDto;
 import org.springframework.stereotype.Component;

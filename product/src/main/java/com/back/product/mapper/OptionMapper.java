@@ -2,7 +2,7 @@ package com.back.product.mapper;
 
 import com.back.product.domain.OptionGroup;
 import com.back.product.domain.OptionValue;
-import com.back.product.dto.event.kafka.OptionPayload;
+import com.back.product.event.kafka.OptionPayload;
 import com.back.product.dto.model.OptionDto;
 import com.back.product.dto.response.OptionListResponseDto;
 import com.back.product.dto.response.OptionResponseDto;

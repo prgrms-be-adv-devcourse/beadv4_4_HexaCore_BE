@@ -1,4 +1,4 @@
-package com.back.product.dto.event.kafka;
+package com.back.product.event.kafka;
 
 import com.back.common.event.KafkaPayload;
 import jakarta.validation.Valid;

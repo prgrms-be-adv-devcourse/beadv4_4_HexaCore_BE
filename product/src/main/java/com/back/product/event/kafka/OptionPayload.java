@@ -1,4 +1,4 @@
-package com.back.product.dto.event.kafka;
+package com.back.product.event.kafka;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
