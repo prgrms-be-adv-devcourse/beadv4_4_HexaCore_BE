@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 @Component
-public class SpringEventMapper {
+public class ProductSpringEventMapper {
     public ProductUpdateCompletedEvent toProductUpdatedEvent(ProductInfoDto productInfoDto, List<OptionDto> optionDtos, String thumbnailUrl) {
         return ProductUpdateCompletedEvent.builder()
                 .productInfoDto(productInfoDto)

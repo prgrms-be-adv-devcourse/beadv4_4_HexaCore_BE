@@ -3,6 +3,7 @@ package com.back.product.app.facade;
 import com.back.common.annotation.Loggable;
 import com.back.common.code.FailureCode;
 import com.back.common.exception.CustomException;
+import com.back.product.adapter.out.event.ProductSpringEventPublisher;
 import com.back.product.app.usecase.command.*;
 import com.back.product.domain.*;
 import com.back.product.dto.command.*;
@@ -24,7 +25,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class ProductFacade {
-    private final ApplicationEventPublisher applicationEventPublisher;
+    private final ProductSpringEventPublisher productSpringEventPublisher;
 
     private final BrandUseCase brandUseCase;
     private final CategoryUseCase categoryUseCase;
@@ -38,7 +39,6 @@ public class ProductFacade {
     private final ProductInfoMapper productInfoMapper;
     private final ProductMapper productMapper;
     private final OptionMapper optionMapper;
-    private final SpringEventMapper springEventMapper;
 
     private final BrandDataCommandMapper brandDataCommandMapper;
     private final CategoryDataCommandMapper categoryDataCommandMapper;
@@ -138,7 +138,8 @@ public class ProductFacade {
                 .map(productVariantCreateCommandMapper::toCommand).toList();
         List<ProductDto> productDtos = productUseCase.createMultipleProduct(productInfo, productVariantCreateCommands);
 
-        publishProductCreateEvent(productInfoDto, productDtos);
+        String thumbnailUrl = findThumbnailUrl(productDtos);
+        productSpringEventPublisher.sendCreatedEvent(productInfoDto, productDtos, thumbnailUrl);
 
         return productMapper.toResponseDto(productInfoDto, productDtos);
     }
@@ -158,7 +159,8 @@ public class ProductFacade {
                 .map(productVariantUpdateCommandMapper::toCommand).toList();
         List<ProductDto> productDtos = productUseCase.updateMultipleProduct(productInfo, productVariantUpdateCommands);
 
-        publishProductUpdateEvent(productInfoDto, productDtos);
+        String thumbnailUrl = findThumbnailUrl(productDtos);
+        productSpringEventPublisher.sendModifiedEvent(productInfoDto, productDtos, thumbnailUrl);
 
         return productMapper.toResponseDto(productInfoDto, productDtos);
     }
@@ -170,7 +172,7 @@ public class ProductFacade {
 
         productInfoUseCase.deleteProductInfo(productInfoId);
 
-        publishProductDeleteEvent(productInfoId);
+        productSpringEventPublisher.sendDeletedEvent(productInfoId);
     }
 
     @Loggable
@@ -248,36 +250,6 @@ public class ProductFacade {
     public OptionListResponseDto getOptions() {
         List<OptionDto> optionDtos = optionUseCase.findAllOptions();
         return optionMapper.toListResponseDto(optionDtos);
-    }
-
-    private void publishProductUpdateEvent(ProductInfoDto productInfoDto, List<ProductDto> productDtos) {
-        List<OptionDto> optionDtos = productDtos.stream()
-                .flatMap(productDto -> productDto.options().stream())
-                .toList();
-
-        String thumbnailUrl = findThumbnailUrl(productDtos);
-
-        ProductUpdateCompletedEvent event = springEventMapper.toProductUpdatedEvent(productInfoDto, optionDtos, thumbnailUrl);
-
-        applicationEventPublisher.publishEvent(event);
-    }
-
-    private void publishProductCreateEvent(ProductInfoDto productInfoDto, List<ProductDto> productDtos) {
-        List<OptionDto> optionDtos = productDtos.stream()
-                .flatMap(productDto -> productDto.options().stream())
-                .toList();
-
-        String thumbnailUrl = findThumbnailUrl(productDtos);
-
-        ProductCreationCompletedEvent event = springEventMapper.toProductCreatedEvent(productInfoDto, optionDtos, thumbnailUrl);
-
-        applicationEventPublisher.publishEvent(event);
-    }
-
-    private void publishProductDeleteEvent(Long productInfoId) {
-        ProductDeletionCompletedEvent event = springEventMapper.toProductDeletedEvent(productInfoId);
-
-        applicationEventPublisher.publishEvent(event);
     }
 
     private String findThumbnailUrl(List<ProductDto> productDtos) {
