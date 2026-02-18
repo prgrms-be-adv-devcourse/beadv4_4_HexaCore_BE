@@ -84,11 +84,25 @@ public class ProductKafkaEventPublisher {
         }
     }
 
-    public void sendDeletedEvent(@Valid ProductDeletedPayload payload) {
-        Envelope<ProductDeletedPayload> event = Envelope.of(productDeletedTopic, payload);
+    public void sendDeletedEvent(ProductOutboxEvent outbox) {
+        String eventId = outbox.getEventId();
+        try {
+            ProductDeletedPayload payload = jsonMapper.readValue(outbox.getPayload(), ProductDeletedPayload.class);
 
-        kafkaEventPublisher.publish(productDeletedTopic, event);
+            Envelope<ProductDeletedPayload> event = Envelope.of(eventId, productDeletedTopic, payload);
 
-        log.info("[ProductKafkaEventPublisher] Sent ProductDeletedPayload for productInfoId: {}", payload.productInfoId());
+            kafkaTemplate.send(productDeletedTopic, event).whenComplete((result, exception) -> {
+                if (exception == null) {
+                    productOutboxUseCase.markAsSucceeded(eventId);
+                    log.info("[ProductKafkaEventPublisher] Publish ProductDeletedEvent Successful. EventId: {}", eventId);
+                } else {
+                    productOutboxUseCase.markAsFailed(eventId);
+                    log.error("[ProductKafkaEventPublisher] Publish ProductDeletedEvent Failed. EventId: {}, Error: {}", eventId, exception.getMessage(), exception);
+                }
+            });
+        } catch (Exception e) {
+            productOutboxUseCase.markAsFailed(eventId);
+            log.error("[ProductKafkaEventPublisher] Publish ProductDeletedEvent Failed. EventId: {}, Error: {}", eventId, e.getMessage(), e);
+        }
     }
 }

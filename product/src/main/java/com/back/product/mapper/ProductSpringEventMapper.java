@@ -35,7 +35,10 @@ public class ProductSpringEventMapper {
     }
 
     public ProductDeletionCompletedEvent toProductDeletedEvent(Long productInfoId) {
+        String eventId = UUID.randomUUID().toString();
+
         return ProductDeletionCompletedEvent.builder()
+                .eventId(eventId)
                 .productInfoId(productInfoId)
                 .build();
     }

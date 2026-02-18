@@ -39,10 +39,11 @@ public class ProductSpringEventListener {
         eventPublisher.sendModifiedEvent(outbox);
     }
 
+    @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleProductDelete(ProductDeletionCompletedEvent event) {
-        ProductDeletedPayload payload = productPayloadMapper.toDeletedPayload(event.productInfoId());
+        ProductOutboxEvent outbox = productOutboxUseCase.findRecordedEvent(event.eventId());
 
-        eventPublisher.sendDeletedEvent(payload);
+        eventPublisher.sendDeletedEvent(outbox);
     }
 }
