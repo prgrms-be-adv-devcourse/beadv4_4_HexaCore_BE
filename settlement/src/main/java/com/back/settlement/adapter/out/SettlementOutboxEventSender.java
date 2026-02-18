@@ -1,6 +1,7 @@
 package com.back.settlement.adapter.out;
 
 import com.back.settlement.domain.outbox.SettlementOutboxEvent;
+import com.back.settlement.domain.outbox.SettlementOutboxStatus;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,9 +25,13 @@ public class SettlementOutboxEventSender {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void send(Long outboxId) {
-        SettlementOutboxEvent outbox = outboxRepository.findById(outboxId).orElse(null);
+        SettlementOutboxEvent outbox = outboxRepository.findByIdWithPessimisticWriteLock(outboxId).orElse(null);
         if (outbox == null) {
             log.warn("[OUTBOX] 대상 이벤트를 찾을 수 없습니다. outboxId={}", outboxId);
+            return;
+        }
+        if (outbox.getStatus() != SettlementOutboxStatus.PROCESSING) {
+            log.info("[OUTBOX] PROCESSING 상태가 아니어서 발행을 건너뜁니다. outboxId={}, status={}", outboxId, outbox.getStatus());
             return;
         }
         try {

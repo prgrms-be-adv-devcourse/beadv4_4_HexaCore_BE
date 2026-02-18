@@ -8,6 +8,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.back.settlement.domain.outbox.SettlementOutboxEvent;
+import com.back.settlement.domain.outbox.SettlementOutboxStatus;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,7 +21,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("SettlementOutboxEventSender 단위 테스트")
+@DisplayName("SettlementOutboxEventSender 비관적 락 단위 테스트")
 class SettlementOutboxEventSenderTest {
 
     @Mock
@@ -42,9 +43,10 @@ class SettlementOutboxEventSenderTest {
         SettlementOutboxEvent outbox = mock(SettlementOutboxEvent.class);
 
         when(outbox.getId()).thenReturn(1L);
+        when(outbox.getStatus()).thenReturn(SettlementOutboxStatus.PROCESSING);
         when(outbox.getTopic()).thenReturn("topic");
         when(outbox.getPayload()).thenReturn("{\"payload\":true}");
-        when(outboxRepository.findById(1L)).thenReturn(Optional.of(outbox));
+        when(outboxRepository.findByIdWithPessimisticWriteLock(1L)).thenReturn(Optional.of(outbox));
         when(kafkaTemplate.send("topic", "{\"payload\":true}"))
                 .thenReturn(CompletableFuture.completedFuture(null));
 
@@ -55,16 +57,17 @@ class SettlementOutboxEventSenderTest {
     }
 
     @Test
-    @DisplayName("발행 실패 시 outbox 상태를 FAILED로 전이한다")
+    @DisplayName("비관적 락으로 점유한 PROCESSING 이벤트는 발행 실패 시 FAILED로 전이한다")
     void send_WhenKafkaSendFails_MarksFailed() {
         SettlementOutboxEvent outbox = mock(SettlementOutboxEvent.class);
         CompletableFuture<SendResult<String, String>> failedFuture = new CompletableFuture<>();
         failedFuture.completeExceptionally(new RuntimeException("kafka down"));
 
         when(outbox.getId()).thenReturn(1L);
+        when(outbox.getStatus()).thenReturn(SettlementOutboxStatus.PROCESSING);
         when(outbox.getTopic()).thenReturn("topic");
         when(outbox.getPayload()).thenReturn("{\"payload\":true}");
-        when(outboxRepository.findById(1L)).thenReturn(Optional.of(outbox));
+        when(outboxRepository.findByIdWithPessimisticWriteLock(1L)).thenReturn(Optional.of(outbox));
         when(kafkaTemplate.send("topic", "{\"payload\":true}"))
                 .thenReturn(failedFuture);
 
@@ -75,12 +78,26 @@ class SettlementOutboxEventSenderTest {
     }
 
     @Test
-    @DisplayName("대상 outbox가 없으면 Kafka를 호출하지 않는다")
+    @DisplayName("비관적 락으로 점유할 outbox가 없으면 Kafka를 호출하지 않는다")
     void send_WhenOutboxNotFound_DoesNothing() {
-        when(outboxRepository.findById(1L)).thenReturn(Optional.empty());
+        when(outboxRepository.findByIdWithPessimisticWriteLock(1L)).thenReturn(Optional.empty());
 
         eventSender.send(1L);
 
         verifyNoInteractions(kafkaTemplate);
+    }
+
+    @Test
+    @DisplayName("비관적 락으로 점유했더라도 PROCESSING이 아니면 Kafka를 호출하지 않는다")
+    void send_WhenOutboxIsNotProcessing_SkipsPublish() {
+        SettlementOutboxEvent outbox = mock(SettlementOutboxEvent.class);
+        when(outbox.getStatus()).thenReturn(SettlementOutboxStatus.SENT);
+        when(outboxRepository.findByIdWithPessimisticWriteLock(1L)).thenReturn(Optional.of(outbox));
+
+        eventSender.send(1L);
+
+        verifyNoInteractions(kafkaTemplate);
+        verify(outbox, never()).markAsSent();
+        verify(outbox, never()).markAsFailed(anyInt());
     }
 }
