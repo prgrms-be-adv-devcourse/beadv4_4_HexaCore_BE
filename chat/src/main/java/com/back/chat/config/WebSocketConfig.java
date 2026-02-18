@@ -1,4 +1,4 @@
-package com.back.chat.adapter.in.ws;
+package com.back.chat.config;
 
 import com.back.security.jwt.JWTUtil;
 import com.back.security.principal.AuthPrincipal;
