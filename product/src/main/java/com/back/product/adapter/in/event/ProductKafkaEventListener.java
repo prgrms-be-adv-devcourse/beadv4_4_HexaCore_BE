@@ -1,7 +1,7 @@
 package com.back.product.adapter.in.event;
 
 import com.back.common.event.Envelope;
-import com.back.product.app.usecase.command.ProductDocumentUseCase;
+import com.back.product.app.usecase.ProductDocumentUseCase;
 import com.back.product.event.kafka.ProductCreatedPayload;
 import com.back.product.event.kafka.ProductDeletedPayload;
 import com.back.product.event.kafka.ProductUpdatedPayload;

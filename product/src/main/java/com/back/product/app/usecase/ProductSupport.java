@@ -1,4 +1,4 @@
-package com.back.product.app.usecase.query;
+package com.back.product.app.usecase;
 
 import com.back.common.code.FailureCode;
 import com.back.common.exception.CustomException;

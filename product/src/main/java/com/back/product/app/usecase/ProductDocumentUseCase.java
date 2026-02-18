@@ -1,4 +1,4 @@
-package com.back.product.app.usecase.command;
+package com.back.product.app.usecase;
 
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.KnnSearch;
@@ -9,7 +9,6 @@ import com.back.common.annotation.Loggable;
 import com.back.common.code.FailureCode;
 import com.back.common.exception.CustomException;
 import com.back.product.adapter.out.document.ProductDocumentRepository;
-import com.back.product.app.usecase.query.ProductDocumentSupport;
 import com.back.product.document.ProductDocument;
 import com.back.product.dto.command.ProductSearchCommand;
 import com.back.product.dto.enums.ProductSortType;
@@ -33,7 +32,6 @@ import org.springframework.util.StringUtils;
 import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service

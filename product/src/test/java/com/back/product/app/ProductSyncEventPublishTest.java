@@ -2,7 +2,7 @@ package com.back.product.app;
 
 import com.back.product.adapter.out.document.ProductDocumentRepository;
 import com.back.product.adapter.out.event.ProductKafkaEventPublisher;
-import com.back.product.app.usecase.command.ProductDocumentUseCase;
+import com.back.product.app.usecase.ProductDocumentUseCase;
 import com.back.product.event.kafka.ProductCreatedPayload;
 import com.back.product.event.kafka.ProductDeletedPayload;
 import com.back.product.event.kafka.ProductInfoPayload;
