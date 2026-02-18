@@ -43,7 +43,7 @@ public class ProductKafkaEventPublisher {
     public void sendCreatedEvent(ProductOutboxEvent outbox) {
         String eventId = outbox.getEventId();
         try {
-            ProductCreatedPayload payload = jsonMapper.convertValue(outbox, ProductCreatedPayload.class);
+            ProductCreatedPayload payload = jsonMapper.readValue(outbox.getPayload(), ProductCreatedPayload.class);
 
             Envelope<ProductCreatedPayload> event = Envelope.of(eventId, productCreatedTopic, payload);
 
@@ -62,12 +62,26 @@ public class ProductKafkaEventPublisher {
         }
     }
 
-    public void sendModifiedEvent(@Valid ProductUpdatedPayload payload) {
-        Envelope<ProductUpdatedPayload> event = Envelope.of(productUpdatedTopic, payload);
+    public void sendModifiedEvent(ProductOutboxEvent outbox) {
+        String eventId = outbox.getEventId();
+        try {
+            ProductUpdatedPayload payload = jsonMapper.readValue(outbox.getPayload(), ProductUpdatedPayload.class);
 
-        kafkaEventPublisher.publish(productUpdatedTopic, event);
+            Envelope<ProductUpdatedPayload> event = Envelope.of(eventId, productUpdatedTopic, payload);
 
-        log.info("[ProductKafkaEventPublisher] Sent ProductUpdatedPayload for productInfoId: {}", payload.productInfo().productInfoId());
+            kafkaTemplate.send(productUpdatedTopic, event).whenComplete((result, exception) -> {
+                if (exception == null) {
+                    productOutboxUseCase.markAsSucceeded(eventId);
+                    log.info("[ProductKafkaEventPublisher] Publish ProductUpdatedEvent Successful. EventId: {}", eventId);
+                } else {
+                    productOutboxUseCase.markAsFailed(eventId);
+                    log.error("[ProductKafkaEventPublisher] Publish ProductUpdatedEvent Failed. EventId: {}, Error: {}", eventId, exception.getMessage(), exception);
+                }
+            });
+        } catch (Exception e) {
+            productOutboxUseCase.markAsFailed(eventId);
+            log.error("[ProductKafkaEventPublisher] Publish ProductUpdatedEvent Failed. EventId: {}, Error: {}", eventId, e.getMessage(), e);
+        }
     }
 
     public void sendDeletedEvent(@Valid ProductDeletedPayload payload) {

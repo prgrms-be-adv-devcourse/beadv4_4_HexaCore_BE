@@ -12,18 +12,21 @@ import java.util.UUID;
 
 @Component
 public class ProductSpringEventMapper {
-    public ProductUpdateCompletedEvent toProductUpdatedEvent(ProductInfoDto productInfoDto, List<OptionDto> optionDtos, String thumbnailUrl) {
-        return ProductUpdateCompletedEvent.builder()
+    public ProductCreationCompletedEvent toProductCreatedEvent(ProductInfoDto productInfoDto, List<OptionDto> optionDtos, String thumbnailUrl) {
+        String eventId = UUID.randomUUID().toString();
+
+        return ProductCreationCompletedEvent.builder()
+                .eventId(eventId)
                 .productInfoDto(productInfoDto)
                 .optionDtos(optionDtos)
                 .thumbnailUrl(thumbnailUrl)
                 .build();
     }
 
-    public ProductCreationCompletedEvent toProductCreatedEvent(ProductInfoDto productInfoDto, List<OptionDto> optionDtos, String thumbnailUrl) {
+    public ProductUpdateCompletedEvent toProductUpdatedEvent(ProductInfoDto productInfoDto, List<OptionDto> optionDtos, String thumbnailUrl) {
         String eventId = UUID.randomUUID().toString();
 
-        return ProductCreationCompletedEvent.builder()
+        return ProductUpdateCompletedEvent.builder()
                 .eventId(eventId)
                 .productInfoDto(productInfoDto)
                 .optionDtos(optionDtos)

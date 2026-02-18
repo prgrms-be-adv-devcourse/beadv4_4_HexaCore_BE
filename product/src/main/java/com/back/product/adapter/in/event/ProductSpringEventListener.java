@@ -31,11 +31,12 @@ public class ProductSpringEventListener {
         eventPublisher.sendCreatedEvent(outbox);
     }
 
+    @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleProductUpdate(ProductUpdateCompletedEvent event) {
-        ProductUpdatedPayload payload = productPayloadMapper.toUpdatedPayload(event.productInfoDto(), event.optionDtos(), event.thumbnailUrl());
+        ProductOutboxEvent outbox = productOutboxUseCase.findRecordedEvent(event.eventId());
 
-        eventPublisher.sendModifiedEvent(payload);
+        eventPublisher.sendModifiedEvent(outbox);
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)

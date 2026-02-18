@@ -2,7 +2,9 @@ package com.back.product.adapter.in.event;
 
 import com.back.product.app.usecase.ProductOutboxUseCase;
 import com.back.product.event.kafka.ProductCreatedPayload;
+import com.back.product.event.kafka.ProductUpdatedPayload;
 import com.back.product.event.spring.ProductCreationCompletedEvent;
+import com.back.product.event.spring.ProductUpdateCompletedEvent;
 import com.back.product.mapper.ProductPayloadMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,8 +24,25 @@ public class ProductOutboxListener {
         public void handleProductCreation(ProductCreationCompletedEvent event) {
             ProductCreatedPayload payload = productPayloadMapper.toCreatedPayload(event.productInfoDto(), event.optionDtos(), event.thumbnailUrl());
 
-            productOutboxUseCase.record(event.eventId(), payload);
+            String eventId = event.eventId();
+            String eventType = event.getClass().getSimpleName();
+            String aggregateId = String.valueOf(event.productInfoDto().productInfoId());
+
+            productOutboxUseCase.record(eventId, eventType, aggregateId, payload);
 
             log.info("[ProductOutboxListener] handleProductCreation payload: {}", payload);
+        }
+
+        @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
+        public void handleProductUpdate(ProductUpdateCompletedEvent event) {
+            ProductUpdatedPayload payload = productPayloadMapper.toUpdatedPayload(event.productInfoDto(), event.optionDtos(), event.thumbnailUrl());
+
+            String eventId = event.eventId();
+            String eventType = event.getClass().getSimpleName();
+            String aggregateId = String.valueOf(event.productInfoDto().productInfoId());
+
+            productOutboxUseCase.record(eventId, eventType, aggregateId, payload);
+
+            log.info("[ProductOutboxListener] handleProductUpdate payload: {}", payload);
         }
 }
