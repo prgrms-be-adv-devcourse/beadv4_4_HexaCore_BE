@@ -1,11 +1,11 @@
 package com.back.chat.app;
 
-import com.back.chat.adapter.out.ChatMessageRepository;
-import com.back.chat.adapter.out.ChatReportRepository;
-import com.back.chat.adapter.out.ChatRoomRepository;
-import com.back.chat.domain.ChatMessage;
-import com.back.chat.domain.ChatReport;
-import com.back.chat.domain.ChatRoom;
+import com.back.chat.adapter.out.repository.ChatMessageRepository;
+import com.back.chat.adapter.out.repository.ChatReportRepository;
+import com.back.chat.adapter.out.repository.ChatRoomRepository;
+import com.back.chat.domain.entity.ChatMessage;
+import com.back.chat.domain.entity.ChatReport;
+import com.back.chat.domain.entity.ChatRoom;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

@@ -1,8 +1,8 @@
 package com.back.chat;
 
-import com.back.chat.adapter.in.ChatWsController;
+import com.back.chat.adapter.in.ws.ChatWsController;
 import com.back.chat.app.ChatFacade;
-import com.back.chat.dto.request.ChatMessageSendRequestDto;
+import com.back.chat.adapter.in.web.dto.request.ChatMessageSendRequestDto;
 import com.back.security.principal.AuthPrincipal;
 import org.junit.jupiter.api.Test;
 

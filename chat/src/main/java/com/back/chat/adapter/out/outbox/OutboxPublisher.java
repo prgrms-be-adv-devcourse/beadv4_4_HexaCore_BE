@@ -1,7 +1,7 @@
 package com.back.chat.adapter.out.outbox;
 
-import com.back.chat.event.ChatEventType;
-import com.back.chat.event.ChatOutboxSavedEvent;
+import com.back.chat.domain.event.ChatEventType;
+import com.back.chat.domain.event.ChatOutboxSavedEvent;
 import com.back.common.chat.ChatMessageBlindedKafkaEvent;
 import com.back.common.code.FailureCode;
 import com.back.common.event.Envelope;

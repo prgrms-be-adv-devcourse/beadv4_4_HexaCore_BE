@@ -1,6 +1,6 @@
 package com.back.chat.adapter.out.outbox;
 
-import com.back.chat.event.ChatEventType;
+import com.back.chat.domain.event.ChatEventType;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;

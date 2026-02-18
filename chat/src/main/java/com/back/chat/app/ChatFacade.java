@@ -1,11 +1,12 @@
 package com.back.chat.app;
 
 
-import com.back.chat.dto.request.ChatMessageReportRequestDto;
-import com.back.chat.dto.request.ChatMessageSendRequestDto;
-import com.back.chat.dto.response.ChatMessageHistoryResponseDto;
-import com.back.chat.dto.response.ChatMessageReportResponseDto;
-import com.back.chat.dto.response.ChatRoomEnterResponseDto;
+import com.back.chat.app.usecase.*;
+import com.back.chat.adapter.in.web.dto.request.ChatMessageReportRequestDto;
+import com.back.chat.adapter.in.web.dto.request.ChatMessageSendRequestDto;
+import com.back.chat.adapter.in.web.dto.response.ChatMessageHistoryResponseDto;
+import com.back.chat.adapter.in.web.dto.response.ChatMessageReportResponseDto;
+import com.back.chat.adapter.in.web.dto.response.ChatRoomEnterResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

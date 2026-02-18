@@ -1,10 +1,10 @@
 package com.back.chat.adapter.out.redis;
 
-import com.back.chat.event.ChatEventEnvelope;
-import com.back.chat.event.ChatEventType;
-import com.back.chat.event.payload.ChatMessageBlindedPayload;
-import com.back.chat.event.payload.ChatMessageDeletedPayload;
-import com.back.chat.event.payload.ChatMessagePayload;
+import com.back.chat.domain.event.ChatEventEnvelope;
+import com.back.chat.domain.event.ChatEventType;
+import com.back.chat.adapter.out.redis.payload.ChatMessageBlindedPayload;
+import com.back.chat.adapter.out.redis.payload.ChatMessageDeletedPayload;
+import com.back.chat.adapter.out.redis.payload.ChatMessagePayload;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
