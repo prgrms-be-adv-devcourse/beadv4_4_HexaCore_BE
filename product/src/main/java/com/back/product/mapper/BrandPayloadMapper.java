@@ -5,9 +5,6 @@ import com.back.product.event.kafka.BrandCreatedPayload;
 import com.back.product.event.kafka.BrandDeletedPayload;
 import com.back.product.event.kafka.BrandPayload;
 import com.back.product.event.kafka.BrandUpdatedPayload;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -22,7 +19,7 @@ public class BrandPayloadMapper {
         List<BrandPayload> brandPayloads = brandDtos.stream().map(brandMapper::toPayload).toList();
 
         return BrandCreatedPayload.builder()
-                .brandPayloadList(brandPayloads)
+                .brands(brandPayloads)
                 .build();
     }
 
@@ -30,7 +27,7 @@ public class BrandPayloadMapper {
         BrandPayload brandPayload = brandMapper.toPayload(brand);
 
         return BrandUpdatedPayload.builder()
-                .brandPayload(brandPayload)
+                .brand(brandPayload)
                 .build();
     }
 

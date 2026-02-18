@@ -9,6 +9,6 @@ import lombok.Builder;
 public record BrandUpdatedPayload(
         @NotNull(message = "브랜드 페이로드는 필수입니다.")
         @Valid
-        BrandPayload brandPayload
+        BrandPayload brand
 ) implements KafkaPayload {
 }

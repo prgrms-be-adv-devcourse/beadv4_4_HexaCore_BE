@@ -11,6 +11,6 @@ import java.util.List;
 public record BrandCreatedPayload(
         @NotNull(message = "브랜드 페이로드는 필수입니다.")
         @Valid
-        List<BrandPayload> brandPayloadList
+        List<BrandPayload> brands
 ) implements KafkaPayload {
 }

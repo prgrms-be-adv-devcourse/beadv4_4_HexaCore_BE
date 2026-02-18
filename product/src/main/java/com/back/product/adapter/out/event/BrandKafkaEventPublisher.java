@@ -34,8 +34,8 @@ public class BrandKafkaEventPublisher {
         kafkaEventPublisher.publish(brandCreatedTopic, event);
 
         log.info("[BrandKafkaEventPublisher] Sent BrandCreatedPayload size: {}, brands: {}",
-                payload.brandPayloadList().size(),
-                payload.brandPayloadList().stream()
+                payload.brands().size(),
+                payload.brands().stream()
                         .map(BrandPayload::name)
                         .collect(Collectors.joining(", "))
         );
@@ -46,7 +46,7 @@ public class BrandKafkaEventPublisher {
 
         kafkaEventPublisher.publish(brandUpdatedTopic, event);
 
-        log.info("[BrandKafkaEventPublisher] Sent BrandUpdatedPayload brandName: {}", payload.brandPayload().name());
+        log.info("[BrandKafkaEventPublisher] Sent BrandUpdatedPayload brandName: {}", payload.brand().name());
     }
 
     public void sendDeletedEvent(@Valid BrandDeletedPayload payload) {

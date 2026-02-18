@@ -123,9 +123,9 @@ class BrandEventIntegrationTest {
         Envelope<BrandCreatedPayload> envelope = objectMapper.readValue(record.value(), new TypeReference<>() {});
         BrandCreatedPayload payload = envelope.payload();
 
-        assertThat(payload.brandPayloadList()).hasSize(1);
-        assertThat(payload.brandPayloadList().get(0).brandId()).isEqualTo(createdBrandId);
-        assertThat(payload.brandPayloadList().get(0).name()).isEqualTo("New Kafka Brand");
+        assertThat(payload.brands()).hasSize(1);
+        assertThat(payload.brands().get(0).brandId()).isEqualTo(createdBrandId);
+        assertThat(payload.brands().get(0).name()).isEqualTo("New Kafka Brand");
     }
 
     @Test
@@ -153,8 +153,8 @@ class BrandEventIntegrationTest {
         Envelope<BrandUpdatedPayload> envelope = objectMapper.readValue(record.value(), new TypeReference<>() {});
         BrandUpdatedPayload payload = envelope.payload();
 
-        assertThat(payload.brandPayload().brandId()).isEqualTo(brandId);
-        assertThat(payload.brandPayload().name()).isEqualTo("Updated Kafka Brand");
+        assertThat(payload.brand().brandId()).isEqualTo(brandId);
+        assertThat(payload.brand().name()).isEqualTo("Updated Kafka Brand");
     }
 
     @Test
