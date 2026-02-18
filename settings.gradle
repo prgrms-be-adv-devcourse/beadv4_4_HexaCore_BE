@@ -11,5 +11,6 @@ include(
         "image",
         "settlement",
         "detector",
-        "security"
+        "security",
+        "ai"
 )

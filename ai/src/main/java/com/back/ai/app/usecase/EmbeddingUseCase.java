@@ -1,0 +1,27 @@
+package com.back.ai.app.usecase;
+
+import com.back.common.annotation.Loggable;
+import lombok.RequiredArgsConstructor;
+import org.springframework.ai.embedding.EmbeddingModel;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.stream.IntStream;
+
+@Service
+@RequiredArgsConstructor
+public class EmbeddingUseCase {
+    private final EmbeddingModel embeddingModel;
+
+    @Loggable
+    public float[] generateEmbeddings(String texts) {
+        return embeddingModel.embed(texts);
+    }
+
+    @Loggable
+    public List<Float> convertArrayToList(float[] embedding) {
+        return IntStream.range(0, embedding.length)
+                        .mapToObj(i -> embedding[i])
+                        .toList();
+    }
+}

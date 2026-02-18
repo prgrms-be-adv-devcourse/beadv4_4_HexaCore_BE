@@ -187,9 +187,15 @@ public class ProductFacade {
 
     @Loggable
     @Transactional(readOnly = true)
-    public ProductSearchResponseDto findProductPage(@Valid ProductSearchRequestDto request, Long page, Long size) {
-        ProductSearchCommand productSearchCommand = productSearchCommandMapper.toCommand(request, page, size);
+    public ProductSearchResponseDto findProductPage(@Valid ProductSearchRequestDto request) {
+        ProductSearchCommand productSearchCommand = productSearchCommandMapper.toCommand(request);
         return productDocumentUseCase.findProductPage(productSearchCommand);
+    }
+
+    @Loggable
+    @Transactional(readOnly = true)
+    public ProductSearchResponseDto findSimilarProducts(Long productInfoId, PageRequestDto request) {
+        return productDocumentUseCase.findSimilarProducts(productInfoId, request.page(), request.size());
     }
 
     @Loggable

@@ -25,6 +25,9 @@ public class ProductDocument extends BaseDocument<String> {
     @Field(type = FieldType.Nested)
     private List<Option> totalOptions;
 
+    @Field(type = FieldType.Dense_Vector, dims = 384)
+    private float[] embedding;
+
     @Getter
     @Builder
     @NoArgsConstructor(access = AccessLevel.PROTECTED)
