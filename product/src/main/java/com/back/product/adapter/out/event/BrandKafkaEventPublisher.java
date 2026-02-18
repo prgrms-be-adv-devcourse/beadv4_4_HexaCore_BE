@@ -6,7 +6,6 @@ import com.back.common.event.KafkaEventPublisher;
 import com.back.product.app.usecase.ProductOutboxUseCase;
 import com.back.product.domain.ProductOutboxEvent;
 import com.back.product.event.kafka.*;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,8 +13,6 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 import tools.jackson.databind.json.JsonMapper;
-
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
