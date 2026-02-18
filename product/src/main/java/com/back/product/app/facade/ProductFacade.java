@@ -3,15 +3,17 @@ package com.back.product.app.facade;
 import com.back.common.annotation.Loggable;
 import com.back.common.code.FailureCode;
 import com.back.common.exception.CustomException;
+import com.back.product.adapter.out.event.BrandSpringEventPublisher;
+import com.back.product.adapter.out.event.ProductSpringEventPublisher;
 import com.back.product.app.usecase.command.*;
 import com.back.product.domain.*;
 import com.back.product.dto.command.*;
 import com.back.product.dto.model.*;
 import com.back.product.dto.request.*;
 import com.back.product.dto.response.*;
-import com.back.product.dto.event.spring.ProductCreationCompletedEvent;
-import com.back.product.dto.event.spring.ProductDeletionCompletedEvent;
-import com.back.product.dto.event.spring.ProductUpdateCompletedEvent;
+import com.back.product.event.spring.ProductCreationCompletedEvent;
+import com.back.product.event.spring.ProductDeletionCompletedEvent;
+import com.back.product.event.spring.ProductUpdateCompletedEvent;
 import com.back.product.mapper.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +26,8 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class ProductFacade {
-    private final ApplicationEventPublisher applicationEventPublisher;
+    private final ProductSpringEventPublisher productSpringEventPublisher;
+    private final BrandSpringEventPublisher brandSpringEventPublisher;
 
     private final BrandUseCase brandUseCase;
     private final CategoryUseCase categoryUseCase;
@@ -38,7 +41,6 @@ public class ProductFacade {
     private final ProductInfoMapper productInfoMapper;
     private final ProductMapper productMapper;
     private final OptionMapper optionMapper;
-    private final SpringEventMapper springEventMapper;
 
     private final BrandDataCommandMapper brandDataCommandMapper;
     private final CategoryDataCommandMapper categoryDataCommandMapper;
@@ -59,6 +61,7 @@ public class ProductFacade {
     public BrandListResponseDto createBrands(@Valid BrandListCreateRequestDto request) {
         List<BrandDataCommand> brandsCommands = request.brands().stream().map(brandDataCommandMapper::toCommand).toList();
         List<BrandDto> brandDtos = brandUseCase.createBrands(brandsCommands);
+        brandSpringEventPublisher.sendCreatedEvent(brandDtos);
         return brandMapper.toListResponseDto(brandDtos);
     }
 
@@ -67,6 +70,7 @@ public class ProductFacade {
     public BrandResponseDto modifyBrand(Long brandId, @Valid BrandDataRequestDto request) {
         BrandDataCommand brandCommand = brandDataCommandMapper.toCommand(request);
         BrandDto brandDto = brandUseCase.modifyBrand(brandId, brandCommand);
+        brandSpringEventPublisher.sendUpdatedEvent(brandDto);
         return brandMapper.toResponseDto(brandDto);
     }
 
@@ -80,6 +84,8 @@ public class ProductFacade {
         }
 
         brandUseCase.deleteBrand(brandId);
+
+        brandSpringEventPublisher.sendDeletedEvent(brandId);
     }
 
     @Loggable
@@ -138,7 +144,8 @@ public class ProductFacade {
                 .map(productVariantCreateCommandMapper::toCommand).toList();
         List<ProductDto> productDtos = productUseCase.createMultipleProduct(productInfo, productVariantCreateCommands);
 
-        publishProductCreateEvent(productInfoDto, productDtos);
+        String thumbnailUrl = findThumbnailUrl(productDtos);
+        productSpringEventPublisher.sendCreatedEvent(productInfoDto, productDtos, thumbnailUrl);
 
         return productMapper.toResponseDto(productInfoDto, productDtos);
     }
@@ -158,7 +165,8 @@ public class ProductFacade {
                 .map(productVariantUpdateCommandMapper::toCommand).toList();
         List<ProductDto> productDtos = productUseCase.updateMultipleProduct(productInfo, productVariantUpdateCommands);
 
-        publishProductUpdateEvent(productInfoDto, productDtos);
+        String thumbnailUrl = findThumbnailUrl(productDtos);
+        productSpringEventPublisher.sendModifiedEvent(productInfoDto, productDtos, thumbnailUrl);
 
         return productMapper.toResponseDto(productInfoDto, productDtos);
     }
@@ -170,7 +178,7 @@ public class ProductFacade {
 
         productInfoUseCase.deleteProductInfo(productInfoId);
 
-        publishProductDeleteEvent(productInfoId);
+        productSpringEventPublisher.sendDeletedEvent(productInfoId);
     }
 
     @Loggable
@@ -254,36 +262,6 @@ public class ProductFacade {
     public OptionListResponseDto getOptions() {
         List<OptionDto> optionDtos = optionUseCase.findAllOptions();
         return optionMapper.toListResponseDto(optionDtos);
-    }
-
-    private void publishProductUpdateEvent(ProductInfoDto productInfoDto, List<ProductDto> productDtos) {
-        List<OptionDto> optionDtos = productDtos.stream()
-                .flatMap(productDto -> productDto.options().stream())
-                .toList();
-
-        String thumbnailUrl = findThumbnailUrl(productDtos);
-
-        ProductUpdateCompletedEvent event = springEventMapper.toProductUpdatedEvent(productInfoDto, optionDtos, thumbnailUrl);
-
-        applicationEventPublisher.publishEvent(event);
-    }
-
-    private void publishProductCreateEvent(ProductInfoDto productInfoDto, List<ProductDto> productDtos) {
-        List<OptionDto> optionDtos = productDtos.stream()
-                .flatMap(productDto -> productDto.options().stream())
-                .toList();
-
-        String thumbnailUrl = findThumbnailUrl(productDtos);
-
-        ProductCreationCompletedEvent event = springEventMapper.toProductCreatedEvent(productInfoDto, optionDtos, thumbnailUrl);
-
-        applicationEventPublisher.publishEvent(event);
-    }
-
-    private void publishProductDeleteEvent(Long productInfoId) {
-        ProductDeletionCompletedEvent event = springEventMapper.toProductDeletedEvent(productInfoId);
-
-        applicationEventPublisher.publishEvent(event);
     }
 
     private String findThumbnailUrl(List<ProductDto> productDtos) {

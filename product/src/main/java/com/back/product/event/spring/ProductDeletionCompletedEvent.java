@@ -1,4 +1,4 @@
-package com.back.product.dto.event.spring;
+package com.back.product.event.spring;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;

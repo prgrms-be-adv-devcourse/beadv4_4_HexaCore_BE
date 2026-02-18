@@ -2,6 +2,7 @@ package com.back.product.app;
 
 import com.back.common.code.FailureCode;
 import com.back.common.exception.CustomException;
+import com.back.product.adapter.out.event.BrandSpringEventPublisher;
 import com.back.product.app.facade.ProductFacade;
 import com.back.product.app.usecase.command.*;
 import org.junit.jupiter.api.DisplayName;
@@ -40,6 +41,9 @@ class ProductFacadeTest {
 
     @Mock
     private OptionUseCase optionUseCase;
+
+    @Mock
+    private BrandSpringEventPublisher brandSpringEventPublisher;
 
     @Nested
     @DisplayName("deleteOptionGroup 메서드")

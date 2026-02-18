@@ -1,4 +1,4 @@
-package com.back.product.dto.event.spring;
+package com.back.product.event.spring;
 
 import com.back.product.dto.model.OptionDto;
 import com.back.product.dto.model.ProductInfoDto;
@@ -12,7 +12,7 @@ import org.hibernate.validator.constraints.URL;
 import java.util.List;
 
 @Builder
-public record ProductUpdateCompletedEvent(
+public record ProductCreationCompletedEvent(
         @NotNull(message = "상품 정보 DTO는 필수입니다.")
         @Valid
         ProductInfoDto productInfoDto,

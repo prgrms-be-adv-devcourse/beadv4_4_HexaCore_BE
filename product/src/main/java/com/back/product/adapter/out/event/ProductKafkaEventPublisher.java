@@ -2,9 +2,9 @@ package com.back.product.adapter.out.event;
 
 import com.back.common.event.Envelope;
 import com.back.common.event.KafkaEventPublisher;
-import com.back.product.dto.event.kafka.ProductCreatedPayload;
-import com.back.product.dto.event.kafka.ProductDeletedPayload;
-import com.back.product.dto.event.kafka.ProductUpdatedPayload;
+import com.back.product.event.kafka.ProductCreatedPayload;
+import com.back.product.event.kafka.ProductDeletedPayload;
+import com.back.product.event.kafka.ProductUpdatedPayload;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

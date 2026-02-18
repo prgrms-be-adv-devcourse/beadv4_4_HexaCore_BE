@@ -1,20 +1,20 @@
 package com.back.product.app;
 
+import com.back.product.adapter.out.document.ProductDocumentRepository;
 import com.back.product.adapter.out.event.ProductKafkaEventPublisher;
 import com.back.product.app.usecase.command.ProductDocumentUseCase;
-import com.back.product.dto.event.kafka.ProductCreatedPayload;
-import com.back.product.dto.event.kafka.ProductDeletedPayload;
-import com.back.product.dto.event.kafka.ProductInfoPayload;
-import com.back.product.dto.event.kafka.ProductUpdatedPayload;
+import com.back.product.event.kafka.ProductCreatedPayload;
+import com.back.product.event.kafka.ProductDeletedPayload;
+import com.back.product.event.kafka.ProductInfoPayload;
+import com.back.product.event.kafka.ProductUpdatedPayload;
 import com.back.product.dto.model.BrandDto;
 import com.back.product.dto.model.CategoryDto;
 import com.back.product.dto.model.OptionDto;
 import com.back.product.dto.model.ProductInfoDto;
-import com.back.product.dto.event.spring.ProductCreationCompletedEvent;
-import com.back.product.dto.event.spring.ProductUpdateCompletedEvent;
-import com.back.product.dto.event.spring.ProductDeletionCompletedEvent;
+import com.back.product.event.spring.ProductCreationCompletedEvent;
+import com.back.product.event.spring.ProductUpdateCompletedEvent;
+import com.back.product.event.spring.ProductDeletionCompletedEvent;
 import jakarta.validation.ConstraintViolationException;
-import jakarta.validation.Validator;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -48,10 +48,20 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 @TestPropertySource(properties = {
         "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}",
         "spring.kafka.consumer.properties.spring.json.trusted.packages=*",
-        "spring.kafka.consumer.auto-offset-reset=earliest"
+        "spring.kafka.consumer.auto-offset-reset=earliest",
+
+        "spring.datasource.url=jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=MySQL",
+        "spring.datasource.driver-class-name=org.h2.Driver",
+        "spring.datasource.username=sa",
+        "spring.datasource.password=",
+        "spring.jpa.hibernate.ddl-auto=create-drop",
+        "spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.H2Dialect"
 })
 @EnableAspectJAutoProxy(proxyTargetClass = true) // CGLIB 프록시 사용
 class ProductSyncEventPublishTest {
+
+    @MockitoBean
+    private ProductDocumentRepository productDocumentRepository;
 
     @Autowired
     private ApplicationEventPublisher applicationEventPublisher;

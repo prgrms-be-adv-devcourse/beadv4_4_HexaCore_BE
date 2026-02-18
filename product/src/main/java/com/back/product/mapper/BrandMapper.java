@@ -3,7 +3,7 @@ package com.back.product.mapper;
 import com.back.product.document.ProductDocument;
 import com.back.product.domain.Brand;
 import com.back.product.dto.command.BrandDataCommand;
-import com.back.product.dto.event.kafka.BrandPayload;
+import com.back.product.event.kafka.BrandPayload;
 import com.back.product.dto.model.BrandDto;
 import com.back.product.dto.response.BrandListResponseDto;
 import com.back.product.dto.response.BrandResponseDto;

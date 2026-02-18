@@ -1,12 +1,12 @@
 package com.back.product.adapter.in.event;
 
 import com.back.product.adapter.out.event.ProductKafkaEventPublisher;
-import com.back.product.dto.event.kafka.ProductCreatedPayload;
-import com.back.product.dto.event.kafka.ProductDeletedPayload;
-import com.back.product.dto.event.kafka.ProductUpdatedPayload;
-import com.back.product.dto.event.spring.ProductCreationCompletedEvent;
-import com.back.product.dto.event.spring.ProductDeletionCompletedEvent;
-import com.back.product.dto.event.spring.ProductUpdateCompletedEvent;
+import com.back.product.event.kafka.ProductCreatedPayload;
+import com.back.product.event.kafka.ProductDeletedPayload;
+import com.back.product.event.kafka.ProductUpdatedPayload;
+import com.back.product.event.spring.ProductCreationCompletedEvent;
+import com.back.product.event.spring.ProductDeletionCompletedEvent;
+import com.back.product.event.spring.ProductUpdateCompletedEvent;
 import com.back.product.mapper.ProductPayloadMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
