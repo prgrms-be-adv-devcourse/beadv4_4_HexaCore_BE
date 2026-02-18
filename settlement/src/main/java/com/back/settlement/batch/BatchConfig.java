@@ -5,7 +5,7 @@ import org.springframework.batch.core.configuration.annotation.EnableBatchProces
 import org.springframework.batch.core.configuration.annotation.EnableJdbcJobRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
+
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.datasource.init.DataSourceInitializer;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
@@ -16,21 +16,7 @@ import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 public class BatchConfig {
 
     @Bean
-    @Profile("!prod")
-    public DataSourceInitializer notProdDataSourceInitializer(DataSource dataSource) {
-        ResourceDatabasePopulator populator = new ResourceDatabasePopulator();
-        populator.addScript(new ClassPathResource("/org/springframework/batch/core/schema-h2.sql"));
-        populator.setContinueOnError(true);
-
-        DataSourceInitializer initializer = new DataSourceInitializer();
-        initializer.setDataSource(dataSource);
-        initializer.setDatabasePopulator(populator);
-        return initializer;
-    }
-
-    @Bean
-    @Profile("prod")
-    public DataSourceInitializer prodDataSourceInitializer(DataSource dataSource) {
+    public DataSourceInitializer dataSourceInitializer(DataSource dataSource) {
         ResourceDatabasePopulator populator = new ResourceDatabasePopulator();
         populator.addScript(new ClassPathResource("/org/springframework/batch/core/schema-postgresql.sql"));
         populator.setContinueOnError(true);
