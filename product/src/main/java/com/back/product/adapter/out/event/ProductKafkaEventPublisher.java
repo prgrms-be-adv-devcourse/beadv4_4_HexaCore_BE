@@ -1,23 +1,35 @@
 package com.back.product.adapter.out.event;
 
 import com.back.common.event.Envelope;
+import com.back.common.event.EventName;
 import com.back.common.event.KafkaEventPublisher;
+import com.back.common.exception.CustomException;
+import com.back.product.app.usecase.ProductOutboxUseCase;
+import com.back.product.domain.ProductOutboxEvent;
 import com.back.product.event.kafka.ProductCreatedPayload;
 import com.back.product.event.kafka.ProductDeletedPayload;
 import com.back.product.event.kafka.ProductUpdatedPayload;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
+import tools.jackson.databind.json.JsonMapper;
 
 @Slf4j
 @Service
 @Validated
 @RequiredArgsConstructor
 public class ProductKafkaEventPublisher {
+    private final KafkaTemplate<String, EventName> kafkaTemplate;
     private final KafkaEventPublisher kafkaEventPublisher;
+
+    private final ProductOutboxUseCase productOutboxUseCase;
+
+    private final JsonMapper jsonMapper;
 
     @Value("${custom.kafka.topic.product-item-created}")
     private String productCreatedTopic;
@@ -28,12 +40,26 @@ public class ProductKafkaEventPublisher {
     @Value("${custom.kafka.topic.product-item-deleted}")
     private String productDeletedTopic;
 
-    public void sendCreatedEvent(@Valid ProductCreatedPayload payload) {
-        Envelope<ProductCreatedPayload> event = Envelope.of(productCreatedTopic, payload);
+    public void sendCreatedEvent(ProductOutboxEvent outbox) {
+        String eventId = outbox.getEventId();
+        try {
+            ProductCreatedPayload payload = jsonMapper.convertValue(outbox, ProductCreatedPayload.class);
 
-        kafkaEventPublisher.publish(productCreatedTopic, event);
+            Envelope<ProductCreatedPayload> event = Envelope.of(eventId, productCreatedTopic, payload);
 
-        log.info("[ProductKafkaEventPublisher] Sent ProductCreatedPayload for productInfoId: {}", payload.productInfo().productInfoId());
+            kafkaTemplate.send(productCreatedTopic, event).whenComplete((result, exception) -> {
+                if (exception == null) {
+                    productOutboxUseCase.markAsSucceeded(eventId);
+                    log.info("[ProductKafkaEventPublisher] Publish ProductCreatedEvent Successful. EventId: {}", eventId);
+                } else {
+                    productOutboxUseCase.markAsFailed(eventId);
+                    log.error("[ProductKafkaEventPublisher] Publish ProductCreatedEvent Failed. EventId: {}, Error: {}", eventId, exception.getMessage(), exception);
+                }
+            });
+        } catch (Exception e) {
+            productOutboxUseCase.markAsFailed(eventId);
+            log.error("[ProductKafkaEventPublisher] Publish ProductCreatedEvent Failed. EventId: {}, Error: {}", eventId, e.getMessage(), e);
+        }
     }
 
     public void sendModifiedEvent(@Valid ProductUpdatedPayload payload) {

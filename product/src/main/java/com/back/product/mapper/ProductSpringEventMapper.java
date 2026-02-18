@@ -8,6 +8,7 @@ import com.back.product.dto.model.ProductInfoDto;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.UUID;
 
 @Component
 public class ProductSpringEventMapper {
@@ -20,7 +21,10 @@ public class ProductSpringEventMapper {
     }
 
     public ProductCreationCompletedEvent toProductCreatedEvent(ProductInfoDto productInfoDto, List<OptionDto> optionDtos, String thumbnailUrl) {
+        String eventId = UUID.randomUUID().toString();
+
         return ProductCreationCompletedEvent.builder()
+                .eventId(eventId)
                 .productInfoDto(productInfoDto)
                 .optionDtos(optionDtos)
                 .thumbnailUrl(thumbnailUrl)

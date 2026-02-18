@@ -13,6 +13,9 @@ import java.util.List;
 
 @Builder
 public record ProductCreationCompletedEvent(
+        @NotEmpty(message = "이벤트 아이디는 필수입니다.")
+        String eventId,
+
         @NotNull(message = "상품 정보 DTO는 필수입니다.")
         @Valid
         ProductInfoDto productInfoDto,
