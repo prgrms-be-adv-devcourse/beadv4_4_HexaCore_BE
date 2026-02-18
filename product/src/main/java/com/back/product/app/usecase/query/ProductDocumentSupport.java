@@ -20,30 +20,15 @@ public class ProductDocumentSupport {
     private final ElasticsearchOperations elasticsearchOperations;
 
     @Transactional(readOnly = true)
-    public PageImpl<ProductDocument> findProductPage(Query searchQuery, ProductSortType sort, Long page, Long size) {
-        Pageable pageable = buildPageable(sort, page, size);
-
-        searchQuery.setPageable(pageable);
-
+    public PageImpl<ProductDocument> findProductPage(Query searchQuery) {
         SearchHits<ProductDocument> searchHits = elasticsearchOperations.search(searchQuery, ProductDocument.class);
 
-        List<ProductDocument> content = searchHits.getSearchHits() .stream()
+        List<ProductDocument> content = searchHits.getSearchHits().stream()
                 .map(SearchHit::getContent) .toList();
 
-        return new PageImpl<>(content, pageable, searchHits.getTotalHits());
-    }
+        Pageable pageable = searchQuery.getPageable();
+        long totalHits = searchHits.getTotalHits();
 
-    private Pageable buildPageable(ProductSortType sortType, Long page, Long size) {
-        // 정렬 조건 (기본 정렬: 최신순)
-        Sort sort = Sort.by(
-                ProductSortType.LATEST.getDirection(),
-                ProductSortType.LATEST.getFieldName()
-        );
-        if (sortType != null) {
-            sort = Sort.by(sortType.getDirection(), sortType.getFieldName());
-        }
-
-        // 페이징
-        return PageRequest.of(page.intValue(), size.intValue(), sort);
+        return new PageImpl<>(content, pageable, totalHits);
     }
 }

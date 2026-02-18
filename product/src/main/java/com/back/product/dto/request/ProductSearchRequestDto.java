@@ -30,6 +30,35 @@ public record ProductSearchRequestDto(
 
         // 4. 정렬 조건
         @NotNull(message = "Sort cannot be null")
-        ProductSortType sort
+        ProductSortType sort,
+
+        // 5. 페이징
+        @Min(value = 0, message = "Page must be greater than or equal to 0")
+        Long page,
+
+        @Min(value = 5, message = "Size must be greater than or equal to 5")
+        @Max(value = 50, message = "Size must be less than or equal to 50")
+        Long size
 ) {
+    public ProductSearchRequestDto {
+        if (brandIds == null) {
+            brandIds = List.of();
+        }
+
+        if (categoryIds == null) {
+            categoryIds = List.of();
+        }
+
+        if (page == null) {
+            page = 0L;
+        }
+
+        if (size == null) {
+            size = 20L;
+        }
+
+        if (sort == null) {
+            sort = ProductSortType.LATEST;
+        }
+    }
 }

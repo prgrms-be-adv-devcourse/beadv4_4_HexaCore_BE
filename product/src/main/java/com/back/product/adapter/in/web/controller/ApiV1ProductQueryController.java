@@ -7,6 +7,7 @@ import com.back.product.adapter.in.web.api.ProductQueryApiController;
 import com.back.product.app.facade.ProductFacade;
 import com.back.product.dto.request.ProductQueryRequestDto;
 import com.back.product.dto.request.ProductSearchRequestDto;
+import com.back.product.dto.request.PageRequestDto;
 import com.back.product.dto.response.ProductDetailListResponseDto;
 import com.back.product.dto.response.ProductDetailResponseDto;
 import com.back.product.dto.response.ProductSearchResponseDto;
@@ -32,12 +33,19 @@ public class ApiV1ProductQueryController implements ProductQueryApiController {
     @Override
     @Loggable
     @GetMapping
-    public CommonResponse<ProductSearchResponseDto> searchProducts(
-       @ModelAttribute @Valid ProductSearchRequestDto request,
-       @RequestParam(defaultValue = "0") Long page,
-       @RequestParam(defaultValue = "10") Long size
-     ) {
-        ProductSearchResponseDto response = productFacade.findProductPage(request, page, size);
+    public CommonResponse<ProductSearchResponseDto> searchProducts(@ModelAttribute @Valid ProductSearchRequestDto request) {
+        ProductSearchResponseDto response = productFacade.findProductPage(request);
+        return CommonResponse.success(SuccessCode.OK, response);
+    }
+
+    @Override
+    @Loggable
+    @GetMapping("/{productInfoId}/similar")
+    public CommonResponse<ProductSearchResponseDto> findSimilarProducts(
+            @PathVariable Long productInfoId,
+            @Valid @ModelAttribute PageRequestDto request
+    ) {
+        ProductSearchResponseDto response = productFacade.findSimilarProducts(productInfoId, request);
         return CommonResponse.success(SuccessCode.OK, response);
     }
 

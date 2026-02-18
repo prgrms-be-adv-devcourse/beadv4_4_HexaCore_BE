@@ -2,6 +2,7 @@ dependencies {
     implementation project(':common')
     implementation project(':security')
     implementation project(":image")
+    implementation project(":ai")
 
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
