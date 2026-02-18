@@ -1,6 +1,8 @@
 package com.back.product.adapter.in.event;
 
 import com.back.product.adapter.out.event.BrandKafkaEventPublisher;
+import com.back.product.app.usecase.ProductOutboxUseCase;
+import com.back.product.domain.ProductOutboxEvent;
 import com.back.product.event.kafka.BrandCreatedPayload;
 import com.back.product.event.kafka.BrandDeletedPayload;
 import com.back.product.event.kafka.BrandUpdatedPayload;
@@ -9,6 +11,7 @@ import com.back.product.event.spring.BrandDeletionCompletedEvent;
 import com.back.product.event.spring.BrandUpdateCompletedEvent;
 import com.back.product.mapper.BrandPayloadMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
@@ -17,13 +20,15 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @RequiredArgsConstructor
 public class BrandSpringEventListener {
     private final BrandKafkaEventPublisher eventPublisher;
+    private final ProductOutboxUseCase productOutboxUseCase;
     private final BrandPayloadMapper brandPayloadMapper;
 
+    @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleBrandCreation(BrandCreationCompletedEvent event) {
-        BrandCreatedPayload payload = brandPayloadMapper.toCreatedPayload(event.brands());
+        ProductOutboxEvent outbox = productOutboxUseCase.findRecordedEvent(event.eventId());
 
-        eventPublisher.sendCreatedEvent(payload);
+        eventPublisher.sendCreatedEvent(outbox);
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
