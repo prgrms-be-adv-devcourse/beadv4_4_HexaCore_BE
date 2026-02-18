@@ -4,6 +4,7 @@ import com.back.product.app.usecase.ProductOutboxUseCase;
 import com.back.product.dto.model.BrandDto;
 import com.back.product.event.kafka.*;
 import com.back.product.event.spring.BrandCreationCompletedEvent;
+import com.back.product.event.spring.BrandDeletionCompletedEvent;
 import com.back.product.event.spring.BrandUpdateCompletedEvent;
 import com.back.product.mapper.BrandPayloadMapper;
 import lombok.RequiredArgsConstructor;
@@ -48,5 +49,18 @@ public class BrandOutboxListener {
         productOutboxUseCase.record(eventId, eventType, aggregateId, payload);
 
         log.info("[BrandOutboxListener] handleBrandUpdate payload: {}", payload);
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
+    public void handleBrandDeletion(BrandDeletionCompletedEvent event) {
+        BrandDeletedPayload payload = brandPayloadMapper.toDeletedPayload(event.brandId());
+
+        String eventId = event.eventId();
+        String eventType = event.getClass().getSimpleName();
+        String aggregateId = String.valueOf(event.brandId());
+
+        productOutboxUseCase.record(eventId, eventType, aggregateId, payload);
+
+        log.info("[BrandOutboxListener] handleBrandDeletion payload: {}", payload);
     }
 }

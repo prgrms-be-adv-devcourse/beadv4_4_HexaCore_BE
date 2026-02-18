@@ -31,7 +31,10 @@ public class BrandSpringEventMapper {
     }
 
     public BrandDeletionCompletedEvent toBrandDeletedEvent(Long brandId) {
+        String eventId = UUID.randomUUID().toString();
+
         return BrandDeletionCompletedEvent.builder()
+                .eventId(eventId)
                 .brandId(brandId)
                 .build();
     }

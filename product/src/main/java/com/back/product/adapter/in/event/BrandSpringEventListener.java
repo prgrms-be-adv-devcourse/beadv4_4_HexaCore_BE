@@ -39,10 +39,11 @@ public class BrandSpringEventListener {
         eventPublisher.sendUpdatedEvent(outbox);
     }
 
+    @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleBrandDeletion(BrandDeletionCompletedEvent event) {
-        BrandDeletedPayload payload = brandPayloadMapper.toDeletedPayload(event.brandId());
+        ProductOutboxEvent outbox = productOutboxUseCase.findRecordedEvent(event.eventId());
 
-        eventPublisher.sendDeletedEvent(payload);
+        eventPublisher.sendDeletedEvent(outbox);
     }
 }
