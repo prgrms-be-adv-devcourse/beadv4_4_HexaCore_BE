@@ -60,12 +60,26 @@ public class BrandKafkaEventPublisher {
         }
     }
 
-    public void sendUpdatedEvent(@Valid BrandUpdatedPayload payload) {
-        Envelope<BrandUpdatedPayload> event = Envelope.of(brandUpdatedTopic, payload);
+    public void sendUpdatedEvent(ProductOutboxEvent outbox) {
+        String eventId = outbox.getEventId();
+        try {
+            BrandUpdatedPayload payload = jsonMapper.readValue(outbox.getPayload(), BrandUpdatedPayload.class);
 
-        kafkaEventPublisher.publish(brandUpdatedTopic, event);
+            Envelope<BrandUpdatedPayload> event = Envelope.of(eventId, brandUpdatedTopic, payload);
 
-        log.info("[BrandKafkaEventPublisher] Sent BrandUpdatedPayload brandName: {}", payload.brand().name());
+            kafkaTemplate.send(brandUpdatedTopic, event).whenComplete((result, exception) -> {
+                if (exception == null) {
+                    productOutboxUseCase.markAsSucceeded(eventId);
+                    log.info("[ProductKafkaEventPublisher] Publish BrandUpdatedEvent Successful. EventId: {}", eventId);
+                } else {
+                    productOutboxUseCase.markAsFailed(eventId);
+                    log.error("[ProductKafkaEventPublisher] Publish BrandUpdatedEvent Failed. EventId: {}, Error: {}", eventId, exception.getMessage(), exception);
+                }
+            });
+        } catch (Exception e) {
+            productOutboxUseCase.markAsFailed(eventId);
+            log.error("[ProductKafkaEventPublisher] Publish BrandUpdatedEvent Failed. EventId: {}, Error: {}", eventId, e.getMessage(), e);
+        }
     }
 
     public void sendDeletedEvent(@Valid BrandDeletedPayload payload) {

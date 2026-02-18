@@ -31,11 +31,12 @@ public class BrandSpringEventListener {
         eventPublisher.sendCreatedEvent(outbox);
     }
 
+    @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleBrandUpdate(BrandUpdateCompletedEvent event) {
-        BrandUpdatedPayload payload = brandPayloadMapper.toUpdatePayload(event.brand());
+        ProductOutboxEvent outbox = productOutboxUseCase.findRecordedEvent(event.eventId());
 
-        eventPublisher.sendUpdatedEvent(payload);
+        eventPublisher.sendUpdatedEvent(outbox);
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
