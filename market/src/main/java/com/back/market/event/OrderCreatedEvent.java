@@ -7,7 +7,7 @@ import com.back.market.domain.enums.BiddingPosition;
 import java.math.BigDecimal;
 
 public record OrderCreatedEvent(
-        Long biddingId,
+        Long orderId,
         Long buyerUserId,
         Long sellerUserId,
         Long productId,

@@ -72,7 +72,7 @@ public class MarketKafkaEventPublisher {
     public void sendSellBiddingCreated(SellBiddingCreatedEvent event) {
         //검증 및 예외처리
         if (event.biddingId() == null || event.sellerUserId() == null) {
-            log.error("[MarketKafkaEventPublisher] 필수 데이터 누락: biddingId={}, sellerId={}", event.biddingId(), event.sellerUserId());
+            log.error("[MarketKafkaEventPublisher] 필수 데이터 누락: orderId={}, sellerId={}", event.biddingId(), event.sellerUserId());
             throw new CustomException(FailureCode.MISSING_REQUIRED_FIELD);
         }
 
@@ -99,16 +99,16 @@ public class MarketKafkaEventPublisher {
     public void sendOrderCreated(OrderCreatedEvent event) {
 
         // 검증
-        if (event.biddingId() == null || event.buyerUserId() == null || event.sellerUserId() == null || event.productName() == null) {
+        if (event.orderId() == null || event.buyerUserId() == null || event.sellerUserId() == null || event.productName() == null) {
 
             log.error("[MarketKafkaEventPublisher] 주문 생성 이벤트 필수 데이터 누락: orderId={}, buyer={}, seller={}, product={}",
-                    event.biddingId(), event.buyerUserId(), event.sellerUserId(), event.productName());
+                    event.orderId(), event.buyerUserId(), event.sellerUserId(), event.productName());
             throw new CustomException(FailureCode.MISSING_REQUIRED_FIELD);
         }
 
         // 페이로드 생성 및 전송
         OrderCreatedPayload payload = OrderCreatedPayload.of(
-                event.biddingId(),
+                event.orderId(),
                 event.buyerUserId(),
                 event.sellerUserId(),
                 event.productId(),
