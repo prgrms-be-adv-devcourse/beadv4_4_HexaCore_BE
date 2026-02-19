@@ -1,5 +1,6 @@
 package com.back.chat.domain.entity;
 
+import com.back.chat.domain.ChatRoomStatus;
 import com.back.common.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -17,6 +18,10 @@ public class ChatRoom extends BaseTimeEntity {
 
     @Column(name = "brand_id", nullable = false, unique = true)
     private Long brandId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ChatRoomStatus status = ChatRoomStatus.ACTIVE;
 
     public ChatRoom(Long brandId) {
         this.brandId = brandId;

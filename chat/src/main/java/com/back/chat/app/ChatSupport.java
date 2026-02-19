@@ -60,4 +60,8 @@ public class ChatSupport {
     public int insertIfNotExists(Long brandId) {
         return chatRoomRepository.insertIfNotExists(brandId);
     }
+
+    public int deleteChatRoomByBrandId(Long brandId) {
+        return chatRoomRepository.deleteByBrandId(brandId);
+    }
 }

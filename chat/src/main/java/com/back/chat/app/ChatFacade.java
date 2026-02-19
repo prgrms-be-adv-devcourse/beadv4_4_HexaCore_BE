@@ -23,6 +23,7 @@ public class ChatFacade {
     private final ChatReportMessageUseCase chatReportMessageUseCase;
     private final ChatDeleteMessageUseCase chatDeleteMessageUseCase;
     private final CreateChatRoomsUseCase createChatRoomsUseCase;
+    private final DeleteChatRoomUseCase deleteChatRoomUseCase;
 
     @Transactional
     public ChatRoomEnterResponseDto enterChatRoom(Long brandId, Long userId){
@@ -54,4 +55,8 @@ public class ChatFacade {
         createChatRoomsUseCase.createChatRooms(brandIds);
     }
 
+    @Transactional
+    public int deleteChatRoom(Long brandId) {
+        return deleteChatRoomUseCase.deleteChatRoom(brandId);
+    }
 }
