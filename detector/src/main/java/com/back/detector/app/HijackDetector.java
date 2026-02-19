@@ -117,7 +117,7 @@ public class HijackDetector {
                 long registeredTime = Long.parseLong(timestamp);
                 long hoursPassed = (System.currentTimeMillis() - registeredTime) / (1000 * 60 * 60);
 
-                sendEmailNotification(userId, userEmail, getAllIps(userId), currentIp,
+                return sendEmailNotification(userId, userEmail, getAllIps(userId), currentIp,
                         transactionAmount, NEW_IP_TRANSACTION_LIMIT, currentAccumulated, hoursPassed);
             }
 
