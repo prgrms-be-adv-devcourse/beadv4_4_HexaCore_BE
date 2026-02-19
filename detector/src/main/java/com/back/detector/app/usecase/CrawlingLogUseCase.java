@@ -15,10 +15,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class CrawlingLogUseCase {
 
     private final CrawlingLogRepository crawlingLogRepository;
+    private final CrawlingLogMapper crawlingLogMapper;
 
     @Transactional
     public void save(String ip, CrawlingBanLevel banLevel) {
-        crawlingLogRepository.save(CrawlingLogMapper.toCrawlingLog(ip, banLevel));
+        crawlingLogRepository.save(crawlingLogMapper.toCrawlingLog(ip, banLevel));
     }
 
     @Transactional(readOnly = true)

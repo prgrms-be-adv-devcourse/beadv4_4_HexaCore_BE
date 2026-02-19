@@ -15,10 +15,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class BidSpamLogUseCase {
 
     private final BidSpamLogRepository bidSpamLogRepository;
+    private final BidSpamLogMapper bidSpamLogMapper;
 
     @Transactional
     public void save(Long userId, BidSpamBanLevel banLevel) {
-        bidSpamLogRepository.save(BidSpamLogMapper.toBidSpamLog(userId, banLevel));
+        bidSpamLogRepository.save(bidSpamLogMapper.toBidSpamLog(userId, banLevel));
     }
 
     @Transactional(readOnly = true)

@@ -16,11 +16,12 @@ import java.math.BigDecimal;
 public class HijackLogUseCase {
 
     private final HijackLogRepository hijackLogRepository;
+    private final HijackLogMapper hijackLogMapper;
 
     @Transactional
     public void save(Long userId, String userEmail, String currentIp,
                      String existingIps, BigDecimal transactionAmount, String reason) {
-        hijackLogRepository.save(HijackLogMapper.toHijackLog(userId, userEmail, currentIp, existingIps, transactionAmount, reason));
+        hijackLogRepository.save(hijackLogMapper.toHijackLog(userId, userEmail, currentIp, existingIps, transactionAmount, reason));
     }
 
     @Transactional(readOnly = true)
