@@ -8,7 +8,6 @@ import com.back.cash.domain.Wallet;
 import com.back.cash.domain.enums.PayoutStatus;
 import com.back.cash.domain.enums.WalletType;
 import com.back.cash.domain.event.CashPayoutRequestedCommand;
-import com.back.cash.mapper.PayoutMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
