@@ -1,7 +1,10 @@
 package com.back.product.app;
 
 import com.back.product.adapter.out.document.ProductDocumentRepository;
+import com.back.product.adapter.out.persistence.ProductOutboxEventRepository;
 import com.back.product.app.usecase.ProductDocumentUseCase;
+import com.back.product.domain.ProductOutboxEvent;
+import com.back.product.dto.enums.OutboxEventStatus;
 import com.back.product.dto.model.BrandDto;
 import com.back.product.dto.model.CategoryDto;
 import com.back.product.dto.model.OptionDto;
@@ -66,6 +69,9 @@ class ProductSyncEventPublishTest {
     @Autowired
     private TransactionTemplate transactionTemplate;
 
+    @Autowired
+    private ProductOutboxEventRepository outboxRepository;
+
     @Nested
     @DisplayName("ProductCreatedEventTest 발행 및 구독 테스트")
     class ProductCreatedEventTest {
@@ -117,6 +123,9 @@ class ProductSyncEventPublishTest {
                 assertThat(infoDtoCaptor.getValue().name()).isEqualTo("TestProduct");
                 assertThat(optionsCaptor.getValue()).hasSize(1);
                 assertThat(urlCaptor.getValue()).isEqualTo("http://test.com/image.jpg");
+
+                ProductOutboxEvent outbox = outboxRepository.findByEventId(eventId).orElseThrow();
+                assertThat(outbox.getStatus()).isEqualTo(OutboxEventStatus.SUCCEEDED);
 
                 verifyNoMoreInteractions(productDocumentUseCase);
             });
@@ -173,6 +182,9 @@ class ProductSyncEventPublishTest {
                 assertThat(optionsCaptor.getValue()).hasSize(1);
                 assertThat(urlCaptor.getValue()).isEqualTo("http://test.com/updated_image.jpg");
 
+                ProductOutboxEvent outbox = outboxRepository.findByEventId(eventId).orElseThrow();
+                assertThat(outbox.getStatus()).isEqualTo(OutboxEventStatus.SUCCEEDED);
+
                 verifyNoMoreInteractions(productDocumentUseCase);
             });
         }
@@ -202,6 +214,9 @@ class ProductSyncEventPublishTest {
                 verify(productDocumentUseCase, times(1)).deleteProduct(idCaptor.capture());
 
                 assertThat(idCaptor.getValue()).isEqualTo(productInfoIdToDelete);
+
+                ProductOutboxEvent outbox = outboxRepository.findByEventId(eventId).orElseThrow();
+                assertThat(outbox.getStatus()).isEqualTo(OutboxEventStatus.SUCCEEDED);
 
                 verifyNoMoreInteractions(productDocumentUseCase);
             });
