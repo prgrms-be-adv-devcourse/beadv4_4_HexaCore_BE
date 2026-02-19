@@ -103,7 +103,7 @@ public class MarketFacade {
      * @param userId 사용자ID
      * @param orderId 주문ID
      */
-//    @Transactional
+    @Transactional
     public void completeOrder(Long userId, Long orderId) {
 
         Order order = completeOrderUseCase.completeOrder(userId, orderId);
