@@ -5,6 +5,8 @@ import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import java.util.UUID;
+
 public final class KafkaListenerUtil {
 
     private KafkaListenerUtil() {
@@ -33,5 +35,11 @@ public final class KafkaListenerUtil {
                 ack.acknowledge();
             }
         });
+    }
+
+    public static UUID safeUuid(String s) {
+        if (s == null || s.isBlank()) return null;
+        try { return UUID.fromString(s.trim()); }
+        catch (IllegalArgumentException e) { return null; }
     }
 }
