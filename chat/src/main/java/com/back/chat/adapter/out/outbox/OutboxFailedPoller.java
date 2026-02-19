@@ -1,6 +1,6 @@
 package com.back.chat.adapter.out.outbox;
 
-import com.back.chat.event.ChatEventType;
+import com.back.chat.domain.event.ChatEventType;
 import com.back.common.chat.ChatDeadLetterPayload;
 import com.back.common.chat.ChatMessageBlindedKafkaEvent;
 import com.back.common.event.Envelope;

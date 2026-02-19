@@ -1,6 +1,5 @@
 package com.back.chat.domain;
 
-import com.back.chat.event.payload.ChatMessagePayload;
 import org.springframework.stereotype.Component;
 
 @Component
