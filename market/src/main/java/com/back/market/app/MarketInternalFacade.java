@@ -1,6 +1,7 @@
 package com.back.market.app;
 
 import com.back.common.dto.settlement.SettlementTargetOrder;
+import com.back.market.adapter.out.MarketUserRepository;
 import com.back.market.app.usecase.ConfirmPaymentUseCase;
 import com.back.common.dto.cash.request.PaymentCompletedRequestDto;
 import com.back.market.app.usecase.CreateCartUseCase;
@@ -25,6 +26,7 @@ public class MarketInternalFacade {
     private final GetSettlementDataUseCase getSettlementDataUseCase;
     private final CreateMarketMemberUseCase createMarketMemberUseCase;
     private final CreateCartUseCase createCartUseCase;
+    private final MarketUserRepository userRepository;
 
     /**
      * Cash 모듈로부터 결제 완료(입금 확인) 통지를 수신하여 주문 상태를 확정
@@ -52,6 +54,13 @@ public class MarketInternalFacade {
      */
     @Transactional
     public void handleUserCreatedEvent(UserCreatedPayload payload) {
+
+        // 이미 존재하는 유저인지 확인 (멱등성 체크)
+        if (userRepository.existsById(payload.id())) {
+            log.warn("[MarketInternalFacade] 이미 존재하는 유저입니다. UserId: {}", payload.id());
+            return;
+        }
+
         // payload의 값을 사용해 이벤트 생성
         UserCreatedResultPayload command = UserCreatedResultPayload.of(
                 payload.id(),
