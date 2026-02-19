@@ -17,6 +17,7 @@ import org.springframework.data.redis.core.ValueOperations;
 
 import java.util.concurrent.TimeUnit;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
@@ -36,7 +37,7 @@ class CrawlingDetectorTest {
     private static final String TEST_IP = "192.168.1.1";
     private static final String COUNT_KEY = DetectorRedisKey.CRAWLING_COUNT.getKey(TEST_IP);
     private static final String BAN_KEY = DetectorRedisKey.CRAWLING_BAN.getKey(TEST_IP);
-    private static final String BAN_COUNT_KEY = BAN_KEY + ":count";
+    private static final String BAN_COUNT_KEY = DetectorRedisKey.CRAWLING_BAN_COUNT.getKey(TEST_IP);
     private static final int MAX_ATTEMPTS = DetectorPolicy.CRAWLING.getMaxAttempts();
     private static final int TIME_WINDOW = DetectorPolicy.CRAWLING.getTimeWindowMinutes();
 
@@ -84,25 +85,27 @@ class CrawlingDetectorTest {
         }
 
         @Test
-        @DisplayName("카운트가 maxAttempts(100)를 초과하면 CrawlingDetectedException을 발생시켜야 한다")
+        @DisplayName("카운트가 maxAttempts(100)를 초과하면 banLevel을 반환해야 한다")
         void should_throw_when_count_exceeds_max_attempts() {
             when(detectorRedisTemplate.hasKey(BAN_KEY)).thenReturn(false);
             when(valueOperations.increment(COUNT_KEY)).thenReturn((long) MAX_ATTEMPTS + 1);
             when(valueOperations.increment(BAN_COUNT_KEY)).thenReturn(1L);
 
-            assertThatThrownBy(() -> crawlingDetector.checkCrawling(TEST_IP))
-                    .isInstanceOf(CrawlingDetectedException.class);
+            CrawlingBanLevel result = crawlingDetector.checkCrawling(TEST_IP);
+
+            assertThat(result).isNotNull();
         }
 
         @Test
-        @DisplayName("카운트가 매우 높아도(예: 500) CrawlingDetectedException을 발생시켜야 한다")
+        @DisplayName("카운트가 매우 높아도(예: 500) banLevel을 반환해야 한다")
         void should_throw_when_count_is_very_high() {
             when(detectorRedisTemplate.hasKey(BAN_KEY)).thenReturn(false);
             when(valueOperations.increment(COUNT_KEY)).thenReturn(500L);
             when(valueOperations.increment(BAN_COUNT_KEY)).thenReturn(1L);
 
-            assertThatThrownBy(() -> crawlingDetector.checkCrawling(TEST_IP))
-                    .isInstanceOf(CrawlingDetectedException.class);
+            CrawlingBanLevel result = crawlingDetector.checkCrawling(TEST_IP);
+
+            assertThat(result).isNotNull();
         }
     }
 
@@ -138,9 +141,9 @@ class CrawlingDetectorTest {
             when(valueOperations.increment(COUNT_KEY)).thenReturn((long) MAX_ATTEMPTS + 1);
             when(valueOperations.increment(BAN_COUNT_KEY)).thenReturn(1L);
 
-            assertThatThrownBy(() -> crawlingDetector.checkCrawling(TEST_IP))
-                    .isInstanceOf(CrawlingDetectedException.class);
+            CrawlingBanLevel result = crawlingDetector.checkCrawling(TEST_IP);
 
+            assertThat(result).isEqualTo(CrawlingBanLevel.FIRST);
             verify(detectorRedisTemplate).expire(BAN_KEY, CrawlingBanLevel.FIRST.getBanMinutes(), TimeUnit.MINUTES);
             verify(detectorRedisTemplate).delete(COUNT_KEY);
         }
@@ -152,9 +155,9 @@ class CrawlingDetectorTest {
             when(valueOperations.increment(COUNT_KEY)).thenReturn((long) MAX_ATTEMPTS + 1);
             when(valueOperations.increment(BAN_COUNT_KEY)).thenReturn(2L);
 
-            assertThatThrownBy(() -> crawlingDetector.checkCrawling(TEST_IP))
-                    .isInstanceOf(CrawlingDetectedException.class);
+            CrawlingBanLevel result = crawlingDetector.checkCrawling(TEST_IP);
 
+            assertThat(result).isEqualTo(CrawlingBanLevel.SECOND);
             verify(detectorRedisTemplate).expire(BAN_KEY, CrawlingBanLevel.SECOND.getBanMinutes(), TimeUnit.MINUTES);
             verify(detectorRedisTemplate).delete(COUNT_KEY);
         }

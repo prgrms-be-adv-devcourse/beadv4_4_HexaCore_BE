@@ -1,5 +1,6 @@
 package com.back.detector.app;
 
+import com.back.detector.domain.BidSpamBanLevel;
 import com.back.detector.domain.DetectorPolicy;
 import com.back.detector.domain.enums.DetectorRedisKey;
 import com.back.detector.exception.BidSpamException;
@@ -16,7 +17,7 @@ import org.springframework.data.redis.core.ValueOperations;
 
 import java.util.concurrent.TimeUnit;
 
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.Mockito.*;
 
@@ -64,10 +65,10 @@ class BidSpamDetectorTest {
         void should_pass_when_count_equals_max_attempts() {
             when(valueOperations.increment(EXPECTED_KEY)).thenReturn((long) MAX_ATTEMPTS);
 
-            assertThatCode(() -> bidSpamDetector.checkBidSpam(USER_ID)).doesNotThrowAnyException(); // 예외 없음
+            assertThatCode(() -> bidSpamDetector.checkBidSpam(USER_ID)).doesNotThrowAnyException();
 
             verify(valueOperations).increment(EXPECTED_KEY);
-            verify(detectorRedisTemplate).expire(EXPECTED_KEY, TIME_WINDOW, TimeUnit.MINUTES);
+            verify(detectorRedisTemplate, never()).expire(EXPECTED_KEY, TIME_WINDOW, TimeUnit.MINUTES);
         }
     }
 
@@ -78,21 +79,25 @@ class BidSpamDetectorTest {
     class WhenBidCountExceedsLimit {
 
         @Test
-        @DisplayName("카운트가 maxAttempts(5)를 초과하면 BidSpamException을 발생시켜야 한다")
+        @DisplayName("카운트가 maxAttempts(5)를 초과하면 banLevel을 반환해야 한다")
         void should_throw_when_count_exceeds_max_attempts() {
-            when(valueOperations.increment(EXPECTED_KEY)).thenReturn((long) MAX_ATTEMPTS + 1); // 6
+            when(valueOperations.increment(EXPECTED_KEY)).thenReturn((long) MAX_ATTEMPTS + 1);
+            when(valueOperations.increment(DetectorRedisKey.BID_BAN_COUNT.getKey(USER_ID))).thenReturn(1L);
 
-            assertThatThrownBy(() -> bidSpamDetector.checkBidSpam(USER_ID))
-                    .isInstanceOf(BidSpamException.class);
+            BidSpamBanLevel result = bidSpamDetector.checkBidSpam(USER_ID);
+
+            assertThat(result).isNotNull();
         }
 
         @Test
-        @DisplayName("카운트가 매우 높아도(예: 100) BidSpamException을 발생시켜야 한다")
+        @DisplayName("카운트가 매우 높아도(예: 100) banLevel을 반환해야 한다")
         void should_throw_when_count_is_very_high() {
             when(valueOperations.increment(EXPECTED_KEY)).thenReturn(100L);
+            when(valueOperations.increment(DetectorRedisKey.BID_BAN_COUNT.getKey(USER_ID))).thenReturn(1L);
 
-            assertThatThrownBy(() -> bidSpamDetector.checkBidSpam(USER_ID))
-                    .isInstanceOf(BidSpamException.class);
+            BidSpamBanLevel result = bidSpamDetector.checkBidSpam(USER_ID);
+
+            assertThat(result).isNotNull();
         }
     }
 
@@ -117,7 +122,7 @@ class BidSpamDetectorTest {
         @Test
         @DisplayName("increment 후 매번 expire를 갱신해야 한다 (slide window 방지)")
         void should_always_refresh_ttl_after_increment() {
-            when(valueOperations.increment(EXPECTED_KEY)).thenReturn(3L);
+            when(valueOperations.increment(EXPECTED_KEY)).thenReturn(1L);
 
             bidSpamDetector.checkBidSpam(USER_ID);
 
@@ -125,15 +130,15 @@ class BidSpamDetectorTest {
         }
 
         @Test
-        @DisplayName("스팸 감지되더라도 expire는 increment 직후 호출되어야 한다")
+        @DisplayName("스팸 감지 시 banLevel을 반환하고 expire는 첫 카운트에만 호출되어야 한다")
         void should_call_expire_even_when_spam_detected() {
             when(valueOperations.increment(EXPECTED_KEY)).thenReturn((long) MAX_ATTEMPTS + 1);
+            when(valueOperations.increment(DetectorRedisKey.BID_BAN_COUNT.getKey(USER_ID))).thenReturn(1L);
 
-            assertThatThrownBy(() -> bidSpamDetector.checkBidSpam(USER_ID))
-                    .isInstanceOf(BidSpamException.class);
+            BidSpamBanLevel result = bidSpamDetector.checkBidSpam(USER_ID);
 
-            // expire는 스팸 체크 if-블록 이전에 실행되므로 반드시 호출됨
-            verify(detectorRedisTemplate).expire(EXPECTED_KEY, TIME_WINDOW, TimeUnit.MINUTES);
+            assertThat(result).isNotNull();
+            verify(detectorRedisTemplate, never()).expire(EXPECTED_KEY, TIME_WINDOW, TimeUnit.MINUTES);
         }
     }
 
