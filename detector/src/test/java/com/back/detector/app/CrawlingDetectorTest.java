@@ -1,6 +1,7 @@
 package com.back.detector.app;
 
 import com.back.detector.domain.CrawlingBanLevel;
+import com.back.detector.domain.CrawlingDetectResult;
 import com.back.detector.domain.DetectorPolicy;
 import com.back.detector.domain.enums.DetectorRedisKey;
 import com.back.detector.exception.CrawlingDetectedException;
@@ -91,7 +92,7 @@ class CrawlingDetectorTest {
             when(valueOperations.increment(COUNT_KEY)).thenReturn((long) MAX_ATTEMPTS + 1);
             when(valueOperations.increment(BAN_COUNT_KEY)).thenReturn(1L);
 
-            CrawlingBanLevel result = crawlingDetector.checkCrawling(TEST_IP);
+            CrawlingDetectResult result = crawlingDetector.checkCrawling(TEST_IP);
 
             assertThat(result).isNotNull();
         }
@@ -103,7 +104,7 @@ class CrawlingDetectorTest {
             when(valueOperations.increment(COUNT_KEY)).thenReturn(500L);
             when(valueOperations.increment(BAN_COUNT_KEY)).thenReturn(1L);
 
-            CrawlingBanLevel result = crawlingDetector.checkCrawling(TEST_IP);
+            CrawlingDetectResult result = crawlingDetector.checkCrawling(TEST_IP);
 
             assertThat(result).isNotNull();
         }
@@ -141,9 +142,9 @@ class CrawlingDetectorTest {
             when(valueOperations.increment(COUNT_KEY)).thenReturn((long) MAX_ATTEMPTS + 1);
             when(valueOperations.increment(BAN_COUNT_KEY)).thenReturn(1L);
 
-            CrawlingBanLevel result = crawlingDetector.checkCrawling(TEST_IP);
+            CrawlingDetectResult result = crawlingDetector.checkCrawling(TEST_IP);
 
-            assertThat(result).isEqualTo(CrawlingBanLevel.FIRST);
+            assertThat(result.banLevel()).isEqualTo(CrawlingBanLevel.FIRST);
             verify(detectorRedisTemplate).expire(BAN_KEY, CrawlingBanLevel.FIRST.getBanMinutes(), TimeUnit.MINUTES);
             verify(detectorRedisTemplate).delete(COUNT_KEY);
         }
@@ -155,9 +156,9 @@ class CrawlingDetectorTest {
             when(valueOperations.increment(COUNT_KEY)).thenReturn((long) MAX_ATTEMPTS + 1);
             when(valueOperations.increment(BAN_COUNT_KEY)).thenReturn(2L);
 
-            CrawlingBanLevel result = crawlingDetector.checkCrawling(TEST_IP);
+            CrawlingDetectResult result = crawlingDetector.checkCrawling(TEST_IP);
 
-            assertThat(result).isEqualTo(CrawlingBanLevel.SECOND);
+            assertThat(result.banLevel()).isEqualTo(CrawlingBanLevel.SECOND);
             verify(detectorRedisTemplate).expire(BAN_KEY, CrawlingBanLevel.SECOND.getBanMinutes(), TimeUnit.MINUTES);
             verify(detectorRedisTemplate).delete(COUNT_KEY);
         }

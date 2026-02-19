@@ -8,10 +8,10 @@ import org.springframework.stereotype.Component;
 @Component
 public class CrawlingLogMapper {
 
-    public CrawlingLog toCrawlingLog(String ip, CrawlingBanLevel banLevel) {
+    public CrawlingLog toCrawlingLog(String ip, int requestCount, CrawlingBanLevel banLevel) {
         return CrawlingLog.builder()
                 .ipAddress(ip)
-                .requestCount(DetectorPolicy.CRAWLING.getMaxAttempts())
+                .requestCount(requestCount)
                 .timeWindowMinutes(DetectorPolicy.CRAWLING.getTimeWindowMinutes())
                 .banLevel(banLevel)
                 .build();

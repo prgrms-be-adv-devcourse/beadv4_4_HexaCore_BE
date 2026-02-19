@@ -1,6 +1,7 @@
 package com.back.detector.app;
 
 import com.back.detector.domain.CrawlingBanLevel;
+import com.back.detector.domain.CrawlingDetectResult;
 import com.back.detector.domain.DetectorPolicy;
 import com.back.detector.domain.enums.DetectorRedisKey;
 import com.back.detector.exception.CrawlingDetectedException;
@@ -23,7 +24,7 @@ public class CrawlingDetector {
      * 1단계: 1분 내 조회 횟수를 카운팅
      * 2단계: 횟수 초과 시 차단 카운트를 증가하고, 단계별 차단 시간 적용
      */
-    public CrawlingBanLevel checkCrawling(String ip) {
+    public CrawlingDetectResult checkCrawling(String ip) {
         if (isBanned(ip)) {
             throw new CrawlingDetectedException();
         }
@@ -37,7 +38,7 @@ public class CrawlingDetector {
 
         if (newCount > DetectorPolicy.CRAWLING.getMaxAttempts()) {
             CrawlingBanLevel level = applyBan(ip);
-            return level;
+            return new CrawlingDetectResult(level, newCount.intValue());
         }
         return null;
     }

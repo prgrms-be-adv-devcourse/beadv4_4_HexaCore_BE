@@ -4,7 +4,7 @@ import com.back.detector.app.usecase.BidSpamLogUseCase;
 import com.back.detector.app.usecase.CrawlingLogUseCase;
 import com.back.detector.app.usecase.HijackLogUseCase;
 import com.back.detector.domain.BidSpamBanLevel;
-import com.back.detector.domain.CrawlingBanLevel;
+import com.back.detector.domain.CrawlingDetectResult;
 import com.back.detector.domain.HijackDetectResult;
 import com.back.detector.dto.response.BidSpamLogResponse;
 import com.back.detector.dto.response.CrawlingLogResponse;
@@ -45,9 +45,9 @@ public class DetectorFacade {
 
     @Transactional
     public void detectCrawling(String ip) {
-        CrawlingBanLevel banLevel = crawlingDetector.checkCrawling(ip);
-        if (banLevel != null) {
-            crawlingLogUseCase.save(ip, banLevel);
+        CrawlingDetectResult result = crawlingDetector.checkCrawling(ip);
+        if (result != null) {
+            crawlingLogUseCase.save(ip, result.requestCount(), result.banLevel());
             throw new CrawlingDetectedException();
         }
     }

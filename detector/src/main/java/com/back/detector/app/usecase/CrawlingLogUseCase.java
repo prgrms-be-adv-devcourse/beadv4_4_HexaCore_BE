@@ -18,8 +18,8 @@ public class CrawlingLogUseCase {
     private final CrawlingLogMapper crawlingLogMapper;
 
     @Transactional
-    public void save(String ip, CrawlingBanLevel banLevel) {
-        crawlingLogRepository.save(crawlingLogMapper.toCrawlingLog(ip, banLevel));
+    public void save(String ip, int requestCount, CrawlingBanLevel banLevel) {
+        crawlingLogRepository.save(crawlingLogMapper.toCrawlingLog(ip, requestCount, banLevel));
     }
 
     @Transactional(readOnly = true)
