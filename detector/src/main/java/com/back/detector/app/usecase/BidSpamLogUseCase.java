@@ -1,0 +1,20 @@
+package com.back.detector.app.usecase;
+
+import com.back.detector.domain.BidSpamBanLevel;
+import com.back.detector.domain.BidSpamLogRepository;
+import com.back.detector.mapper.BidSpamLogMapper;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@RequiredArgsConstructor
+public class BidSpamLogUseCase {
+
+    private final BidSpamLogRepository bidSpamLogRepository;
+
+    @Transactional
+    public void save(Long userId, BidSpamBanLevel banLevel) {
+        bidSpamLogRepository.save(BidSpamLogMapper.toBidSpamLog(userId, banLevel));
+    }
+}

@@ -1,5 +1,6 @@
 package com.back.detector.app;
 
+import com.back.detector.app.usecase.BidSpamLogUseCase;
 import com.back.detector.app.usecase.CrawlingLogUseCase;
 import com.back.detector.app.usecase.HijackLogUseCase;
 import com.back.detector.domain.BidSpamBanLevel;
@@ -23,6 +24,7 @@ public class DetectorFacade {
     private final BidSpamDetector bidSpamDetector;
     private final CrawlingDetector crawlingDetector;
     private final HijackDetector hijackDetector;
+    private final BidSpamLogUseCase bidSpamLogUseCase;
     private final CrawlingLogUseCase crawlingLogUseCase;
     private final HijackLogUseCase hijackLogUseCase;
 
@@ -30,6 +32,7 @@ public class DetectorFacade {
     public void detectBidSpam(Long userId) {
         BidSpamBanLevel banLevel = bidSpamDetector.checkBidSpam(userId);
         if (banLevel != null) {
+            bidSpamLogUseCase.save(userId, banLevel);
             throw new BidSpamException();
         }
     }
