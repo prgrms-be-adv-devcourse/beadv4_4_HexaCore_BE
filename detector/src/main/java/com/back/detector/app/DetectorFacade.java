@@ -24,18 +24,14 @@ public class DetectorFacade {
     private final CrawlingDetector crawlingDetector;
     private final HijackDetector hijackDetector;
 
-    @Around("@annotation(com.back.detector.annotation.CheckBidSpam)")
-    public Object detectBidSpam(ProceedingJoinPoint joinPoint) throws Throwable {
-        Long userId = getCurrentUserId();
+    @Transactional
+    public void detectBidSpam(Long userId) {
         bidSpamDetector.checkBidSpam(userId);
-        return joinPoint.proceed();
     }
 
-    @Around("@annotation(com.back.detector.annotation.CheckCrawling)")
-    public Object detectCrawling(ProceedingJoinPoint joinPoint) throws Throwable {
-        String ip = getCurrentIp();
+    @Transactional
+    public void detectCrawling(String ip) {
         crawlingDetector.checkCrawling(ip);
-        return joinPoint.proceed();
     }
 
     /**
@@ -50,39 +46,4 @@ public class DetectorFacade {
         hijackDetector.checkHijack(userId, userEmail, ip, transactionAmount);
     }
 
-    private Long getCurrentUserId() {
-        return SecurityHelper.getCurrentUserId();
-    }
-
-    private String getCurrentIp() {
-        ServletRequestAttributes attributes =
-                (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-        if (attributes == null) {
-            throw new IllegalStateException("HTTP 요청 컨텍스트가 없습니다");
-        }
-        HttpServletRequest request = attributes.getRequest();
-        return IpAddressExtractor.extractClientIp(request);
-    }
-
-    /**
-     * 예외 로깅용 : getCurrentIp()가 실패해도 로그는 남기려는 용도
-     */
-    private String getCurrentIpSafe() {
-        try {
-            return getCurrentIp();
-        } catch (Exception e) {
-            return "unknown";
-        }
-    }
-
-    /**
-     * 예외 로깅용 : getCurrentUserId()가 실패해도 로그는 남기려는 용도
-     */
-    private Long getCurrentUserIdSafe() {
-        try {
-            return getCurrentUserId();
-        } catch (Exception e) {
-            return null;
-        }
-    }
 }
