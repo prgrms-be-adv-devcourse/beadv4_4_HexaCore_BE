@@ -45,12 +45,12 @@ public class CashPayoutUseCase {
 
         wallet.deposit(command.totalNetAmount());
 
-        Wallet systemwallet = walletSupport.getSystemWallet();
-        systemwallet.deposit(command.totalFeeAmount());
+        Wallet systemWallet = walletSupport.getSystemWallet();
+        systemWallet.deposit(command.totalFeeAmount());
 
         // 로그 기록
         cashLogSupport.recordSettlementPayoutLog(wallet, command.totalNetAmount(), command.settlementId());
-        cashLogSupport.recordSystemSettlementPayoutLog(systemwallet, command.totalFeeAmount(), command.settlementId());
+        cashLogSupport.recordSystemSettlementPayoutLog(systemWallet, command.totalFeeAmount(), command.settlementId());
 
         payout.markDone();
     }
