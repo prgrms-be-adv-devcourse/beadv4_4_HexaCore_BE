@@ -10,5 +10,6 @@ public enum OutboxEventStatus {
     INIT,
     SUCCEEDED,
     FAILED,
+    PROCESSING,
     DEAD
 }

@@ -1,12 +1,10 @@
 package com.back.product.adapter.in.event;
 
 import com.back.product.adapter.out.event.ProductKafkaEventPublisher;
-import com.back.product.app.usecase.ProductOutboxUseCase;
-import com.back.product.domain.ProductOutboxEvent;
+import com.back.product.app.facade.ProductOutboxFacade;
 import com.back.product.event.spring.ProductCreationCompletedEvent;
 import com.back.product.event.spring.ProductDeletionCompletedEvent;
 import com.back.product.event.spring.ProductUpdateCompletedEvent;
-import com.back.product.mapper.ProductPayloadMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -17,30 +15,23 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @RequiredArgsConstructor
 public class ProductSpringEventListener {
     private final ProductKafkaEventPublisher eventPublisher;
-    private final ProductOutboxUseCase productOutboxUseCase;
-    private final ProductPayloadMapper productPayloadMapper;
+    private final ProductOutboxFacade productOutboxFacade;
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleProductCreation(ProductCreationCompletedEvent event) {
-        ProductOutboxEvent outbox = productOutboxUseCase.findRecordedEvent(event.eventId());
-
-        eventPublisher.sendCreatedEvent(outbox);
+        productOutboxFacade.publish(event.eventId(), eventPublisher::sendCreatedEvent);
     }
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleProductUpdate(ProductUpdateCompletedEvent event) {
-        ProductOutboxEvent outbox = productOutboxUseCase.findRecordedEvent(event.eventId());
-
-        eventPublisher.sendModifiedEvent(outbox);
+        productOutboxFacade.publish(event.eventId(), eventPublisher::sendModifiedEvent);
     }
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleProductDelete(ProductDeletionCompletedEvent event) {
-        ProductOutboxEvent outbox = productOutboxUseCase.findRecordedEvent(event.eventId());
-
-        eventPublisher.sendDeletedEvent(outbox);
+        productOutboxFacade.publish(event.eventId(), eventPublisher::sendDeletedEvent);
     }
 }

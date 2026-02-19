@@ -48,6 +48,10 @@ public class ProductOutboxEvent extends BaseTimeEntity {
         this.status = OutboxEventStatus.SUCCEEDED;
     }
 
+    public void markAsProcessing() {
+        this.status = OutboxEventStatus.PROCESSING;
+    }
+
     public void markAsFailed() {
         this.status = OutboxEventStatus.FAILED;
         this.retryCount += 1L;
