@@ -25,7 +25,7 @@ public class MarketKafkaEventListener {
             groupId = "${spring.kafka.consumer.group-id}"
     )
     public void consumeUserCreatedEvent(String message) {
-        log.info("[MarketUserEventListener] UserCreatedEvent 수신: {}", message);
+        log.info("[MarketKafkaEventListener] UserCreatedEvent 수신: {}", message);
 
         Envelope<UserCreatedPayload> event;
 
@@ -33,7 +33,7 @@ public class MarketKafkaEventListener {
             event = jsonMapper.readValue(message, new TypeReference<>() {
             });
         } catch (Exception e) {
-            log.error("[MarketUserEventListener] UserCreatedEvent 파싱 중 오류 발생: {}", e.getMessage());
+            log.error("[MarketKafkaEventListener] UserCreatedEvent 파싱 중 오류 발생: {}", e.getMessage());
             throw new CustomException(FailureCode.INTERNAL_SERVER_ERROR);
         }
 
