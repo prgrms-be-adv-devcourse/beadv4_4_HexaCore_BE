@@ -36,7 +36,7 @@ public class CashPayoutListener {
         }
 
         CashPayoutRequestedPayload data = event.payload();
-        CashPayoutRequestedCommand cashPayoutRequestedCommand = PayoutMapper.toCashPayoutRequestedEvent(data);
+        CashPayoutRequestedCommand cashPayoutRequestedCommand = PayoutMapper.toCashPayoutRequestedCommand(data);
 
         cashPayoutFacade.requestPayout(cashPayoutRequestedCommand);
 
