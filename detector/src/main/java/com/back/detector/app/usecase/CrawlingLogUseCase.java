@@ -2,8 +2,11 @@ package com.back.detector.app.usecase;
 
 import com.back.detector.domain.CrawlingBanLevel;
 import com.back.detector.domain.CrawlingLogRepository;
+import com.back.detector.dto.response.CrawlingLogResponse;
 import com.back.detector.mapper.CrawlingLogMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,5 +19,11 @@ public class CrawlingLogUseCase {
     @Transactional
     public void save(String ip, CrawlingBanLevel banLevel) {
         crawlingLogRepository.save(CrawlingLogMapper.toCrawlingLog(ip, banLevel));
+    }
+
+    @Transactional(readOnly = true)
+    public Page<CrawlingLogResponse> findPageByCreatedAtDesc(Pageable pageable) {
+        return crawlingLogRepository.findAll(pageable)
+                .map(CrawlingLogResponse::from);
     }
 }

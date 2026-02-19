@@ -2,8 +2,11 @@ package com.back.detector.app.usecase;
 
 import com.back.detector.domain.BidSpamBanLevel;
 import com.back.detector.domain.BidSpamLogRepository;
+import com.back.detector.dto.response.BidSpamLogResponse;
 import com.back.detector.mapper.BidSpamLogMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,5 +19,11 @@ public class BidSpamLogUseCase {
     @Transactional
     public void save(Long userId, BidSpamBanLevel banLevel) {
         bidSpamLogRepository.save(BidSpamLogMapper.toBidSpamLog(userId, banLevel));
+    }
+
+    @Transactional(readOnly = true)
+    public Page<BidSpamLogResponse> findPageByCreatedAtDesc(Pageable pageable) {
+        return bidSpamLogRepository.findAll(pageable)
+                .map(BidSpamLogResponse::from);
     }
 }

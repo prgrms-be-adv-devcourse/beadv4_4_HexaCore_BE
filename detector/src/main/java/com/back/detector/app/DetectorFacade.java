@@ -6,8 +6,14 @@ import com.back.detector.app.usecase.HijackLogUseCase;
 import com.back.detector.domain.BidSpamBanLevel;
 import com.back.detector.domain.CrawlingBanLevel;
 import com.back.detector.domain.HijackDetectResult;
+import com.back.detector.dto.response.BidSpamLogResponse;
+import com.back.detector.dto.response.CrawlingLogResponse;
+import com.back.detector.dto.response.HijackLogResponse;
 import com.back.detector.exception.BidSpamException;
 import com.back.detector.exception.CrawlingDetectedException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -60,6 +66,18 @@ public class DetectorFacade {
             hijackLogUseCase.save(result.userId(), result.userEmail(), result.currentIp(),
                     result.existingIps(), result.transactionAmount(), result.reason());
         }
+    }
+
+    public Page<BidSpamLogResponse> findLatestBidSpamLogs(int page, int size) {
+        return bidSpamLogUseCase.findPageByCreatedAtDesc(PageRequest.of(page, size, Sort.by("createdAt").descending()));
+    }
+
+    public Page<CrawlingLogResponse> findLatestCrawlingLogs(int page, int size) {
+        return crawlingLogUseCase.findPageByCreatedAtDesc(PageRequest.of(page, size, Sort.by("createdAt").descending()));
+    }
+
+    public Page<HijackLogResponse> findLatestHijackLogs(int page, int size) {
+        return hijackLogUseCase.findPageByCreatedAtDesc(PageRequest.of(page, size, Sort.by("createdAt").descending()));
     }
 
 }
