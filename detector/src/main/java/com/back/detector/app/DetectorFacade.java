@@ -1,7 +1,9 @@
 package com.back.detector.app;
 
 import com.back.detector.app.usecase.CrawlingLogUseCase;
+import com.back.detector.app.usecase.HijackLogUseCase;
 import com.back.detector.domain.CrawlingBanLevel;
+import com.back.detector.domain.HijackDetectResult;
 import com.back.detector.exception.CrawlingDetectedException;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +22,7 @@ public class DetectorFacade {
     private final CrawlingDetector crawlingDetector;
     private final HijackDetector hijackDetector;
     private final CrawlingLogUseCase crawlingLogUseCase;
+    private final HijackLogUseCase hijackLogUseCase;
 
     @Transactional
     public void detectBidSpam(Long userId) {
@@ -44,7 +47,11 @@ public class DetectorFacade {
      */
     @Transactional
     public void detectHijack(Long userId, String userEmail, String ip, BigDecimal transactionAmount) {
-        hijackDetector.checkHijack(userId, userEmail, ip, transactionAmount);
+        HijackDetectResult result = hijackDetector.checkHijack(userId, userEmail, ip, transactionAmount);
+        if (result != null) {
+            hijackLogUseCase.save(result.userId(), result.userEmail(), result.currentIp(),
+                    result.existingIps(), result.transactionAmount(), result.reason());
+        }
     }
 
 }
