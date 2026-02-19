@@ -1,5 +1,7 @@
 package com.back.detector.app;
 
+import com.back.detector.domain.HijackLog;
+import com.back.detector.domain.HijackLogRepository;
 import com.back.detector.domain.enums.DetectorRedisKey;
 import com.back.detector.dto.HijackDetectedEvent;
 import jakarta.transaction.Transactional;
@@ -19,6 +21,8 @@ import java.util.concurrent.TimeUnit;
 public class HijackDetector {
 
     private final RedisTemplate<String, String> detectorRedisTemplate;
+
+    private final HijackLogRepository hijackLogRepository;
 
     private static final BigDecimal NEW_IP_TRANSACTION_LIMIT = new BigDecimal("200000");
     private static final int IP_HISTORY_DAYS = 90;
@@ -173,6 +177,16 @@ public class HijackDetector {
                     previousAmount.longValue(), currentAmount.longValue(), 
                     total.longValue(), limit.longValue(), hoursPassed);
         }
+
+        // 로그 저장
+        hijackLogRepository.save(HijackLog.builder()
+                .userId(userId)
+                .userEmail(userEmail)
+                .currentIp(currentIp)
+                .existingIps(existingIps)
+                .transactionAmount(currentAmount)
+                .reason(reason)
+                .build());
 
         // 이벤트 발행
         HijackDetectedEvent event = new HijackDetectedEvent(
