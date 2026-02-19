@@ -11,6 +11,7 @@ public enum DetectorRedisKey {
     BID_BAN_COUNT("bid:ban:count"),
     CRAWLING_COUNT("crawl:count:"),
     CRAWLING_BAN("crawl:ban:"),
+    CRAWLING_BAN_COUNT("crawl:ban:count"),
     TRUSTED_IP("trusted:ips:"),
     NEW_IP_TIMESTAMP("new:ip:timestamp:"),
     NEW_IP_AMOUNT("new:ip:amount:");

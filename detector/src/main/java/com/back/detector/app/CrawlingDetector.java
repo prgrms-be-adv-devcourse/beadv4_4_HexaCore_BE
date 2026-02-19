@@ -59,8 +59,7 @@ public class CrawlingDetector {
         String countKey = DetectorRedisKey.CRAWLING_COUNT.getKey(ip);
 
         // 차단 횟수 카운트 키 (만료 없이 유지)
-        String banCountKey = banKey + ":count";
-        Long banCount = detectorRedisTemplate.opsForValue().increment(banCountKey);
+        Long banCount = detectorRedisTemplate.opsForValue().increment(DetectorRedisKey.CRAWLING_BAN_COUNT.getKey(ip));
 
         CrawlingBanLevel level = CrawlingBanLevel.of(banCount);
 
