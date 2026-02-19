@@ -54,8 +54,7 @@ public class DetectorEventHandler {
                     event.reason()
             );
 
-            // TODO: 실제 이메일 발송 로직 구현
-            // emailService.sendHijackAlert(event);
+            // TODO: 운영 환경에서 실제 이메일 발송 로직 구현
 
             log.info("[계정 탈취 의심 이메일 발송 완료] userId: {}, email: {}",
                     event.userId(), event.email());
