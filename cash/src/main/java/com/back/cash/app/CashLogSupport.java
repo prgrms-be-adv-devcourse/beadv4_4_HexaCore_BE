@@ -100,14 +100,31 @@ public class CashLogSupport {
 
     public void recordSettlementPayoutLog(
             Wallet payeeWallet,
-            BigDecimal amount,
+            BigDecimal totalNetAmount,
             Long settlementId
     ) {
         CashLog log = CashLog.builder()
                 .wallet(payeeWallet)
-                .amount(amount)
+                .amount(totalNetAmount)
                 .balance(payeeWallet.getBalance())
                 .type(Type.SETTLEMENT_PRINCIPAL)
+                .relType(RelType.SETTLEMENT)
+                .relId(settlementId)
+                .build();
+
+        cashLogRepository.save(log);
+    }
+
+    public void recordSystemSettlementPayoutLog(
+            Wallet systemWallet,
+            BigDecimal totalFeeAmount,
+            Long settlementId
+    ) {
+        CashLog log = CashLog.builder()
+                .wallet(systemWallet)
+                .amount(totalFeeAmount)
+                .balance(systemWallet.getBalance())
+                .type(Type.SETTLEMENT_FEE)
                 .relType(RelType.SETTLEMENT)
                 .relId(settlementId)
                 .build();
