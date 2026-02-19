@@ -2,12 +2,14 @@ package com.back.product.adapter.out.persistence;
 
 import com.back.product.domain.ProductOutboxEvent;
 import com.back.product.dto.enums.OutboxEventStatus;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 public interface ProductOutboxEventRepository extends JpaRepository<ProductOutboxEvent, Long> {
@@ -24,4 +26,11 @@ public interface ProductOutboxEventRepository extends JpaRepository<ProductOutbo
             @Param("eventId") String eventId,
             @Param("status") OutboxEventStatus status,
             @Param("expiredAt") LocalDateTime expiredAt);
+
+    @Query("""
+                SELECT p FROM ProductOutboxEvent p
+                WHERE (p.status = 'INIT' OR p.status = 'FAILED' OR p.status = 'DEAD')
+                AND p.createdAt < :threshold ORDER BY p.createdAt ASC
+            """)
+    List<ProductOutboxEvent> findEventIdsToRetry(@Param("threshold") LocalDateTime threshold, Pageable pageable);
 }

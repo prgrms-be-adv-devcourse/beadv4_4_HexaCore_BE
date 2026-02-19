@@ -13,6 +13,8 @@ import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +22,7 @@ import org.springframework.validation.annotation.Validated;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
@@ -75,5 +78,15 @@ public class ProductOutboxUseCase {
     public ProductOutboxEvent findRecordedEvent(@NotEmpty String eventId) {
         return productOutboxEventRepository.findByEventId(eventId)
                 .orElseThrow(() -> new CustomException(FailureCode.PRODUCT_OUTBOX_NOT_FOUND));
+    }
+
+    @Loggable
+    @Transactional(readOnly = true)
+    public List<ProductOutboxEvent> findEventIds(Long size) {
+        Pageable pageable = PageRequest.of(0, Math.toIntExact(size));
+
+        LocalDateTime threshold = LocalDateTime.now().minusMinutes(eventExpireMinutes);
+
+        return productOutboxEventRepository.findEventIdsToRetry(threshold, pageable);
     }
 }

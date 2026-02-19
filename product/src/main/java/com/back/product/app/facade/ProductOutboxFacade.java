@@ -39,6 +39,7 @@ public class ProductOutboxFacade {
         } catch (Exception e) {
             productOutboxUseCase.complete(eventId, OutboxEventStatus.FAILED);
             log.info("[ProductOutboxUseCase] {}-{} publish failed: {}", outbox.getEventType(), outbox.getEventId(), e.getMessage(), e);
+            throw e;
         }
     }
 }
