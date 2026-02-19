@@ -7,6 +7,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum DetectorRedisKey {
     BID_COUNT("bid:count:"),
+    BID_BAN("bid:ban:"),
+    BID_BAN_COUNT("bid:ban:count"),
     CRAWLING_COUNT("crawl:count:"),
     CRAWLING_BAN("crawl:ban:"),
     TRUSTED_IP("trusted:ips:"),

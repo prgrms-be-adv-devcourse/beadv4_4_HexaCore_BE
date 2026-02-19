@@ -2,8 +2,10 @@ package com.back.detector.app;
 
 import com.back.detector.app.usecase.CrawlingLogUseCase;
 import com.back.detector.app.usecase.HijackLogUseCase;
+import com.back.detector.domain.BidSpamBanLevel;
 import com.back.detector.domain.CrawlingBanLevel;
 import com.back.detector.domain.HijackDetectResult;
+import com.back.detector.exception.BidSpamException;
 import com.back.detector.exception.CrawlingDetectedException;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +28,10 @@ public class DetectorFacade {
 
     @Transactional
     public void detectBidSpam(Long userId) {
-        bidSpamDetector.checkBidSpam(userId);
+        BidSpamBanLevel banLevel = bidSpamDetector.checkBidSpam(userId);
+        if (banLevel != null) {
+            throw new BidSpamException();
+        }
     }
 
     @Transactional

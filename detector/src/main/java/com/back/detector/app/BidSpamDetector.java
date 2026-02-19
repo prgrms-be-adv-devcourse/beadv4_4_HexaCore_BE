@@ -1,5 +1,6 @@
 package com.back.detector.app;
 
+import com.back.detector.domain.BidSpamBanLevel;
 import com.back.detector.domain.DetectorPolicy;
 import com.back.detector.domain.enums.DetectorRedisKey;
 import com.back.detector.exception.BidSpamException;
@@ -16,19 +17,47 @@ import java.util.concurrent.TimeUnit;
 public class BidSpamDetector {
     private final RedisTemplate<String, String> detectorRedisTemplate;
 
-    public void checkBidSpam(Long userId) {
-        String key = DetectorRedisKey.BID_COUNT.getKey(userId);
-        Long newCount = detectorRedisTemplate.opsForValue().increment(key);
-
-        detectorRedisTemplate.expire(key,
-                DetectorPolicy.BID_SPAM.getTimeWindowMinutes(),
-                TimeUnit.MINUTES);
-
-        if(newCount > DetectorPolicy.BID_SPAM.getMaxAttempts()) {
-            // TODO: event를 사용한 경고, 밴 구현
+    public BidSpamBanLevel checkBidSpam(Long userId) {
+        if (isBanned(userId)) {
             throw new BidSpamException();
         }
 
+        String countKey = DetectorRedisKey.BID_COUNT.getKey(userId);
+        Long newCount = detectorRedisTemplate.opsForValue().increment(countKey);
+
+        if (newCount == 1) {
+            detectorRedisTemplate.expire(countKey,
+                    DetectorPolicy.BID_SPAM.getTimeWindowMinutes(),
+                    TimeUnit.MINUTES);
+        }
+
+        if (newCount > DetectorPolicy.BID_SPAM.getMaxAttempts()) {
+            return applyBan(userId);
+        }
+
+        return null;
     }
 
+    private boolean isBanned(Long userId) {
+        String banKey = DetectorRedisKey.BID_BAN.getKey(userId);
+        return Boolean.TRUE.equals(detectorRedisTemplate.hasKey(banKey));
+    }
+
+    private BidSpamBanLevel applyBan(Long userId) {
+        String banKey = DetectorRedisKey.BID_BAN.getKey(userId);
+        String countKey = DetectorRedisKey.BID_COUNT.getKey(userId);
+
+        String banCountKey = DetectorRedisKey.BID_BAN_COUNT.getKey(userId);
+        Long banCount = detectorRedisTemplate.opsForValue().increment(banCountKey);
+
+        BidSpamBanLevel level = BidSpamBanLevel.of(banCount);
+
+        detectorRedisTemplate.opsForValue().set(banKey, "banned");
+        detectorRedisTemplate.expire(banKey, level.getBanMinutes(), TimeUnit.MINUTES);
+
+        detectorRedisTemplate.delete(countKey);
+
+        log.warn("[입찰 스팸 차단] userId: {}, 차단 단계: {}, 차단 시간: {}분", userId, level.name(), level.getBanMinutes());
+        return level;
+    }
 }
