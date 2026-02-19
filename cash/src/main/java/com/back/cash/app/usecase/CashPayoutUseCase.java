@@ -69,7 +69,7 @@ public class CashPayoutUseCase {
 
         if (gross.compareTo(calculatedGross) != 0) {
             log.warn("정산 금액 불일치 - 검증대상(gross): {}, 기대합계(net+fee): {} [net: {}, fee: {}]",
-                    gross, gross.compareTo(net.add(fee)), net, fee);
+                    gross, calculatedGross, net, fee);
             throw new BadRequestException(FailureCode.INVALID_AMOUNT);
         }
     }
