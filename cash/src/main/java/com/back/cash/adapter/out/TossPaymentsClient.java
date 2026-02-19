@@ -19,7 +19,6 @@ import java.util.Map;
 public class TossPaymentsClient {
 
     private final RestClient restClient;
-    private final String secretKey;
     private final JsonMapper jsonMapper;
 
     public TossPaymentsClient(
@@ -28,8 +27,10 @@ public class TossPaymentsClient {
             @Value("${toss.connect-timeout:5000}") int connectTimeout,
             @Value("${toss.read-timeout:30000}") int readTimeout,
             JsonMapper jsonMapper) {
-        this.secretKey = secretKey;
         this.jsonMapper = jsonMapper;
+
+        String authorization = "Basic " + Base64.getEncoder()
+                .encodeToString((secretKey + ":").getBytes(StandardCharsets.UTF_8));
 
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
         factory.setConnectTimeout(Duration.ofMillis(connectTimeout));
@@ -38,17 +39,14 @@ public class TossPaymentsClient {
         this.restClient = RestClient.builder()
                 .baseUrl(baseUrl)
                 .requestFactory(factory)
+                .defaultHeader("Authorization", authorization)
                 .build();
     }
 
     public void confirm(String paymentKey, String orderId, BigDecimal amount) {
-        String basic = Base64.getEncoder()
-                .encodeToString((secretKey + ":").getBytes(StandardCharsets.UTF_8));
-
         try {
             restClient.post()
                     .uri("/v1/payments/confirm")
-                    .header("Authorization", "Basic " + basic)
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(Map.of(
                             "paymentKey", paymentKey,
@@ -75,4 +73,3 @@ public class TossPaymentsClient {
 
     record TossErrorDto(String code, String message) {}
 }
-
