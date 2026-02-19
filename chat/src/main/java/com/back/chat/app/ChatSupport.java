@@ -56,4 +56,9 @@ public class ChatSupport {
     public int deleteIfNotDeleted(Long messageId) {
         return chatMessageRepository.deleteIfNotDeleted(messageId);
     }
+
+    public void saveChatRooms(List<ChatRoom> chatRooms) {
+        chatRoomRepository.saveAll(chatRooms);
+    }
+
 }

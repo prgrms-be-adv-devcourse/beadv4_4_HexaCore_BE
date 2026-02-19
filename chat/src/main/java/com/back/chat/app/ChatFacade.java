@@ -11,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class ChatFacade {
@@ -20,6 +22,7 @@ public class ChatFacade {
     private final ChatGetHistoryUseCase chatGetHistoryUseCase;
     private final ChatReportMessageUseCase chatReportMessageUseCase;
     private final ChatDeleteMessageUseCase chatDeleteMessageUseCase;
+    private final CreateChatRoomsUseCase createChatRoomsUseCase;
 
     @Transactional
     public ChatRoomEnterResponseDto enterChatRoom(Long brandId, Long userId){
@@ -45,4 +48,10 @@ public class ChatFacade {
     public void deleteMessage(Long userId, Long messageId) {
         chatDeleteMessageUseCase.deleteMessage(userId, messageId);
     }
+
+    @Transactional
+    public void createChatRoomsIfAbsent(List<Long> brandIds) {
+        createChatRoomsUseCase.createChatRooms(brandIds);
+    }
+
 }
