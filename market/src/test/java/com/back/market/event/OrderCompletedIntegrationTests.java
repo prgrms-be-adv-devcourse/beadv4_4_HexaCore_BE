@@ -28,10 +28,8 @@ import java.math.BigDecimal;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Slf4j
-@Rollback(false)
 @SpringBootTest(properties = "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}") // 가상 브로커 주소를 자동 주입
 @ActiveProfiles("test")
-@Transactional
 @EmbeddedKafka(
         partitions = 1,
         topics = {"market.order.completed"} // 토픽만 지정하면 포트는 랜덤으로 잡힙니다.
@@ -50,6 +48,8 @@ public class OrderCompletedIntegrationTests {
     private BiddingRepository biddingRepository; // 연관 관계 저장을 위해 주입
 
     @Test
+    @Transactional
+    @Rollback(false)
     @DisplayName("통합 테스트: 구매 확정 시 DB 상태가 변경되고 실제 Kafka로 이벤트가 발행되어야 한다")
     void completeOrder_RealInfrastructure_Success() throws InterruptedException {
         // 1. 기초 데이터 저장 (User)
