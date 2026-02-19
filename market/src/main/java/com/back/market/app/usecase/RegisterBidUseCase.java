@@ -16,10 +16,12 @@ import com.back.market.dto.request.BiddingRequestDto;
 import com.back.common.dto.cash.request.PayAndHoldRequestDto;
 import com.back.common.dto.cash.response.PayAndHoldResponseDto;
 import com.back.market.dto.response.MarketPaymentResponseDto;
+import com.back.market.event.SellBiddingCreatedEvent;
 import com.back.market.mapper.BiddingMapper;
 import com.back.market.mapper.CashRequestMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,6 +39,7 @@ public class RegisterBidUseCase {
     private final CashRequestMapper cashRequestMapper;
     private final MarketCashAdapter marketCashAdapter;
     private final MarketSupport marketSupport;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * MARKET-010: 구매 입찰 등록
@@ -110,6 +113,9 @@ public class RegisterBidUseCase {
         Bidding bidding = biddingMapper.toEntity(requestDto, user, product, BiddingPosition.SELL);
         bidding.changeStatus(BiddingStatus.PROCESS); // 판매 입찰은 결제 과정이 없으므로 즉시 활성화
         Bidding savedBidding = biddingRepository.save(bidding);
+
+        // 엔티티 정보로 스프링 이벤트 발행
+        eventPublisher.publishEvent(SellBiddingCreatedEvent.of(savedBidding));
 
         // 가짜 Cash 응답 생성 (판매는 결제 완료 상태이므로 cash 모듈과 통신 필요없음)
         PayAndHoldResponseDto cashResponse = PayAndHoldResponseDto.of(
