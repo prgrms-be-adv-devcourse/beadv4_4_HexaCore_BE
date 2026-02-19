@@ -115,18 +115,7 @@ public class RegisterBidUseCase {
         Bidding savedBidding = biddingRepository.save(bidding);
 
         // 엔티티 정보로 스프링 이벤트 발행
-        eventPublisher.publishEvent(SellBiddingCreatedEvent.of(
-                savedBidding.getId(),
-                savedBidding.getMarketUser().getId(),
-                savedBidding.getMarketProduct().getId(),
-                savedBidding.getMarketProduct().getName(),
-                savedBidding.getMarketProduct().getProductNumber(),
-                savedBidding.getMarketProduct().getProductOption(),
-                savedBidding.getMarketProduct().getBrandName(),
-                savedBidding.getMarketProduct().getCategoryName(),
-                savedBidding.getMarketProduct().getThumbnailImage(),
-                savedBidding.getPrice()
-        ));
+        eventPublisher.publishEvent(SellBiddingCreatedEvent.of(savedBidding));
 
         // 가짜 Cash 응답 생성 (판매는 결제 완료 상태이므로 cash 모듈과 통신 필요없음)
         PayAndHoldResponseDto cashResponse = PayAndHoldResponseDto.of(
