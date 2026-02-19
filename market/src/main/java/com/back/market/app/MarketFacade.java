@@ -1,18 +1,13 @@
 package com.back.market.app;
 
-import com.back.market.app.usecase.CancelBidUseCase;
-import com.back.market.app.usecase.GetInstantPriceUseCase;
-import com.back.market.app.usecase.MatchInstantTradeUseCase;
-import com.back.market.app.usecase.RegisterBidUseCase;
-import com.back.common.event.KafkaEventPublisher;
-import com.back.common.market.event.OrderCompletedEvent;
+import com.back.common.dto.cash.response.PaymentCancelResponseDto;
 import com.back.market.app.usecase.*;
 import com.back.market.domain.Order;
 import com.back.market.dto.request.BiddingRequestDto;
 import com.back.market.dto.response.*;
-import com.back.common.dto.cash.response.PaymentCancelResponseDto;
+import com.back.market.event.OrderCompletedEvent;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -29,10 +24,7 @@ public class MarketFacade {
     private final CancelBidUseCase cancelBidUseCase;
     private final CompleteOrderUseCase completeOrderUseCase;
     private final GetOrdersUseCase getOrdersUseCase;
-
-    @Value("${custom.kafka.topic.market-order-completed}")
-    private String orderCompletedTopic;
-    private final KafkaEventPublisher kafkaEventPublisher;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * MARKET-010: 구매 입찰 등록
@@ -107,24 +99,25 @@ public class MarketFacade {
     }
 
     /**
-     * MARKET: 구매 확정 + 정산 모듈에 이벤트 전송
+     * MARKET: 구매 확정 + spring event 발행
      * @param userId 사용자ID
      * @param orderId 주문ID
      */
+//    @Transactional
     public void completeOrder(Long userId, Long orderId) {
 
         Order order = completeOrderUseCase.completeOrder(userId, orderId);
 
-        OrderCompletedEvent event = new OrderCompletedEvent(
+        eventPublisher.publishEvent(OrderCompletedEvent.of(
                 order.getId(),
                 order.getSellBidding().getMarketProduct().getId(),
                 order.getBuyBidding().getMarketUser().getId(),
                 order.getSellBidding().getMarketUser().getId(),
                 order.getSellBidding().getMarketUser().getName(),
                 order.getPrice(),
+                order.getOrderStatus(),
                 LocalDateTime.now()
-        );
-        kafkaEventPublisher.publish(orderCompletedTopic, event);
+        ));
     }
 
     /**

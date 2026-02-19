@@ -1,4 +1,4 @@
-package com.back.market.dto.payload;
+package com.back.market.event.payload;
 
 import com.back.common.event.KafkaPayload;
 

@@ -7,8 +7,8 @@ import com.back.market.app.usecase.CreateCartUseCase;
 import com.back.market.app.usecase.CreateMarketMemberUseCase;
 import com.back.market.app.usecase.GetSettlementDataUseCase;
 import com.back.market.domain.MarketUser;
-import com.back.market.dto.payload.UserCreatedPayload;
-import com.back.market.event.UserCreatedEvent;
+import com.back.market.event.payload.UserCreatedPayload;
+import com.back.market.event.resultpayload.UserCreatedResultPayload;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -53,7 +53,7 @@ public class MarketInternalFacade {
     @Transactional
     public void handleUserCreatedEvent(UserCreatedPayload payload) {
         // payload의 값을 사용해 이벤트 생성
-        UserCreatedEvent event = new UserCreatedEvent(
+        UserCreatedResultPayload command = UserCreatedResultPayload.of(
                 payload.id(),
                 payload.name(),
                 payload.email(),
@@ -62,13 +62,13 @@ public class MarketInternalFacade {
         );
 
         // 회원 정보 복제
-        MarketUser user = createMarketMemberUseCase.createMarketMember(event);
+        MarketUser user = createMarketMemberUseCase.createMarketMember(command);
 
         // 해당 회원의 장바구니 생성
         if (user != null) {
             createCartUseCase.createCart(user);
         } else {
-            log.warn("[MarketInternalFacade] market_member 복제 실패, cart 생성 건너뜀: userId = {}", event.id());
+            log.warn("[MarketInternalFacade] market_member 복제 실패, cart 생성 건너뜀: userId = {}", command.id());
         }
     }
 }
