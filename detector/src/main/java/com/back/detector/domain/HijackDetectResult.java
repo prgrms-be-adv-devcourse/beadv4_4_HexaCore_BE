@@ -1,4 +1,4 @@
-package com.back.detector.app;
+package com.back.detector.domain;
 
 import java.math.BigDecimal;
 

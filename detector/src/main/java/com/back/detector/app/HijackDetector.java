@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import com.back.detector.domain.HijackDetectResult;
 
 import java.math.BigDecimal;
 import java.util.Set;
@@ -16,21 +17,19 @@ import java.util.concurrent.TimeUnit;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class Hijacetector {
+public class HijackDetector {
 
     private final RedisTemplate<String, String> detectorRedisTemplate;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     private static final BigDecimal NEW_IP_TRANSACTION_LIMIT = new BigDecimal("200000");
     private static final int IP_HISTORY_DAYS = 90;
     private static final int NEW_IP_COOLDOWN_HOURS = 24;
 
-    private final ApplicationEventPublisher applicationEventPublisher;
-
     /**
      * 회원가입 시 첫 IP를 안전한 IP로 등록
      */
-    public record HijackDetectResult(Long userId, String userEmail, String currentIp,
-                                      String existingIps, BigDecimal transactionAmount, String reason) {}
+    public void registerInitialIp(Long userId, String ip) {
         String ipSetKey = DetectorRedisKey.TRUSTED_IP.getKey(userId);
 
         detectorRedisTemplate.opsForSet().add(ipSetKey, ip);
@@ -91,7 +90,7 @@ public class Hijacetector {
             BigDecimal remaining = NEW_IP_TRANSACTION_LIMIT.subtract(transactionAmount);
             log.info("[새 IP 등록] userId: {}, IP: {}, 첫 거래: {}원, 잔여: {}원",
                     userId, currentIp, transactionAmount, remaining.max(BigDecimal.ZERO));
-            return;
+            return null;
         }
 
         // 2. 알려진 IP
@@ -118,19 +117,20 @@ public class Hijacetector {
                 long registeredTime = Long.parseLong(timestamp);
                 long hoursPassed = (System.currentTimeMillis() - registeredTime) / (1000 * 60 * 60);
 
-                sendEmailNotification(userId, userEmail, getAllIps(userId), currentIp, 
+                sendEmailNotification(userId, userEmail, getAllIps(userId), currentIp,
                         transactionAmount, NEW_IP_TRANSACTION_LIMIT, currentAccumulated, hoursPassed);
             }
 
             BigDecimal remaining = NEW_IP_TRANSACTION_LIMIT.subtract(newTotal);
             log.info("[쿨다운 중 거래] userId: {}, IP: {}, 현재: {}원, 누적: {}원, 잔여: {}원",
                     userId, currentIp, transactionAmount, newTotal, remaining.max(BigDecimal.ZERO));
-            return;
+            return null;
         }
 
-        // 2-2. 쿨다운 종료 (타임스탬프 키 만료 = 24시간 경과) → 신뢰 IP
+        // 2-2. 쿨다운 종료 → 신뢰 IP
         log.debug("[신뢰 IP 거래] userId: {}, IP: {}, 금액: {}원 (제한 없음)",
                 userId, currentIp, transactionAmount);
+        return null;
     }
 
     /**
@@ -155,8 +155,8 @@ public class Hijacetector {
      */
     @Transactional
     public HijackDetectResult sendEmailNotification(Long userId, String userEmail, String existingIps,
-                                      String currentIp, BigDecimal currentAmount,
-                                      BigDecimal limit, BigDecimal previousAmount, Long hoursPassed) {
+                                                                          String currentIp, BigDecimal currentAmount,
+                                                                          BigDecimal limit, BigDecimal previousAmount, Long hoursPassed) {
         String reason;
 
         if (previousAmount == null) {
@@ -179,10 +179,7 @@ public class Hijacetector {
         );
         log.info("발행할 이벤트: userId={}, email={}", userId, userEmail);
         applicationEventPublisher.publishEvent(event);
-
         return new HijackDetectResult(userId, userEmail, currentIp, existingIps, currentAmount, reason);
     }
 
-    public record HijackDetectResult(Long userId, String userEmail, String currentIp,
-                                     String existingIps, BigDecimal transactionAmount, String reason) {}
 }
