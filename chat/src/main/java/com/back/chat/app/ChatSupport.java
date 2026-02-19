@@ -57,8 +57,7 @@ public class ChatSupport {
         return chatMessageRepository.deleteIfNotDeleted(messageId);
     }
 
-    public void saveChatRooms(List<ChatRoom> chatRooms) {
-        chatRoomRepository.saveAll(chatRooms);
+    public int insertIfNotExists(Long brandId) {
+        return chatRoomRepository.insertIfNotExists(brandId);
     }
-
 }
