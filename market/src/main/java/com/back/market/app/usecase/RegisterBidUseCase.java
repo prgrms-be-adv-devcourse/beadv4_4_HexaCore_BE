@@ -92,7 +92,6 @@ public class RegisterBidUseCase {
      * @param requestDto BiddingRequestDto
      * @return 저장된 판매 입찰의 PK
      */
-    @Transactional
     public MarketPaymentResponseDto registerSellBid(Long userId, BiddingRequestDto requestDto) {
         // 가격 유효성 검사(1000원단위인지 아닌지)
         validatePriceUnit(requestDto.price());
