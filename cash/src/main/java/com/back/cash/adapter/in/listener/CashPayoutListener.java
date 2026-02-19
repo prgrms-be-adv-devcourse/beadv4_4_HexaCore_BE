@@ -1,6 +1,5 @@
 package com.back.cash.adapter.in.listener;
 
-import com.back.cash.adapter.in.listener.exception.PayoutMessageParseException;
 import com.back.cash.app.CashPayoutFacade;
 import com.back.cash.app.event.CashPayoutRequestedPayload;
 import com.back.cash.domain.event.CashPayoutRequestedCommand;
@@ -9,6 +8,7 @@ import com.back.common.event.Envelope;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.messaging.converter.MessageConversionException;
 import org.springframework.stereotype.Component;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.json.JsonMapper;
@@ -32,7 +32,7 @@ public class CashPayoutListener {
             event = jsonMapper.readValue(message, new TypeReference<Envelope<CashPayoutRequestedPayload>>() {});
         } catch (Exception e) {
             log.error("[ERROR_PAYOUT_REQUESTED_CONSUME] 역직렬화 실패. message={}", message, e);
-            throw new PayoutMessageParseException("payout message parse failed", e);
+            throw new MessageConversionException("payout message parse failed", e);
         }
 
         CashPayoutRequestedPayload data = event.payload();
