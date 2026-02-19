@@ -33,7 +33,7 @@ public class ProductOutboxUseCase {
 
     private final JsonMapper jsonMapper;
 
-    @Value("${custom.kafka.expire}")
+    @Value("${custom.kafka.outbox.expire}")
     private Long eventExpireMinutes;
 
     @Loggable
