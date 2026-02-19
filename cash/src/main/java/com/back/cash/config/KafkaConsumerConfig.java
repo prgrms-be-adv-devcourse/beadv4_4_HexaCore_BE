@@ -31,7 +31,8 @@ public class KafkaConsumerConfig {
     @Value("${custom.kafka.topic.user-wallet-created-dlt}")
     private String walletDltTopicName;
 
-    private KafkaTemplate<String, String> createDltKafkaTemplate() {
+    @Bean
+    public KafkaTemplate<String, String> dltKafkaTemplate() {
         return new KafkaTemplate<>(
                 new DefaultKafkaProducerFactory<>(Map.of(
                         ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers,
@@ -49,9 +50,9 @@ public class KafkaConsumerConfig {
         return backOff;
     }
 
-    private DefaultErrorHandler createErrorHandler(String dltTopicName) {
+    private DefaultErrorHandler createErrorHandler(KafkaTemplate<String, String> dltKafkaTemplate, String dltTopicName) {
         DeadLetterPublishingRecoverer recoverer =
-                new DeadLetterPublishingRecoverer(createDltKafkaTemplate(),
+                new DeadLetterPublishingRecoverer(dltKafkaTemplate,
                         (record, ex) -> new TopicPartition(dltTopicName, -1)) {
                     @Override
                     public void accept(ConsumerRecord<?, ?> record,
@@ -72,13 +73,13 @@ public class KafkaConsumerConfig {
     }
 
     @Bean
-    public DefaultErrorHandler cashPayoutErrorHandler() {
-        return createErrorHandler(payoutDltTopicName);
+    public DefaultErrorHandler cashPayoutErrorHandler(KafkaTemplate<String, String> dltKafkaTemplate) {
+        return createErrorHandler(dltKafkaTemplate, payoutDltTopicName);
     }
 
     @Bean
-    public DefaultErrorHandler walletErrorHandler() {
-        return createErrorHandler(walletDltTopicName);
+    public DefaultErrorHandler walletErrorHandler(KafkaTemplate<String, String> dltKafkaTemplate) {
+        return createErrorHandler(dltKafkaTemplate, walletDltTopicName);
     }
 
     @Bean(name = "cashPayoutKafkaListenerContainerFactory")
