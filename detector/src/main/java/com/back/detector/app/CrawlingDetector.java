@@ -1,8 +1,6 @@
 package com.back.detector.app;
 
 import com.back.detector.domain.CrawlingBanLevel;
-import com.back.detector.domain.CrawlingLog;
-import com.back.detector.domain.CrawlingLogRepository;
 import com.back.detector.domain.DetectorPolicy;
 import com.back.detector.domain.enums.DetectorRedisKey;
 import com.back.detector.exception.CrawlingDetectedException;
@@ -19,14 +17,13 @@ import java.util.concurrent.TimeUnit;
 public class CrawlingDetector {
 
     private final RedisTemplate<String, String> detectorRedisTemplate;
-    private final CrawlingLogRepository crawlingLogRepository;
 
     /**
      * IP 기반 크롤링 감지
      * 1단계: 1분 내 조회 횟수를 카운팅
      * 2단계: 횟수 초과 시 차단 카운트를 증가하고, 단계별 차단 시간 적용
      */
-    public void checkCrawling(String ip) {
+    public CrawlingBanLevel checkCrawling(String ip) {
         if (isBanned(ip)) {
             throw new CrawlingDetectedException();
         }
@@ -40,14 +37,9 @@ public class CrawlingDetector {
 
         if (newCount > DetectorPolicy.CRAWLING.getMaxAttempts()) {
             CrawlingBanLevel level = applyBan(ip);
-            crawlingLogRepository.save(CrawlingLog.builder()
-                    .ipAddress(ip)
-                    .requestCount(newCount)
-                    .timeWindowMinutes(DetectorPolicy.CRAWLING.getTimeWindowMinutes())
-                    .banLevel(level)
-                    .build());
-            throw new CrawlingDetectedException();
+            return level;
         }
+        return null;
     }
 
     /**

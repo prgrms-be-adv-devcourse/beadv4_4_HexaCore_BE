@@ -1,17 +1,13 @@
 package com.back.detector.app;
 
-import com.back.common.util.IpAddressExtractor;
-import com.back.security.util.SecurityHelper;
-import jakarta.servlet.http.HttpServletRequest;
+import com.back.detector.app.usecase.CrawlingLogUseCase;
+import com.back.detector.domain.CrawlingBanLevel;
+import com.back.detector.exception.CrawlingDetectedException;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.aspectj.lang.ProceedingJoinPoint;
-import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.springframework.stereotype.Service;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.math.BigDecimal;
 
@@ -23,6 +19,7 @@ public class DetectorFacade {
     private final BidSpamDetector bidSpamDetector;
     private final CrawlingDetector crawlingDetector;
     private final HijackDetector hijackDetector;
+    private final CrawlingLogUseCase crawlingLogUseCase;
 
     @Transactional
     public void detectBidSpam(Long userId) {
@@ -31,7 +28,11 @@ public class DetectorFacade {
 
     @Transactional
     public void detectCrawling(String ip) {
-        crawlingDetector.checkCrawling(ip);
+        CrawlingBanLevel banLevel = crawlingDetector.checkCrawling(ip);
+        if (banLevel != null) {
+            crawlingLogUseCase.save(ip, banLevel);
+            throw new CrawlingDetectedException();
+        }
     }
 
     /**

@@ -1,7 +1,5 @@
 package com.back.detector.app;
 
-import com.back.detector.domain.HijackLog;
-import com.back.detector.domain.HijackLogRepository;
 import com.back.detector.domain.enums.DetectorRedisKey;
 import com.back.detector.dto.HijackDetectedEvent;
 import jakarta.transaction.Transactional;
@@ -18,11 +16,9 @@ import java.util.concurrent.TimeUnit;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class HijackDetector {
+public class Hijacetector {
 
     private final RedisTemplate<String, String> detectorRedisTemplate;
-
-    private final HijackLogRepository hijackLogRepository;
 
     private static final BigDecimal NEW_IP_TRANSACTION_LIMIT = new BigDecimal("200000");
     private static final int IP_HISTORY_DAYS = 90;
@@ -33,7 +29,8 @@ public class HijackDetector {
     /**
      * 회원가입 시 첫 IP를 안전한 IP로 등록
      */
-    public void registerInitialIp(Long userId, String ip) {
+    public record HijackDetectResult(Long userId, String userEmail, String currentIp,
+                                      String existingIps, BigDecimal transactionAmount, String reason) {}
         String ipSetKey = DetectorRedisKey.TRUSTED_IP.getKey(userId);
 
         detectorRedisTemplate.opsForSet().add(ipSetKey, ip);
@@ -57,7 +54,7 @@ public class HijackDetector {
      * - 모든 거래는 항상 허용됨 (차단 없음)
      */
     @Transactional
-    public void checkHijack(Long userId, String userEmail, String currentIp, BigDecimal transactionAmount) {
+    public HijackDetectResult checkHijack(Long userId, String userEmail, String currentIp, BigDecimal transactionAmount) {
         String trustedIpSetKey = DetectorRedisKey.TRUSTED_IP.getKey(userId);
         String ipTimestampKey = DetectorRedisKey.NEW_IP_TIMESTAMP.getKey(userId, currentIp);
         String accumulatedAmountKey = DetectorRedisKey.NEW_IP_AMOUNT.getKey(userId, currentIp);
@@ -68,12 +65,8 @@ public class HijackDetector {
         if (!Boolean.TRUE.equals(isKnownIp)) {
             // 첫 거래가 한도 초과하면 IP 등록하지 않고 메일만 발송
             if (transactionAmount.compareTo(NEW_IP_TRANSACTION_LIMIT) > 0) {
-                sendEmailNotification(userId, userEmail, getAllIps(userId), currentIp, 
+                return sendEmailNotification(userId, userEmail, getAllIps(userId), currentIp,
                         transactionAmount, NEW_IP_TRANSACTION_LIMIT, null, null);
-                
-                log.warn("[새 IP 거부] userId: {}, IP: {}, 첫 거래: {}원 (한도 {}원 초과로 IP 등록 안함)",
-                        userId, currentIp, transactionAmount, NEW_IP_TRANSACTION_LIMIT);
-                return;
             }
 
             // 첫 거래가 한도 이하일 때만 IP 신뢰 목록에 등록
@@ -161,34 +154,21 @@ public class HijackDetector {
      * 이메일 알림 발송
      */
     @Transactional
-    public void sendEmailNotification(Long userId, String userEmail, String existingIps,
+    public HijackDetectResult sendEmailNotification(Long userId, String userEmail, String existingIps,
                                       String currentIp, BigDecimal currentAmount,
                                       BigDecimal limit, BigDecimal previousAmount, Long hoursPassed) {
         String reason;
 
         if (previousAmount == null) {
-            // 새 IP 첫 거래 한도 초과
-            reason = String.format("새 IP 첫 거래 한도 초과 (한도: %,d원, 거래: %,d원)", 
+            reason = String.format("새 IP 첫 거래 한도 초과 (한도: %,d원, 거래: %,d원)",
                     limit.longValue(), currentAmount.longValue());
         } else {
-            // 새 IP 누적 금액 초과
             BigDecimal total = previousAmount.add(currentAmount);
             reason = String.format("새 IP 누적 금액 초과 (기존: %,d원 + 현재: %,d원 = %,d원, 한도: %,d원, 등록 후 %d시간)",
-                    previousAmount.longValue(), currentAmount.longValue(), 
+                    previousAmount.longValue(), currentAmount.longValue(),
                     total.longValue(), limit.longValue(), hoursPassed);
         }
 
-        // 로그 저장
-        hijackLogRepository.save(HijackLog.builder()
-                .userId(userId)
-                .userEmail(userEmail)
-                .currentIp(currentIp)
-                .existingIps(existingIps)
-                .transactionAmount(currentAmount)
-                .reason(reason)
-                .build());
-
-        // 이벤트 발행
         HijackDetectedEvent event = new HijackDetectedEvent(
                 userId,
                 userEmail,
@@ -199,5 +179,10 @@ public class HijackDetector {
         );
         log.info("발행할 이벤트: userId={}, email={}", userId, userEmail);
         applicationEventPublisher.publishEvent(event);
+
+        return new HijackDetectResult(userId, userEmail, currentIp, existingIps, currentAmount, reason);
     }
+
+    public record HijackDetectResult(Long userId, String userEmail, String currentIp,
+                                     String existingIps, BigDecimal transactionAmount, String reason) {}
 }
