@@ -17,7 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
  * 더미 데이터 생성을 위한 클래스(MarketUser, MarketProduct, Bidding, Order)
  * CommandLineRunner를 통해 스프링 application이 시작될 때 run() 메소드도 실행하게끔 구현
  */
-@Component
+//@Component
 @RequiredArgsConstructor
 public class MarketDataInit implements CommandLineRunner {
 
