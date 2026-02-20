@@ -4,4 +4,5 @@ import com.back.market.domain.MarketProduct;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface MarketProductRepository  extends JpaRepository<MarketProduct, Long> {
+    boolean existsByProductOptionId(Long productOptionId);
 }

@@ -2,14 +2,14 @@ package com.back.market.app;
 
 import com.back.common.dto.settlement.SettlementTargetOrder;
 import com.back.market.adapter.out.MarketUserRepository;
-import com.back.market.app.usecase.ConfirmPaymentUseCase;
+import com.back.market.app.usecase.*;
 import com.back.common.dto.cash.request.PaymentCompletedRequestDto;
-import com.back.market.app.usecase.CreateCartUseCase;
-import com.back.market.app.usecase.CreateMarketMemberUseCase;
-import com.back.market.app.usecase.GetSettlementDataUseCase;
 import com.back.market.domain.MarketUser;
+import com.back.market.event.payload.ProductCreatedPayload;
 import com.back.market.event.payload.UserCreatedPayload;
+import com.back.market.event.resultpayload.ProductCreatedResultPayload;
 import com.back.market.event.resultpayload.UserCreatedResultPayload;
+import com.back.market.mapper.MarketProductMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -27,6 +27,8 @@ public class MarketInternalFacade {
     private final CreateMarketMemberUseCase createMarketMemberUseCase;
     private final CreateCartUseCase createCartUseCase;
     private final MarketUserRepository userRepository;
+    private final MarketProductMapper marketProductMapper;
+    private final CreateProductUseCase createProductUseCase;
 
     /**
      * Cash 모듈로부터 결제 완료(입금 확인) 통지를 수신하여 주문 상태를 확정
@@ -79,5 +81,18 @@ public class MarketInternalFacade {
         } else {
             log.warn("[MarketInternalFacade] market_member 복제 실패, cart 생성 건너뜀: userId = {}", command.id());
         }
+    }
+
+    @Transactional
+    public void handleProductCreatedEvent(ProductCreatedPayload payload) {
+        //멱등성 검사는 usecase에서 진행..
+        List<ProductCreatedResultPayload> commands = payload.options().stream()
+                .flatMap(option -> option.values().stream()
+                        .map(value -> marketProductMapper.toResultPayload(payload, value))
+                )
+                .toList();
+
+        createProductUseCase.register(commands);
+
     }
 }
