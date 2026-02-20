@@ -37,7 +37,7 @@ public class MarketDataInit implements CommandLineRunner {
             return;
         }
         System.out.println("======= [Market] 초기 테스트 데이터 생성 시작 =======");
-
+/*
         // 1. MarketUser 생성 (ID 수동 지정)
         // 유저 1: 판매자 역할 (ID: 1L)
         MarketUser seller = marketUserMapper.toEntity(
@@ -136,6 +136,8 @@ public class MarketDataInit implements CommandLineRunner {
         createTestOrder(sId, bId, pId, 40000, "2026-02-01 00:00:01", "2026-02-01 00:00:01");
 
         System.out.println("======= [Market] 초기 데이터 생성 완료 (User: 2건, Product: 3건, Order: 8건, Bidding: 16건) =======");
+
+ */
     }
 
     /**
