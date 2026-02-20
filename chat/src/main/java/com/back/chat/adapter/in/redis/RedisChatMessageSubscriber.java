@@ -14,12 +14,12 @@ import tools.jackson.databind.json.JsonMapper;
 
 import java.nio.charset.StandardCharsets;
 
+import static com.back.chat.adapter.in.redis.RedisSubscriberConfig.WS_CHAT_ROOM_TOPIC_PREFIX;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class RedisChatMessageSubscriber implements MessageListener {
-
-    private static final String ROOM_TOPIC_PREFIX = "/topic/chat/room/";
 
     private final JsonMapper jsonMapper;
     private final SimpMessagingTemplate messagingTemplate;
@@ -72,6 +72,6 @@ public class RedisChatMessageSubscriber implements MessageListener {
     }
 
     private String roomTopic(Long roomId) {
-        return ROOM_TOPIC_PREFIX + roomId;
+        return WS_CHAT_ROOM_TOPIC_PREFIX + roomId;
     }
 }
