@@ -10,9 +10,17 @@ import com.back.product.dto.model.ProductInfoDto;
 import com.back.product.mapper.OptionMapper;
 import com.back.product.mapper.ProductInfoMapper;
 import jakarta.validation.Valid;
+import jakarta.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.kafka.annotation.BackOff;
+import org.springframework.kafka.annotation.DltHandler;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.annotation.RetryableTopic;
+import org.springframework.kafka.retrytopic.DltStrategy;
+import org.springframework.kafka.retrytopic.TopicSuffixingStrategy;
+import org.springframework.kafka.support.KafkaHeaders;
+import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -32,6 +40,15 @@ public class ProductKafkaEventListener {
     private final ProductInfoMapper productInfoMapper;
     private final OptionMapper optionMapper;
 
+    @RetryableTopic(
+            attempts = "5",
+            backOff = @BackOff(delay = 10 * 1000, multiplier = 2, maxDelay = 10 * 60 * 1000),
+            topicSuffixingStrategy = TopicSuffixingStrategy.SUFFIX_WITH_INDEX_VALUE,
+            dltStrategy = DltStrategy.FAIL_ON_ERROR,
+            exclude = {JacksonException.class, ValidationException.class},
+            dltTopicSuffix = ".dlt",
+            retryTopicSuffix = ".retry"
+    )
     @KafkaListener(
             topics = "${custom.kafka.topic.product-item-created}",
             groupId = "${spring.kafka.consumer.group-id}"
@@ -46,9 +63,19 @@ public class ProductKafkaEventListener {
             processSyncCreatedProduct(payload);
         } catch (JacksonException e) {
             log.error("[KafkaListenerFailed] ProductCreatedPayload 역직렬화 중 에러 발생 : {}", e.getMessage(), e);
+            throw e;
         }
     }
 
+    @RetryableTopic(
+            attempts = "5",
+            backOff = @BackOff(delay = 10 * 1000, multiplier = 2, maxDelay = 10 * 60 * 1000),
+            topicSuffixingStrategy = TopicSuffixingStrategy.SUFFIX_WITH_INDEX_VALUE,
+            dltStrategy = DltStrategy.FAIL_ON_ERROR,
+            exclude = {JacksonException.class, ValidationException.class},
+            dltTopicSuffix = ".dlt",
+            retryTopicSuffix = ".retry"
+    )
     @KafkaListener(
             topics = "${custom.kafka.topic.product-item-updated}",
             groupId = "${spring.kafka.consumer.group-id}"
@@ -63,9 +90,19 @@ public class ProductKafkaEventListener {
             processSyncUpdatedProduct(payload);
         } catch (JacksonException e) {
             log.error("[KafkaListenerFailed] ProductUpdatedPayload 역직렬화 중 에러 발생 : {}", e.getMessage(), e);
+            throw e;
         }
     }
 
+    @RetryableTopic(
+            attempts = "5",
+            backOff = @BackOff(delay = 10 * 1000, multiplier = 2, maxDelay = 10 * 60 * 1000),
+            topicSuffixingStrategy = TopicSuffixingStrategy.SUFFIX_WITH_INDEX_VALUE,
+            dltStrategy = DltStrategy.FAIL_ON_ERROR,
+            exclude = {JacksonException.class, ValidationException.class},
+            dltTopicSuffix = ".dlt",
+            retryTopicSuffix = ".retry"
+    )
     @KafkaListener(
             topics = "${custom.kafka.topic.product-item-deleted}",
             groupId = "${spring.kafka.consumer.group-id}"
@@ -80,7 +117,19 @@ public class ProductKafkaEventListener {
             processSyncDeletedProduct(payload);
         } catch (JacksonException e) {
             log.error("[KafkaListenerFailed] ProductDeletedEvent 역직렬화 중 에러 발생 : {}", e.getMessage(), e);
+            throw e;
         }
+    }
+
+    @DltHandler
+    public void handleDlt(
+            String message,
+            @Header(KafkaHeaders.RECEIVED_TOPIC) String topic,
+            @Header(KafkaHeaders.EXCEPTION_MESSAGE) String errorMessage
+    ) {
+        log.error("[KafkaListenerDlt] Topic: {}, Message: {}, Error: {}", topic, message, errorMessage);
+
+
     }
 
     @Transactional
