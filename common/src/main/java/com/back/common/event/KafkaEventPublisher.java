@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class KafkaEventPublisher {
-    private final KafkaTemplate<String, EventName> kafkaTemplate;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
 
     public void publish(EventName event) {
         kafkaTemplate.send(event.getEventName(), event);
