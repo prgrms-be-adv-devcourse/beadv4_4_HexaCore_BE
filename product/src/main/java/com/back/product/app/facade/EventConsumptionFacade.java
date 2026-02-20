@@ -108,4 +108,10 @@ public class EventConsumptionFacade {
             throw e;
         }
     }
+
+    @Loggable
+    @Transactional
+    public void eventFailedLog(String eventId, String errorMessage) {
+        eventLogUseCase.markAsDead(eventId, errorMessage);
+    }
 }

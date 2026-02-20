@@ -1,6 +1,7 @@
 package com.back.product.adapter.in.event;
 
 import com.back.common.event.Envelope;
+import com.back.common.event.KafkaPayload;
 import com.back.product.app.facade.EventConsumptionFacade;
 import com.back.product.dto.command.EventConsumptionCommand;
 import com.back.product.event.kafka.ProductCreatedPayload;
@@ -15,6 +16,7 @@ import org.springframework.kafka.annotation.DltHandler;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.annotation.RetryableTopic;
 import org.springframework.kafka.retrytopic.DltStrategy;
+import org.springframework.kafka.retrytopic.SameIntervalTopicReuseStrategy;
 import org.springframework.kafka.retrytopic.TopicSuffixingStrategy;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
@@ -22,7 +24,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.core.JacksonException;
 import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
+
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -32,12 +37,18 @@ public class ProductKafkaEventListener {
     private final EventConsumptionCommandMapper eventConsumptionCommandMapper;
     private final JsonMapper jsonMapper;
 
+    private static final String ATTEMPTS = "5";
+    private static final long INIT_DELAY_MS = 2_000L;
+    private static final long MULTIPLIER = 2L;
+    private static final long MAX_DELAY_MS = 60_000L;
+
     @RetryableTopic(
-            attempts = "5",
-            backOff = @BackOff(delay = 10 * 1000, multiplier = 2, maxDelay = 10 * 60 * 1000),
+            kafkaTemplate = "retryKafkaTemplate",
+            attempts = ATTEMPTS,
+            backOff = @BackOff(delay = INIT_DELAY_MS, multiplier = MULTIPLIER, maxDelay = MAX_DELAY_MS),
             topicSuffixingStrategy = TopicSuffixingStrategy.SUFFIX_WITH_INDEX_VALUE,
+            sameIntervalTopicReuseStrategy = SameIntervalTopicReuseStrategy.SINGLE_TOPIC,
             dltStrategy = DltStrategy.FAIL_ON_ERROR,
-            exclude = {JacksonException.class, ValidationException.class},
             dltTopicSuffix = ".dlt",
             retryTopicSuffix = ".retry"
     )
@@ -72,11 +83,12 @@ public class ProductKafkaEventListener {
     }
 
     @RetryableTopic(
-            attempts = "5",
-            backOff = @BackOff(delay = 10 * 1000, multiplier = 2, maxDelay = 10 * 60 * 1000),
+            kafkaTemplate = "retryKafkaTemplate",
+            attempts = ATTEMPTS,
+            backOff = @BackOff(delay = INIT_DELAY_MS, multiplier = MULTIPLIER, maxDelay = MAX_DELAY_MS),
             topicSuffixingStrategy = TopicSuffixingStrategy.SUFFIX_WITH_INDEX_VALUE,
+            sameIntervalTopicReuseStrategy = SameIntervalTopicReuseStrategy.SINGLE_TOPIC,
             dltStrategy = DltStrategy.FAIL_ON_ERROR,
-            exclude = {JacksonException.class, ValidationException.class},
             dltTopicSuffix = ".dlt",
             retryTopicSuffix = ".retry"
     )
@@ -111,11 +123,12 @@ public class ProductKafkaEventListener {
     }
 
     @RetryableTopic(
-            attempts = "5",
-            backOff = @BackOff(delay = 10 * 1000, multiplier = 2, maxDelay = 10 * 60 * 1000),
+            kafkaTemplate = "retryKafkaTemplate",
+            attempts = ATTEMPTS,
+            backOff = @BackOff(delay = INIT_DELAY_MS, multiplier = MULTIPLIER, maxDelay = MAX_DELAY_MS),
             topicSuffixingStrategy = TopicSuffixingStrategy.SUFFIX_WITH_INDEX_VALUE,
+            sameIntervalTopicReuseStrategy = SameIntervalTopicReuseStrategy.SINGLE_TOPIC,
             dltStrategy = DltStrategy.FAIL_ON_ERROR,
-            exclude = {JacksonException.class, ValidationException.class},
             dltTopicSuffix = ".dlt",
             retryTopicSuffix = ".retry"
     )
@@ -157,7 +170,19 @@ public class ProductKafkaEventListener {
             @Header(KafkaHeaders.OFFSET) Long offset,
             @Header(KafkaHeaders.EXCEPTION_MESSAGE) String errorMessage
     ) {
-        log.error("[KafkaListenerDlt] Topic: {}, Partition: {}, Offset: {}, Error: {}, Message: {}",
-                topic, partition, offset, errorMessage, message);
+        try {
+            log.error("[KafkaListenerDlt] Topic: {}, Partition: {}, Offset: {}, Error: {}, Message: {}",
+                    topic, partition, offset, errorMessage, message);
+
+            JsonNode rootNode = jsonMapper.readTree(message);
+            String eventId = rootNode.path("header").path("eventId").asString();
+            if (eventId == null || eventId.isBlank()) {
+                throw new IllegalStateException("eventId is null or empty");
+            }
+
+            eventConsumptionFacade.eventFailedLog(eventId, errorMessage);
+        } catch (JacksonException | IllegalStateException e) {
+            log.error("[KafkaListenerDlt] KafkaDlt 역직렬화 중 에러 발생 : {}", e.getMessage(), e);
+        }
     }
 }

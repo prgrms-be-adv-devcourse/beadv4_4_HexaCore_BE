@@ -1,6 +1,8 @@
 package com.back.product.app.usecase;
 
 import com.back.common.annotation.Loggable;
+import com.back.common.code.FailureCode;
+import com.back.common.exception.CustomException;
 import com.back.product.adapter.out.persistence.EventConsumptionLogRepository;
 import com.back.product.domain.EventConsumptionLog;
 import com.back.product.dto.command.EventConsumptionCommand;
@@ -16,11 +18,13 @@ public class EventLogUseCase {
     private final EventConsumptionLogRepository eventConsumptionLogRepository;
     private final EventConsumptionLogMapper eventConsumptionLogMapper;
 
+    private static final long PROCESSING_TIMEOUT_MINUTES = 30;
+
     @Loggable
     @Transactional(readOnly = true)
     public boolean isAlreadyProcessed(String eventId) {
         return eventConsumptionLogRepository.findByEventId(eventId)
-                .map(log -> isAlreadyProcessed(log.getStatus()))
+                .map(this::isAlreadyProcessed)
                 .orElse(false);
     }
 
@@ -30,7 +34,7 @@ public class EventLogUseCase {
         eventConsumptionLogRepository.findByEventId(command.eventId())
                 .ifPresentOrElse(
                         log -> {
-                            if (isAlreadyProcessed(log.getStatus())) {
+                            if (isAlreadyProcessed(log)) {
                                 throw new IllegalStateException("Already " + log.getStatus() + " event: " + command.eventId());
                             }
                             log.updateStatus(EventConsumptionStatus.PROCESSING);
@@ -61,7 +65,28 @@ public class EventLogUseCase {
                 });
     }
 
-    private boolean isAlreadyProcessed(EventConsumptionStatus status) {
-        return status == EventConsumptionStatus.SUCCEEDED || status == EventConsumptionStatus.PROCESSING;
+    @Loggable
+    @Transactional
+    public void markAsDead(String eventId, String errorMessage) {
+        eventConsumptionLogRepository.findByEventId(eventId)
+                .ifPresent(
+                        log -> {
+                            log.updateStatus(EventConsumptionStatus.DLQ);
+                            log.updateErrorMessage(errorMessage);
+                        }
+                );
+    }
+
+    private boolean isAlreadyProcessed(EventConsumptionLog log) {
+        if (log.getStatus() == EventConsumptionStatus.SUCCEEDED) {
+            return true;
+        }
+        
+        if (log.getStatus() == EventConsumptionStatus.PROCESSING) {
+            // 처리 시작 후 일정 시간(30분)이 지나지 않았다면 아직 처리 중으로 간주하여 차단
+            return log.getCreatedAt().isAfter(java.time.LocalDateTime.now().minusMinutes(PROCESSING_TIMEOUT_MINUTES));
+        }
+        
+        return false;
     }
 }
