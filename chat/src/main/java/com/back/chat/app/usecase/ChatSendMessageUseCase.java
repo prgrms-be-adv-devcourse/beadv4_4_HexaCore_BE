@@ -34,13 +34,8 @@ public class ChatSendMessageUseCase {
             throw new BadRequestException(FailureCode.CHAT_ROOM_NOT_FOUND);
         }
 
-        LocalDateTime until = redisChatRestrictionReader.getRestrictedUntil(userId);
-        if (until != null) {
-            if (!until.isAfter(now)) {
-                redisChatRestrictionReader.delete(userId);
-            } else {
-                throw new ForbiddenException(FailureCode.CHAT_RESTRICTED);
-            }
+        if (redisChatRestrictionReader.isRestricted(userId)) {
+            throw new ForbiddenException(FailureCode.CHAT_RESTRICTED);
         }
 
         ChatMessage savedMessage = chatSupport.saveMessage(
