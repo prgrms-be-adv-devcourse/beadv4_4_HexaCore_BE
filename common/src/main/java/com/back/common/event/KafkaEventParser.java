@@ -1,7 +1,5 @@
 package com.back.common.event;
 
-import com.back.common.code.FailureCode;
-import com.back.common.exception.CustomException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.converter.MessageConversionException;
@@ -18,10 +16,10 @@ public class KafkaEventParser {
 
     /**
      * Envelope에서 페이로드를 추출하는 유틸리티 메서드
-     * @param message
-     * @param typeReference
-     * @return
-     * @param <T>
+     * @param message Kafka에서 수신한 원본 메시지(Envelope 형태의 JSON 문자열)
+     * @param typeReference 역직렬화할 Envelope의 타입 정보
+     * @return Envelope에서 추출한 페이로드 객체
+     * @param <T> KafkaPayload를 구현한 페이로드 타입
      */
     public <T extends KafkaPayload> T extractPayload(
             String message,
