@@ -1,6 +1,7 @@
 package com.back.product.adapter.in.event;
 
 import com.back.common.event.Envelope;
+import com.back.product.app.facade.EventConsumptionFacade;
 import com.back.product.app.usecase.ProductDocumentUseCase;
 import com.back.product.event.kafka.ProductCreatedPayload;
 import com.back.product.event.kafka.ProductDeletedPayload;
@@ -32,13 +33,10 @@ import java.util.List;
 
 @Slf4j
 @Service
-@Validated
 @RequiredArgsConstructor
 public class ProductKafkaEventListener {
+    private final EventConsumptionFacade eventConsumptionFacade;
     private final JsonMapper jsonMapper;
-    private final ProductDocumentUseCase productDocumentUseCase;
-    private final ProductInfoMapper productInfoMapper;
-    private final OptionMapper optionMapper;
 
     @RetryableTopic(
             attempts = "5",
@@ -60,7 +58,14 @@ public class ProductKafkaEventListener {
 
             ProductCreatedPayload payload = event.payload();
 
-            processSyncCreatedProduct(payload);
+            log.info("[KafkaListenerSuccess] ProductCreatedEvent 수신 : productInfo = {}", payload.productInfo());
+
+            eventConsumptionFacade.syncCreatedProduct(
+                    event.header().eventId(),
+                    event.header().eventType(),
+                    message,
+                    payload
+            );
         } catch (JacksonException e) {
             log.error("[KafkaListenerFailed] ProductCreatedPayload 역직렬화 중 에러 발생 : {}", e.getMessage(), e);
             throw e;
@@ -87,7 +92,14 @@ public class ProductKafkaEventListener {
 
             ProductUpdatedPayload payload = event.payload();
 
-            processSyncUpdatedProduct(payload);
+            log.info("[KafkaListenerSuccess] ProductUpdatedEvent 수신 : productInfo = {}", payload.productInfo());
+
+            eventConsumptionFacade.syncUpdatedProduct(
+                    event.header().eventId(),
+                    event.header().eventType(),
+                    message,
+                    payload
+            );
         } catch (JacksonException e) {
             log.error("[KafkaListenerFailed] ProductUpdatedPayload 역직렬화 중 에러 발생 : {}", e.getMessage(), e);
             throw e;
@@ -114,7 +126,14 @@ public class ProductKafkaEventListener {
 
             ProductDeletedPayload payload = event.payload();
 
-            processSyncDeletedProduct(payload);
+            log.info("[KafkaListenerSuccess] ProductDeletedEvent 수신 : productInfoId = {}", payload.productInfoId());
+
+            eventConsumptionFacade.syncDeletedProduct(
+                    event.header().eventId(),
+                    event.header().eventType(),
+                    message,
+                    payload
+            );
         } catch (JacksonException e) {
             log.error("[KafkaListenerFailed] ProductDeletedEvent 역직렬화 중 에러 발생 : {}", e.getMessage(), e);
             throw e;
@@ -130,34 +149,5 @@ public class ProductKafkaEventListener {
         log.error("[KafkaListenerDlt] Topic: {}, Message: {}, Error: {}", topic, message, errorMessage);
 
 
-    }
-
-    @Transactional
-    public void processSyncCreatedProduct(@Valid ProductCreatedPayload payload) {
-        log.info("[KafkaListenerSuccess] ProductCreatedEvent 수신 : productInfo = {}", payload.productInfo());
-
-        ProductInfoDto productInfoDto = productInfoMapper.toDto(payload.productInfo());
-        List<OptionDto> optionDtos = payload.options().stream().map(optionMapper::toDto).toList();
-        String thumbnailUrl = payload.thumbnailUrl();
-
-        productDocumentUseCase.syncProduct(productInfoDto, optionDtos, thumbnailUrl);
-    }
-
-    @Transactional
-    public void processSyncUpdatedProduct(@Valid ProductUpdatedPayload payload) {
-        log.info("[KafkaListenerSuccess] ProductUpdatedEvent 수신 : productInfo = {}", payload.productInfo());
-
-        ProductInfoDto productInfoDto = productInfoMapper.toDto(payload.productInfo());
-        List<OptionDto> optionDtos = payload.options().stream().map(optionMapper::toDto).toList();
-        String thumbnailUrl = payload.thumbnailUrl();
-
-        productDocumentUseCase.syncProduct(productInfoDto, optionDtos, thumbnailUrl);
-    }
-
-    @Transactional
-    public void processSyncDeletedProduct(@Valid ProductDeletedPayload payload) {
-        log.info("[KafkaListenerSuccess] ProductDeletedEvent 수신 : productInfoId = {}", payload.productInfoId());
-
-        productDocumentUseCase.deleteProduct(payload.productInfoId());
     }
 }
