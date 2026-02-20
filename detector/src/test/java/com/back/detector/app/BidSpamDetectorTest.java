@@ -120,13 +120,23 @@ class BidSpamDetectorTest {
         }
 
         @Test
-        @DisplayName("increment 후 매번 expire를 갱신해야 한다 (slide window 방지)")
-        void should_always_refresh_ttl_after_increment() {
+        @DisplayName("첫 번째 요청(count=1)일 때만 expire를 설정해야 한다")
+        void should_set_expire_only_on_first_increment() {
             when(valueOperations.increment(EXPECTED_KEY)).thenReturn(1L);
 
             bidSpamDetector.checkBidSpam(USER_ID);
 
             verify(detectorRedisTemplate).expire(EXPECTED_KEY, TIME_WINDOW, TimeUnit.MINUTES);
+        }
+
+        @Test
+        @DisplayName("두 번째 이상 요청(count>1)일 때는 expire를 설정하지 않아야 한다")
+        void should_not_set_expire_after_first_increment() {
+            when(valueOperations.increment(EXPECTED_KEY)).thenReturn(2L);
+
+            bidSpamDetector.checkBidSpam(USER_ID);
+
+            verify(detectorRedisTemplate, never()).expire(EXPECTED_KEY, TIME_WINDOW, TimeUnit.MINUTES);
         }
 
         @Test
