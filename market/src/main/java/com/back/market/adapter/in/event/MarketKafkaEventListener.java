@@ -1,18 +1,14 @@
 package com.back.market.adapter.in.event;
 
-import com.back.common.code.FailureCode;
-import com.back.common.event.Envelope;
-import com.back.common.exception.CustomException;
+import com.back.common.event.KafkaEventParser;
 import com.back.market.app.MarketInternalFacade;
 import com.back.market.event.payload.ProductCreatedPayload;
 import com.back.market.event.payload.UserCreatedPayload;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 import tools.jackson.core.type.TypeReference;
-import tools.jackson.databind.json.JsonMapper;
 
 @Slf4j
 @Component
@@ -20,7 +16,7 @@ import tools.jackson.databind.json.JsonMapper;
 public class MarketKafkaEventListener {
 
     private final MarketInternalFacade marketInternalFacade;
-    private final JsonMapper jsonMapper;
+    private final KafkaEventParser kafkaEventParser;
 
     @KafkaListener(
             topics = "${custom.kafka.topic.user-account-created}",
@@ -28,18 +24,7 @@ public class MarketKafkaEventListener {
     )
     public void consumeUserCreatedEvent(String message) {
         log.info("[MarketKafkaEventListener] UserCreatedEvent 수신: {}", message);
-
-        Envelope<UserCreatedPayload> event;
-
-        try {
-            event = jsonMapper.readValue(message, new TypeReference<>() {
-            });
-        } catch (Exception e) {
-            log.error("[MarketKafkaEventListener] UserCreatedEvent 파싱 중 오류 발생: {}", e.getMessage());
-            throw new CustomException(FailureCode.INTERNAL_SERVER_ERROR);
-        }
-
-        UserCreatedPayload payload = event.payload();
+        UserCreatedPayload payload = kafkaEventParser.extractPayload(message, new TypeReference<>() {});
         marketInternalFacade.handleUserCreatedEvent(payload);
     }
 
@@ -49,15 +34,7 @@ public class MarketKafkaEventListener {
     )
     public void consumeProductCreatedEvent(String message) {
         log.info("[MarketKafkaEventListener] product-item-created 수신: {}", message);
-        Envelope<ProductCreatedPayload> event;
-        try {
-            event = jsonMapper.readValue(message, new TypeReference<>() {
-            });
-        } catch (Exception e) {
-            log.error("[MarketKafkaEventListener] ProductCreatedEvent 파싱 중 오류 발생: {}", e.getMessage());
-            throw new CustomException(FailureCode.INTERNAL_SERVER_ERROR);
-        }
-        ProductCreatedPayload payload = event.payload();
+        ProductCreatedPayload payload = kafkaEventParser.extractPayload(message, new TypeReference<>() {});
         marketInternalFacade.handleProductCreatedEvent(payload);
     }
 
