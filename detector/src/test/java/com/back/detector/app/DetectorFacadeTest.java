@@ -80,15 +80,18 @@ class DetectorFacadeTest {
     // --- 인증 컨텍스트 없는 경우 ---
 
     @Nested
-    @DisplayName("SecurityContext에 인증 정보가 없는 경우")
-    class WhenAuthenticationMissing {
+    @DisplayName("userId가 null인 경우")
+    class WhenUserIdIsNull {
 
         @Test
-        @DisplayName("userId가 null이면 checkBidSpam에 null이 전달되어야 한다")
-        void should_pass_null_user_id() throws Throwable {
-            detectorFacade.detectBidSpam(null);
+        @DisplayName("userId가 null이면 checkBidSpam 호출 전 IllegalArgumentException이 발생해야 한다")
+        void should_throw_when_user_id_is_null() {
+            doThrow(new IllegalArgumentException("userId는 null일 수 없습니다"))
+                    .when(bidSpamDetector).checkBidSpam(null);
 
-            verify(bidSpamDetector).checkBidSpam(null);
+            assertThatThrownBy(() -> detectorFacade.detectBidSpam(null))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessage("userId는 null일 수 없습니다");
         }
     }
 }

@@ -18,6 +18,10 @@ public class BidSpamDetector {
     private final RedisTemplate<String, String> detectorRedisTemplate;
 
     public BidSpamBanLevel checkBidSpam(Long userId) {
+        if (userId == null) {
+            throw new IllegalArgumentException("userId는 null일 수 없습니다");
+        }
+
         if (isBanned(userId)) {
             throw new BidSpamException();
         }

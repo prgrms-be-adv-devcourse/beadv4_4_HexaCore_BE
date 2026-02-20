@@ -3,7 +3,6 @@ package com.back.detector.app;
 import com.back.detector.domain.BidSpamBanLevel;
 import com.back.detector.domain.DetectorPolicy;
 import com.back.detector.domain.enums.DetectorRedisKey;
-import com.back.detector.exception.BidSpamException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -19,6 +18,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -38,9 +38,21 @@ class BidSpamDetectorTest {
     private static final int MAX_ATTEMPTS = DetectorPolicy.BID_SPAM.getMaxAttempts();      // 5
     private static final int TIME_WINDOW   = DetectorPolicy.BID_SPAM.getTimeWindowMinutes(); // 1
 
-    @BeforeEach
-    void setUp() {
-        when(detectorRedisTemplate.opsForValue()).thenReturn(valueOperations);
+    // --- null 방어 ---
+
+    @Nested
+    @DisplayName("userId가 null인 경우")
+    class WhenUserIdIsNull {
+
+        @Test
+        @DisplayName("userId가 null이면 IllegalArgumentException을 던져야 한다")
+        void should_throw_when_user_id_is_null() {
+            assertThatThrownBy(() -> bidSpamDetector.checkBidSpam(null))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessage("userId는 null일 수 없습니다");
+
+            verifyNoInteractions(detectorRedisTemplate);
+        }
     }
 
     // --- 정상 흐름----
@@ -48,6 +60,11 @@ class BidSpamDetectorTest {
     @Nested
     @DisplayName("스팸이 아닌 정상 입찰 시나리오")
     class WhenBidCountIsWithinLimit {
+
+        @BeforeEach
+        void setUp() {
+            when(detectorRedisTemplate.opsForValue()).thenReturn(valueOperations);
+        }
 
         @Test
         @DisplayName("첫 번째 입찰 시 카운트가 1이면 예외 없이 통과해야 한다")
@@ -78,6 +95,11 @@ class BidSpamDetectorTest {
     @DisplayName("스팸 감지 여부 검증")
     class WhenBidCountExceedsLimit {
 
+        @BeforeEach
+        void setUp() {
+            when(detectorRedisTemplate.opsForValue()).thenReturn(valueOperations);
+        }
+
         @Test
         @DisplayName("카운트가 maxAttempts(5)를 초과하면 banLevel을 반환해야 한다")
         void should_throw_when_count_exceeds_max_attempts() {
@@ -106,6 +128,11 @@ class BidSpamDetectorTest {
     @Nested
     @DisplayName("Redis 키 생성 및 TTL 설정 검증")
     class RedisKeyAndTtlBehavior {
+
+        @BeforeEach
+        void setUp() {
+            when(detectorRedisTemplate.opsForValue()).thenReturn(valueOperations);
+        }
 
         @Test
         @DisplayName("올바른 키 형식(bid:count:{userId})으로 increment가 호출되어야 한다")
@@ -157,6 +184,11 @@ class BidSpamDetectorTest {
     @Nested
     @DisplayName("유저별 카운트 독립성")
     class UserIsolation {
+
+        @BeforeEach
+        void setUp() {
+            when(detectorRedisTemplate.opsForValue()).thenReturn(valueOperations);
+        }
 
         @Test
         @DisplayName("서로 다른 유저의 키가 독립적으로 생성되어야 한다")
