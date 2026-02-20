@@ -4,6 +4,7 @@ import com.back.chat.adapter.out.redis.RedisChatEventPublisher;
 import com.back.chat.domain.event.ChatMessageSavedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
@@ -15,6 +16,7 @@ public class ChatMessagePublishListener {
 
     private final RedisChatEventPublisher redisChatMessagePublisher;
 
+    @Async("chatRedisExecutor")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleAfterCommit(ChatMessageSavedEvent event) {
         try {
