@@ -61,6 +61,9 @@ public class RedisChatMessageSubscriber implements MessageListener {
 
                     String destination = roomTopic(payload.roomId());
                     messagingTemplate.convertAndSend(destination,payload);
+
+                    log.info("[CHAT][REDIS-SUB] channel={}, type=MESSAGE_DELETED roomId={}, messageId={}, destination={}",
+                            channel, payload.roomId(), payload.messageId(), destination);
                 }
 
                 default -> log.warn("[CHAT][REDIS-SUB][WARN] unknown type. channel={}, rawBody={}", channel, rawBody);

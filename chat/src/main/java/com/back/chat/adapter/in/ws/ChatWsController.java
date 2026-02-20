@@ -10,6 +10,8 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 
+import java.security.Principal;
+
 @Controller
 @RequiredArgsConstructor
 public class ChatWsController {
@@ -19,9 +21,9 @@ public class ChatWsController {
     @MessageMapping("/message")
     public void sendMessage(
             @Valid @Payload ChatMessageSendRequestDto requestDto,
-            Authentication auth
+            Authentication authentication
     ) {
-        AuthPrincipal authPrincipal = (AuthPrincipal) auth.getPrincipal();
+        AuthPrincipal authPrincipal = (AuthPrincipal) authentication.getPrincipal();
 
         chatFacade.sendMessage(requestDto, authPrincipal.getUserId());
     }

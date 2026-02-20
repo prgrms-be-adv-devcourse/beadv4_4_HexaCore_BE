@@ -24,15 +24,10 @@ public class RedisSubscriberConfig {
         container.setConnectionFactory(redisConnectionFactory);
 
         container.addMessageListener(
-                messageListenerAdapter(),
+                redisChatMessageSubscriber,
                 new PatternTopic(REDIS_PUBSUB_CHAT_ROOM_PATTERN)
         );
 
         return container;
-    }
-
-    @Bean
-    public MessageListenerAdapter messageListenerAdapter() {
-        return new MessageListenerAdapter(redisChatMessageSubscriber);
     }
 }
