@@ -85,14 +85,26 @@ public class MarketInternalFacade {
 
     @Transactional
     public void handleProductCreatedEvent(ProductCreatedPayload payload) {
-        //멱등성 검사는 usecase에서 진행..
-        List<ProductCreatedResultPayload> commands = payload.options().stream()
-                .flatMap(option -> option.values().stream()
-                        .map(value -> marketProductMapper.toResultPayload(payload, value))
-                )
-                .toList();
+        try {
+            //멱등성 검사는 usecase에서 진행..
+            List<ProductCreatedResultPayload> payloads = payload.options().stream()
+                    .flatMap(option -> option.values().stream()
+                            .map(value -> marketProductMapper.toResultPayload(payload, value))
+                    )
+                    .toList();
 
-        createProductUseCase.register(commands);
-
+            int savedCount = createProductUseCase.createMarketProduct(payloads);
+            if (savedCount > 0) {
+                log.info("[MarketInternalFacade] 상품 복제 완료 - 상품명: {}, 처리된 옵션: {}/{}개",
+                        payload.productInfo().name(), savedCount, payloads.size());
+            } else {
+                log.warn("[MarketInternalFacade] 모든 옵션이 이미 존재하여 복제를 건너뜁니다 - 상품명: {}",
+                        payload.productInfo().name());
+            }
+        } catch (Exception e) {
+            log.error("[MarketInternalFacade] 상품 처리 중 예외 발생! - 상품명: {}, 사유: {}",
+                    payload.productInfo().name(), e.getMessage(), e);
+            throw e;
+        }
     }
 }

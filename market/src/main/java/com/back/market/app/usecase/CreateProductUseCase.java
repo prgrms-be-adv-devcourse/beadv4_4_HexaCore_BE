@@ -17,14 +17,18 @@ public class CreateProductUseCase {
     private final MarketProductRepository marketProductRepository;
     private final MarketProductMapper marketProductMapper;
 
-    public void register(List<ProductCreatedResultPayload> payloads) {
+    public int createMarketProduct(List<ProductCreatedResultPayload> payloads) {
+        int savedCount = 0;
         for(ProductCreatedResultPayload payload: payloads) {
             if(!marketProductRepository.existsByProductOptionId(payload.productOptionId())) {
                 MarketProduct product = marketProductMapper.toEntity(payload);
                 marketProductRepository.save(product);
+                savedCount++;
+                log.info("  >> [신규 등록] 옵션ID: {}, 옵션값: {}", payload.productOptionId(), payload.productOption());
             } else {
-                log.info("[RegisterProductUseCase] 이미 존재하는 옵션 건너뜀. optionId: {}", payload.productOptionId());
+                log.info("[CreateProductUseCase] 이미 존재하는 옵션 건너뜀. optionId: {}", payload.productOptionId());
             }
         }
+        return savedCount;
     }
 }
