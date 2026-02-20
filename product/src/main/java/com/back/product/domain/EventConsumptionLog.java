@@ -27,6 +27,15 @@ public class EventConsumptionLog extends BaseTimeEntity {
     String eventType;
 
     @Column(nullable = false)
+    String topic;
+
+    @Column(nullable = false)
+    Integer partition;
+
+    @Column(nullable = false)
+    Long offset;
+
+    @Column(nullable = false)
     @Builder.Default
     EventConsumptionStatus status = EventConsumptionStatus.PROCESSING;
 

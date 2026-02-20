@@ -2,15 +2,11 @@ package com.back.product.adapter.in.event;
 
 import com.back.common.event.Envelope;
 import com.back.product.app.facade.EventConsumptionFacade;
-import com.back.product.app.usecase.ProductDocumentUseCase;
+import com.back.product.dto.command.EventConsumptionCommand;
 import com.back.product.event.kafka.ProductCreatedPayload;
 import com.back.product.event.kafka.ProductDeletedPayload;
 import com.back.product.event.kafka.ProductUpdatedPayload;
-import com.back.product.dto.model.OptionDto;
-import com.back.product.dto.model.ProductInfoDto;
-import com.back.product.mapper.OptionMapper;
-import com.back.product.mapper.ProductInfoMapper;
-import jakarta.validation.Valid;
+import com.back.product.mapper.EventConsumptionCommandMapper;
 import jakarta.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,18 +20,16 @@ import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.validation.annotation.Validated;
 import tools.jackson.core.JacksonException;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.json.JsonMapper;
-
-import java.util.List;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class ProductKafkaEventListener {
     private final EventConsumptionFacade eventConsumptionFacade;
+    private final EventConsumptionCommandMapper eventConsumptionCommandMapper;
     private final JsonMapper jsonMapper;
 
     @RetryableTopic(
@@ -52,7 +46,12 @@ public class ProductKafkaEventListener {
             groupId = "${spring.kafka.consumer.group-id}"
     )
     @Transactional
-    public void handleProductCreate(String message) {
+    public void handleProductCreate(
+            String message,
+            @Header(KafkaHeaders.RECEIVED_TOPIC) String topic,
+            @Header(KafkaHeaders.RECEIVED_PARTITION) Integer partition,
+            @Header(KafkaHeaders.OFFSET) Long offset
+    ) {
         try {
             Envelope<ProductCreatedPayload> event = jsonMapper.readValue(message, new TypeReference<>() {});
 
@@ -60,12 +59,12 @@ public class ProductKafkaEventListener {
 
             log.info("[KafkaListenerSuccess] ProductCreatedEvent 수신 : productInfo = {}", payload.productInfo());
 
-            eventConsumptionFacade.syncCreatedProduct(
-                    event.header().eventId(),
-                    event.header().eventType(),
-                    message,
-                    payload
+            EventConsumptionCommand command = eventConsumptionCommandMapper.toCommand(
+                    event.header().eventId(), event.header().eventType(),
+                    topic, partition, offset, message
             );
+
+            eventConsumptionFacade.syncCreatedProduct(command, payload);
         } catch (JacksonException e) {
             log.error("[KafkaListenerFailed] ProductCreatedPayload 역직렬화 중 에러 발생 : {}", e.getMessage(), e);
             throw e;
@@ -86,7 +85,12 @@ public class ProductKafkaEventListener {
             groupId = "${spring.kafka.consumer.group-id}"
     )
     @Transactional
-    public void handleProductUpdate(String message) {
+    public void handleProductUpdate(
+            String message,
+            @Header(KafkaHeaders.RECEIVED_TOPIC) String topic,
+            @Header(KafkaHeaders.RECEIVED_PARTITION) Integer partition,
+            @Header(KafkaHeaders.OFFSET) Long offset
+    ) {
         try {
             Envelope<ProductUpdatedPayload> event = jsonMapper.readValue(message, new TypeReference<>() {});
 
@@ -94,12 +98,12 @@ public class ProductKafkaEventListener {
 
             log.info("[KafkaListenerSuccess] ProductUpdatedEvent 수신 : productInfo = {}", payload.productInfo());
 
-            eventConsumptionFacade.syncUpdatedProduct(
-                    event.header().eventId(),
-                    event.header().eventType(),
-                    message,
-                    payload
+            EventConsumptionCommand command = eventConsumptionCommandMapper.toCommand(
+                    event.header().eventId(), event.header().eventType(),
+                    topic, partition, offset, message
             );
+
+            eventConsumptionFacade.syncUpdatedProduct(command, payload);
         } catch (JacksonException e) {
             log.error("[KafkaListenerFailed] ProductUpdatedPayload 역직렬화 중 에러 발생 : {}", e.getMessage(), e);
             throw e;
@@ -120,7 +124,12 @@ public class ProductKafkaEventListener {
             groupId = "${spring.kafka.consumer.group-id}"
     )
     @Transactional
-    public void handleProductDelete(String message) {
+    public void handleProductDelete(
+            String message,
+            @Header(KafkaHeaders.RECEIVED_TOPIC) String topic,
+            @Header(KafkaHeaders.RECEIVED_PARTITION) Integer partition,
+            @Header(KafkaHeaders.OFFSET) Long offset
+    ) {
         try {
             Envelope<ProductDeletedPayload> event = jsonMapper.readValue(message, new TypeReference<>() {});
 
@@ -128,12 +137,12 @@ public class ProductKafkaEventListener {
 
             log.info("[KafkaListenerSuccess] ProductDeletedEvent 수신 : productInfoId = {}", payload.productInfoId());
 
-            eventConsumptionFacade.syncDeletedProduct(
-                    event.header().eventId(),
-                    event.header().eventType(),
-                    message,
-                    payload
+            EventConsumptionCommand command = eventConsumptionCommandMapper.toCommand(
+                    event.header().eventId(), event.header().eventType(),
+                    topic, partition, offset, message
             );
+
+            eventConsumptionFacade.syncDeletedProduct(command, payload);
         } catch (JacksonException e) {
             log.error("[KafkaListenerFailed] ProductDeletedEvent 역직렬화 중 에러 발생 : {}", e.getMessage(), e);
             throw e;
@@ -144,10 +153,11 @@ public class ProductKafkaEventListener {
     public void handleDlt(
             String message,
             @Header(KafkaHeaders.RECEIVED_TOPIC) String topic,
+            @Header(KafkaHeaders.RECEIVED_PARTITION) Integer partition,
+            @Header(KafkaHeaders.OFFSET) Long offset,
             @Header(KafkaHeaders.EXCEPTION_MESSAGE) String errorMessage
     ) {
-        log.error("[KafkaListenerDlt] Topic: {}, Message: {}, Error: {}", topic, message, errorMessage);
-
-
+        log.error("[KafkaListenerDlt] Topic: {}, Partition: {}, Offset: {}, Error: {}, Message: {}",
+                topic, partition, offset, errorMessage, message);
     }
 }

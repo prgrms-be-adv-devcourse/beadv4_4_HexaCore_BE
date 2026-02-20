@@ -3,6 +3,7 @@ package com.back.product.app.facade;
 import com.back.common.annotation.Loggable;
 import com.back.product.app.usecase.EventLogUseCase;
 import com.back.product.app.usecase.ProductDocumentUseCase;
+import com.back.product.dto.command.EventConsumptionCommand;
 import com.back.product.dto.model.OptionDto;
 import com.back.product.dto.model.ProductInfoDto;
 import com.back.product.event.kafka.ProductCreatedPayload;
@@ -32,14 +33,16 @@ public class EventConsumptionFacade {
 
     @Loggable
     @Transactional
-    public void syncCreatedProduct(String eventId, String eventType, String message, @Valid ProductCreatedPayload payload) {
+    public void syncCreatedProduct(EventConsumptionCommand command, @Valid ProductCreatedPayload payload) {
+        String eventId = command.eventId();
+
         if (eventLogUseCase.isAlreadyProcessed(eventId)) {
-            log.info("[EventConsumptionFacade] {}-{} is already processed.", eventType, eventId);
+            log.info("[EventConsumptionFacade] {}-{} is already processed.", command.eventType(), eventId);
             return;
         }
 
         try {
-            eventLogUseCase.startProcessing(eventId, eventType, message);
+            eventLogUseCase.startProcessing(command);
 
             ProductInfoDto productInfoDto = productInfoMapper.toDto(payload.productInfo());
             List<OptionDto> optionDtos = payload.options().stream().map(optionMapper::toDto).toList();
@@ -57,14 +60,16 @@ public class EventConsumptionFacade {
 
     @Loggable
     @Transactional
-    public void syncUpdatedProduct(String eventId, String eventType, String message, @Valid ProductUpdatedPayload payload) {
+    public void syncUpdatedProduct(EventConsumptionCommand command, @Valid ProductUpdatedPayload payload) {
+        String eventId = command.eventId();
+
         if (eventLogUseCase.isAlreadyProcessed(eventId)) {
-            log.info("[EventConsumptionFacade] {}-{} is already processed.", eventType, eventId);
+            log.info("[EventConsumptionFacade] {}-{} is already processed.", command.eventType(), eventId);
             return;
         }
 
         try {
-            eventLogUseCase.startProcessing(eventId, eventType, message);
+            eventLogUseCase.startProcessing(command);
 
             ProductInfoDto productInfoDto = productInfoMapper.toDto(payload.productInfo());
             List<OptionDto> optionDtos = payload.options().stream().map(optionMapper::toDto).toList();
@@ -82,14 +87,16 @@ public class EventConsumptionFacade {
 
     @Loggable
     @Transactional
-    public void syncDeletedProduct(String eventId, String eventType, String message, @Valid ProductDeletedPayload payload) {
+    public void syncDeletedProduct(EventConsumptionCommand command, @Valid ProductDeletedPayload payload) {
+        String eventId = command.eventId();
+
         if (eventLogUseCase.isAlreadyProcessed(eventId)) {
-            log.info("[EventConsumptionFacade] {}-{} is already processed.", eventType, eventId);
+            log.info("[EventConsumptionFacade] {}-{} is already processed.", command.eventType(), eventId);
             return;
         }
 
         try {
-            eventLogUseCase.startProcessing(eventId, eventType, message);
+            eventLogUseCase.startProcessing(command);
 
             productDocumentUseCase.deleteProduct(payload.productInfoId());
 

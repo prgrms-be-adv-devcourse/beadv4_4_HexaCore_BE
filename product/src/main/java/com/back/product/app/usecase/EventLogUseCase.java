@@ -3,6 +3,7 @@ package com.back.product.app.usecase;
 import com.back.common.annotation.Loggable;
 import com.back.product.adapter.out.persistence.EventConsumptionLogRepository;
 import com.back.product.domain.EventConsumptionLog;
+import com.back.product.dto.command.EventConsumptionCommand;
 import com.back.product.dto.enums.EventConsumptionStatus;
 import com.back.product.mapper.EventConsumptionLogMapper;
 import lombok.RequiredArgsConstructor;
@@ -25,19 +26,19 @@ public class EventLogUseCase {
 
     @Loggable
     @Transactional
-    public void startProcessing(String eventId, String eventType, String message) {
-        eventConsumptionLogRepository.findByEventId(eventId)
+    public void startProcessing(EventConsumptionCommand command) {
+        eventConsumptionLogRepository.findByEventId(command.eventId())
                 .ifPresentOrElse(
                         log -> {
                             if (isAlreadyProcessed(log.getStatus())) {
-                                throw new IllegalStateException("Already " + log.getStatus() + " event: " + eventId);
+                                throw new IllegalStateException("Already " + log.getStatus() + " event: " + command.eventId());
                             }
                             log.updateStatus(EventConsumptionStatus.PROCESSING);
                             log.incrementRetryCount();
                             eventConsumptionLogRepository.saveAndFlush(log);
                         },
                         () -> {
-                            EventConsumptionLog eventLog = eventConsumptionLogMapper.toEntity(eventId, eventType, message);
+                            EventConsumptionLog eventLog = eventConsumptionLogMapper.toEntity(command);
                             eventConsumptionLogRepository.saveAndFlush(eventLog);
                         }
                 );
