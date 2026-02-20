@@ -5,6 +5,7 @@ import com.back.common.event.EventName;
 
 public record PaymentFailedEvent(
         RelType relType,
-        Long relId
+        Long relId,
+        String failReason
 ) implements EventName {
 }

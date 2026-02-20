@@ -6,10 +6,9 @@ import com.back.cash.app.WalletSupport;
 import com.back.cash.domain.Payment;
 import com.back.cash.domain.Wallet;
 import com.back.cash.domain.enums.PaymentStatus;
+import com.back.cash.domain.event.PaymentFailedEvent;
 import com.back.cash.dto.request.TossFailRequestDto;
 import com.back.common.code.FailureCode;
-import com.back.cash.domain.event.PaymentFailedEvent;
-import com.back.common.dto.cash.request.PaymentFailedRequestDto;
 import com.back.common.exception.BadRequestException;
 import com.back.common.exception.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +26,7 @@ public class FailTossPaymentUseCase {
     private final WalletSupport walletSupport;
     private final CashLogSupport cashLogSupport;
 
-    public PaymentFailedRequestDto execute(TossFailRequestDto req) {
+    public void execute(TossFailRequestDto req) {
         if (req == null || req.orderId() == null || req.orderId().isBlank()) {
             throw new BadRequestException(FailureCode.BAD_REQUEST);
         }
@@ -35,21 +34,16 @@ public class FailTossPaymentUseCase {
         Payment payment = paymentRepository.findWithLockByTossOrderId(req.orderId())
                 .orElseThrow(() -> new EntityNotFoundException(FailureCode.PAYMENT_NOT_FOUND));
 
-        if (payment.getStatus() == PaymentStatus.DONE) {
-            return new PaymentFailedRequestDto(payment.getRelType(), payment.getRelId());
+        if (payment.getStatus() != PaymentStatus.READY) {
+            return;
         }
 
-        // 멱등 처리: 이미 FAIL이면 다시 처리하지 않아도 됨
-        if (payment.getStatus() != PaymentStatus.FAIL) {
-            payment.markAsFail();
-        }
+        payment.markAsFail();
 
         // 선홀딩이 있었다면 release
         releaseIfHeld(payment);
 
-        eventPublisher.publishEvent(new PaymentFailedEvent(payment.getRelType(), payment.getRelId()));
-
-        return new PaymentFailedRequestDto(payment.getRelType(), payment.getRelId());
+        eventPublisher.publishEvent(new PaymentFailedEvent(payment.getRelType(), payment.getRelId(), req.message()));
     }
 
     private void releaseIfHeld(Payment payment) {

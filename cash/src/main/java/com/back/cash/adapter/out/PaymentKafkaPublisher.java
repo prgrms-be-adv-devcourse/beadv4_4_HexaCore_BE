@@ -44,7 +44,7 @@ public class PaymentKafkaPublisher {
     public void publishFailed(PaymentFailedEvent event) {
         Envelope<PaymentFailPayload> envelope = Envelope.of(
                 paymentFailedTopic,
-                new PaymentFailPayload(event.relType(), event.relId())
+                new PaymentFailPayload(event.relType(), event.relId(), event.failReason())
         );
 
         kafkaEventPublisher.publish(paymentFailedTopic, envelope);

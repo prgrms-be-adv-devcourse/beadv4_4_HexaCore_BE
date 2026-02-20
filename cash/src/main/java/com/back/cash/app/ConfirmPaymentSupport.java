@@ -108,7 +108,7 @@ public class ConfirmPaymentSupport {
         handleConfirmFail(payment);
 
         eventPublisher.publishEvent(new PaymentFailedEvent(
-                payment.getRelType(), payment.getRelId()
+                payment.getRelType(), payment.getRelId(), failReason
         ));
 
         return ConfirmResultResponseDto.fail(PaymentMapper.toFailedDto(payment), errorCode, failReason);

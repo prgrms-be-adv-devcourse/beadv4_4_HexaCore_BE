@@ -73,7 +73,7 @@ class PaymentKafkaPublisherTest {
     @DisplayName("[publishFailed] PaymentFailedEvent → PAYMENT_FAILED Envelope로 발행")
     void publishFailed_sendsEnvelopeWithCorrectPayload() {
         // given
-        PaymentFailedEvent event = new PaymentFailedEvent(RelType.BIDDING, 200L);
+        PaymentFailedEvent event = new PaymentFailedEvent(RelType.BIDDING, 200L, "FAIL_REASON");
 
         // when
         publisher.publishFailed(event);
