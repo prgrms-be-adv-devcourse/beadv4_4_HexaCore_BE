@@ -72,12 +72,15 @@ public class ChatReportMessageUseCase {
                     )
             );
         }
-            ChatMessageBlindedKafkaEvent payload =
-                    new ChatMessageBlindedKafkaEvent(
-                            UUID.randomUUID().toString(),
-                            message.getUserId(),
-                            LocalDateTime.now()
-                    );
+        LocalDateTime now = LocalDateTime.now();
+        String eventId = UUID.randomUUID().toString();
+
+        ChatMessageBlindedKafkaEvent payload =
+                new ChatMessageBlindedKafkaEvent(
+                        eventId,
+                        message.getUserId(),
+                        now
+                );
 
             String payloadJson;
             try {
@@ -93,7 +96,7 @@ public class ChatReportMessageUseCase {
                             message.getId(),
                             ChatEventType.MESSAGE_BLINDED,
                             payloadJson,
-                            LocalDateTime.now()
+                            now
                     )
             );
                 eventPublisher.publishEvent(new ChatOutboxSavedEvent(outbox.getId()));
