@@ -1,14 +1,17 @@
 package com.back.chat.app;
 
 
-import com.back.chat.dto.request.ChatMessageReportRequestDto;
-import com.back.chat.dto.request.ChatMessageSendRequestDto;
-import com.back.chat.dto.response.ChatMessageHistoryResponseDto;
-import com.back.chat.dto.response.ChatMessageReportResponseDto;
-import com.back.chat.dto.response.ChatRoomEnterResponseDto;
+import com.back.chat.app.usecase.*;
+import com.back.chat.adapter.in.web.dto.request.ChatMessageReportRequestDto;
+import com.back.chat.adapter.in.web.dto.request.ChatMessageSendRequestDto;
+import com.back.chat.adapter.in.web.dto.response.ChatMessageHistoryResponseDto;
+import com.back.chat.adapter.in.web.dto.response.ChatMessageReportResponseDto;
+import com.back.chat.adapter.in.web.dto.response.ChatRoomEnterResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -19,6 +22,8 @@ public class ChatFacade {
     private final ChatGetHistoryUseCase chatGetHistoryUseCase;
     private final ChatReportMessageUseCase chatReportMessageUseCase;
     private final ChatDeleteMessageUseCase chatDeleteMessageUseCase;
+    private final CreateChatRoomsUseCase createChatRoomsUseCase;
+    private final DeleteChatRoomUseCase deleteChatRoomUseCase;
 
     @Transactional
     public ChatRoomEnterResponseDto enterChatRoom(Long brandId, Long userId){
@@ -43,5 +48,15 @@ public class ChatFacade {
     @Transactional
     public void deleteMessage(Long userId, Long messageId) {
         chatDeleteMessageUseCase.deleteMessage(userId, messageId);
+    }
+
+    @Transactional
+    public void createChatRoomsIfAbsent(List<Long> brandIds) {
+        createChatRoomsUseCase.createChatRooms(brandIds);
+    }
+
+    @Transactional
+    public int deleteChatRoom(Long brandId) {
+        return deleteChatRoomUseCase.deleteChatRoom(brandId);
     }
 }

@@ -30,7 +30,13 @@ public class Payout {
     private Long payeeId;
 
     @Column(precision = 19, scale = 2, nullable = false)
-    private BigDecimal amount;
+    private BigDecimal totalGrossAmount;
+
+    @Column(precision = 19, scale = 2, nullable = false)
+    private BigDecimal totalNetAmount;
+
+    @Column(precision = 19, scale = 2, nullable = false)
+    private BigDecimal totalFeeAmount;
 
     private LocalDateTime completedAt;
 
@@ -41,7 +47,9 @@ public class Payout {
 
     public void markDone() {
         this.status = PayoutStatus.DONE;
+        this.completedAt = LocalDateTime.now();
     }
+
     public void markFailed(String reason) {
         this.status = PayoutStatus.FAILED;
         this.failReason = reason;

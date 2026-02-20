@@ -122,6 +122,8 @@ public class Settlement extends BaseAggregateEntity<Settlement> {
         registerEvent(new SettlementInternalCompletedEvent(
                 this.id,
                 previousStatus,
+                this.totalSalesAmount,
+                this.totalFeeAmount,
                 this.totalNetAmount,
                 this.sellerId,
                 this.sellerName,

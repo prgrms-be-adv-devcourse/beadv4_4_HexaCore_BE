@@ -1,7 +1,7 @@
 package com.back.chat;
 
 /*
-import com.back.chat.adapter.out.redis.RedisChatMessageSubscriber;
+import com.back.chat.adapter.in.redis.RedisChatMessageSubscriber;
 import com.back.chat.event.payload.ChatMessagePayload;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;

@@ -1,22 +1,19 @@
 package com.back.chat;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
 
-import com.back.chat.adapter.out.ChatMessageRepository;
-import com.back.chat.adapter.out.ChatReportRepository;
-import com.back.chat.app.ChatReportMessageUseCase;
-import com.back.chat.domain.ChatMessage;
+import com.back.chat.adapter.out.repository.ChatMessageRepository;
+import com.back.chat.adapter.out.repository.ChatReportRepository;
+import com.back.chat.app.usecase.ChatReportMessageUseCase;
+import com.back.chat.domain.entity.ChatMessage;
 import com.back.chat.domain.ChatReportReason;
 import com.back.chat.domain.MessageStatus;
-import com.back.chat.dto.request.ChatMessageReportRequestDto;
-import com.back.common.exception.BadRequestException;
+import com.back.chat.adapter.in.web.dto.request.ChatMessageReportRequestDto;
 import com.back.common.exception.ConflictException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest(classes = ChatApplication.class)

@@ -59,7 +59,7 @@ class PaymentKafkaPublisherTest {
         verify(kafkaEventPublisher).publish(eq(COMPLETED_TOPIC), envelopeCaptor.capture());
 
         Envelope<?> envelope = envelopeCaptor.getValue();
-        assertThat(envelope.header().eventType()).isEqualTo("PAYMENT_COMPLETED");
+        assertThat(envelope.header().eventType()).isEqualTo(COMPLETED_TOPIC);
         assertThat(envelope.header().eventId()).isNotBlank();
         assertThat(envelope.header().occurrenceAt()).isNotNull();
 
@@ -82,7 +82,7 @@ class PaymentKafkaPublisherTest {
         verify(kafkaEventPublisher).publish(eq(FAILED_TOPIC), envelopeCaptor.capture());
 
         Envelope<?> envelope = envelopeCaptor.getValue();
-        assertThat(envelope.header().eventType()).isEqualTo("PAYMENT_FAILED");
+        assertThat(envelope.header().eventType()).isEqualTo(FAILED_TOPIC);
         assertThat(envelope.header().eventId()).isNotBlank();
 
         PaymentFailPayload payload = (PaymentFailPayload) envelope.payload();

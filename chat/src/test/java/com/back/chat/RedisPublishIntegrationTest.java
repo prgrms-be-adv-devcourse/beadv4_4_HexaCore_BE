@@ -2,7 +2,7 @@ package com.back.chat;
 
 import com.back.chat.adapter.out.redis.RedisChatEventPublisher;
 import com.back.chat.domain.MessageStatus;
-import com.back.chat.event.payload.ChatMessagePayload;
+import com.back.chat.adapter.out.redis.payload.ChatMessagePayload;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

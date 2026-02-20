@@ -6,6 +6,7 @@ import com.back.common.event.Envelope;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.messaging.converter.MessageConversionException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.core.type.TypeReference;
@@ -21,7 +22,8 @@ public class WalletUserCreatedListener {
 
     @KafkaListener(
             topics = "${custom.kafka.topic.user-wallet-created}",
-            groupId = "${spring.kafka.consumer.group-id}"
+            groupId = "${spring.kafka.consumer.group-id}",
+            containerFactory = "walletKafkaListenerContainerFactory"
     )
     @Transactional
     public void on(String message) {
@@ -30,7 +32,7 @@ public class WalletUserCreatedListener {
             event = jsonMapper.readValue(message, new TypeReference<Envelope<WalletCreateRequestedPayload>>() {});
         } catch (Exception e) {
             log.error("[ERROR_WALLET_CREATED_CONSUME] 역직렬화 실패. message={}", message, e);
-            return;
+            throw new MessageConversionException("wallet user created message parse failed", e);
         }
 
         WalletCreateRequestedPayload data = event.payload();
