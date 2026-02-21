@@ -21,23 +21,11 @@ class DetectorFacadeTest {
 
     private static final Long USER_ID = 55L;
 
-    @AfterEach
-    void clearSecurityContext() {
-    }
-
-    private void setUpAuthenticatedContext() {
-    }
-
     // --- 정상 흐름 ---
 
     @Nested
-    @DisplayName("스팸 아닌 정상 입찰 흐름")
+    @DisplayName("정상 입찰 흐름")
     class WhenSpamCheckPasses {
-
-        @BeforeEach
-        void setUp() {
-            setUpAuthenticatedContext();
-        }
 
         @Test
         @DisplayName("스팸 아닌 경우 checkBidSpam이 호출되어야 한다")
@@ -62,11 +50,6 @@ class DetectorFacadeTest {
     @DisplayName("BidSpamException 발생 시 동작")
     class WhenSpamDetected {
 
-        @BeforeEach
-        void setUp() {
-            setUpAuthenticatedContext();
-        }
-
         @Test
         @DisplayName("BidSpamException이 발생하면 그대로 상위로 전파되어야 한다")
         void should_rethrow_bid_spam_exception() {
@@ -77,7 +60,7 @@ class DetectorFacadeTest {
         }
     }
 
-    // --- 인증 컨텍스트 없는 경우 ---
+    // --- userId null 검증 ---
 
     @Nested
     @DisplayName("userId가 null인 경우")
