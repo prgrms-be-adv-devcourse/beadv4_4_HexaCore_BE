@@ -1,21 +1,26 @@
 package com.back.detector.app;
 
-import com.back.common.util.IpAddressExtractor;
-import com.back.security.util.SecurityHelper;
-import jakarta.servlet.http.HttpServletRequest;
+import com.back.detector.app.usecase.BidSpamLogUseCase;
+import com.back.detector.app.usecase.CrawlingLogUseCase;
+import com.back.detector.app.usecase.HijackLogUseCase;
+import com.back.detector.domain.BidSpamDetectResult;
+import com.back.detector.domain.CrawlingDetectResult;
+import com.back.detector.domain.HijackDetectResult;
+import com.back.detector.dto.response.BidSpamLogResponse;
+import com.back.detector.dto.response.CrawlingLogResponse;
+import com.back.detector.dto.response.HijackLogResponse;
+import com.back.detector.exception.BidSpamException;
+import com.back.detector.exception.CrawlingDetectedException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.aspectj.lang.ProceedingJoinPoint;
-import org.aspectj.lang.annotation.Around;
-import org.aspectj.lang.annotation.Aspect;
 import org.springframework.stereotype.Service;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.math.BigDecimal;
 
-@Aspect
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -23,19 +28,30 @@ public class DetectorFacade {
     private final BidSpamDetector bidSpamDetector;
     private final CrawlingDetector crawlingDetector;
     private final HijackDetector hijackDetector;
+    private final BidSpamLogUseCase bidSpamLogUseCase;
+    private final CrawlingLogUseCase crawlingLogUseCase;
+    private final HijackLogUseCase hijackLogUseCase;
 
-    @Around("@annotation(com.back.detector.annotation.CheckBidSpam)")
-    public Object detectBidSpam(ProceedingJoinPoint joinPoint) throws Throwable {
-        Long userId = getCurrentUserId();
-        bidSpamDetector.checkBidSpam(userId);
-        return joinPoint.proceed();
+    @Transactional
+    public void detectBidSpam(Long userId) {
+        BidSpamDetectResult result = bidSpamDetector.checkBidSpam(userId);
+        if (result != null) {
+            if (result.requestCount() > 0) {
+                bidSpamLogUseCase.save(userId, result.banLevel(), result.requestCount());
+            }
+            throw new BidSpamException();
+        }
     }
 
-    @Around("@annotation(com.back.detector.annotation.CheckCrawling)")
-    public Object detectCrawling(ProceedingJoinPoint joinPoint) throws Throwable {
-        String ip = getCurrentIp();
-        crawlingDetector.checkCrawling(ip);
-        return joinPoint.proceed();
+    @Transactional
+    public void detectCrawling(String ip) {
+        CrawlingDetectResult result = crawlingDetector.checkCrawling(ip);
+        if (result != null) {
+            if (result.requestCount() > 0) {
+                crawlingLogUseCase.save(ip, result.requestCount(), result.banLevel());
+            }
+            throw new CrawlingDetectedException();
+        }
     }
 
     /**
@@ -47,42 +63,23 @@ public class DetectorFacade {
      */
     @Transactional
     public void detectHijack(Long userId, String userEmail, String ip, BigDecimal transactionAmount) {
-        hijackDetector.checkHijack(userId, userEmail, ip, transactionAmount);
-    }
-
-    private Long getCurrentUserId() {
-        return SecurityHelper.getCurrentUserId();
-    }
-
-    private String getCurrentIp() {
-        ServletRequestAttributes attributes =
-                (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-        if (attributes == null) {
-            throw new IllegalStateException("HTTP 요청 컨텍스트가 없습니다");
-        }
-        HttpServletRequest request = attributes.getRequest();
-        return IpAddressExtractor.extractClientIp(request);
-    }
-
-    /**
-     * 예외 로깅용 : getCurrentIp()가 실패해도 로그는 남기려는 용도
-     */
-    private String getCurrentIpSafe() {
-        try {
-            return getCurrentIp();
-        } catch (Exception e) {
-            return "unknown";
+        HijackDetectResult result = hijackDetector.checkHijack(userId, userEmail, ip, transactionAmount);
+        if (result != null) {
+            hijackLogUseCase.save(result.userId(), result.userEmail(), result.currentIp(),
+                    result.existingIps(), result.transactionAmount(), result.reason());
         }
     }
 
-    /**
-     * 예외 로깅용 : getCurrentUserId()가 실패해도 로그는 남기려는 용도
-     */
-    private Long getCurrentUserIdSafe() {
-        try {
-            return getCurrentUserId();
-        } catch (Exception e) {
-            return null;
-        }
+    public Page<BidSpamLogResponse> findLatestBidSpamLogs(int page, int size) {
+        return bidSpamLogUseCase.findPageByCreatedAtDesc(PageRequest.of(page, size, Sort.by("createdAt").descending()));
     }
+
+    public Page<CrawlingLogResponse> findLatestCrawlingLogs(int page, int size) {
+        return crawlingLogUseCase.findPageByCreatedAtDesc(PageRequest.of(page, size, Sort.by("createdAt").descending()));
+    }
+
+    public Page<HijackLogResponse> findLatestHijackLogs(int page, int size) {
+        return hijackLogUseCase.findPageByCreatedAtDesc(PageRequest.of(page, size, Sort.by("createdAt").descending()));
+    }
+
 }

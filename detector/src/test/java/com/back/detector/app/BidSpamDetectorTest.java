@@ -1,8 +1,9 @@
 package com.back.detector.app;
 
+import com.back.detector.domain.BidSpamBanLevel;
+import com.back.detector.domain.BidSpamDetectResult;
 import com.back.detector.domain.DetectorPolicy;
 import com.back.detector.domain.enums.DetectorRedisKey;
-import com.back.detector.exception.BidSpamException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -16,8 +17,9 @@ import org.springframework.data.redis.core.ValueOperations;
 
 import java.util.concurrent.TimeUnit;
 
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -33,13 +35,27 @@ class BidSpamDetectorTest {
     private BidSpamDetector bidSpamDetector;
 
     private static final Long USER_ID = 100L;
-    private static final String EXPECTED_KEY = DetectorRedisKey.BID_COUNT.getKey(USER_ID); // "bid:count:100"
-    private static final int MAX_ATTEMPTS = DetectorPolicy.BID_SPAM.getMaxAttempts();      // 5
-    private static final int TIME_WINDOW   = DetectorPolicy.BID_SPAM.getTimeWindowMinutes(); // 1
+    private static final String COUNT_KEY = DetectorRedisKey.BID_COUNT.getKey(USER_ID);
+    private static final String BAN_KEY = DetectorRedisKey.BID_BAN.getKey(USER_ID);
+    private static final String BAN_COUNT_KEY = DetectorRedisKey.BID_BAN_COUNT.getKey(USER_ID);
+    private static final int MAX_ATTEMPTS = DetectorPolicy.BID_SPAM.getMaxAttempts();
+    private static final int TIME_WINDOW   = DetectorPolicy.BID_SPAM.getTimeWindowMinutes();
 
-    @BeforeEach
-    void setUp() {
-        when(detectorRedisTemplate.opsForValue()).thenReturn(valueOperations);
+    // --- null 방어 ---
+
+    @Nested
+    @DisplayName("userId가 null인 경우")
+    class WhenUserIdIsNull {
+
+        @Test
+        @DisplayName("userId가 null이면 IllegalArgumentException을 던져야 한다")
+        void should_throw_when_user_id_is_null() {
+            assertThatThrownBy(() -> bidSpamDetector.checkBidSpam(null))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessage("userId는 null일 수 없습니다");
+
+            verifyNoInteractions(detectorRedisTemplate);
+        }
     }
 
     // --- 정상 흐름----
@@ -48,26 +64,32 @@ class BidSpamDetectorTest {
     @DisplayName("스팸이 아닌 정상 입찰 시나리오")
     class WhenBidCountIsWithinLimit {
 
+        @BeforeEach
+        void setUp() {
+            when(detectorRedisTemplate.opsForValue()).thenReturn(valueOperations);
+            when(valueOperations.get(BAN_KEY)).thenReturn(null);
+        }
+
         @Test
         @DisplayName("첫 번째 입찰 시 카운트가 1이면 예외 없이 통과해야 한다")
         void should_pass_on_first_bid() {
-            when(valueOperations.increment(EXPECTED_KEY)).thenReturn(1L);
+            when(valueOperations.increment(COUNT_KEY)).thenReturn(1L);
 
             assertThatCode(() -> bidSpamDetector.checkBidSpam(USER_ID)).doesNotThrowAnyException();
 
-            verify(valueOperations).increment(EXPECTED_KEY);
-            verify(detectorRedisTemplate).expire(EXPECTED_KEY, TIME_WINDOW, TimeUnit.MINUTES);
+            verify(valueOperations).increment(COUNT_KEY);
+            verify(detectorRedisTemplate).expire(COUNT_KEY, TIME_WINDOW, TimeUnit.MINUTES);
         }
 
         @Test
         @DisplayName("정확히 maxAttempts(5회)까지는 예외 없이 통과해야 한다")
         void should_pass_when_count_equals_max_attempts() {
-            when(valueOperations.increment(EXPECTED_KEY)).thenReturn((long) MAX_ATTEMPTS);
+            when(valueOperations.increment(COUNT_KEY)).thenReturn((long) MAX_ATTEMPTS);
 
-            assertThatCode(() -> bidSpamDetector.checkBidSpam(USER_ID)).doesNotThrowAnyException(); // 예외 없음
+            assertThatCode(() -> bidSpamDetector.checkBidSpam(USER_ID)).doesNotThrowAnyException();
 
-            verify(valueOperations).increment(EXPECTED_KEY);
-            verify(detectorRedisTemplate).expire(EXPECTED_KEY, TIME_WINDOW, TimeUnit.MINUTES);
+            verify(valueOperations).increment(COUNT_KEY);
+            verify(detectorRedisTemplate, never()).expire(COUNT_KEY, TIME_WINDOW, TimeUnit.MINUTES);
         }
     }
 
@@ -77,22 +99,66 @@ class BidSpamDetectorTest {
     @DisplayName("스팸 감지 여부 검증")
     class WhenBidCountExceedsLimit {
 
-        @Test
-        @DisplayName("카운트가 maxAttempts(5)를 초과하면 BidSpamException을 발생시켜야 한다")
-        void should_throw_when_count_exceeds_max_attempts() {
-            when(valueOperations.increment(EXPECTED_KEY)).thenReturn((long) MAX_ATTEMPTS + 1); // 6
-
-            assertThatThrownBy(() -> bidSpamDetector.checkBidSpam(USER_ID))
-                    .isInstanceOf(BidSpamException.class);
+        @BeforeEach
+        void setUp() {
+            when(detectorRedisTemplate.opsForValue()).thenReturn(valueOperations);
+            when(valueOperations.get(BAN_KEY)).thenReturn(null);
         }
 
         @Test
-        @DisplayName("카운트가 매우 높아도(예: 100) BidSpamException을 발생시켜야 한다")
-        void should_throw_when_count_is_very_high() {
-            when(valueOperations.increment(EXPECTED_KEY)).thenReturn(100L);
+        @DisplayName("카운트가 maxAttempts(5)를 초과하면 DetectResult를 반환해야 한다")
+        void should_return_detect_result_when_count_exceeds_max_attempts() {
+            when(valueOperations.increment(COUNT_KEY)).thenReturn((long) MAX_ATTEMPTS + 1);
+            when(valueOperations.increment(BAN_COUNT_KEY)).thenReturn(1L);
 
-            assertThatThrownBy(() -> bidSpamDetector.checkBidSpam(USER_ID))
-                    .isInstanceOf(BidSpamException.class);
+            BidSpamDetectResult result = bidSpamDetector.checkBidSpam(USER_ID);
+
+            assertThat(result).isNotNull();
+        }
+
+        @Test
+        @DisplayName("카운트가 매우 높아도(예: 100) DetectResult를 반환해야 한다")
+        void should_return_detect_result_when_count_is_very_high() {
+            when(valueOperations.increment(COUNT_KEY)).thenReturn(100L);
+            when(valueOperations.increment(BAN_COUNT_KEY)).thenReturn(1L);
+
+            BidSpamDetectResult result = bidSpamDetector.checkBidSpam(USER_ID);
+
+            assertThat(result).isNotNull();
+        }
+    }
+
+    // --- 이미 차단된 유저 ---
+
+    @Nested
+    @DisplayName("이미 차단된 유저의 동작")
+    class WhenUserIsAlreadyBanned {
+
+        @BeforeEach
+        void setUp() {
+            when(detectorRedisTemplate.opsForValue()).thenReturn(valueOperations);
+        }
+
+        @Test
+        @DisplayName("차단 중인 유저이면 카운트 확인 없이 즉시 DetectResult를 반환해야 한다")
+        void should_return_detect_result_immediately_when_banned() {
+            when(valueOperations.get(BAN_KEY)).thenReturn(BidSpamBanLevel.FIRST.name());
+
+            BidSpamDetectResult result = bidSpamDetector.checkBidSpam(USER_ID);
+
+            assertThat(result).isNotNull();
+            assertThat(result.banLevel()).isEqualTo(BidSpamBanLevel.FIRST);
+            verify(valueOperations, never()).increment(COUNT_KEY);
+        }
+
+        @Test
+        @DisplayName("차단 중인 유저는 requestCount가 0으로 반환되어야 한다")
+        void should_return_zero_request_count_when_banned() {
+            when(valueOperations.get(BAN_KEY)).thenReturn(BidSpamBanLevel.SECOND.name());
+
+            BidSpamDetectResult result = bidSpamDetector.checkBidSpam(USER_ID);
+
+            assertThat(result.requestCount()).isZero();
         }
     }
 
@@ -102,38 +168,58 @@ class BidSpamDetectorTest {
     @DisplayName("Redis 키 생성 및 TTL 설정 검증")
     class RedisKeyAndTtlBehavior {
 
+        @BeforeEach
+        void setUp() {
+            when(detectorRedisTemplate.opsForValue()).thenReturn(valueOperations);
+        }
+
         @Test
         @DisplayName("올바른 키 형식(bid:count:{userId})으로 increment가 호출되어야 한다")
         void should_use_correct_key_format() {
             Long targetUserId = 42L;
-            String expectedKey = "bid:count:42";
-            when(valueOperations.increment(expectedKey)).thenReturn(1L);
+            String expectedCountKey = "bid:count:42";
+            String expectedBanKey = "bid:ban:42";
+            when(valueOperations.get(expectedBanKey)).thenReturn(null);
+            when(valueOperations.increment(expectedCountKey)).thenReturn(1L);
 
             bidSpamDetector.checkBidSpam(targetUserId);
 
-            verify(valueOperations).increment(expectedKey);
+            verify(valueOperations).increment(expectedCountKey);
         }
 
         @Test
-        @DisplayName("increment 후 매번 expire를 갱신해야 한다 (slide window 방지)")
-        void should_always_refresh_ttl_after_increment() {
-            when(valueOperations.increment(EXPECTED_KEY)).thenReturn(3L);
+        @DisplayName("첫 번째 요청(count=1)일 때만 expire를 설정해야 한다")
+        void should_set_expire_only_on_first_increment() {
+            when(valueOperations.get(BAN_KEY)).thenReturn(null);
+            when(valueOperations.increment(COUNT_KEY)).thenReturn(1L);
 
             bidSpamDetector.checkBidSpam(USER_ID);
 
-            verify(detectorRedisTemplate).expire(EXPECTED_KEY, TIME_WINDOW, TimeUnit.MINUTES);
+            verify(detectorRedisTemplate).expire(COUNT_KEY, TIME_WINDOW, TimeUnit.MINUTES);
         }
 
         @Test
-        @DisplayName("스팸 감지되더라도 expire는 increment 직후 호출되어야 한다")
-        void should_call_expire_even_when_spam_detected() {
-            when(valueOperations.increment(EXPECTED_KEY)).thenReturn((long) MAX_ATTEMPTS + 1);
+        @DisplayName("두 번째 이상 요청(count>1)일 때는 expire를 설정하지 않아야 한다")
+        void should_not_set_expire_after_first_increment() {
+            when(valueOperations.get(BAN_KEY)).thenReturn(null);
+            when(valueOperations.increment(COUNT_KEY)).thenReturn(2L);
 
-            assertThatThrownBy(() -> bidSpamDetector.checkBidSpam(USER_ID))
-                    .isInstanceOf(BidSpamException.class);
+            bidSpamDetector.checkBidSpam(USER_ID);
 
-            // expire는 스팸 체크 if-블록 이전에 실행되므로 반드시 호출됨
-            verify(detectorRedisTemplate).expire(EXPECTED_KEY, TIME_WINDOW, TimeUnit.MINUTES);
+            verify(detectorRedisTemplate, never()).expire(COUNT_KEY, TIME_WINDOW, TimeUnit.MINUTES);
+        }
+
+        @Test
+        @DisplayName("스팸 감지 시 DetectResult를 반환하고 expire는 첫 카운트에만 호출되어야 한다")
+        void should_not_call_expire_when_spam_detected_on_non_first_count() {
+            when(valueOperations.get(BAN_KEY)).thenReturn(null);
+            when(valueOperations.increment(COUNT_KEY)).thenReturn((long) MAX_ATTEMPTS + 1);
+            when(valueOperations.increment(BAN_COUNT_KEY)).thenReturn(1L);
+
+            BidSpamDetectResult result = bidSpamDetector.checkBidSpam(USER_ID);
+
+            assertThat(result).isNotNull();
+            verify(detectorRedisTemplate, never()).expire(COUNT_KEY, TIME_WINDOW, TimeUnit.MINUTES);
         }
     }
 
@@ -143,11 +229,18 @@ class BidSpamDetectorTest {
     @DisplayName("유저별 카운트 독립성")
     class UserIsolation {
 
+        @BeforeEach
+        void setUp() {
+            when(detectorRedisTemplate.opsForValue()).thenReturn(valueOperations);
+        }
+
         @Test
         @DisplayName("서로 다른 유저의 키가 독립적으로 생성되어야 한다")
         void should_use_different_keys_per_user() {
             Long userA = 1L;
             Long userB = 2L;
+            when(valueOperations.get("bid:ban:1")).thenReturn(null);
+            when(valueOperations.get("bid:ban:2")).thenReturn(null);
             when(valueOperations.increment("bid:count:1")).thenReturn(1L);
             when(valueOperations.increment("bid:count:2")).thenReturn(1L);
 
