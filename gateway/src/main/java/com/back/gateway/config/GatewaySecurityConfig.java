@@ -22,7 +22,7 @@ public class GatewaySecurityConfig {
         http.formLogin(ServerHttpSecurity.FormLoginSpec::disable);
         http.httpBasic(ServerHttpSecurity.HttpBasicSpec::disable);
 
-        // Gateway는 모든 요청 허용 — 인증은 GatewayAuthFilter(라우트 필터)에서 처리
+        // Gateway는 모든 요청 허용 — 인증은 AuthenticationGlobalFilter(글로벌 필터)에서 처리
         http.authorizeExchange(auth -> auth.anyExchange().permitAll());
 
         http.cors(cors -> cors.configurationSource(corsConfigurationSource()));
