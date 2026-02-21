@@ -22,7 +22,7 @@ public class CrawlingLog extends BaseTimeEntity {
     private String ipAddress;
 
     @Column(nullable = false)
-    private int requestCount;
+    private long requestCount;
 
     @Column(nullable = false)
     private int timeWindowMinutes;

@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 public record CrawlingLogResponse(
         Long id,
         String ipAddress,
-        int requestCount,
+        long requestCount,
         int timeWindowMinutes,
         CrawlingBanLevel banLevel,
         LocalDateTime createdAt

@@ -19,7 +19,7 @@ public class CrawlingLogUseCase {
     private final CrawlingLogMapper crawlingLogMapper;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void save(String ip, int requestCount, CrawlingBanLevel banLevel) {
+    public void save(String ip, long requestCount, CrawlingBanLevel banLevel) {
         crawlingLogRepository.save(crawlingLogMapper.toCrawlingLog(ip, requestCount, banLevel));
     }
 
