@@ -4,7 +4,6 @@ import com.back.detector.domain.BidSpamBanLevel;
 import com.back.detector.domain.BidSpamDetectResult;
 import com.back.detector.domain.DetectorPolicy;
 import com.back.detector.domain.enums.DetectorRedisKey;
-import com.back.detector.exception.BidSpamException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -23,8 +22,9 @@ public class BidSpamDetector {
             throw new IllegalArgumentException("userId는 null일 수 없습니다");
         }
 
-        if (isBanned(userId)) {
-            throw new BidSpamException();
+        BidSpamDetectResult bannedResult = getBannedResult(userId);
+        if (bannedResult != null) {
+            return bannedResult;
         }
 
         String countKey = DetectorRedisKey.BID_COUNT.getKey(userId);
@@ -43,9 +43,18 @@ public class BidSpamDetector {
         return null;
     }
 
-    private boolean isBanned(Long userId) {
+    /**
+     * 이미 차단 중인 경우 ban 키에 저장된 단계를 읽어 DetectResult로 반환
+     * 예외를 직접 던지지 않고 Facade에서 일괄 처리하도록 위임
+     */
+    private BidSpamDetectResult getBannedResult(Long userId) {
         String banKey = DetectorRedisKey.BID_BAN.getKey(userId);
-        return Boolean.TRUE.equals(detectorRedisTemplate.hasKey(banKey));
+        String storedLevel = detectorRedisTemplate.opsForValue().get(banKey);
+        if (storedLevel == null) {
+            return null;
+        }
+        BidSpamBanLevel level = BidSpamBanLevel.valueOf(storedLevel);
+        return new BidSpamDetectResult(level, 0L);
     }
 
     private BidSpamBanLevel applyBan(Long userId, Long requestCount) {
@@ -57,7 +66,8 @@ public class BidSpamDetector {
 
         BidSpamBanLevel level = BidSpamBanLevel.of(banCount);
 
-        detectorRedisTemplate.opsForValue().set(banKey, "banned");
+        // ban 키에 banLevel 값을 저장해 차단 중 재진입 시에도 단계 정보 조회 가능
+        detectorRedisTemplate.opsForValue().set(banKey, level.name());
         detectorRedisTemplate.expire(banKey, level.getBanMinutes(), TimeUnit.MINUTES);
 
         detectorRedisTemplate.delete(countKey);
