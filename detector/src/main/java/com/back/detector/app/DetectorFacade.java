@@ -36,7 +36,9 @@ public class DetectorFacade {
     public void detectBidSpam(Long userId) {
         BidSpamDetectResult result = bidSpamDetector.checkBidSpam(userId);
         if (result != null) {
-            bidSpamLogUseCase.save(userId, result.banLevel(), result.requestCount());
+            if (result.requestCount() > 0) {
+                bidSpamLogUseCase.save(userId, result.banLevel(), result.requestCount());
+            }
             throw new BidSpamException();
         }
     }
@@ -45,7 +47,9 @@ public class DetectorFacade {
     public void detectCrawling(String ip) {
         CrawlingDetectResult result = crawlingDetector.checkCrawling(ip);
         if (result != null) {
-            crawlingLogUseCase.save(ip, result.requestCount(), result.banLevel());
+            if (result.requestCount() > 0) {
+                crawlingLogUseCase.save(ip, result.requestCount(), result.banLevel());
+            }
             throw new CrawlingDetectedException();
         }
     }
