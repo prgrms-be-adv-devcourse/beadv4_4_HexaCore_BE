@@ -1,32 +1,27 @@
 package com.back.security.config;
 
-import com.back.security.jwt.JWTFilter;
-import jakarta.servlet.http.HttpServletRequest;
+import com.back.security.filter.GatewayHeaderFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
 
-import java.util.Collections;
-import java.util.List;
 
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class BaseSecurityConfig {
-
-    private final JWTFilter jwtFilter;
+    private final GatewayHeaderFilter gatewayHeaderFilter;
 
     @Bean
     @Order(100)
-    public SecurityFilterChain apiJwtChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain apiJwtChain(HttpSecurity http) {
 
         http.csrf(csrf -> csrf.disable());
         http.formLogin(form -> form.disable());
@@ -37,48 +32,20 @@ public class BaseSecurityConfig {
 
         http.headers(h -> h.frameOptions(f -> f.sameOrigin()));
 
-        http.cors(cors -> cors.configurationSource(corsConfigurationSource()));
-
         http.authorizeHttpRequests(auth -> auth
                 .requestMatchers(
-                        "/",
-                        "/h2-console/**",
-                        // todo : 개발 편의성을 위해 api/v1/**경로 추가, 추후 제거
-                        "/api/v1/**",
-                        // --- Swagger 관련 경로 추가 ---
                         "/v3/api-docs/**",
                         "/swagger-ui/**",
                         "/swagger-ui.html",
-                        "/ws/**",
-                        // --- Actuator (Prometheus 메트릭) ---
                         "/actuator/**"
                 ).permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/products/**", "/api/v1/market/products/**").permitAll()
                 .anyRequest().authenticated()
         );
 
-        // JWT 인증 필터
-        http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+        // Gateway가 주입한 X-User-Id, X-User-Role 헤더로 SecurityContext 설정
+        http.addFilterBefore(gatewayHeaderFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
-    }
-
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        return (HttpServletRequest request) -> {
-            CorsConfiguration configuration = new CorsConfiguration();
-            configuration.setAllowedOriginPatterns(List.of(
-                    // todo: 추후 환경변수로 분리
-                    "http://localhost:*",
-                    "http://127.0.0.1:*",
-                    "https://resello.co.kr",
-                    "https://www.resello.co.kr"
-            ));
-            configuration.setAllowedMethods(Collections.singletonList("*"));
-            configuration.setAllowCredentials(true);
-            configuration.setAllowedHeaders(Collections.singletonList("*"));
-            configuration.setMaxAge(3600L);
-            configuration.setExposedHeaders(List.of("Authorization"));
-            return configuration;
-        };
     }
 }
