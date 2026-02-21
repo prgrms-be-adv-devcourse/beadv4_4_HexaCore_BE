@@ -1,0 +1,98 @@
+server:
+  port: 8080
+  forward-headers-strategy: framework
+
+spring:
+  config:
+    import: optional:file:.env[.properties]
+  profiles:
+    active: local
+  output:
+    ansi:
+      enabled: always
+  application:
+    name: gateway-service
+  jwt:
+    secret: ${JWT_SECRET}
+  cloud:
+    gateway:
+      metrics:
+        enabled: true
+        tags:
+          path:
+            enabled: true
+      server:
+        webflux:
+          routes:
+            - id: user-service
+              uri: ${USER_SERVICE_URL:http://user-service:8080}
+              predicates:
+                - Path=/api/v1/users/**
+            - id: oauth2
+              uri: ${USER_SERVICE_URL:http://user-service:8080}
+              predicates:
+                - Path=/oauth2/**,/login/**
+            - id: product-service
+              uri: ${PRODUCT_SERVICE_URL:http://product-service:8080}
+              predicates:
+                - Path=/api/v1/products/**
+            - id: market-service
+              uri: ${MARKET_SERVICE_URL:http://market-service:8080}
+              predicates:
+                - Path=/api/v1/market/**
+            - id: cash-service
+              uri: ${CASH_SERVICE_URL:http://cash-service:8080}
+              predicates:
+                - Path=/api/v1/cash/**
+            - id: chat-service
+              uri: ${CHAT_SERVICE_URL:http://chat-service:8080}
+              predicates:
+                - Path=/api/v1/chat/**,/api/v1/chat-ws/**,/ws/chat/**
+            - id: notification-service
+              uri: ${NOTIFICATION_SERVICE_URL:http://notification-service:8080}
+              predicates:
+                - Path=/api/v1/notifications/**,/api/v1/price-alerts/**
+            - id: settlement-service-public
+              uri: ${SETTLEMENT_SERVICE_URL:http://settlement-service:8080}
+              predicates:
+                - Path=/api/v1/settlements/**
+            - id: settlement-service-admin
+              uri: ${SETTLEMENT_SERVICE_URL:http://settlement-service:8080}
+              predicates:
+                - Path=/api/v1/admin/settlements/**
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus, metrics
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      enabled: true
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        spring.cloud.gateway.requests: true
+        http.server.requests: true
+
+custom:
+  auth:
+    # 메서드 무관하게 인증 불필요한 /api/ 경로
+    public-paths:
+      - /api/v1/users/reissue
+      - /api/v1/chat-ws/**
+    # GET 요청만 인증 불필요한 /api/ 경로
+    public-get-paths:
+      - /api/v1/products
+      - /api/v1/market/products
+    admin-api-path-prefix: /api/v1/admin/
+    admin-required-role: ROLE_ADMIN
