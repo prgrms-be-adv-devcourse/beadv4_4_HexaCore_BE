@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -17,9 +18,9 @@ public class BidSpamLogUseCase {
     private final BidSpamLogRepository bidSpamLogRepository;
     private final BidSpamLogMapper bidSpamLogMapper;
 
-    @Transactional
-    public void save(Long userId, BidSpamBanLevel banLevel) {
-        bidSpamLogRepository.save(bidSpamLogMapper.toBidSpamLog(userId, banLevel));
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void save(Long userId, BidSpamBanLevel banLevel, Long requestCount) {
+        bidSpamLogRepository.save(bidSpamLogMapper.toBidSpamLog(userId, banLevel, requestCount));
     }
 
     @Transactional(readOnly = true)

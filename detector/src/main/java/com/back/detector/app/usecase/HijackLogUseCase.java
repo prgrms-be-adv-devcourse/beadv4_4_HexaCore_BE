@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -18,7 +19,7 @@ public class HijackLogUseCase {
     private final HijackLogRepository hijackLogRepository;
     private final HijackLogMapper hijackLogMapper;
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void save(Long userId, String userEmail, String currentIp,
                      String existingIps, BigDecimal transactionAmount, String reason) {
         hijackLogRepository.save(hijackLogMapper.toHijackLog(userId, userEmail, currentIp, existingIps, transactionAmount, reason));

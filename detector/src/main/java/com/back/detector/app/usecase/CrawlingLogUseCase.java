@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -17,7 +18,7 @@ public class CrawlingLogUseCase {
     private final CrawlingLogRepository crawlingLogRepository;
     private final CrawlingLogMapper crawlingLogMapper;
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void save(String ip, int requestCount, CrawlingBanLevel banLevel) {
         crawlingLogRepository.save(crawlingLogMapper.toCrawlingLog(ip, requestCount, banLevel));
     }
