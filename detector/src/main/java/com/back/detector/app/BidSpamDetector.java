@@ -1,6 +1,7 @@
 package com.back.detector.app;
 
 import com.back.detector.domain.BidSpamBanLevel;
+import com.back.detector.domain.BidSpamDetectResult;
 import com.back.detector.domain.DetectorPolicy;
 import com.back.detector.domain.enums.DetectorRedisKey;
 import com.back.detector.exception.BidSpamException;
@@ -17,7 +18,7 @@ import java.util.concurrent.TimeUnit;
 public class BidSpamDetector {
     private final RedisTemplate<String, String> detectorRedisTemplate;
 
-    public BidSpamBanLevel checkBidSpam(Long userId) {
+    public BidSpamDetectResult checkBidSpam(Long userId) {
         if (userId == null) {
             throw new IllegalArgumentException("userId는 null일 수 없습니다");
         }
@@ -36,7 +37,7 @@ public class BidSpamDetector {
         }
 
         if (newCount > DetectorPolicy.BID_SPAM.getMaxAttempts()) {
-            return applyBan(userId);
+            return new BidSpamDetectResult(applyBan(userId, newCount), newCount);
         }
 
         return null;
@@ -47,7 +48,7 @@ public class BidSpamDetector {
         return Boolean.TRUE.equals(detectorRedisTemplate.hasKey(banKey));
     }
 
-    private BidSpamBanLevel applyBan(Long userId) {
+    private BidSpamBanLevel applyBan(Long userId, Long requestCount) {
         String banKey = DetectorRedisKey.BID_BAN.getKey(userId);
         String countKey = DetectorRedisKey.BID_COUNT.getKey(userId);
 

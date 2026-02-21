@@ -9,8 +9,8 @@ import java.time.LocalDateTime;
 public record BidSpamLogResponse(
         Long id,
         Long userId,
-        int requestCount,
-        int timeWindowMinutes,
+        long requestCount,
+        long timeWindowMinutes,
         BidSpamBanLevel banLevel,
         LocalDateTime createdAt
 ) {

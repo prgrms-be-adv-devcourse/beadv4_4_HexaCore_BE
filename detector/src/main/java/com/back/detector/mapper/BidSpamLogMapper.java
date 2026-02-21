@@ -8,10 +8,10 @@ import org.springframework.stereotype.Component;
 @Component
 public class BidSpamLogMapper {
 
-    public BidSpamLog toBidSpamLog(Long userId, BidSpamBanLevel banLevel) {
+    public BidSpamLog toBidSpamLog(Long userId, BidSpamBanLevel banLevel, Long requestCount) {
         return BidSpamLog.builder()
                 .userId(userId)
-                .requestCount(DetectorPolicy.BID_SPAM.getMaxAttempts())
+                .requestCount(requestCount)
                 .timeWindowMinutes(DetectorPolicy.BID_SPAM.getTimeWindowMinutes())
                 .banLevel(banLevel)
                 .build();

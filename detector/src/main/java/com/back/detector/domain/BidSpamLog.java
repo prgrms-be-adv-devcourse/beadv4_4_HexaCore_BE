@@ -22,10 +22,10 @@ public class BidSpamLog extends BaseTimeEntity {
     private Long userId;
 
     @Column(nullable = false)
-    private int requestCount;
+    private long requestCount;
 
     @Column(nullable = false)
-    private int timeWindowMinutes;
+    private long timeWindowMinutes;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
