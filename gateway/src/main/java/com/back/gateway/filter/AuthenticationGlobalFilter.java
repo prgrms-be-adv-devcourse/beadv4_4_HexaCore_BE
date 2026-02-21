@@ -1,8 +1,5 @@
 package com.back.gateway.filter;
 
-import com.back.common.code.FailureCode;
-import com.back.common.exception.ForbiddenException;
-import com.back.common.exception.UnauthorizedException;
 import com.back.gateway.config.GatewayServiceProperties;
 import com.back.security.header.GatewayHeaders;
 import com.back.security.jwt.JWTUtil;
@@ -10,20 +7,26 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
+import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.HttpCookie;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpRequest;
+import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.StringUtils;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * 모든 요청에 대해 JWT를 검증하고
@@ -39,6 +42,7 @@ public class AuthenticationGlobalFilter implements GlobalFilter, Ordered {
 
     private final GatewayServiceProperties properties;
     private final JWTUtil jwtUtil;
+    private final JsonMapper jsonMapper;
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
     @Override
@@ -51,9 +55,35 @@ public class AuthenticationGlobalFilter implements GlobalFilter, Ordered {
             return chain.filter(exchange);
         }
 
-        Claims claims = validateToken(request);
-        checkAdminAuthority(path, claims);
-        ServerHttpRequest mutated = addHeaders(request, claims);
+        String token = extractAccessToken(request);
+        if (token == null) {
+            return writeErrorResponse(exchange, HttpStatus.UNAUTHORIZED, "TOKEN_MISSING", "토큰이 존재하지 않습니다.");
+        }
+
+        Claims claims;
+        try {
+            claims = jwtUtil.validateAndGetClaims(token);
+        } catch (ExpiredJwtException e) {
+            return writeErrorResponse(exchange, HttpStatus.UNAUTHORIZED, "TOKEN_EXPIRED", "토큰이 만료되었습니다.");
+        } catch (JwtException | IllegalArgumentException e) {
+            return writeErrorResponse(exchange, HttpStatus.UNAUTHORIZED, "TOKEN_INVALID", "토큰이 유효하지 않습니다.");
+        }
+
+        String userId = claims.getSubject();
+        String role = claims.get("role", String.class);
+        if (!StringUtils.hasText(userId) || !StringUtils.hasText(role)) {
+            return writeErrorResponse(exchange, HttpStatus.UNAUTHORIZED, "TOKEN_INVALID", "토큰이 유효하지 않습니다.");
+        }
+
+        String normalizedRole = normalizeRole(role);
+        if (isAdminPath(path) && !isAdminRole(normalizedRole)) {
+            return writeErrorResponse(exchange, HttpStatus.FORBIDDEN, "FORBIDDEN", "접근 권한이 없습니다.");
+        }
+
+        ServerHttpRequest mutated = request.mutate()
+                .header(GatewayHeaders.USER_ID, userId)
+                .header(GatewayHeaders.USER_ROLE, normalizedRole)
+                .build();
 
         return chain.filter(exchange.mutate().request(mutated).build());
     }
@@ -66,45 +96,6 @@ public class AuthenticationGlobalFilter implements GlobalFilter, Ordered {
             return true;
         }
         return HttpMethod.GET.equals(method) && isPublicGetPath(path);
-    }
-
-    private Claims validateToken(ServerHttpRequest request) {
-        String token = extractAccessToken(request);
-        if (!StringUtils.hasText(token)) {
-            throw new UnauthorizedException(FailureCode.TOKEN_MISSING);
-        }
-
-        try {
-            Claims claims = jwtUtil.validateAndGetClaims(token);
-            String userId = claims.getSubject();
-            String role = claims.get("role", String.class);
-
-            if (!StringUtils.hasText(userId) || !StringUtils.hasText(role)) {
-                throw new UnauthorizedException(FailureCode.TOKEN_INVALID);
-            }
-            return claims;
-        } catch (ExpiredJwtException e) {
-            throw new UnauthorizedException(FailureCode.TOKEN_EXPIRED);
-        } catch (JwtException | IllegalArgumentException e) {
-            throw new UnauthorizedException(FailureCode.TOKEN_INVALID);
-        }
-    }
-
-    private void checkAdminAuthority(String path, Claims claims) {
-        String role = normalizeRole(claims.get("role", String.class));
-        if (isAdminPath(path) && !isAdminRole(role)) {
-            throw new ForbiddenException(FailureCode.FORBIDDEN);
-        }
-    }
-
-    private ServerHttpRequest addHeaders(ServerHttpRequest request, Claims claims) {
-        String userId = claims.getSubject();
-        String role = normalizeRole(claims.get("role", String.class));
-
-        return request.mutate()
-                .header(GatewayHeaders.USER_ID, userId)
-                .header(GatewayHeaders.USER_ROLE, role)
-                .build();
     }
 
     private boolean isPublicPath(String path) {
@@ -129,14 +120,12 @@ public class AuthenticationGlobalFilter implements GlobalFilter, Ordered {
             if (!StringUtils.hasText(pattern)) {
                 continue;
             }
-
             if (containsWildcard(pattern)) {
                 if (pathMatcher.match(pattern, path)) {
                     return true;
                 }
                 continue;
             }
-
             if (path.equals(pattern) || path.startsWith(pattern + "/")) {
                 return true;
             }
@@ -148,17 +137,17 @@ public class AuthenticationGlobalFilter implements GlobalFilter, Ordered {
         String authorization = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
         if (StringUtils.hasText(authorization)) {
             if (!authorization.startsWith(BEARER_PREFIX)) {
-                throw new UnauthorizedException(FailureCode.TOKEN_INVALID);
+                return null;
             }
             String token = authorization.substring(BEARER_PREFIX.length()).trim();
-            if (!StringUtils.hasText(token)) {
-                throw new UnauthorizedException(FailureCode.TOKEN_INVALID);
-            }
-            return token;
+            return StringUtils.hasText(token) ? token : null;
         }
 
         HttpCookie cookie = request.getCookies().getFirst(ACCESS_TOKEN_COOKIE);
-        return cookie != null ? cookie.getValue() : "";
+        if (cookie != null && StringUtils.hasText(cookie.getValue())) {
+            return cookie.getValue();
+        }
+        return null;
     }
 
     private boolean containsWildcard(String pattern) {
@@ -167,6 +156,24 @@ public class AuthenticationGlobalFilter implements GlobalFilter, Ordered {
 
     private String normalizeRole(String role) {
         return role.startsWith("ROLE_") ? role : "ROLE_" + role;
+    }
+
+    private Mono<Void> writeErrorResponse(ServerWebExchange exchange, HttpStatus status, String code, String message) {
+        ServerHttpResponse response = exchange.getResponse();
+        response.setStatusCode(status);
+        response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+
+        Map<String, Object> body = Map.of(
+                "status", status.value(),
+                "code", code,
+                "message", message
+        );
+
+        byte[] bytes;
+        bytes = jsonMapper.writeValueAsBytes(body);
+
+        DataBuffer buffer = response.bufferFactory().wrap(bytes);
+        return response.writeWith(Mono.just(buffer));
     }
 
     @Override
