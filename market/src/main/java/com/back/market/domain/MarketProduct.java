@@ -29,11 +29,7 @@ public class MarketProduct extends BaseTimeEntity {
 
     @Id
     @Column(name = "id")
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;                    // MarketProduct의 PK
-
-    @Column(name = "product_option_id", nullable = false, unique = true)
-    private Long productOptionId;        // 원본 상품의 Option Value ID (비즈니스 키)
+    private Long id;        // 원본 상품의 Option Value ID (비즈니스 키)
 
     @Column(name = "product_option", nullable = false, length = 100)
     private String productOption;        // 상품 사이즈(옵션)

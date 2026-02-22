@@ -29,7 +29,7 @@ public class MarketProductMapper {
     // 2단계: 중간재(ResultPayload)를 최종(Entity)으로 변환
     public MarketProduct toEntity(ProductCreatedResultPayload payload) {
         return MarketProduct.builder()
-                .productOptionId(payload.productOptionId())
+                .id(payload.productOptionId())
                 .productInfoId(payload.productInfoId())
                 .name(payload.name())
                 .productOption(payload.productOption())
@@ -53,7 +53,7 @@ public class MarketProductMapper {
             String thumbnailImage
     ) {
         return MarketProduct.builder()
-                .productOptionId(productOptionId)
+                .id(productOptionId)
                 .productInfoId(productInfoId)
                 .brandName(brandName)
                 .name(name)
