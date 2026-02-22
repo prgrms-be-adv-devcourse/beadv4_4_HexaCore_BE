@@ -1,6 +1,7 @@
 package com.back.product.app;
 
 import com.back.common.event.Envelope;
+import com.back.common.event.EventName;
 import com.back.product.adapter.out.document.ProductDocumentRepository;
 import com.back.product.adapter.out.persistence.ProductOutboxEventRepository;
 import com.back.product.domain.ProductOutboxEvent;
@@ -26,10 +27,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
@@ -54,6 +59,9 @@ import static org.awaitility.Awaitility.await;
         "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}",
         "spring.kafka.consumer.properties.spring.json.trusted.packages=*",
         "spring.kafka.consumer.auto-offset-reset=earliest",
+        "spring.kafka.producer.key-serializer=org.apache.kafka.common.serialization.StringSerializer",
+        "spring.kafka.producer.value-serializer=org.springframework.kafka.support.serializer.JacksonJsonSerializer",
+        
         "spring.datasource.url=jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=MySQL",
         "spring.datasource.driver-class-name=org.h2.Driver",
         "spring.datasource.username=sa",
@@ -63,6 +71,17 @@ import static org.awaitility.Awaitility.await;
 })
 @EnableAspectJAutoProxy(proxyTargetClass = true) // CGLIB 프록시 사용
 class BrandEventIntegrationTest {
+
+    @TestConfiguration
+    static class TestKafkaConfig {
+        @Bean
+        public KafkaTemplate<String, EventName> eventNameKafkaTemplate(
+                ProducerFactory<Object, Object> producerFactory) {
+            // Spring Boot가 제공하는 기본 ProducerFactory를 주입받아
+            // 코드에서 요구하는 <String, EventName> 타입의 템플릿을 생성합니다.
+            return new KafkaTemplate(producerFactory);
+        }
+    }
 
     @MockitoBean
     private ProductDocumentRepository productDocumentRepository;
