@@ -10,6 +10,7 @@ import com.back.market.event.payload.UserCreatedPayload;
 import com.back.market.event.resultpayload.ProductCreatedResultPayload;
 import com.back.market.event.resultpayload.UserCreatedResultPayload;
 import com.back.market.mapper.MarketProductMapper;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -84,7 +85,7 @@ public class MarketInternalFacade {
     }
 
     @Transactional
-    public void handleProductCreatedEvent(ProductCreatedPayload payload) {
+    public void handleProductCreatedEvent(@Valid ProductCreatedPayload payload) {
         try {
             //멱등성 검사는 usecase에서 진행..
             List<ProductCreatedResultPayload> payloads = payload.options().stream()
