@@ -22,7 +22,7 @@ import java.util.concurrent.CompletableFuture;
 @Validated
 @RequiredArgsConstructor
 public class ProductKafkaEventPublisher {
-    private final KafkaTemplate<String, EventName> kafkaTemplate;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
 
     private final JsonMapper jsonMapper;
 

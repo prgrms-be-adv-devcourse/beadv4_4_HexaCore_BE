@@ -75,7 +75,7 @@ class BrandEventIntegrationTest {
     @TestConfiguration
     static class TestKafkaConfig {
         @Bean
-        public KafkaTemplate<String, EventName> eventNameKafkaTemplate(
+        public KafkaTemplate<String, Object> eventNameKafkaTemplate(
                 ProducerFactory<Object, Object> producerFactory) {
             // Spring Boot가 제공하는 기본 ProducerFactory를 주입받아
             // 코드에서 요구하는 <String, EventName> 타입의 템플릿을 생성합니다.
