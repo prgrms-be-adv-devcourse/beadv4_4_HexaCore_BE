@@ -27,13 +27,13 @@ public class EventConsumptionLog extends BaseTimeEntity {
     String eventType;
 
     @Column(nullable = false)
-    String topic;
+    String eventTopic;
 
     @Column(nullable = false)
-    Integer partition;
+    Integer eventPartition;
 
     @Column(nullable = false)
-    Long offset;
+    Long eventOffset;
 
     @Column(nullable = false)
     @Builder.Default
@@ -43,10 +43,10 @@ public class EventConsumptionLog extends BaseTimeEntity {
     @Builder.Default
     Long retryCount = 0L;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     String message;
 
-    @Column
+    @Column(columnDefinition = "TEXT")
     String errorMessage;
 
     public void updateStatus(EventConsumptionStatus status) {

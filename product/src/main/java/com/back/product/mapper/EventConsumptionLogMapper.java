@@ -10,9 +10,9 @@ public class EventConsumptionLogMapper {
         return EventConsumptionLog.builder()
                 .eventId(command.eventId())
                 .eventType(command.eventType())
-                .topic(command.topic())
-                .partition(command.partition())
-                .offset(command.offset())
+                .eventTopic(command.topic())
+                .eventPartition(command.partition())
+                .eventOffset(command.offset())
                 .message(command.message())
                 .build();
     }
