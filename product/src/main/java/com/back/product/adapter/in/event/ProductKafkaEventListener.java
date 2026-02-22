@@ -79,6 +79,8 @@ public class ProductKafkaEventListener {
         } catch (JacksonException e) {
             log.error("[KafkaListenerFailed] ProductCreatedPayload 역직렬화 중 에러 발생 : {}", e.getMessage(), e);
             throw e;
+        } catch (ValidationException e) {
+            log.warn("[KafkaListenerFailed] ProductCreatedEvent 검증 실패로 처리 불가. message = {}, error = {}", message, e.getMessage(), e);
         }
     }
 
@@ -183,6 +185,8 @@ public class ProductKafkaEventListener {
             eventConsumptionFacade.eventFailedLog(eventId, errorMessage);
         } catch (JacksonException | IllegalStateException e) {
             log.error("[KafkaListenerDlt] KafkaDlt 역직렬화 중 에러 발생 : {}", e.getMessage(), e);
+        } catch (Exception e) {
+            log.error("[KafkaListenerDlt] DLT 처리 중 예기치 못한 시스템 에러 발생 : {}", e.getMessage(), e);
         }
     }
 }
