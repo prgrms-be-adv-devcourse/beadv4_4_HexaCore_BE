@@ -26,6 +26,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
@@ -71,7 +72,7 @@ class ApiV1CategoryControllerTest {
                     .currentPage(0)
                     .build();
 
-            given(categoryFacade.getCategories(anyLong(), anyLong())).willReturn(responseDto);
+            given(categoryFacade.getCategories(anyInt(), anyInt())).willReturn(responseDto);
 
             // when & then
             mockMvc.perform(
@@ -82,7 +83,7 @@ class ApiV1CategoryControllerTest {
                     ).andDo(print())
                     .andExpect(status().isOk());
 
-            verify(categoryFacade).getCategories(0L, 10L);
+            verify(categoryFacade).getCategories(0, 10);
         }
     }
 

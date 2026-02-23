@@ -12,7 +12,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 public interface CategoryApiController {
     @Operation(summary = "카테고리 목록 조회", description = "상품 카테고리 목록을 페이징하여 조회합니다.")
     @ApiResponse(responseCode = "200", description = "카테고리 목록 조회 성공")
-    CommonResponse<?> getCategories(Long page, Long size);
+    CommonResponse<?> getCategories(Integer page, Integer size);
 
     @Operation(summary = "카테고리 생성", description = "새로운 상품 카테고리를 생성합니다. 이미 존재하는 카테고리명은 무시됩니다.")
     @ApiResponse(responseCode = "201", description = "카테고리 생성 성공")

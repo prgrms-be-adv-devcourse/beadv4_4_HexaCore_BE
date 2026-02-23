@@ -68,7 +68,7 @@ class BrandUseCaseTest {
             given(brandMapper.toDto(brand2)).willReturn(new BrandDto(2L, "Adidas", "https://example.com/logo2.png"));
 
             // when
-            Page<BrandDto> result = brandUseCase.getBrands(0L, 10L);
+            Page<BrandDto> result = brandUseCase.getBrands(0, 10);
 
             // then
             assertThat(result.getContent()).hasSize(2);

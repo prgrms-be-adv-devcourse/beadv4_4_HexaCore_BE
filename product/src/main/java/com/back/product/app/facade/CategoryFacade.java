@@ -32,7 +32,7 @@ public class CategoryFacade {
 
     @Loggable
     @Transactional(readOnly = true)
-    public CategoryPageResponseDto getCategories(Long page, Long size) {
+    public CategoryPageResponseDto getCategories(Integer page, Integer size) {
         Page<CategoryDto> categories = categoryUseCase.getCategories(page, size);
         return categoryMapper.toPageResponseDto(
                 categories.getContent(),

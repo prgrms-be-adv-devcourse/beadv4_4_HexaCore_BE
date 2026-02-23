@@ -66,7 +66,7 @@ class CategoryUseCaseTest {
             given(categoryMapper.toDto(category2)).willReturn(new CategoryDto(2L, "Bottoms", "https://example.com/image.png"));
 
             // when
-            Page<CategoryDto> result = categoryUseCase.getCategories(0L, 10L);
+            Page<CategoryDto> result = categoryUseCase.getCategories(0, 10);
 
             // then
             assertThat(result.getContent()).hasSize(2);

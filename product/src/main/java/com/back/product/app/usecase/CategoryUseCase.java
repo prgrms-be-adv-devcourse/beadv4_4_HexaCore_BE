@@ -29,8 +29,8 @@ public class CategoryUseCase {
 
     @Loggable
     @Transactional(readOnly = true)
-    public Page<CategoryDto> getCategories(Long page, Long size) {
-        Pageable pageable = PageRequest.of(page.intValue(), size.intValue());
+    public Page<CategoryDto> getCategories(Integer page, Integer size) {
+        Pageable pageable = PageRequest.of(page, size);
         return productSupport.getAllCategories(pageable).map(categoryMapper::toDto);
     }
 

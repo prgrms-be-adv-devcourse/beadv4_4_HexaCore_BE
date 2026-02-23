@@ -29,8 +29,8 @@ public class BrandUseCase {
 
     @Loggable
     @Transactional(readOnly = true)
-    public Page<BrandDto> getBrands(Long page, Long size) {
-        Pageable pageable = PageRequest.of(page.intValue(), size.intValue());
+    public Page<BrandDto> getBrands(Integer page, Integer size) {
+        Pageable pageable = PageRequest.of(page, size);
         return productSupport.getAllBrands(pageable).map(brandMapper::toDto);
     }
 

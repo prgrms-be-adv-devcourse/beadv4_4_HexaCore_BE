@@ -35,8 +35,8 @@ public class ApiV1CategoryController implements CategoryApiController {
     @Loggable
     @GetMapping
     public CommonResponse<CategoryPageResponseDto> getCategories(
-            @RequestParam(defaultValue = "0") Long page,
-            @RequestParam(defaultValue = "10") Long size
+            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "10") Integer size
     ) {
         CategoryPageResponseDto response = categoryFacade.getCategories(page, size);
         return CommonResponse.success(SuccessCode.OK, response);

@@ -35,8 +35,8 @@ public class ApiV1BrandController implements BrandApiController {
     @Loggable
     @GetMapping
     public CommonResponse<BrandPageResponseDto> getBrands(
-            @RequestParam(defaultValue = "0") Long page,
-            @RequestParam(defaultValue = "10") Long size
+            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "10") Integer size
     ) {
         BrandPageResponseDto response = brandFacade.getBrands(page, size);
         return CommonResponse.success(SuccessCode.OK, response);

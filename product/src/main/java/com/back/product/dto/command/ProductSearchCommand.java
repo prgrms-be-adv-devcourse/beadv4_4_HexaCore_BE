@@ -14,7 +14,7 @@ public record ProductSearchCommand(
     BigDecimal minPrice,
     BigDecimal maxPrice,
     ProductSortType sort,
-    Long page,
-    Long size
+    Integer page,
+    Integer size
 ) {
 }

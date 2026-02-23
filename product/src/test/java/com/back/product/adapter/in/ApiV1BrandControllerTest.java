@@ -26,7 +26,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doNothing;
@@ -71,7 +71,7 @@ class ApiV1BrandControllerTest {
                     .currentPage(0)
                     .build();
 
-            given(brandFacade.getBrands(anyLong(), anyLong())).willReturn(responseDto);
+            given(brandFacade.getBrands(anyInt(), anyInt())).willReturn(responseDto);
 
             // when & then
             mockMvc.perform(
@@ -82,7 +82,7 @@ class ApiV1BrandControllerTest {
                     ).andDo(print())
                     .andExpect(status().isOk());
 
-            verify(brandFacade).getBrands(0L, 10L);
+            verify(brandFacade).getBrands(0, 10);
         }
     }
 

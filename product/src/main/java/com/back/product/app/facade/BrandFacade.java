@@ -34,7 +34,7 @@ public class BrandFacade {
 
     @Loggable
     @Transactional(readOnly = true)
-    public BrandPageResponseDto getBrands(Long page, Long size) {
+    public BrandPageResponseDto getBrands(Integer page, Integer size) {
         Page<BrandDto> brands = brandUseCase.getBrands(page, size);
         return brandMapper.toPageResponseDto(
                 brands.getContent(),

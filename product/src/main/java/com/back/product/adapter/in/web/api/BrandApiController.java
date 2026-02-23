@@ -14,7 +14,7 @@ public interface BrandApiController {
     @Operation(summary = "브랜드 목록 조회", description = "상품의 브랜드 목록을 페이징하여 조회합니다.")
     @ApiResponse(responseCode = "200", description = "브랜드 목록 조회 성공")
     @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
-    CommonResponse<?> getBrands(Long page, Long size);
+    CommonResponse<?> getBrands(Integer page, Integer size);
 
     @Operation(summary = "브랜드 생성", description = "새로운 브랜드를 생성합니다. 동일한 이름(특수문자 제외)이 존재할 경우 해당 브랜드는 생성이 건너뛰어집니다.")
     @ApiResponse(responseCode = "201", description = "브랜드 생성 성공")
