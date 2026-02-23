@@ -9,7 +9,6 @@ import org.springframework.data.elasticsearch.core.SearchHit;
 import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.data.elasticsearch.core.query.Query;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -18,7 +17,6 @@ import java.util.List;
 public class ProductDocumentSupport {
     private final ElasticsearchOperations elasticsearchOperations;
 
-    @Transactional(readOnly = true)
     public PageImpl<ProductDocument> findProductPage(Query searchQuery) {
         SearchHits<ProductDocument> searchHits = elasticsearchOperations.search(searchQuery, ProductDocument.class);
 

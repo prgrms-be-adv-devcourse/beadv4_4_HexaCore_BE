@@ -14,8 +14,8 @@ import com.back.product.dto.command.ProductSearchCommand;
 import com.back.product.dto.enums.ProductSortType;
 import com.back.product.dto.model.OptionDto;
 import com.back.product.dto.model.ProductInfoDto;
-import com.back.product.dto.response.ProductSearchResponseDto;
 import com.back.product.dto.model.ProductSearchDto;
+import com.back.product.dto.response.ProductSearchResponseDto;
 import com.back.product.mapper.ProductDocumentMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageImpl;
@@ -26,7 +26,6 @@ import org.springframework.data.elasticsearch.client.elc.NativeQuery;
 import org.springframework.data.elasticsearch.client.elc.NativeQueryBuilder;
 import org.springframework.data.elasticsearch.core.query.Query;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
@@ -44,7 +43,6 @@ public class ProductDocumentUseCase {
     private final EmbeddingUseCase embeddingUseCase;
 
     @Loggable
-    @Transactional
     public void syncProduct(ProductInfoDto productInfoDto, List<OptionDto> optionDtos, String thumbnailUrl) {
         String description = buildProductInfo(productInfoDto, optionDtos);
 
@@ -58,13 +56,11 @@ public class ProductDocumentUseCase {
     }
 
     @Loggable
-    @Transactional
     public void deleteProduct(Long productInfoId) {
         productDocumentRepository.deleteById(productInfoId.toString());
     }
 
     @Loggable
-    @Transactional(readOnly = true)
     public ProductSearchResponseDto findProductPage(ProductSearchCommand search) {
         Query query = buildSearchQuery(search);
 
@@ -79,7 +75,6 @@ public class ProductDocumentUseCase {
     }
 
     @Loggable
-    @Transactional(readOnly = true)
     public ProductSearchResponseDto findSimilarProducts(Long productInfoId, Long page, Long size) {
         ProductDocument targetProduct = productDocumentRepository.findById(productInfoId.toString())
                 .orElseThrow(() -> new CustomException(FailureCode.PRODUCT_INFO_NOT_FOUND));

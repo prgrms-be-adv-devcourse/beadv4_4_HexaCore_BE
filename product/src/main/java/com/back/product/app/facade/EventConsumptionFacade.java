@@ -16,7 +16,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
@@ -32,7 +31,6 @@ public class EventConsumptionFacade {
     private final OptionMapper optionMapper;
 
     @Loggable
-    @Transactional
     public void syncCreatedProduct(EventConsumptionCommand command, @Valid ProductCreatedPayload payload) {
         String eventId = command.eventId();
 
@@ -59,7 +57,6 @@ public class EventConsumptionFacade {
     }
 
     @Loggable
-    @Transactional
     public void syncUpdatedProduct(EventConsumptionCommand command, @Valid ProductUpdatedPayload payload) {
         String eventId = command.eventId();
 
@@ -86,7 +83,6 @@ public class EventConsumptionFacade {
     }
 
     @Loggable
-    @Transactional
     public void syncDeletedProduct(EventConsumptionCommand command, @Valid ProductDeletedPayload payload) {
         String eventId = command.eventId();
 
@@ -110,7 +106,6 @@ public class EventConsumptionFacade {
     }
 
     @Loggable
-    @Transactional
     public void eventFailedLog(String eventId, String errorMessage) {
         eventLogUseCase.markAsDead(eventId, errorMessage);
     }
