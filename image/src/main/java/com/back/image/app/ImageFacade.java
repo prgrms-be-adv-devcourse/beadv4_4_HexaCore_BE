@@ -14,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Slf4j
@@ -27,22 +28,32 @@ public class ImageFacade {
 
     @Loggable(logArgs = false, logResult = false)
     public ImageUploadResponseDto uploadImage(List<MultipartFile> images, ImageCategory category) {
-        List<File> allTemporaryFiles = new ArrayList<>();
+        // 병렬 처리를 위해 스레드 안전한 리스트 사용
+        List<File> allTemporaryFiles = Collections.synchronizedList(new ArrayList<>());
 
         try {
-            List<File> convertedImages = convertImageUseCase.convertMultipleFile(images);
-            allTemporaryFiles.addAll(convertedImages);
+            List<String> uploadedImageUrls = images.parallelStream()
+                    .map(image -> {
+                        // 1. 이미지 변환 (임시 파일 생성)
+                        File originalFile = convertImageUseCase.convertFile(image);
+                        allTemporaryFiles.add(originalFile);
 
-            List<File> resizeFiles = resizeImageUseCase.resizeMultipleImage(convertedImages);
-            allTemporaryFiles.addAll(resizeFiles);
+                        // 2. 이미지 리사이징 (필요한 경우 새 임시 파일 생성)
+                        File resizedFile = resizeImageUseCase.resizeImage(originalFile);
+                        if (resizedFile != originalFile) {
+                            allTemporaryFiles.add(resizedFile);
+                        }
 
-            List<String> uploadedImageUrls = uploadImageUseCase.uploadMultipleImage(resizeFiles, category.getPath());
+                        // 3. S3 업로드
+                        return uploadImageUseCase.uploadImage(resizedFile, category.getPath());
+                    })
+                    .toList();
 
             return ImageUploadResponseDto.builder().fileUrl(uploadedImageUrls).build();
         } finally {
             if (!allTemporaryFiles.isEmpty()) {
                 log.info("[FileCleanup] 임시 파일 정리 시작, 파일 개수: {}", allTemporaryFiles.size());
-                flushImageUseCase.flushMultipleFile(allTemporaryFiles);
+                flushImageUseCase.flushMultipleFile(new ArrayList<>(allTemporaryFiles));
             }
         }
     }

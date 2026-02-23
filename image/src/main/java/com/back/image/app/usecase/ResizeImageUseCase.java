@@ -77,9 +77,16 @@ public class ResizeImageUseCase {
         int resizedWidth = (int) Math.round(originWidth * scale);
         int resizedHeight = (int) Math.round(originHeight * scale);
 
-        Image scaledImage = originalImage.getScaledInstance(resizedWidth, resizedHeight, java.awt.Image.SCALE_SMOOTH);
         BufferedImage resizedImage = new BufferedImage(resizedWidth, resizedHeight, BufferedImage.TYPE_INT_RGB);
-        resizedImage.getGraphics().drawImage(scaledImage, 0, 0, null);
+        Graphics2D graphics2D = resizedImage.createGraphics();
+
+        // 품질과 속도의 균형을 위한 렌더링 힌트 설정
+        graphics2D.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        graphics2D.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        graphics2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        graphics2D.drawImage(originalImage, 0, 0, resizedWidth, resizedHeight, null);
+        graphics2D.dispose();
 
         return resizedImage;
     }
