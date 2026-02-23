@@ -2,7 +2,6 @@ package com.back.market.event;
 
 import com.back.common.event.Envelope;
 import com.back.common.event.KafkaEventPublisher;
-import com.back.common.market.event.OrderCompletedEvent;
 import com.back.market.app.MarketFacade;
 import com.back.market.app.usecase.CompleteOrderUseCase;
 import com.back.market.domain.Order;
