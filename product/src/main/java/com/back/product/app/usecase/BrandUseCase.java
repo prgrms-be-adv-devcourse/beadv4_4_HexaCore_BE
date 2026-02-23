@@ -69,7 +69,7 @@ public class BrandUseCase {
     public BrandDto modifyBrand(Long brandId, BrandDataCommand brand) {
         Brand brandToModify = findBrandExists(brandId);
 
-        String newName = toPlainText(brand.name());
+        String newName = brand.name().toLowerCase();
 
         if (productSupport.existsBrandByName(newName)) {
             throw new CustomException(FailureCode.BRAND_NAME_DUPLICATE);
