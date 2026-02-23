@@ -11,7 +11,7 @@ import java.util.List;
 
 @Builder
 public record BrandPageResponseDto(
-        @NotEmpty(message = "브랜드 목록은 비어 있을 수 없습니다.")
+        @NotEmpty(message = "브랜드 목록은 NULL일 수 없습니다.")
         @Valid
         List<BrandDto> brands,
 

@@ -3,7 +3,6 @@ package com.back.product.dto.response;
 import com.back.product.dto.model.CategoryDto;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 
@@ -11,7 +10,7 @@ import java.util.List;
 
 @Builder
 public record CategoryPageResponseDto(
-        @NotEmpty(message = "카테고리 목록은 비어 있을 수 없습니다.")
+        @NotNull(message = "카테고리 목록은 NULL일 수 없습니다.")
         @Valid
         List<CategoryDto> categories,
 
