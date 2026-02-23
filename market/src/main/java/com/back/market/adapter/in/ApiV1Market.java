@@ -7,6 +7,7 @@ import com.back.common.dto.cash.response.PaymentCancelResponseDto;
 import com.back.security.principal.AuthPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -22,13 +23,15 @@ public interface ApiV1Market {
     @PostMapping("/bids/buy")
     CommonResponse<MarketPaymentResponseDto> registerBuyBid(
             @AuthenticationPrincipal AuthPrincipal principal,
-            @RequestBody @Valid BiddingRequestDto requestDto);
+            @RequestBody @Valid BiddingRequestDto requestDto,
+            HttpServletRequest request);
 
     @Operation(summary = "판매 입찰 등록", description = "판매자가 원하는 가격으로 새로운 판매 입찰을 등록한다.")
     @PostMapping("/bids/sell")
     CommonResponse<MarketPaymentResponseDto> registerSellBid(
             @AuthenticationPrincipal AuthPrincipal principal,
-            @RequestBody @Valid BiddingRequestDto requestDto);
+            @RequestBody @Valid BiddingRequestDto requestDto,
+            HttpServletRequest request);
 
     @Operation(summary = "즉시 구매가 조회", description = "특정 상품에 대해 즉시 구매 가능한(판매 입찰 중 가장 낮은) 가격을 조회한다.")
     @GetMapping("/products/{productId}/buy-now-price")
@@ -42,13 +45,15 @@ public interface ApiV1Market {
     @PostMapping("/buy-now")
     CommonResponse<MarketPaymentResponseDto> buyNow(
             @AuthenticationPrincipal AuthPrincipal principal,
-            @RequestBody @Valid BiddingRequestDto requestDto);
+            @RequestBody @Valid BiddingRequestDto requestDto,
+            HttpServletRequest request);
 
     @Operation(summary = "즉시 판매 실행", description = "구매 대기 중인 최고가 입찰과 매칭하여 즉시 주문을 생성하고 결제를 진행한다.")
     @PostMapping("/sell-now")
     CommonResponse<MarketPaymentResponseDto> sellNow(
             @AuthenticationPrincipal AuthPrincipal principal,
-            @RequestBody @Valid BiddingRequestDto requestDto);
+            @RequestBody @Valid BiddingRequestDto requestDto,
+            HttpServletRequest request);
 
     @Operation(summary = "입찰 취소", description = "대기 중인 입찰을 취소하고 구매 입찰일 경우 예치금 환불을 진행한다.")
     @DeleteMapping("/bid/{biddingId}")
