@@ -78,7 +78,7 @@ class ProductEventConsumeTests {
 
         // 2. MarketProduct.java의 'name' 필드 검증 (getName() 사용)
         // payload의 "productName"이 Facade를 거쳐 엔티티의 "name"으로 잘 들어갔는지 확인
-        assertThat(products.get(0).getName()).isEqualTo("Air Jordan");
+        assertThat(products).extracting("name").containsOnly("Air Jordan");
 
         // 3. productOptionId 검증
         assertThat(products).extracting("id")
@@ -112,10 +112,14 @@ class ProductEventConsumeTests {
               "category": { "categoryId": 20, "name": "Shoes" },
               "name": "New Air Jordan",
               "code": "AJ-001-NEW",
-              "releasePrice": 200.00
+              "releasePrice": 200.00,
+              "releaseDate": "2026-01-01T00:00:00"
             },
             "options": [
-              { "values": [{ "valueId": 1001, "valueName": "270" }] }
+              { 
+                "group": { "groupId": 1, "groupName": "size" }, 
+                "values": [{ "valueId": 1001, "valueName": "270" }] 
+              }
             ],
             "thumbnailUrl": "https://example.com/new-image.jpg"
           }
