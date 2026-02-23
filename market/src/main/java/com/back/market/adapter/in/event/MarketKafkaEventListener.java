@@ -3,6 +3,7 @@ package com.back.market.adapter.in.event;
 import com.back.common.event.KafkaEventParser;
 import com.back.market.app.MarketInternalFacade;
 import com.back.market.event.payload.ProductCreatedPayload;
+import com.back.market.event.payload.ProductDeletedPayload;
 import com.back.market.event.payload.ProductUpdatedPayload;
 import com.back.market.event.payload.UserCreatedPayload;
 import lombok.RequiredArgsConstructor;
@@ -57,6 +58,8 @@ public class MarketKafkaEventListener {
     )
     public void consumeProductDeletedEvent(String message) {
         log.info("[MarketKafkaEventListener] product-item-deleted 수신: {}", message);
+        ProductDeletedPayload payload = kafkaEventParser.extractPayload(message, new TypeReference<>() {});
+        marketInternalFacade.handleProductDeletedEvent(payload);
     }
 
 }

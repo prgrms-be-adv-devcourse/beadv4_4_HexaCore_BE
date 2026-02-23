@@ -6,6 +6,7 @@ import com.back.market.app.usecase.*;
 import com.back.common.dto.cash.request.PaymentCompletedRequestDto;
 import com.back.market.domain.MarketUser;
 import com.back.market.event.payload.ProductCreatedPayload;
+import com.back.market.event.payload.ProductDeletedPayload;
 import com.back.market.event.payload.ProductUpdatedPayload;
 import com.back.market.event.payload.UserCreatedPayload;
 import com.back.market.event.resultpayload.ProductCreatedResultPayload;
@@ -33,6 +34,7 @@ public class MarketInternalFacade {
     private final MarketProductMapper marketProductMapper;
     private final CreateProductUseCase createProductUseCase;
     private final UpdateProductUseCase updateProductUseCase;
+    private final DeleteProductUseCase deleteProductUseCase;
 
     /**
      * Cash 모듈로부터 결제 완료(입금 확인) 통지를 수신하여 주문 상태를 확정
@@ -139,5 +141,17 @@ public class MarketInternalFacade {
             throw e;
         }
 
+    }
+
+    @Transactional
+    public void handleProductDeletedEvent(ProductDeletedPayload payload) {
+        try {
+            log.info("[MarketInternalFacade] 상품 삭제 이벤트 수신, 처리 시작 - id : {}", payload.productInfoId());
+            deleteProductUseCase.deleteMarketProduct(payload.productInfoId());
+        } catch (Exception e) {
+            log.error("[MarketInternalFacade] 상품 삭제 처리 중 예외 발생 - 상품명: {}, 사유: {}",
+                    payload.productInfoId(), e.getMessage(), e);
+            throw e;
+        }
     }
 }
