@@ -78,6 +78,7 @@ public enum FailureCode {
     OPTION_GROUP_NOT_FOUND(HttpStatus.NOT_FOUND, "OPTION_GROUP_NOT_FOUND", "옵션 그룹이 존재하지 않습니다."),
     CHAT_OUTBOX_NOT_FOUND(HttpStatus.NOT_FOUND, "CHAT_OUTBOX_NOT_FOUND", "해당 아웃박스를 찾을 수 없습니다."),
     EMBEDDING_NOT_FOUND(HttpStatus.NOT_FOUND, "EMBEDDING_NOT_FOUND", "상품의 임베딩을 찾을 수 없습니다."),
+    PRODUCT_OUTBOX_NOT_FOUND(HttpStatus.NOT_FOUND, "PRODUCT_OUTBOX_NOT_FOUND", "상품 이벤트의 아웃박스 데이터를 찾을 수 없습니다."),
 
     /**
      * 405 Method Not Allowed

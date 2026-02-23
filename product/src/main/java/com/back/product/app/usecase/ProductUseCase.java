@@ -1,4 +1,4 @@
-package com.back.product.app.usecase.command;
+package com.back.product.app.usecase;
 
 import com.back.common.annotation.Loggable;
 import com.back.common.code.FailureCode;
@@ -6,7 +6,6 @@ import com.back.common.exception.CustomException;
 import com.back.product.adapter.out.persistence.ProductImageRepository;
 import com.back.product.adapter.out.persistence.ProductOptionValuesRepository;
 import com.back.product.adapter.out.persistence.ProductRepository;
-import com.back.product.app.usecase.query.ProductSupport;
 import com.back.product.domain.*;
 import com.back.product.dto.command.ProductVariantCreateCommand;
 import com.back.product.dto.command.ProductVariantUpdateCommand;

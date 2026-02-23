@@ -5,8 +5,6 @@ import com.back.common.exception.CustomException;
 import com.back.product.adapter.out.persistence.ProductImageRepository;
 import com.back.product.adapter.out.persistence.ProductOptionValuesRepository;
 import com.back.product.adapter.out.persistence.ProductRepository;
-import com.back.product.app.usecase.command.ProductUseCase;
-import com.back.product.app.usecase.query.ProductSupport;
 import com.back.product.domain.*;
 import com.back.product.dto.command.ProductVariantCreateCommand;
 import com.back.product.dto.command.ProductVariantUpdateCommand;

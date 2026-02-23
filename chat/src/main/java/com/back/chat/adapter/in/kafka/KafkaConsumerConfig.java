@@ -23,13 +23,13 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.nio.charset.StandardCharsets;
+
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+
+import static com.back.chat.adapter.in.kafka.KafkaListenerUtil.*;
 
 @EnableKafka
 @Configuration
@@ -112,7 +112,8 @@ public class KafkaConsumerConfig {
                         record.partition(),
                         record.offset(),
                         record.timestamp(),
-                        ex,
+                        errorClass,
+                        errorMessage,
                         payloadJson,
                         stacktrace,
                         LocalDateTime.now()
@@ -157,49 +158,6 @@ public class KafkaConsumerConfig {
         props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 50);
 
         return props;
-    }
-
-    // ===== util =====
-
-    private static UUID safeUuid(String s) {
-        if (s == null) return null;
-        String v = s.trim();
-        if (v.isBlank()) return null;
-        try { return UUID.fromString(v); }
-        catch (IllegalArgumentException e) { return null; }
-    }
-
-    private static String safeMsg(Throwable t) {
-        if (t == null) return "";
-        String msg = t.getMessage();
-        return (msg == null) ? "" : msg;
-    }
-
-    private static String safeValueAsString(Object value) {
-        if (value == null) return null;
-        if (value instanceof String s) return s;
-        if (value instanceof byte[] bytes) return new String(bytes, StandardCharsets.UTF_8);
-        return String.valueOf(value);
-    }
-
-    private static String stackTraceToString(Throwable e) {
-        StringWriter sw = new StringWriter();
-        PrintWriter pw = new PrintWriter(sw);
-        e.printStackTrace(pw);
-        return sw.toString();
-    }
-
-    private static String truncate(String s, int max) {
-        if (s == null) return null;
-        if (s.length() <= max) return s;
-        return s.substring(0, max);
-    }
-
-    private static Throwable rootCause(Throwable t) {
-        if (t == null) return null;
-        Throwable cur = t;
-        while (cur.getCause() != null && cur.getCause() != cur) cur = cur.getCause();
-        return cur;
     }
 }
 

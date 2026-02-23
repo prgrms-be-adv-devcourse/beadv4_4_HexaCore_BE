@@ -1,12 +1,9 @@
-package com.back.product.app.usecase.query;
+package com.back.product.app.usecase;
 
 import com.back.product.document.ProductDocument;
-import com.back.product.dto.enums.ProductSortType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.elasticsearch.core.*;
 import org.springframework.data.elasticsearch.core.query.Query;
 import org.springframework.stereotype.Service;

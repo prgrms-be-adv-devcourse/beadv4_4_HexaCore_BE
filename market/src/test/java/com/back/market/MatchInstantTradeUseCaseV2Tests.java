@@ -244,7 +244,17 @@ public class MatchInstantTradeUseCaseV2Tests {
         MarketUser buyer = marketUserMapper.toEntity(buyerId, "buyer", "b@t.com", buyerAddress, "010-1234-5678");
         marketUserRepository.save(buyer);
         if (!marketProductRepository.existsById(productId)) {
-            marketProductRepository.save(marketProductMapper.toEntity(productId, "N", "신발", "N1", "270", 100000L, "S", "img"));
+            marketProductRepository.save(marketProductMapper.toEntity(
+                    productId,
+                    1L,           // productInfoId (원본 정보 ID - 테스트용 임의 값)
+                    "Nike",       // brandName
+                    "신발",        // name
+                    "N1",         // productNumber
+                    "270",        // productOption (사이즈)
+                    100000L,      // price
+                    "스니커즈",     // categoryName
+                    "img"
+            ));
         }
     }
 

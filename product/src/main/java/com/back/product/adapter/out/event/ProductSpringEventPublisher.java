@@ -32,7 +32,7 @@ public class ProductSpringEventPublisher {
                 .flatMap(productDto -> productDto.options().stream())
                 .toList();
 
-        ProductUpdateCompletedEvent event = productSpringEventMapper.toProductUpdatedEvent(productInfoDto, optionDtos, thumbnailUrl);
+        ProductCreationCompletedEvent event = productSpringEventMapper.toProductCreatedEvent(productInfoDto, optionDtos, thumbnailUrl);
 
         applicationEventPublisher.publishEvent(event);
     }
@@ -43,7 +43,7 @@ public class ProductSpringEventPublisher {
                 .flatMap(productDto -> productDto.options().stream())
                 .toList();
 
-        ProductCreationCompletedEvent event = productSpringEventMapper.toProductCreatedEvent(productInfoDto, optionDtos, thumbnailUrl);
+        ProductUpdateCompletedEvent event = productSpringEventMapper.toProductUpdatedEvent(productInfoDto, optionDtos, thumbnailUrl);
 
         applicationEventPublisher.publishEvent(event);
     }
