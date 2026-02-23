@@ -1,5 +1,7 @@
 package com.back.market.app.usecase;
 
+import com.back.common.code.FailureCode;
+import com.back.common.exception.CustomException;
 import com.back.market.adapter.out.MarketUserRepository;
 import com.back.market.domain.MarketUser;
 import com.back.market.event.resultpayload.UserUpdatedResultPayload;
@@ -19,7 +21,8 @@ public class UpdateMarketUserUseCase {
             user.update(payload.name(), payload.address(), payload.phone());
             log.info("[UpdateMarketUserUseCase] 유저 정보 업데이트 완료 - ID: {}", payload.id());
         } else {
-            log.warn("[UpdateMarketUserUseCase] 업데이트 대상 유저를 찾을 수 없음 - ID: {}", payload.id());
+            log.error("[UpdateMarketUserUseCase] 업데이트 대상 유저를 찾을 수 없음 - ID: {}", payload.id());
+            throw new CustomException(FailureCode.USER_NOT_FOUND);
         }
     }
 }

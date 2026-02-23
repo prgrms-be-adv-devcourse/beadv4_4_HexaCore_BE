@@ -92,16 +92,11 @@ public class MarketInternalFacade {
 
     @Transactional
     public void handleUserUpdatedEvent(UserUpdatedPayload payload) {
-        try {
-            log.info("[MarketInternalFacade] 유저 업데이트 이벤트 처리 시작 - ID: {}", payload.id());
-            UserUpdatedResultPayload resultPayload = UserUpdatedResultPayload.of(
-                    payload.id(), payload.name(), payload.address(), payload.phone()
-            );
-            updateMarketUserUseCase.updateMarketUser(resultPayload);
-        } catch (Exception e) {
-            log.error("[MarketInternalFacade] 유저 업데이트 처리 중 예외 발생 - ID: {}, 사유: {}", payload.id(), e.getMessage(), e);
-            throw e;
-        }
+        log.info("[MarketInternalFacade] 유저 업데이트 이벤트 처리 시작 - ID: {}", payload.id());
+        UserUpdatedResultPayload resultPayload = UserUpdatedResultPayload.of(
+                payload.id(), payload.name(), payload.address(), payload.phone()
+        );
+        updateMarketUserUseCase.updateMarketUser(resultPayload);
     }
 
     @Transactional

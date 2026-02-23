@@ -54,8 +54,8 @@ public class KafkaEventParser {
         if (json == null) return null;
         // 1. 마스킹할 패턴 정의 (Case Insensitive 적용)
         // 이메일, 전화번호, 주소 키에 대해 마스킹
-        String regex = "\" (email|phoneNumber|phone|address|sellerName|buyerName|name) \"\\s*:\\s*\"[^\"]+\"";
-        Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE | Pattern.COMMENTS);
+        String regex = "\"(email|phoneNumber|phone|address|sellerName|buyerName|name)\"\\s*:\\s*\"[^\"]+\"";
+        Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
 
         Matcher matcher = pattern.matcher(json);
         StringBuilder sb = new StringBuilder();

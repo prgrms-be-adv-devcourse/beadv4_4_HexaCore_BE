@@ -1,9 +1,12 @@
 package com.back.common.event;
 
+import com.back.common.code.FailureCode;
+import com.back.common.exception.CustomException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import tools.jackson.databind.json.JsonMapper;
 
 @Slf4j
 @Service
@@ -11,6 +14,7 @@ import org.springframework.stereotype.Service;
 public class KafkaEventPublisher {
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private final KafkaEventParser kafkaEventParser;
+    private final JsonMapper jsonMapper;
 
     public void publish(EventName event) {
         kafkaTemplate.send(event.getEventName(), event);
@@ -25,21 +29,21 @@ public class KafkaEventPublisher {
      */
     public <T extends KafkaPayload> void publish(String topic, Envelope<T> envelope) {
         try {
-            // 1. 이벤트 발행
+
+
+            // 로그 마스킹 처리 (toString 대신 jsonMapper 사용)
+            String jsonString = jsonMapper.writeValueAsString(envelope);
+            String maskedLog = kafkaEventParser.maskSensitiveInfo(jsonString);
+
+            // 카프카 전송 (예전처럼 객체 그대로 가볍게 던지기)
             kafkaTemplate.send(topic, envelope);
 
-            // 2. 로그 마스킹 처리 (개인정보 보호)
-            // envelope.toString() 결과물 내의 PII를 KafkaEventParser의 로직으로 마스킹합니다.
-            String maskedLog = kafkaEventParser.maskSensitiveInfo(envelope.toString());
-            log.info("[KafkaEventPublisher] 이벤트 발행 성공 - Topic: {}, Message: {}", topic, maskedLog);
+            log.info("[KafkaEventPublisher] 이벤트 발행 - Topic: {}, Message: {}", topic, maskedLog);
 
         } catch (Exception e) {
-            String maskedErrorLog = kafkaEventParser.maskSensitiveInfo(envelope.toString());
-            log.error("[KafkaEventPublisher] 이벤트 발행 실패 - Topic: {}, Message: {}, 사유: {}",
-                    topic, maskedErrorLog, e.getMessage());
-
-            // 여기서 공통 예외를 던지거나 런타임 예외로 래핑합니다.
-            throw new RuntimeException("Kafka 발행 중 오류 발생", e);
+            // 실패 시 원본 로그 없이 심플하게 에러 메시지만 남김
+            log.error("[KafkaEventPublisher] 이벤트 발행 실패 - Topic: {}, 사유: {}", topic, e.getMessage(), e);
+            throw new CustomException(FailureCode.EVENT_PUBLISH_FAILED);
         }
     }
 }
