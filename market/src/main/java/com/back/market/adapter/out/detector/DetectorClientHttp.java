@@ -9,11 +9,17 @@ import org.springframework.stereotype.Component;
 @Profile({"!local", "!test"})
 @Component
 @RequiredArgsConstructor
-public class DetectorClientHttp implements DetectorClient{
+public class DetectorClientHttp implements DetectorClient {
+
     private final DetectorFeignApi detectorFeignApi;
 
     @Override
     public void detectBidSpam(Long userId) {
         detectorFeignApi.detectBidSpam(userId);
+    }
+
+    @Override
+    public void detectHijack(DetectHijackRequestDto requestDto) {
+        detectorFeignApi.detectHijack(requestDto);
     }
 }

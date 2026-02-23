@@ -1,13 +1,12 @@
 package com.back.detector.adapter.in;
 
 import com.back.detector.app.DetectorFacade;
+import com.back.detector.dto.request.DetectHijackRequestDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
 
 @Tag(name = "인터널 - Detector", description = "서비스 간 내부 호출용 Detector API")
 @RestController
@@ -21,5 +20,11 @@ public class DetectorInternalController {
     @PostMapping("/bid-spam/{userId}")
     public void detectBidSpam(@PathVariable Long userId) {
         detectorFacade.detectBidSpam(userId);
+    }
+
+    @Operation(summary = "계정 탈취 감지", description = "userId, userEmail, ip, transactionAmount를 받아 계정 탈취 여부를 감지한다.")
+    @PostMapping("/hijack")
+    public void detectHijack(@RequestBody DetectHijackRequestDto requestDto) {
+        detectorFacade.detectHijack(requestDto.userId(), requestDto.userEmail(), requestDto.ip(), requestDto.transactionAmount());
     }
 }

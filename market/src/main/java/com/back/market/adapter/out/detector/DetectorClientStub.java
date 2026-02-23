@@ -15,6 +15,10 @@ public class DetectorClientStub implements DetectorClient {
     @Override
     public void detectBidSpam(Long userId) {
         log.info("[FakeDetectorClient] 입찰 스팸 감지 요청 수신: userId={}", userId);
-        // 예외 발생하지 않음
+    }
+
+    @Override
+    public void detectHijack(DetectHijackRequestDto requestDto) {
+        log.info("[FakeDetectorClient] 계정 탈취 감지 요청 수신: userId={}", requestDto.userId());
     }
 }
