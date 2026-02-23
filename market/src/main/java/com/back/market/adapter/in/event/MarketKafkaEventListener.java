@@ -62,5 +62,21 @@ public class MarketKafkaEventListener {
         marketInternalFacade.handleProductDeletedEvent(payload);
     }
 
-}
+    @KafkaListener(
+            topics = "${custom.kafka.topic.cash-payment-completed}",
+            groupId = "${spring.kafka.consumer.group-id}"
+    )
+    public void consumePaymentCompletedEvent(String message) {
+        PaymentCompletedPayload payload = kafkaEventParser.extractPayload(message, new TypeReference<>() {});
+        marketInternalFacade.handlePaymentCompletedEvent(payload);
+    }
 
+    @KafkaListener(
+            topics = "${custom.kafka.topic.cash-payment-failed}",
+            groupId = "${spring.kafka.consumer.group-id}"
+    )
+    public void consumePaymentFailedEvent(String message) {
+        PaymentFailedPayload payload = kafkaEventParser.extractPayload(message, new TypeReference<>() {});
+        marketInternalFacade.handlePaymentFailedEvent(payload);
+    }
+}

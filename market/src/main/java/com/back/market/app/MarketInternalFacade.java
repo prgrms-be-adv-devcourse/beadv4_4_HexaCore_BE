@@ -46,6 +46,18 @@ public class MarketInternalFacade {
         return confirmPaymentUseCase.confirmPayment(requestDto);
     }
 
+    @Transactional
+    public void handlePaymentCompletedEvent(PaymentCompletedPayload payload) {
+        log.info("[MarketInternalFacade] 결제 완료 이벤트 처리 시작 - Type: {}, ID: {}", payload.relType(), payload.relId());
+        confirmPaymentUseCase.confirmPayment(payload);
+    }
+
+    @Transactional
+    public void handlePaymentFailedEvent(PaymentFailedPayload payload) {
+        log.info("[MarketInternalFacade] 결제 실패 이벤트 처리 시작 - Type: {}, ID: {}", payload.relType(), payload.relId());
+        confirmPaymentUseCase.handlePaymentFailure(payload);
+    }
+
     /**
      * 주문 데이터 조회(feign)
      * @param targetDate 요청 날짜(월단위)

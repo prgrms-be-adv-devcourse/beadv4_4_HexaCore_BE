@@ -9,10 +9,14 @@ import com.back.market.domain.enums.BiddingStatus;
 import com.back.market.domain.enums.OrderStatus;
 import com.back.common.dto.cash.enums.RelType;
 import com.back.common.dto.cash.request.PaymentCompletedRequestDto;
+import com.back.market.event.payload.PaymentCompletedPayload;
+import com.back.market.event.payload.PaymentFailedPayload;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
 
 @Slf4j
 @Service
@@ -22,33 +26,70 @@ public class ConfirmPaymentUseCase {
     private final MarketSupport marketSupport;
 
     /**
-     * Cash 모듈로부터 결제 완료(입금 확인) 통지를 수신하여 주문 상태를 확정 or 입찰 상태를 PROCESS로 변경
+     * [feign] Cash 모듈로부터 결제 완료(입금 확인) 통지를 수신하여 주문 상태를 확정 or 입찰 상태를 PROCESS로 변경
      * @param requestDto PaymentCompletedRequestDto
      * @return true: 정상 처리됨 / false: 이미 처리된 요청(중복)
      */
     @Transactional
     public boolean confirmPayment(PaymentCompletedRequestDto requestDto) {
-        log.info("[Market(Internal)] 결제 완료 통지 수신 - Type: {}, Id: {}, Amount: {}", requestDto.relType(), requestDto.relId(), requestDto.totalAmount());
-        if (requestDto.relType() == RelType.ORDER) {
-            return processOrderPayment(requestDto);
-        } else if (requestDto.relType() == RelType.BIDDING) {
-            return processBiddingPayment(requestDto);
+        log.info("[Market(Internal)] HTTP 결제 완료 통지 수신 - Type: {}, Id: {}, Amount: {}", requestDto.relType(), requestDto.relId(), requestDto.totalAmount());
+        return processPaymentLogic(requestDto.relType(), requestDto.relId(), requestDto.totalAmount());
+    }
+
+    /**
+     * [kafka] Cash 모듈로부터 결제 완료(입금 확인) 통지를 수신하여 주문 상태를 확정 or 입찰 상태를 PROCESS로 변경
+     * @param payload PaymentCompletedPayload
+     */
+    @Transactional
+    public void confirmPayment(PaymentCompletedPayload payload) {
+        log.info("[Market(Internal)] Kafka 결제 완료 이벤트 수신 - Type: {}, Id: {}, Amount: {}", payload.relType(), payload.relId(), payload.totalAmount());
+        processPaymentLogic(payload.relType(), payload.relId(), payload.totalAmount());
+    }
+
+    /**
+     * [kafka] Cash 모듈로부터 결제 실패 통지를 수신하여 주문 상태를 취소 or 입찰 상태를 취소로 변경
+     * @param payload PaymentFailedPayload
+     */
+    @Transactional
+    public void handlePaymentFailure(PaymentFailedPayload payload) {
+        log.info("[Market(Internal)] Kafka 결제 실패 이벤트 수신 - Type: {}, Id: {}", payload.relType(), payload.relId());
+        if (payload.relType() == RelType.ORDER) {
+            Order order = marketSupport.findOrderById(payload.relId());
+            if (order.getOrderStatus() == OrderStatus.HOLD) {
+                order.changeStatus(OrderStatus.CANCELLED);
+                log.info("[Market] 결제 실패로 인한 주문 취소 완료 - OrderId: {}", order.getId());
+            }
+        } else if (payload.relType() == RelType.BIDDING) {
+            Bidding bidding = marketSupport.findBiddingById(payload.relId());
+            if (bidding.getStatus() == BiddingStatus.HOLD) {
+                bidding.changeStatus(BiddingStatus.CANCELLED);
+                log.info("[Market] 결제 실패로 인한 입찰 취소 완료 - BiddingId: {}", bidding.getId());
+            }
+        }
+    }
+
+    private boolean processPaymentLogic(RelType relType, Long relId, BigDecimal totalAmount) {
+        if(relType == RelType.ORDER) {
+            return processOrderPayment(relId, totalAmount);
+        } else if(relType == RelType.BIDDING) {
+            return processBiddingPayment(relId, totalAmount);
         }
         return false;
     }
 
     /**
      * 주문 조회 및 금액 검증 후 주문 상태를 변경하는 메서드
-     * @param requestDto PaymentCompletedRequestDto
+     * @param relId
+     * @param totalAmount
      * @return true: 정상 처리됨 / false: 이미 처리된 요청(중복)
      */
-    private boolean processOrderPayment(PaymentCompletedRequestDto requestDto) {
+    private boolean processOrderPayment(Long relId, BigDecimal totalAmount) {
         // 1. 주문 조회
-        Order order = marketSupport.findOrderById(requestDto.relId());
+        Order order = marketSupport.findOrderById(relId);
 
         // 2. 금액 검증 (DB가격 & totalAmount)
-        if (order.getPrice().compareTo(requestDto.totalAmount()) != 0) {
-            log.error("[Market(Internal)] 결제 금액 불일치 - OrderPrice: {}, PaidAmount: {}", order.getPrice(), requestDto.totalAmount());
+        if (order.getPrice().compareTo(totalAmount) != 0) {
+            log.error("[Market(Internal)] 결제 금액 불일치 - OrderPrice: {}, PaidAmount: {}", order.getPrice(), totalAmount);
             throw new BadRequestException(FailureCode.AMOUNT_MISMATCH);
         }
 
@@ -68,16 +109,17 @@ public class ConfirmPaymentUseCase {
 
     /**
      * 구매 입찰 조회 및 금액 검증 후 입찰 상태를 변경하는 메서드
-     * @param requestDto PaymentCompletedRequestDto
+     * @param relId
+     * @param totalAmount
      * @return true: 정상 처리됨 / false: 이미 처리된 요청(중복)
      */
-    private boolean processBiddingPayment(PaymentCompletedRequestDto requestDto) {
+    private boolean processBiddingPayment(Long relId, BigDecimal totalAmount) {
         // 1. 입찰 조회
-        Bidding bidding = marketSupport.findBiddingById(requestDto.relId());
+        Bidding bidding = marketSupport.findBiddingById(relId);
 
         // 2. 금액 검증 (입찰희망가 vs 결제된 금액)
-        if (bidding.getPrice().compareTo(requestDto.totalAmount()) != 0) {
-            log.error("[Market(Internal)] 입찰 보증금 금액 불일치 - BidPrice: {}, PaidAmount: {}", bidding.getPrice(), requestDto.totalAmount());
+        if (bidding.getPrice().compareTo(totalAmount) != 0) {
+            log.error("[Market(Internal)] 입찰 보증금 금액 불일치 - BidPrice: {}, PaidAmount: {}", bidding.getPrice(), totalAmount);
             throw new BadRequestException(FailureCode.AMOUNT_MISMATCH);
         }
 
