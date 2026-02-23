@@ -3,6 +3,7 @@ package com.back.market.adapter.in.event;
 import com.back.common.event.KafkaEventParser;
 import com.back.market.app.MarketInternalFacade;
 import com.back.market.event.payload.ProductCreatedPayload;
+import com.back.market.event.payload.ProductUpdatedPayload;
 import com.back.market.event.payload.UserCreatedPayload;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -46,6 +47,8 @@ public class MarketKafkaEventListener {
     )
     public void consumeProductUpdatedEvent(String message) {
         log.info("[MarketKafkaEventListener] product-item-updated 수신: {}", message);
+        ProductUpdatedPayload payload = kafkaEventParser.extractPayload(message, new TypeReference<>() {});
+        marketInternalFacade.handleProductUpdatedEvent(payload);
     }
 
     @KafkaListener(

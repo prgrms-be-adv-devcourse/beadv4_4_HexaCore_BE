@@ -1,6 +1,7 @@
 package com.back.market.domain;
 
 import com.back.common.entity.BaseTimeEntity;
+import com.back.market.dto.request.MarketProductDto;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -54,4 +55,13 @@ public class MarketProduct extends BaseTimeEntity {
 
     @Column(name = "category_name", nullable = false)
     private String categoryName;        // 카테고리명
+
+    public void updateInfo(MarketProductDto dto) {
+        this.name = dto.name();
+        this.productNumber = dto.productNumber();
+        this.thumbnailImage = dto.thumbnailImage();
+        this.releasePrice = dto.releasePrice();
+        this.brandName = dto.brandName();
+        this.categoryName = dto.categoryName();
+    }
 }
