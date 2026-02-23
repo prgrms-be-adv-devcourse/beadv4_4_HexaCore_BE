@@ -19,7 +19,11 @@ import java.io.IOException;
 
 /**
  * JWT를 검증하기 위한 커스텀 필터
+ *
+ * @deprecated Gateway 도입으로 JWT 검증이 Gateway로 이전됨.
+ * 내부 서비스는 {@link com.back.security.filter.GatewayHeaderFilter}를 사용.
  */
+@Deprecated
 @RequiredArgsConstructor
 @Component
 public class JWTFilter extends OncePerRequestFilter {

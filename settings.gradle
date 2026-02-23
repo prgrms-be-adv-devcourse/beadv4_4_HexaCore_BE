@@ -12,5 +12,6 @@ include(
         "settlement",
         "detector",
         "security",
-        "ai"
+        "ai",
+        "gateway"
 )
