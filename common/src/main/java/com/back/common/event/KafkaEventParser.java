@@ -50,11 +50,11 @@ public class KafkaEventParser {
      * @param json 마스킹할 JSON 문자열
      * @return 민감한 정보가 마스킹된 JSON 문자열
      */
-    private String maskSensitiveInfo(String json) {
+    public String maskSensitiveInfo(String json) {
         if (json == null) return null;
         // 1. 마스킹할 패턴 정의 (Case Insensitive 적용)
         // 이메일, 전화번호, 주소 키에 대해 마스킹
-        String regex = "\" (email|phoneNumber|phone|address) \"\\s*:\\s*\"[^\"]+\"";
+        String regex = "\" (email|phoneNumber|phone|address|sellerName|buyerName|name) \"\\s*:\\s*\"[^\"]+\"";
         Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE | Pattern.COMMENTS);
 
         Matcher matcher = pattern.matcher(json);

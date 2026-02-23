@@ -46,10 +46,10 @@ public class UserCreatedEventConsumeTests {
         Envelope<UserCreatedPayload> envelope = Envelope.of("UserCreatedEvent", userCreatedPayload);
 
         // 3. envelope를 json 문자열로 직렬화
-        String message = jsonMapper.writeValueAsString(envelope);
+        //String message = jsonMapper.writeValueAsString(envelope);
         
         // 4. kafka로 메시지 전송
-        kafkaTemplate.send(topic, message);
+        kafkaTemplate.send(topic, envelope);
         log.info("Event sent to Kafka topic: UserCreatedPayload (id: {})", testId);
 
         Thread.sleep(3000); // 시간차 두기
