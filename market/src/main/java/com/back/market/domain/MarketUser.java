@@ -40,4 +40,10 @@ public class MarketUser extends BaseTimeEntity {
 
     @Column(name = "phone", length = 20)
     private String phone;           // 연락처
+
+    public void update(String name, String address, String phone) {
+        this.name = name;
+        this.address = address;
+        this.phone = phone;
+    }
 }

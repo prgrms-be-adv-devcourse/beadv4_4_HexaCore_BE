@@ -2,10 +2,7 @@ package com.back.market.adapter.in.event;
 
 import com.back.common.event.KafkaEventParser;
 import com.back.market.app.MarketInternalFacade;
-import com.back.market.event.payload.ProductCreatedPayload;
-import com.back.market.event.payload.ProductDeletedPayload;
-import com.back.market.event.payload.ProductUpdatedPayload;
-import com.back.market.event.payload.UserCreatedPayload;
+import com.back.market.event.payload.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -28,6 +25,16 @@ public class MarketKafkaEventListener {
         log.info("[MarketKafkaEventListener] UserCreatedEvent 수신: {}", message);
         UserCreatedPayload payload = kafkaEventParser.extractPayload(message, new TypeReference<>() {});
         marketInternalFacade.handleUserCreatedEvent(payload);
+    }
+
+    @KafkaListener(
+            topics = "${custom.kafka.topic.user-account-updated}",
+            groupId = "${spring.kafka.consumer.group-id}"
+    )
+    public void consumeUserUpdatedEvent(String message) {
+        log.info("[MarketKafkaEventListener] UserUpdatedEvent 수신: {}", message);
+        UserUpdatedPayload payload = kafkaEventParser.extractPayload(message, new TypeReference<>() {});
+        marketInternalFacade.handleUserUpdatedEvent(payload);
     }
 
     @KafkaListener(
