@@ -12,13 +12,15 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+
 @Service
 @RequiredArgsConstructor
 public class EventLogUseCase {
     private final EventConsumptionLogRepository eventConsumptionLogRepository;
     private final EventConsumptionLogMapper eventConsumptionLogMapper;
 
-    private static final long PROCESSING_TIMEOUT_MINUTES = 30;
+    private static final long PROCESSING_TIMEOUT_MINUTES = 10;
 
     @Loggable
     @Transactional(readOnly = true)
@@ -84,7 +86,9 @@ public class EventLogUseCase {
         
         if (log.getStatus() == EventConsumptionStatus.PROCESSING) {
             // 처리 시작 후 일정 시간(30분)이 지나지 않았다면 아직 처리 중으로 간주하여 차단
-            return log.getCreatedAt().isAfter(java.time.LocalDateTime.now().minusMinutes(PROCESSING_TIMEOUT_MINUTES));
+            LocalDateTime startTime = log.getLastModifiedAt();
+            LocalDateTime expireTime = startTime.plusMinutes(PROCESSING_TIMEOUT_MINUTES);
+            return LocalDateTime.now().isBefore(expireTime);
         }
         
         return false;
