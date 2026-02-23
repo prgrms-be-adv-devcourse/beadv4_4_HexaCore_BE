@@ -2,10 +2,7 @@ package com.back.market.adapter.in.event;
 
 import com.back.common.event.KafkaEventParser;
 import com.back.market.app.MarketInternalFacade;
-import com.back.market.event.payload.ProductCreatedPayload;
-import com.back.market.event.payload.ProductDeletedPayload;
-import com.back.market.event.payload.ProductUpdatedPayload;
-import com.back.market.event.payload.UserCreatedPayload;
+import com.back.market.event.payload.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -25,9 +22,17 @@ public class MarketKafkaEventListener {
             groupId = "${spring.kafka.consumer.group-id}"
     )
     public void consumeUserCreatedEvent(String message) {
-        log.info("[MarketKafkaEventListener] UserCreatedEvent 수신: {}", message);
         UserCreatedPayload payload = kafkaEventParser.extractPayload(message, new TypeReference<>() {});
         marketInternalFacade.handleUserCreatedEvent(payload);
+    }
+
+    @KafkaListener(
+            topics = "${custom.kafka.topic.user-account-updated}",
+            groupId = "${spring.kafka.consumer.group-id}"
+    )
+    public void consumeUserUpdatedEvent(String message) {
+        UserUpdatedPayload payload = kafkaEventParser.extractPayload(message, new TypeReference<>() {});
+        marketInternalFacade.handleUserUpdatedEvent(payload);
     }
 
     @KafkaListener(
@@ -35,7 +40,6 @@ public class MarketKafkaEventListener {
             groupId = "${spring.kafka.consumer.group-id}"
     )
     public void consumeProductCreatedEvent(String message) {
-        log.info("[MarketKafkaEventListener] product-item-created 수신: {}", message);
         ProductCreatedPayload payload = kafkaEventParser.extractPayload(message, new TypeReference<>() {});
         marketInternalFacade.handleProductCreatedEvent(payload);
     }
@@ -45,7 +49,6 @@ public class MarketKafkaEventListener {
             groupId = "${spring.kafka.consumer.group-id}"
     )
     public void consumeProductUpdatedEvent(String message) {
-        log.info("[MarketKafkaEventListener] product-item-updated 수신: {}", message);
         ProductUpdatedPayload payload = kafkaEventParser.extractPayload(message, new TypeReference<>() {});
         marketInternalFacade.handleProductUpdatedEvent(payload);
     }
@@ -55,7 +58,6 @@ public class MarketKafkaEventListener {
             groupId = "${spring.kafka.consumer.group-id}"
     )
     public void consumeProductDeletedEvent(String message) {
-        log.info("[MarketKafkaEventListener] product-item-deleted 수신: {}", message);
         ProductDeletedPayload payload = kafkaEventParser.extractPayload(message, new TypeReference<>() {});
         marketInternalFacade.handleProductDeletedEvent(payload);
     }

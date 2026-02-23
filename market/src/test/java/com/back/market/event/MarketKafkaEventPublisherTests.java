@@ -38,15 +38,15 @@ public class MarketKafkaEventPublisherTests {
 
     @Test
     @DisplayName("성공: 올바른 데이터가 주어지면 카프카로 Envelope 메시지를 발행한다.")
-    void sendOrderConfirmed_success() {
+    void sendOrderCompleted_success() {
         OrderCompletedEvent event = new OrderCompletedEvent(1L, 1L, 100L, 500L, "판매자A", new BigDecimal("50000.00"), OrderStatus.COMPLETED, LocalDateTime.now());
-        marketKafkaEventPublisher.sendOrderConfirmed(event);
+        marketKafkaEventPublisher.sendOrderCompleted(event);
         verify(kafkaEventPublisher).publish(eq("market.order.completed"), any(Envelope.class));
     }
 
     @Test
     @DisplayName("실패: 필수 값(orderId)이 누락되면 MISSING_REQUIRED_FIELD 예외가 발생한다")
-    void sendOrderConfirmed_Fail_MissingField() {
+    void sendOrderCompleted_Fail_MissingField() {
         // Given: orderId가 null인 비정상 이벤트
         OrderCompletedEvent invalidEvent = new OrderCompletedEvent(
                 null, 100L, 500L, 600L, "판매자A", new BigDecimal("50000.00"), OrderStatus.COMPLETED, LocalDateTime.now()
@@ -54,7 +54,7 @@ public class MarketKafkaEventPublisherTests {
 
         // When & Then: 예외 발생 여부 검증
         assertThrows(CustomException.class, () -> {
-            marketKafkaEventPublisher.sendOrderConfirmed(invalidEvent);
+            marketKafkaEventPublisher.sendOrderCompleted(invalidEvent);
         });
     }
 }
