@@ -48,8 +48,18 @@ public class ProductSupport {
     }
 
     @Transactional(readOnly = true)
+    public List<Brand> getAllBrandsByName(List<String> brandNames) {
+        return brandRepository.findAllByNameIgnoreCaseIn(brandNames);
+    }
+
+    @Transactional(readOnly = true)
     public List<Category> getAllCategories() {
         return categoryRepository.findAll();
+    }
+
+    @Transactional(readOnly = true)
+    public List<Category> getAllCategoriesByName(List<String> newCategoryNames) {
+        return categoryRepository.findAllByNameIgnoreCaseIn(newCategoryNames);
     }
 
     @Transactional(readOnly = true)

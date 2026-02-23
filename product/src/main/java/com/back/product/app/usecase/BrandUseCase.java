@@ -33,7 +33,9 @@ public class BrandUseCase {
     @Loggable
     @Transactional
     public List<BrandDto> createBrands(List<BrandDataCommand> brands) {
-        Map<String, Brand> existsBrands = productSupport.getAllBrands().stream()
+        List<String> newBrandNames = brands.stream().map(BrandDataCommand::name).toList();
+
+        Map<String, Brand> existsBrands = productSupport.getAllBrandsByName(newBrandNames).stream()
                 .collect(Collectors.toMap(
                         brand -> toPlainText(brand.getName()),
                         brand -> brand)
@@ -65,12 +67,9 @@ public class BrandUseCase {
 
         String newName = toPlainText(brand.name());
 
-        productSupport.getAllBrands().stream()
-                .filter(existsBrand -> !existsBrand.getId().equals(brandId))
-                .map(existsBrand -> toPlainText(existsBrand.getName()))
-                .filter(existsBrandPlainName -> existsBrandPlainName.equals(newName))
-                .findFirst()
-                .ifPresent(_ -> { throw new CustomException(FailureCode.BRAND_NAME_DUPLICATE); });
+        if (productSupport.existsBrandByName(newName)) {
+            throw new CustomException(FailureCode.BRAND_NAME_DUPLICATE);
+        }
 
         brandToModify.modifyName(brand.name());
 

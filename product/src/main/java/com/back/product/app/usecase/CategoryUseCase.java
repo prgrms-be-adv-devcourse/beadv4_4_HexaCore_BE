@@ -33,7 +33,9 @@ public class CategoryUseCase {
     @Loggable
     @Transactional
     public List<CategoryDto> createCategories(List<CategoryDataCommand> categories) {
-        Map<String, Category> existsCategories = productSupport.getAllCategories().stream()
+        List<String> newCategoryNames = categories.stream().map(CategoryDataCommand::name).toList();
+
+        Map<String, Category> existsCategories = productSupport.getAllCategoriesByName(newCategoryNames).stream()
                 .collect(Collectors.toMap(
                         category -> toPlainText(category.getName()),
                         category -> category
@@ -66,12 +68,9 @@ public class CategoryUseCase {
 
         String newName = toPlainText(category.name());
 
-        productSupport.getAllCategories().stream()
-                .filter(existsCategory -> !existsCategory.getId().equals(categoryId))
-                .map(existsCategory -> toPlainText(existsCategory.getName()))
-                .filter(existsCategoryPlainName -> existsCategoryPlainName.equals(newName))
-                .findFirst()
-                .ifPresent(_ -> { throw new CustomException(FailureCode.CATEGORY_NAME_DUPLICATE); });
+        if (productSupport.existsCategoryByName(newName)) {
+            throw new CustomException(FailureCode.CATEGORY_NAME_DUPLICATE);
+        }
 
         categoryToModify.modifyName(category.name());
 
