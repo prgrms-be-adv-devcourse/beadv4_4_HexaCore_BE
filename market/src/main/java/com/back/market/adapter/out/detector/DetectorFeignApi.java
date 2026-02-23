@@ -1,5 +1,6 @@
 package com.back.market.adapter.out.detector;
 
+import com.back.market.adapter.out.detector.dto.request.DetectHijackRequestDto;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;

@@ -1,5 +1,6 @@
 package com.back.market.adapter.out.detector;
 
+import com.back.market.adapter.out.detector.dto.request.DetectHijackRequestDto;
 import com.back.market.exception.BidSpamDetectedException;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;

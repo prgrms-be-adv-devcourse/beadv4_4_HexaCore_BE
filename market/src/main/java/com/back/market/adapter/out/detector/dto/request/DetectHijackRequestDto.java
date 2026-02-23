@@ -1,4 +1,4 @@
-package com.back.market.adapter.out.detector;
+package com.back.market.adapter.out.detector.dto.request;
 
 import java.math.BigDecimal;
 
