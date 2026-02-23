@@ -63,7 +63,7 @@ public class NotificationEventPublishTests {
         BigDecimal bidPrice = new BigDecimal("1000000"); // 100만원
         BiddingRequestDto requestDto = BiddingRequestDto.of(testProductId, bidPrice, "270");
 
-        marketFacade.registerSellBid(testUserId, requestDto);
+        marketFacade.registerSellBid(testUserId, "127.0.0.1", requestDto);
 
         log.info(">>>> 트랜잭션 커밋을 시작합니다.");
         TestTransaction.flagForCommit();
@@ -136,7 +136,7 @@ public class NotificationEventPublishTests {
                         BigDecimal.ZERO,
                         null
                 ));
-        marketFacade.purchaseNow(buyerId, requestDto);
+        marketFacade.purchaseNow(buyerId, "127.0.0.1", requestDto);
 
         // Then: 트랜잭션 종료 후 카프카 발행 로그 확인
         log.info(">>>> 트랜잭션 커밋 시작");
@@ -191,7 +191,7 @@ public class NotificationEventPublishTests {
 
         // 2. When: 즉시 판매 실행
         log.info(">>>> 즉시 판매 시작 (판매자 ID: {})", sellerId);
-        marketFacade.sellNow(sellerId, requestDto);
+        marketFacade.sellNow(sellerId, "127.0.0.1", requestDto);
 
         // 3. Then: 트랜잭션 종료 및 카프카 로그 확인
         log.info(">>>> 트랜잭션 커밋 시작");
