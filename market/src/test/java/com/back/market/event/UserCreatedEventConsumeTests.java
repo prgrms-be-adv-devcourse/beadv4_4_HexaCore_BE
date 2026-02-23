@@ -15,7 +15,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 
 @Slf4j
 @SpringBootTest
-public class KafkaIntegrationTest {
+public class UserCreatedEventConsumeTests {
 
     @Autowired
     private KafkaTemplate<String, Object> kafkaTemplate;
