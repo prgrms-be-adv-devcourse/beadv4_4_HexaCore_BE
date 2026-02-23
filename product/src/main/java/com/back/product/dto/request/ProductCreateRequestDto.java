@@ -1,7 +1,8 @@
 package com.back.product.dto.request;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 
 import java.util.List;

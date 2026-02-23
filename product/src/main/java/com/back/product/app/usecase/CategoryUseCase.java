@@ -10,6 +10,9 @@ import com.back.product.dto.command.CategoryDataCommand;
 import com.back.product.dto.model.CategoryDto;
 import com.back.product.mapper.CategoryMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,14 +29,17 @@ public class CategoryUseCase {
 
     @Loggable
     @Transactional(readOnly = true)
-    public List<CategoryDto> getCategories() {
-        return productSupport.getAllCategories().stream().map(categoryMapper::toDto).toList();
+    public Page<CategoryDto> getCategories(Integer page, Integer size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return productSupport.getAllCategories(pageable).map(categoryMapper::toDto);
     }
 
     @Loggable
     @Transactional
     public List<CategoryDto> createCategories(List<CategoryDataCommand> categories) {
-        Map<String, Category> existsCategories = productSupport.getAllCategories().stream()
+        List<String> newCategoryNames = categories.stream().map(category -> category.name().toLowerCase()).toList();
+
+        Map<String, Category> existsCategories = productSupport.getAllCategoriesByName(newCategoryNames).stream()
                 .collect(Collectors.toMap(
                         category -> toPlainText(category.getName()),
                         category -> category
@@ -66,12 +72,9 @@ public class CategoryUseCase {
 
         String newName = toPlainText(category.name());
 
-        productSupport.getAllCategories().stream()
-                .filter(existsCategory -> !existsCategory.getId().equals(categoryId))
-                .map(existsCategory -> toPlainText(existsCategory.getName()))
-                .filter(existsCategoryPlainName -> existsCategoryPlainName.equals(newName))
-                .findFirst()
-                .ifPresent(_ -> { throw new CustomException(FailureCode.CATEGORY_NAME_DUPLICATE); });
+        if (productSupport.existsCategoryByNameAndIdNot(newName, categoryToModify.getId())) {
+            throw new CustomException(FailureCode.CATEGORY_NAME_DUPLICATE);
+        }
 
         categoryToModify.modifyName(category.name());
 

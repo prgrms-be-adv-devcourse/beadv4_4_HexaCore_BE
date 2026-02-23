@@ -3,15 +3,36 @@ package com.back.product.app.facade;
 import com.back.common.annotation.Loggable;
 import com.back.common.code.FailureCode;
 import com.back.common.exception.CustomException;
-import com.back.product.adapter.out.event.BrandSpringEventPublisher;
 import com.back.product.adapter.out.event.ProductSpringEventPublisher;
-import com.back.product.app.usecase.*;
-import com.back.product.domain.*;
-import com.back.product.dto.command.*;
-import com.back.product.dto.model.*;
-import com.back.product.dto.request.*;
-import com.back.product.dto.response.*;
-import com.back.product.mapper.*;
+import com.back.product.app.usecase.BrandUseCase;
+import com.back.product.app.usecase.CategoryUseCase;
+import com.back.product.app.usecase.ProductDocumentUseCase;
+import com.back.product.app.usecase.ProductInfoUseCase;
+import com.back.product.app.usecase.ProductUseCase;
+import com.back.product.domain.Brand;
+import com.back.product.domain.Category;
+import com.back.product.domain.ProductInfo;
+import com.back.product.dto.command.ProductInfoDataCommand;
+import com.back.product.dto.command.ProductSearchCommand;
+import com.back.product.dto.command.ProductVariantCreateCommand;
+import com.back.product.dto.command.ProductVariantUpdateCommand;
+import com.back.product.dto.model.ProductDetailDto;
+import com.back.product.dto.model.ProductDto;
+import com.back.product.dto.model.ProductInfoDto;
+import com.back.product.dto.request.PageRequestDto;
+import com.back.product.dto.request.ProductCreateRequestDto;
+import com.back.product.dto.request.ProductQueryRequestDto;
+import com.back.product.dto.request.ProductSearchRequestDto;
+import com.back.product.dto.request.ProductUpdateRequestDto;
+import com.back.product.dto.response.ProductDetailListResponseDto;
+import com.back.product.dto.response.ProductDetailResponseDto;
+import com.back.product.dto.response.ProductSearchResponseDto;
+import com.back.product.mapper.ProductInfoDataCommandMapper;
+import com.back.product.mapper.ProductInfoMapper;
+import com.back.product.mapper.ProductMapper;
+import com.back.product.mapper.ProductSearchCommandMapper;
+import com.back.product.mapper.ProductVariantCreateCommandMapper;
+import com.back.product.mapper.ProductVariantUpdateCommandMapper;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -23,100 +44,19 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ProductFacade {
     private final ProductSpringEventPublisher productSpringEventPublisher;
-    private final BrandSpringEventPublisher brandSpringEventPublisher;
 
     private final BrandUseCase brandUseCase;
     private final CategoryUseCase categoryUseCase;
-    private final OptionUseCase optionUseCase;
     private final ProductInfoUseCase productInfoUseCase;
     private final ProductUseCase productUseCase;
     private final ProductDocumentUseCase productDocumentUseCase;
 
-    private final BrandMapper brandMapper;
-    private final CategoryMapper categoryMapper;
     private final ProductInfoMapper productInfoMapper;
     private final ProductMapper productMapper;
-    private final OptionMapper optionMapper;
-
-    private final BrandDataCommandMapper brandDataCommandMapper;
-    private final CategoryDataCommandMapper categoryDataCommandMapper;
-    private final OptionCreateCommandMapper optionCreateCommandMapper;
     private final ProductInfoDataCommandMapper productInfoDataCommandMapper;
     private final ProductSearchCommandMapper productSearchCommandMapper;
     private final ProductVariantCreateCommandMapper productVariantCreateCommandMapper;
     private final ProductVariantUpdateCommandMapper productVariantUpdateCommandMapper;
-
-    @Loggable
-    @Transactional(readOnly = true)
-    public List<BrandDto> getBrands() {
-        return brandUseCase.getBrands();
-    }
-
-    @Loggable
-    @Transactional
-    public BrandListResponseDto createBrands(@Valid BrandListCreateRequestDto request) {
-        List<BrandDataCommand> brandsCommands = request.brands().stream().map(brandDataCommandMapper::toCommand).toList();
-        List<BrandDto> brandDtos = brandUseCase.createBrands(brandsCommands);
-        brandSpringEventPublisher.sendCreatedEvent(brandDtos);
-        return brandMapper.toListResponseDto(brandDtos);
-    }
-
-    @Loggable
-    @Transactional
-    public BrandResponseDto modifyBrand(Long brandId, @Valid BrandDataRequestDto request) {
-        BrandDataCommand brandCommand = brandDataCommandMapper.toCommand(request);
-        BrandDto brandDto = brandUseCase.modifyBrand(brandId, brandCommand);
-        brandSpringEventPublisher.sendUpdatedEvent(brandDto);
-        return brandMapper.toResponseDto(brandDto);
-    }
-
-    @Loggable
-    @Transactional
-    public void deleteBrand(Long brandId) {
-        Boolean isUsed = productInfoUseCase.isBrandInUse(brandId);
-
-        if (isUsed) {
-            throw new CustomException(FailureCode.BRAND_IN_USE);
-        }
-
-        brandUseCase.deleteBrand(brandId);
-
-        brandSpringEventPublisher.sendDeletedEvent(brandId);
-    }
-
-    @Loggable
-    @Transactional(readOnly = true)
-    public List<CategoryDto> getCategories() {
-        return categoryUseCase.getCategories();
-    }
-
-    @Loggable
-    @Transactional
-    public CategoryListResponseDto createCategories(@Valid CategoryListCreateRequestDto request) {
-        List<CategoryDataCommand> categoryCommands = request.categories().stream().map(categoryDataCommandMapper::toCommand).toList();
-        List<CategoryDto> categoryDtos =  categoryUseCase.createCategories(categoryCommands);
-        return categoryMapper.toListResponseDto(categoryDtos);
-    }
-
-    @Loggable
-    @Transactional
-    public CategoryResponseDto modifyCategory(Long categoryId, @Valid CategoryDataRequestDto request) {
-        CategoryDataCommand categoryCommand = categoryDataCommandMapper.toCommand(request);
-        CategoryDto categoryDto = categoryUseCase.modifyCategory(categoryId, categoryCommand);
-        return categoryMapper.toResponseDto(categoryDto);
-    }
-
-    @Loggable
-    @Transactional
-    public void deleteCategory(Long categoryId) {
-        Boolean isUsed = productInfoUseCase.isCategoryInUse(categoryId);
-
-        if (isUsed) {
-            throw new CustomException(FailureCode.CATEGORY_IN_USE);
-        }
-
-        categoryUseCase.deleteCategory(categoryId);
-    }
 
     @Loggable
     @Transactional(readOnly = true)
@@ -200,64 +140,6 @@ public class ProductFacade {
     @Transactional(readOnly = true)
     public ProductSearchResponseDto findSimilarProducts(Long productInfoId, PageRequestDto request) {
         return productDocumentUseCase.findSimilarProducts(productInfoId, request.page(), request.size());
-    }
-
-    @Loggable
-    @Transactional
-    public OptionListResponseDto createOptions(@Valid OptionListCreateRequestDto request) {
-        List<OptionCreateCommand> optionCreateCommands = request.options().stream().map(optionCreateCommandMapper::toCommand).toList();
-        List<OptionDto> optionDtos = optionUseCase.createOptions(optionCreateCommands);
-        return optionMapper.toListResponseDto(optionDtos);
-    }
-
-    @Loggable
-    @Transactional
-    public OptionResponseDto appendOptions(Long optionGroupId, @Valid OptionAppendRequestDto request) {
-        OptionDto optionDto = optionUseCase.appendOptions(optionGroupId, request.values());
-        return optionMapper.toResponseDto(optionDto);
-    }
-
-    @Loggable
-    @Transactional
-    public OptionGroupModifyResponseDto modifyOptionGroup(Long optionGroupId, @Valid OptionGroupModifyRequestDto request) {
-        return optionUseCase.modifyOptionGroup(optionGroupId, request.name());
-    }
-
-    @Loggable
-    @Transactional
-    public OptionValueModifyResponseDto modifyOptionValue(Long optionValueId, @Valid OptionValueModifyRequestDto request) {
-        return optionUseCase.modifyOptionValue(request.optionGroupId(), optionValueId, request.name());
-    }
-
-    @Loggable
-    @Transactional
-    public void deleteOptionGroup(Long optionGroupId) {
-        Boolean isUsed = productUseCase.isOptionGroupInUse(optionGroupId);
-
-        if (isUsed) {
-            throw new CustomException(FailureCode.OPTION_GROUP_IN_USE);
-        }
-
-        optionUseCase.deleteOptions(optionGroupId);
-    }
-
-    @Loggable
-    @Transactional
-    public void deleteOptionValue(Long optionValueId) {
-        Boolean isUsed = productUseCase.isOptionValueInUse(optionValueId);
-
-        if (isUsed) {
-            throw new CustomException(FailureCode.OPTION_VALUE_IN_USE);
-        }
-
-        optionUseCase.deleteOption(optionValueId);
-    }
-
-    @Loggable
-    @Transactional(readOnly = true)
-    public OptionListResponseDto getOptions() {
-        List<OptionDto> optionDtos = optionUseCase.findAllOptions();
-        return optionMapper.toListResponseDto(optionDtos);
     }
 
     private String findThumbnailUrl(List<ProductDto> productDtos) {

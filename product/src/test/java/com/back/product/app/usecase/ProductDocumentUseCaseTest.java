@@ -65,8 +65,8 @@ class ProductDocumentUseCaseTest {
                     .minPrice(BigDecimal.valueOf(10000))
                     .maxPrice(BigDecimal.valueOf(100000))
                     .sort(ProductSortType.PRICE_HIGH)
-                    .page(0L)
-                    .size(20L)
+                    .page(0)
+                    .size(20)
                     .build();
 
             // Dummy data for mocking
@@ -114,8 +114,8 @@ class ProductDocumentUseCaseTest {
             // given
             ProductSearchCommand command = ProductSearchCommand.builder()
                     .sort(ProductSortType.LATEST)
-                    .page(0L)
-                    .size(10L)
+                    .page(0)
+                    .size(10)
                     .build();
 
             ProductDocument document = ProductDocument.builder().productInfo(ProductDocument.ProductInfo.builder().productName("Another Product").build()).build();
@@ -161,8 +161,8 @@ class ProductDocumentUseCaseTest {
         @DisplayName("성공: 유사 상품을 정상적으로 조회한다 (자기 자신 제외)")
         void findSimilarProducts_Success_ExcludesSelf() {
             // given
-            Long page = 0L;
-            Long size = 5L;
+            Integer page = 0;
+            Integer size = 5;
 
             ProductDocument targetProduct = ProductDocument.builder()
                     .productInfo(
@@ -232,8 +232,8 @@ class ProductDocumentUseCaseTest {
         @DisplayName("실패: 대상 상품의 임베딩이 없을 경우 CustomException 발생")
         void findSimilarProducts_Fail_EmbeddingNotFound() {
             // given
-            Long page = 0L;
-            Long size = 5L;
+            Integer page = 0;
+            Integer size = 5;
 
             ProductDocument targetProduct = ProductDocument.builder()
                     .productInfo(
@@ -262,8 +262,8 @@ class ProductDocumentUseCaseTest {
         @DisplayName("실패: 대상 상품을 찾을 수 없을 경우 CustomException 발생")
         void findSimilarProducts_Fail_ProductNotFound() {
             // given
-            Long page = 0L;
-            Long size = 5L;
+            Integer page = 0;
+            Integer size = 5;
 
             given(productDocumentRepository.findById(PRODUCT_INFO_ID.toString())).willReturn(java.util.Optional.empty());
 
@@ -282,8 +282,8 @@ class ProductDocumentUseCaseTest {
         @DisplayName("성공: 유사 상품이 없을 경우 빈 리스트 반환")
         void findSimilarProducts_Success_NoSimilarProducts() {
             // given
-            Long page = 0L;
-            Long size = 5L;
+            Integer page = 0;
+            Integer size = 5;
 
             ProductDocument targetProduct = ProductDocument.builder()
                     .productInfo(

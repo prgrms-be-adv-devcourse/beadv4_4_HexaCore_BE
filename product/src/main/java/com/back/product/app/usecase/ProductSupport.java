@@ -2,9 +2,25 @@ package com.back.product.app.usecase;
 
 import com.back.common.code.FailureCode;
 import com.back.common.exception.CustomException;
-import com.back.product.adapter.out.persistence.*;
-import com.back.product.domain.*;
+import com.back.product.adapter.out.persistence.BrandRepository;
+import com.back.product.adapter.out.persistence.CategoryRepository;
+import com.back.product.adapter.out.persistence.OptionGroupRepository;
+import com.back.product.adapter.out.persistence.OptionValueRepository;
+import com.back.product.adapter.out.persistence.ProductImageRepository;
+import com.back.product.adapter.out.persistence.ProductInfoRepository;
+import com.back.product.adapter.out.persistence.ProductOptionValuesRepository;
+import com.back.product.adapter.out.persistence.ProductRepository;
+import com.back.product.domain.Brand;
+import com.back.product.domain.Category;
+import com.back.product.domain.OptionGroup;
+import com.back.product.domain.OptionValue;
+import com.back.product.domain.Product;
+import com.back.product.domain.ProductImage;
+import com.back.product.domain.ProductInfo;
+import com.back.product.domain.ProductOptionValues;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,23 +40,33 @@ public class ProductSupport {
     private final OptionGroupRepository optionGroupRepository;
 
     @Transactional(readOnly = true)
-    public List<Brand> getAllBrands() {
-        return brandRepository.findAll();
+    public Page<Brand> getAllBrands(Pageable pageable) {
+        return brandRepository.findAll(pageable);
     }
 
     @Transactional(readOnly = true)
-    public boolean existsBrandByName(String name) {
-        return brandRepository.existsBrandByNameIgnoreCase(name);
+    public boolean existsBrandByNameAndIdNot(String name, Long id) {
+        return brandRepository.existsBrandByNameIgnoreCaseAndIdNot(name, id);
     }
 
     @Transactional(readOnly = true)
-    public List<Category> getAllCategories() {
-        return categoryRepository.findAll();
+    public List<Brand> getAllBrandsByName(List<String> brandNames) {
+        return brandRepository.findAllByNameIgnoreCaseIn(brandNames);
     }
 
     @Transactional(readOnly = true)
-    public boolean existsCategoryByName(String name) {
-        return categoryRepository.existsCategoryByNameIgnoreCase(name);
+    public Page<Category> getAllCategories(Pageable pageable) {
+        return categoryRepository.findAll(pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Category> getAllCategoriesByName(List<String> newCategoryNames) {
+        return categoryRepository.findAllByNameIgnoreCaseIn(newCategoryNames);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean existsCategoryByNameAndIdNot(String name, Long id) {
+        return categoryRepository.existsCategoryByNameIgnoreCaseAndIdNot(name, id);
     }
 
     @Transactional(readOnly = true)

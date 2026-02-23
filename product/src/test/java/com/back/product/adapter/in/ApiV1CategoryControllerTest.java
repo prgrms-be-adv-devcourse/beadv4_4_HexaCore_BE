@@ -3,11 +3,12 @@ package com.back.product.adapter.in;
 import com.back.common.code.FailureCode;
 import com.back.common.exception.CustomException;
 import com.back.product.adapter.in.web.controller.ApiV1CategoryController;
-import com.back.product.app.facade.ProductFacade;
+import com.back.product.app.facade.CategoryFacade;
 import com.back.product.dto.model.CategoryDto;
-import com.back.product.dto.request.CategoryListCreateRequestDto;
 import com.back.product.dto.request.CategoryDataRequestDto;
+import com.back.product.dto.request.CategoryListCreateRequestDto;
 import com.back.product.dto.response.CategoryListResponseDto;
+import com.back.product.dto.response.CategoryPageResponseDto;
 import com.back.product.dto.response.CategoryResponseDto;
 import com.back.security.jwt.JWTUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -25,10 +26,18 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -44,7 +53,7 @@ class ApiV1CategoryControllerTest {
     private JWTUtil jwtUtil;
 
     @MockitoBean
-    private ProductFacade productFacade;
+    private CategoryFacade categoryFacade;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -56,16 +65,25 @@ class ApiV1CategoryControllerTest {
         @WithMockUser
         void getCategories() throws Exception {
             // given
-            given(productFacade.getCategories()).willReturn(Collections.emptyList());
+            CategoryPageResponseDto responseDto = CategoryPageResponseDto.builder()
+                    .categories(Collections.emptyList())
+                    .totalPages(0)
+                    .totalElements(0L)
+                    .currentPage(0)
+                    .build();
+
+            given(categoryFacade.getCategories(anyInt(), anyInt())).willReturn(responseDto);
 
             // when & then
             mockMvc.perform(
                             get("/api/v1/products/categories")
+                                    .param("page", "0")
+                                    .param("size", "10")
                                     .contentType(MediaType.APPLICATION_JSON)
                     ).andDo(print())
                     .andExpect(status().isOk());
 
-            verify(productFacade).getCategories();
+            verify(categoryFacade).getCategories(0, 10);
         }
     }
 
@@ -89,7 +107,7 @@ class ApiV1CategoryControllerTest {
                             new CategoryDto(2L, "Bottoms", "https://example.com/image2.png")
                     )).build();
 
-            given(productFacade.createCategories(any(CategoryListCreateRequestDto.class))).willReturn(responseDto);
+            given(categoryFacade.createCategories(any(CategoryListCreateRequestDto.class))).willReturn(responseDto);
 
             // when & then
             mockMvc.perform(
@@ -103,7 +121,7 @@ class ApiV1CategoryControllerTest {
                     .andExpect(jsonPath("$.data.categories[0].name").value("Tops"))
                     .andExpect(jsonPath("$.data.categories[1].name").value("Bottoms"));
 
-            verify(productFacade).createCategories(any(CategoryListCreateRequestDto.class));
+            verify(categoryFacade).createCategories(any(CategoryListCreateRequestDto.class));
         }
 
         @Test
@@ -120,7 +138,7 @@ class ApiV1CategoryControllerTest {
                             new CategoryDto(1L, "New", "https://example.com/image_new.png")
                     )).build();
 
-            given(productFacade.createCategories(any(CategoryListCreateRequestDto.class)))
+            given(categoryFacade.createCategories(any(CategoryListCreateRequestDto.class)))
                     .willReturn(responseDto);
 
             // when & then
@@ -133,7 +151,7 @@ class ApiV1CategoryControllerTest {
                     .andExpect(jsonPath("$.data.categories.length()").value(1))
                     .andExpect(jsonPath("$.data.categories[0].name").value("New"));
 
-            verify(productFacade).createCategories(any(CategoryListCreateRequestDto.class));
+            verify(categoryFacade).createCategories(any(CategoryListCreateRequestDto.class));
         }
 
         @Test
@@ -152,7 +170,7 @@ class ApiV1CategoryControllerTest {
                     ).andDo(print())
                     .andExpect(status().isBadRequest());
 
-            verify(productFacade, never()).createCategories(any(CategoryListCreateRequestDto.class));
+            verify(categoryFacade, never()).createCategories(any(CategoryListCreateRequestDto.class));
         }
     }
 
@@ -175,7 +193,7 @@ class ApiV1CategoryControllerTest {
                     .category(new CategoryDto(CATEGORY_ID, "Modified Category", "https://example.com/modified_image.png"))
                     .build();
 
-            given(productFacade.modifyCategory(eq(CATEGORY_ID), any(CategoryDataRequestDto.class))).willReturn(responseDto);
+            given(categoryFacade.modifyCategory(eq(CATEGORY_ID), any(CategoryDataRequestDto.class))).willReturn(responseDto);
 
             // when & then
             mockMvc.perform(
@@ -188,7 +206,7 @@ class ApiV1CategoryControllerTest {
                     .andExpect(jsonPath("$.data.category.categoryId").value(CATEGORY_ID))
                     .andExpect(jsonPath("$.data.category.name").value("Modified Category"));
 
-            verify(productFacade).modifyCategory(eq(CATEGORY_ID), any(CategoryDataRequestDto.class));
+            verify(categoryFacade).modifyCategory(eq(CATEGORY_ID), any(CategoryDataRequestDto.class));
         }
 
         @Test
@@ -201,7 +219,7 @@ class ApiV1CategoryControllerTest {
                     .imageUrl("https://example.com/non_existent.png")
                     .build();
 
-            given(productFacade.modifyCategory(eq(CATEGORY_ID), any(CategoryDataRequestDto.class)))
+            given(categoryFacade.modifyCategory(eq(CATEGORY_ID), any(CategoryDataRequestDto.class)))
                     .willThrow(new CustomException(FailureCode.CATEGORY_NOT_FOUND));
 
             // when & then
@@ -213,7 +231,7 @@ class ApiV1CategoryControllerTest {
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.code").value("CATEGORY_NOT_FOUND"));
 
-            verify(productFacade).modifyCategory(eq(CATEGORY_ID), any(CategoryDataRequestDto.class));
+            verify(categoryFacade).modifyCategory(eq(CATEGORY_ID), any(CategoryDataRequestDto.class));
         }
 
         @Test
@@ -226,7 +244,7 @@ class ApiV1CategoryControllerTest {
                     .imageUrl("https://example.com/existing.png")
                     .build();
 
-            given(productFacade.modifyCategory(eq(CATEGORY_ID), any(CategoryDataRequestDto.class)))
+            given(categoryFacade.modifyCategory(eq(CATEGORY_ID), any(CategoryDataRequestDto.class)))
                     .willThrow(new CustomException(FailureCode.CATEGORY_NAME_DUPLICATE));
 
             // when & then
@@ -238,7 +256,7 @@ class ApiV1CategoryControllerTest {
                     .andExpect(status().isConflict())
                     .andExpect(jsonPath("$.code").value("CATEGORY_NAME_DUPLICATE"));
 
-            verify(productFacade).modifyCategory(eq(CATEGORY_ID), any(CategoryDataRequestDto.class));
+            verify(categoryFacade).modifyCategory(eq(CATEGORY_ID), any(CategoryDataRequestDto.class));
         }
 
         @Test
@@ -260,7 +278,7 @@ class ApiV1CategoryControllerTest {
                     ).andDo(print())
                     .andExpect(status().isBadRequest());
 
-            verify(productFacade, never()).modifyCategory(eq(CATEGORY_ID), any(CategoryDataRequestDto.class));
+            verify(categoryFacade, never()).modifyCategory(eq(CATEGORY_ID), any(CategoryDataRequestDto.class));
         }
     }
 
@@ -275,8 +293,8 @@ class ApiV1CategoryControllerTest {
         @WithMockUser
         void deleteCategory_Success() throws Exception {
             // given
-            // productFacade.deleteCategory(CATEGORY_ID)가 호출될 때 아무것도 하지 않도록 설정 (void 메소드)
-            doNothing().when(productFacade).deleteCategory(CATEGORY_ID);
+            // categoryFacade.deleteCategory(CATEGORY_ID)가 호출될 때 아무것도 하지 않도록 설정 (void 메소드)
+            doNothing().when(categoryFacade).deleteCategory(CATEGORY_ID);
 
             // when & then
             mockMvc.perform(
@@ -285,8 +303,8 @@ class ApiV1CategoryControllerTest {
                     ).andDo(print())
                     .andExpect(status().isNoContent());
 
-            // productFacade.deleteCategory가 올바른 ID로 호출되었는지 검증
-            verify(productFacade).deleteCategory(CATEGORY_ID);
+            // categoryFacade.deleteCategory가 올바른 ID로 호출되었는지 검증
+            verify(categoryFacade).deleteCategory(CATEGORY_ID);
         }
 
         @Test
@@ -294,9 +312,9 @@ class ApiV1CategoryControllerTest {
         @WithMockUser
         void deleteCategory_Fail_CategoryInUse() throws Exception {
             // given
-            // productFacade.deleteCategory(CATEGORY_ID)가 호출될 때 CATEGORY_IN_USE 예외를 던지도록 설정
+            // categoryFacade.deleteCategory(CATEGORY_ID)가 호출될 때 CATEGORY_IN_USE 예외를 던지도록 설정
             doThrow(new CustomException(FailureCode.CATEGORY_IN_USE))
-                    .when(productFacade).deleteCategory(CATEGORY_ID);
+                    .when(categoryFacade).deleteCategory(CATEGORY_ID);
 
             // when & then
             mockMvc.perform(
@@ -306,8 +324,8 @@ class ApiV1CategoryControllerTest {
                     .andExpect(status().isConflict())
                     .andExpect(jsonPath("$.code").value("CATEGORY_IN_USE"));
 
-            // productFacade.deleteCategory가 올바른 ID로 호출되었는지 검증
-            verify(productFacade).deleteCategory(CATEGORY_ID);
+            // categoryFacade.deleteCategory가 올바른 ID로 호출되었는지 검증
+            verify(categoryFacade).deleteCategory(CATEGORY_ID);
         }
     }
 }

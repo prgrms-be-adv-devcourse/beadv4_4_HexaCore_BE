@@ -3,6 +3,7 @@ package com.back.product.mapper;
 import com.back.product.document.ProductDocument;
 import com.back.product.domain.Brand;
 import com.back.product.dto.command.BrandDataCommand;
+import com.back.product.dto.response.BrandPageResponseDto;
 import com.back.product.event.kafka.BrandPayload;
 import com.back.product.dto.model.BrandDto;
 import com.back.product.dto.response.BrandListResponseDto;
@@ -51,6 +52,15 @@ public class BrandMapper {
     public BrandListResponseDto toListResponseDto(List<BrandDto> brandDtos) {
         return BrandListResponseDto.builder()
                 .brands(brandDtos)
+                .build();
+    }
+
+    public BrandPageResponseDto toPageResponseDto(List<BrandDto> brandDtos, int totalPages, long totalElements, int currentPage) {
+        return BrandPageResponseDto.builder()
+                .brands(brandDtos)
+                .totalPages(totalPages)
+                .totalElements(totalElements)
+                .currentPage(currentPage)
                 .build();
     }
 

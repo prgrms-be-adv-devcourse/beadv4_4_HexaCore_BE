@@ -10,6 +10,9 @@ import com.back.product.dto.command.BrandDataCommand;
 import com.back.product.dto.model.BrandDto;
 import com.back.product.mapper.BrandMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,14 +29,17 @@ public class BrandUseCase {
 
     @Loggable
     @Transactional(readOnly = true)
-    public List<BrandDto> getBrands() {
-        return productSupport.getAllBrands().stream().map(brandMapper::toDto).toList();
+    public Page<BrandDto> getBrands(Integer page, Integer size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return productSupport.getAllBrands(pageable).map(brandMapper::toDto);
     }
 
     @Loggable
     @Transactional
     public List<BrandDto> createBrands(List<BrandDataCommand> brands) {
-        Map<String, Brand> existsBrands = productSupport.getAllBrands().stream()
+        List<String> newBrandNames = brands.stream().map(brand -> brand.name().toLowerCase()).toList();
+
+        Map<String, Brand> existsBrands = productSupport.getAllBrandsByName(newBrandNames).stream()
                 .collect(Collectors.toMap(
                         brand -> toPlainText(brand.getName()),
                         brand -> brand)
@@ -63,14 +69,11 @@ public class BrandUseCase {
     public BrandDto modifyBrand(Long brandId, BrandDataCommand brand) {
         Brand brandToModify = findBrandExists(brandId);
 
-        String newName = toPlainText(brand.name());
+        String newName = brand.name().toLowerCase();
 
-        productSupport.getAllBrands().stream()
-                .filter(existsBrand -> !existsBrand.getId().equals(brandId))
-                .map(existsBrand -> toPlainText(existsBrand.getName()))
-                .filter(existsBrandPlainName -> existsBrandPlainName.equals(newName))
-                .findFirst()
-                .ifPresent(_ -> { throw new CustomException(FailureCode.BRAND_NAME_DUPLICATE); });
+        if (productSupport.existsBrandByNameAndIdNot(newName, brandToModify.getId())) {
+            throw new CustomException(FailureCode.BRAND_NAME_DUPLICATE);
+        }
 
         brandToModify.modifyName(brand.name());
 

@@ -1,15 +1,19 @@
 package com.back.product.adapter.in.web.controller;
 
 import com.back.common.annotation.Loggable;
-import com.back.image.app.ImageFacade;
-import com.back.image.dto.enums.ImageCategory;
 import com.back.common.code.SuccessCode;
 import com.back.common.response.CommonResponse;
+import com.back.image.app.ImageFacade;
+import com.back.image.dto.enums.ImageCategory;
 import com.back.image.dto.response.ImageUploadResponseDto;
 import com.back.product.adapter.in.web.api.ImageApiController;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;

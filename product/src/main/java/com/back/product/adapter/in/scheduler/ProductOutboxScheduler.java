@@ -5,7 +5,12 @@ import com.back.product.adapter.out.event.ProductKafkaEventPublisher;
 import com.back.product.app.facade.ProductOutboxFacade;
 import com.back.product.app.usecase.ProductOutboxUseCase;
 import com.back.product.domain.ProductOutboxEvent;
-import com.back.product.event.spring.*;
+import com.back.product.event.spring.BrandCreationCompletedEvent;
+import com.back.product.event.spring.BrandDeletionCompletedEvent;
+import com.back.product.event.spring.BrandUpdateCompletedEvent;
+import com.back.product.event.spring.ProductCreationCompletedEvent;
+import com.back.product.event.spring.ProductDeletionCompletedEvent;
+import com.back.product.event.spring.ProductUpdateCompletedEvent;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 @Slf4j

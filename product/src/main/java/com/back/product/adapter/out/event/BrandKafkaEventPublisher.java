@@ -1,9 +1,10 @@
 package com.back.product.adapter.out.event;
 
 import com.back.common.event.Envelope;
-import com.back.common.event.EventName;
 import com.back.product.domain.ProductOutboxEvent;
-import com.back.product.event.kafka.*;
+import com.back.product.event.kafka.BrandCreatedPayload;
+import com.back.product.event.kafka.BrandDeletedPayload;
+import com.back.product.event.kafka.BrandUpdatedPayload;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

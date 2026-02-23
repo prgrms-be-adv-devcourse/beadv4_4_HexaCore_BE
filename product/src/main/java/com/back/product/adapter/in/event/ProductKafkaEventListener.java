@@ -56,7 +56,6 @@ public class ProductKafkaEventListener {
             topics = "${custom.kafka.topic.product-item-created}",
             groupId = "${spring.kafka.consumer.group-id}"
     )
-    @Transactional
     public void handleProductCreate(
             String message,
             @Header(KafkaHeaders.RECEIVED_TOPIC) String topic,
@@ -98,7 +97,6 @@ public class ProductKafkaEventListener {
             topics = "${custom.kafka.topic.product-item-updated}",
             groupId = "${spring.kafka.consumer.group-id}"
     )
-    @Transactional
     public void handleProductUpdate(
             String message,
             @Header(KafkaHeaders.RECEIVED_TOPIC) String topic,
@@ -138,7 +136,6 @@ public class ProductKafkaEventListener {
             topics = "${custom.kafka.topic.product-item-deleted}",
             groupId = "${spring.kafka.consumer.group-id}"
     )
-    @Transactional
     public void handleProductDelete(
             String message,
             @Header(KafkaHeaders.RECEIVED_TOPIC) String topic,

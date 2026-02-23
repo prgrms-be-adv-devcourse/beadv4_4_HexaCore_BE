@@ -14,8 +14,8 @@ import com.back.product.dto.command.ProductSearchCommand;
 import com.back.product.dto.enums.ProductSortType;
 import com.back.product.dto.model.OptionDto;
 import com.back.product.dto.model.ProductInfoDto;
-import com.back.product.dto.response.ProductSearchResponseDto;
 import com.back.product.dto.model.ProductSearchDto;
+import com.back.product.dto.response.ProductSearchResponseDto;
 import com.back.product.mapper.ProductDocumentMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageImpl;
@@ -26,7 +26,6 @@ import org.springframework.data.elasticsearch.client.elc.NativeQuery;
 import org.springframework.data.elasticsearch.client.elc.NativeQueryBuilder;
 import org.springframework.data.elasticsearch.core.query.Query;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
@@ -43,8 +42,10 @@ public class ProductDocumentUseCase {
 
     private final EmbeddingUseCase embeddingUseCase;
 
+    private static final Integer SIMILAR_MULTIPLIER = 10;
+    private static final Integer SEARCH_MULTIPLIER = 5;
+
     @Loggable
-    @Transactional
     public void syncProduct(ProductInfoDto productInfoDto, List<OptionDto> optionDtos, String thumbnailUrl) {
         String description = buildProductInfo(productInfoDto, optionDtos);
 
@@ -58,13 +59,11 @@ public class ProductDocumentUseCase {
     }
 
     @Loggable
-    @Transactional
     public void deleteProduct(Long productInfoId) {
         productDocumentRepository.deleteById(productInfoId.toString());
     }
 
     @Loggable
-    @Transactional(readOnly = true)
     public ProductSearchResponseDto findProductPage(ProductSearchCommand search) {
         Query query = buildSearchQuery(search);
 
@@ -72,15 +71,14 @@ public class ProductDocumentUseCase {
 
         return convertToDto(
                 productPage.getContent(),
-                (long) productPage.getTotalPages(),
+                productPage.getTotalPages(),
                 productPage.getTotalElements(),
-                search.page()
+                productPage.getNumber()
         );
     }
 
     @Loggable
-    @Transactional(readOnly = true)
-    public ProductSearchResponseDto findSimilarProducts(Long productInfoId, Long page, Long size) {
+    public ProductSearchResponseDto findSimilarProducts(Long productInfoId, Integer page, Integer size) {
         ProductDocument targetProduct = productDocumentRepository.findById(productInfoId.toString())
                 .orElseThrow(() -> new CustomException(FailureCode.PRODUCT_INFO_NOT_FOUND));
 
@@ -95,7 +93,7 @@ public class ProductDocumentUseCase {
                 .value(productInfoId.toString())
                 .build();
 
-        KnnSearch knnSearch = buildKnnSearch(embedding, size, size * 10L, excludeSelfFilter);
+        KnnSearch knnSearch = buildKnnSearch(embedding, size, size * SIMILAR_MULTIPLIER, excludeSelfFilter);
 
         Pageable pageable = buildPageable(ProductSortType.LATEST, page, size);
 
@@ -108,9 +106,9 @@ public class ProductDocumentUseCase {
 
         return convertToDto(
                 productPage.getContent(),
-                (long) productPage.getTotalPages(),
+                productPage.getTotalPages(),
                 productPage.getTotalElements(),
-                page
+                productPage.getNumber()
         );
     }
 
@@ -137,7 +135,7 @@ public class ProductDocumentUseCase {
         if (StringUtils.hasText(search.keyword())) {
             float[] embedding = embeddingUseCase.generateEmbeddings(search.keyword());
 
-            KnnSearch knnSearch = buildKnnSearch(embedding, search.size(), search.size() * 5L);
+            KnnSearch knnSearch = buildKnnSearch(embedding, search.size(), search.size() * SEARCH_MULTIPLIER);
 
             queryBuilder.withKnnSearches(knnSearch);
         }
@@ -209,7 +207,7 @@ public class ProductDocumentUseCase {
         }
     }
 
-    private Pageable buildPageable(ProductSortType sortType, Long page, Long size) {
+    private Pageable buildPageable(ProductSortType sortType, Integer page, Integer size) {
         // 정렬 조건 (기본 정렬: 최신순)
         Sort sort = Sort.by(
                 ProductSortType.LATEST.getDirection(),
@@ -223,18 +221,18 @@ public class ProductDocumentUseCase {
         return PageRequest.of(page.intValue(), size.intValue(), sort);
     }
 
-    private KnnSearch buildKnnSearch(float[] embedding, Long k, Long candidate) {
+    private KnnSearch buildKnnSearch(float[] embedding, Integer k, Integer candidate) {
         return buildKnnSearch(embedding, k, candidate, null);
     }
 
-    private KnnSearch buildKnnSearch(float[] embedding, Long k, Long candidate, TermQuery mustNotFilter) {
+    private KnnSearch buildKnnSearch(float[] embedding, Integer k, Integer candidate, TermQuery mustNotFilter) {
         List<Float> vectors = embeddingUseCase.convertArrayToList(embedding);
 
         return KnnSearch.of(knn -> {
             knn.queryVector(vectors)
                     .field("embedding")
-                    .k(k.intValue()) // 최종 결과 수
-                    .numCandidates(candidate.intValue()); // 후보 수 (k * 2 ~ k * 10 권장)
+                    .k(k) // 최종 결과 수
+                    .numCandidates(candidate); // 후보 수 (k * 2 ~ k * 10 권장)
 
             if (mustNotFilter != null) {
                 knn.filter(f -> f.bool(b -> b.mustNot(mustNotFilter)));
@@ -244,7 +242,7 @@ public class ProductDocumentUseCase {
         });
     }
 
-    private ProductSearchResponseDto convertToDto(List<ProductDocument> productList, Long totalPages, Long totalElements, Long currentPage) {
+    private ProductSearchResponseDto convertToDto(List<ProductDocument> productList, Integer totalPages, Long totalElements, Integer currentPage) {
         List<ProductSearchDto> products = productList.stream().map(productDocumentMapper::toDto).toList();
 
         return ProductSearchResponseDto.builder()
