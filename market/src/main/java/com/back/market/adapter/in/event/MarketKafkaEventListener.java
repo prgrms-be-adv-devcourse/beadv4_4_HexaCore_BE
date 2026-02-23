@@ -22,7 +22,6 @@ public class MarketKafkaEventListener {
             groupId = "${spring.kafka.consumer.group-id}"
     )
     public void consumeUserCreatedEvent(String message) {
-        log.info("[MarketKafkaEventListener] UserCreatedEvent 수신: {}", message);
         UserCreatedPayload payload = kafkaEventParser.extractPayload(message, new TypeReference<>() {});
         marketInternalFacade.handleUserCreatedEvent(payload);
     }
@@ -32,7 +31,6 @@ public class MarketKafkaEventListener {
             groupId = "${spring.kafka.consumer.group-id}"
     )
     public void consumeUserUpdatedEvent(String message) {
-        log.info("[MarketKafkaEventListener] UserUpdatedEvent 수신: {}", message);
         UserUpdatedPayload payload = kafkaEventParser.extractPayload(message, new TypeReference<>() {});
         marketInternalFacade.handleUserUpdatedEvent(payload);
     }
@@ -42,7 +40,6 @@ public class MarketKafkaEventListener {
             groupId = "${spring.kafka.consumer.group-id}"
     )
     public void consumeProductCreatedEvent(String message) {
-        log.info("[MarketKafkaEventListener] product-item-created 수신: {}", message);
         ProductCreatedPayload payload = kafkaEventParser.extractPayload(message, new TypeReference<>() {});
         marketInternalFacade.handleProductCreatedEvent(payload);
     }
@@ -52,7 +49,6 @@ public class MarketKafkaEventListener {
             groupId = "${spring.kafka.consumer.group-id}"
     )
     public void consumeProductUpdatedEvent(String message) {
-        log.info("[MarketKafkaEventListener] product-item-updated 수신: {}", message);
         ProductUpdatedPayload payload = kafkaEventParser.extractPayload(message, new TypeReference<>() {});
         marketInternalFacade.handleProductUpdatedEvent(payload);
     }
@@ -62,7 +58,6 @@ public class MarketKafkaEventListener {
             groupId = "${spring.kafka.consumer.group-id}"
     )
     public void consumeProductDeletedEvent(String message) {
-        log.info("[MarketKafkaEventListener] product-item-deleted 수신: {}", message);
         ProductDeletedPayload payload = kafkaEventParser.extractPayload(message, new TypeReference<>() {});
         marketInternalFacade.handleProductDeletedEvent(payload);
     }

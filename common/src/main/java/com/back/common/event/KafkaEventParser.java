@@ -28,10 +28,17 @@ public class KafkaEventParser {
             String message,
             TypeReference<Envelope<T>> typeReference
     ) {
+        String maskedMessage = maskSensitiveInfo(message);
         try {
-            return jsonMapper.readValue(message, typeReference).payload();
+            // 메시지 전체(Envelope) 역직렬화
+            Envelope<T> envelope = jsonMapper.readValue(message, typeReference);
+
+            // 성공 로그: 헤더의 정보를 활용 (예: user-account-updated)
+            log.info("[KafkaEventParser] {} 수신 성공: {}",
+                    envelope.header().eventType(), maskedMessage);
+
+            return envelope.payload();
         } catch (Exception e) {
-            String maskedMessage = maskSensitiveInfo(message);
             log.error("[KafkaEventParser] Payload 역직렬화 실패. 메시지: {}", maskedMessage, e);
             // 역직렬화 실패는 재시도해도 해결되지 않을 가능성이 높으므로, 예외를 던져서 DLT로 전송(MessageConversionException은 Kafka에서 재시도 없이 바로 DLT로 전송됨)
             throw new MessageConversionException("[KafkaEventParser] envelope에서 payload 역직렬화 실패", e);
@@ -42,7 +49,7 @@ public class KafkaEventParser {
         if (json == null) return null;
         // 1. 마스킹할 패턴 정의 (Case Insensitive 적용)
         // 이메일, 전화번호, 주소 키에 대해 마스킹
-        String regex = "\" (email|phoneNumber|address) \"\\s*:\\s*\"[^\"]+\"";
+        String regex = "\" (email|phoneNumber|phone|address) \"\\s*:\\s*\"[^\"]+\"";
         Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE | Pattern.COMMENTS);
 
         Matcher matcher = pattern.matcher(json);
