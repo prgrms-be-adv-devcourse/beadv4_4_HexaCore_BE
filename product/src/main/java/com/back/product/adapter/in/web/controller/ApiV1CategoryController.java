@@ -8,6 +8,7 @@ import com.back.product.app.facade.CategoryFacade;
 import com.back.product.dto.request.CategoryDataRequestDto;
 import com.back.product.dto.request.CategoryListCreateRequestDto;
 import com.back.product.dto.response.CategoryListResponseDto;
+import com.back.product.dto.response.CategoryPageResponseDto;
 import com.back.product.dto.response.CategoryResponseDto;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -32,10 +34,11 @@ public class ApiV1CategoryController implements CategoryApiController {
     @Override
     @Loggable
     @GetMapping
-    public CommonResponse<CategoryListResponseDto> getCategories() {
-        CategoryListResponseDto response = CategoryListResponseDto.builder()
-                .categories(categoryFacade.getCategories())
-                .build();
+    public CommonResponse<CategoryPageResponseDto> getCategories(
+            @RequestParam(defaultValue = "0") Long page,
+            @RequestParam(defaultValue = "10") Long size
+    ) {
+        CategoryPageResponseDto response = categoryFacade.getCategories(page, size);
         return CommonResponse.success(SuccessCode.OK, response);
     }
 

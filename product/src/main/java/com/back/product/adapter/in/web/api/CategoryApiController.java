@@ -14,7 +14,7 @@ public interface CategoryApiController {
     @ApiResponse(responseCode = "200", description = "카테고리 목록 조회 성공")
     @ApiResponse(responseCode = "401", description = "인증 실패", content = @Content)
     @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
-    CommonResponse<?> getCategories();
+    CommonResponse<?> getCategories(Long page, Long size);
 
     @Operation(summary = "카테고리 생성", description = "새로운 상품 카테고리를 생성합니다. 다중 생성이 가능합니다.")
     @ApiResponse(responseCode = "201", description = "카테고리 생성 성공")

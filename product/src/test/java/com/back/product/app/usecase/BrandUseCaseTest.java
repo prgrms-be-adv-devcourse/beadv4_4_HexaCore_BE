@@ -15,6 +15,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import java.util.Collections;
 import java.util.List;
@@ -23,8 +26,12 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("BrandUseCase 단위 테스트")
@@ -52,19 +59,20 @@ class BrandUseCaseTest {
             // given
             Brand brand1 = Brand.builder().id(1L).name("Nike").imageUrl("https://example.com/logo1.png").build();
             Brand brand2 = Brand.builder().id(2L).name("Adidas").imageUrl("https://example.com/logo2.png").build();
-            List<Brand> allBrands = List.of(brand1, brand2);
+            List<Brand> brands = List.of(brand1, brand2);
+            Page<Brand> brandPage = new PageImpl<>(brands);
 
-            given(productSupport.getAllBrands()).willReturn(allBrands);
+            given(productSupport.getAllBrands(any(Pageable.class))).willReturn(brandPage);
             given(brandMapper.toDto(brand1)).willReturn(new BrandDto(1L, "Nike", "https://example.com/logo1.png"));
             given(brandMapper.toDto(brand2)).willReturn(new BrandDto(2L, "Adidas", "https://example.com/logo2.png"));
 
             // when
-            List<BrandDto> result = brandUseCase.getBrands();
+            Page<BrandDto> result = brandUseCase.getBrands(0L, 10L);
 
             // then
-            assertThat(result).hasSize(2);
-            assertThat(result).extracting(BrandDto::name).containsExactlyInAnyOrder("Nike", "Adidas");
-            verify(productSupport).getAllBrands();
+            assertThat(result.getContent()).hasSize(2);
+            assertThat(result.getContent()).extracting(BrandDto::name).containsExactlyInAnyOrder("Nike", "Adidas");
+            verify(productSupport).getAllBrands(any(Pageable.class));
             verify(brandMapper, times(2)).toDto(any(Brand.class));
         }
     }
@@ -89,7 +97,7 @@ class BrandUseCaseTest {
             Brand savedBrandEntity2 = Brand.builder().id(2L).name("Nike").imageUrl("https://example.com/logo2.png").build();
             List<Brand> savedBrands = List.of(savedBrandEntity1, savedBrandEntity2);
 
-            given(productSupport.getAllBrands()).willReturn(Collections.emptyList());
+            given(productSupport.getAllBrandsByName(anyList())).willReturn(Collections.emptyList());
             given(brandMapper.toEntity(newBrandDto1)).willReturn(newBrandEntity1);
             given(brandMapper.toEntity(newBrandDto2)).willReturn(newBrandEntity2);
             given(brandRepository.saveAll(brandsToCreate)).willReturn(savedBrands);
@@ -102,7 +110,7 @@ class BrandUseCaseTest {
             // then
             assertThat(result).hasSize(2);
             assertThat(result).extracting(BrandDto::name).containsExactlyInAnyOrder("New Balance", "Nike");
-            verify(productSupport).getAllBrands();
+            verify(productSupport).getAllBrandsByName(anyList());
             verify(brandRepository).saveAll(brandsToCreate);
             verify(brandMapper, times(2)).toEntity(any(BrandDataCommand.class));
             verify(brandMapper, times(2)).toDto(any(Brand.class));
@@ -120,7 +128,7 @@ class BrandUseCaseTest {
             Brand newEntity = Brand.builder().name("New Brand").imageUrl("https://example.com/logo_new.png").build();
             Brand savedNewEntity = Brand.builder().id(2L).name("New Brand").imageUrl("https://example.com/logo_new.png").build();
 
-            given(productSupport.getAllBrands()).willReturn(List.of(existingEntity));
+            given(productSupport.getAllBrandsByName(anyList())).willReturn(List.of(existingEntity));
             given(brandMapper.toEntity(newBrandDto)).willReturn(newEntity);
             given(brandRepository.saveAll(List.of(newEntity))).willReturn(List.of(savedNewEntity));
             given(brandMapper.toDto(savedNewEntity)).willReturn(new BrandDto(2L, "New Brand", "https://example.com/logo_new.png"));
@@ -132,7 +140,7 @@ class BrandUseCaseTest {
             assertThat(result).hasSize(1);
             assertThat(result.get(0).name()).isEqualTo("New Brand");
 
-            verify(productSupport).getAllBrands();
+            verify(productSupport).getAllBrandsByName(anyList());
             verify(brandRepository).saveAll(List.of(newEntity));
             verify(brandMapper, times(1)).toEntity(any(BrandDataCommand.class));
             verify(brandMapper, times(1)).toDto(any(Brand.class));
@@ -157,7 +165,7 @@ class BrandUseCaseTest {
                     .build();
 
             given(productSupport.findBrandById(BRAND_ID)).willReturn(Optional.of(brandToModify));
-            given(productSupport.getAllBrands()).willReturn(List.of(brandToModify));
+            given(productSupport.existsBrandByName(anyString())).willReturn(false);
             given(brandMapper.toDto(brandToModify)).willReturn(new BrandDto(BRAND_ID, "Modified Name", "modified.png"));
 
             // when
@@ -167,7 +175,7 @@ class BrandUseCaseTest {
             assertThat(result.name()).isEqualTo("Modified Name");
             assertThat(result.imageUrl()).isEqualTo("modified.png");
             verify(productSupport).findBrandById(BRAND_ID);
-            verify(productSupport).getAllBrands();
+            verify(productSupport).existsBrandByName(anyString());
             verify(brandToModify).modifyName("Modified Name");
             verify(brandToModify).modifyImageUrl("modified.png");
             verify(brandMapper).toDto(brandToModify);
@@ -188,7 +196,7 @@ class BrandUseCaseTest {
                     .hasFieldOrPropertyWithValue("failureCode", FailureCode.BRAND_NOT_FOUND);
 
             verify(productSupport).findBrandById(NON_EXISTENT_ID);
-            verify(productSupport, never()).getAllBrands();
+            verify(productSupport, never()).existsBrandByName(anyString());
         }
 
         @Test
@@ -196,11 +204,10 @@ class BrandUseCaseTest {
         void modifyBrand_Fail_DuplicateName() {
             // given
             final Long BRAND_ID = 1L;
-            Brand existingBrandWithSameName = Brand.builder().id(2L).name("Existing Name").imageUrl("existing.png").build();
             BrandDataCommand command = BrandDataCommand.builder().name("Existing Name").imageUrl("modified.png").build();
 
             given(productSupport.findBrandById(BRAND_ID)).willReturn(Optional.of(brandToModify));
-            given(productSupport.getAllBrands()).willReturn(List.of(brandToModify, existingBrandWithSameName));
+            given(productSupport.existsBrandByName(anyString())).willReturn(true);
 
             // when & then
             assertThatThrownBy(() -> brandUseCase.modifyBrand(BRAND_ID, command))
@@ -208,7 +215,7 @@ class BrandUseCaseTest {
                     .hasFieldOrPropertyWithValue("failureCode", FailureCode.BRAND_NAME_DUPLICATE);
 
             verify(productSupport).findBrandById(BRAND_ID);
-            verify(productSupport).getAllBrands();
+            verify(productSupport).existsBrandByName(anyString());
             verify(brandToModify, never()).modifyName(anyString());
         }
     }

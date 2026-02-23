@@ -15,6 +15,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import java.util.Collections;
 import java.util.List;
@@ -23,6 +26,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
@@ -54,19 +58,20 @@ class CategoryUseCaseTest {
             // given
             Category category1 = Category.builder().id(1L).name("Tops").imageUrl("https://example.com/image.png").build();
             Category category2 = Category.builder().id(2L).name("Bottoms").imageUrl("https://example.com/image.png").build();
-            List<Category> allCategories = List.of(category1, category2);
+            List<Category> categories = List.of(category1, category2);
+            Page<Category> categoryPage = new PageImpl<>(categories);
 
-            given(productSupport.getAllCategories()).willReturn(allCategories);
+            given(productSupport.getAllCategories(any(Pageable.class))).willReturn(categoryPage);
             given(categoryMapper.toDto(category1)).willReturn(new CategoryDto(1L, "Tops", "https://example.com/image.png"));
             given(categoryMapper.toDto(category2)).willReturn(new CategoryDto(2L, "Bottoms", "https://example.com/image.png"));
 
             // when
-            List<CategoryDto> result = categoryUseCase.getCategories();
+            Page<CategoryDto> result = categoryUseCase.getCategories(0L, 10L);
 
             // then
-            assertThat(result).hasSize(2);
-            assertThat(result).extracting(CategoryDto::name).containsExactlyInAnyOrder("Tops", "Bottoms");
-            verify(productSupport).getAllCategories();
+            assertThat(result.getContent()).hasSize(2);
+            assertThat(result.getContent()).extracting(CategoryDto::name).containsExactlyInAnyOrder("Tops", "Bottoms");
+            verify(productSupport).getAllCategories(any(Pageable.class));
             verify(categoryMapper, times(2)).toDto(any(Category.class));
         }
     }
@@ -91,7 +96,7 @@ class CategoryUseCaseTest {
             Category savedCategoryEntity2 = Category.builder().id(2L).name("Bottoms").imageUrl("https://e.com/2.png").build();
             List<Category> savedCategories = List.of(savedCategoryEntity1, savedCategoryEntity2);
 
-            given(productSupport.getAllCategories()).willReturn(Collections.emptyList());
+            given(productSupport.getAllCategoriesByName(anyList())).willReturn(Collections.emptyList());
             given(categoryMapper.toEntity(newCategoryDto1)).willReturn(newCategoryEntity1);
             given(categoryMapper.toEntity(newCategoryDto2)).willReturn(newCategoryEntity2);
             given(categoryRepository.saveAll(categoriesToCreate)).willReturn(savedCategories);
@@ -104,7 +109,7 @@ class CategoryUseCaseTest {
             // then
             assertThat(result).hasSize(2);
             assertThat(result).extracting(CategoryDto::name).containsExactlyInAnyOrder("Tops", "Bottoms");
-            verify(productSupport).getAllCategories();
+            verify(productSupport).getAllCategoriesByName(anyList());
             verify(categoryRepository).saveAll(categoriesToCreate);
             verify(categoryMapper, times(2)).toEntity(any(CategoryDataCommand.class));
             verify(categoryMapper, times(2)).toDto(any(Category.class));
@@ -122,7 +127,7 @@ class CategoryUseCaseTest {
             Category newEntity = Category.builder().name("New").imageUrl("https://e.com/n.png").build();
             Category savedNewEntity = Category.builder().id(2L).name("New").imageUrl("https://e.com/n.png").build();
 
-            given(productSupport.getAllCategories()).willReturn(List.of(existingEntity));
+            given(productSupport.getAllCategoriesByName(anyList())).willReturn(List.of(existingEntity));
             given(categoryMapper.toEntity(newDto)).willReturn(newEntity);
             given(categoryRepository.saveAll(List.of(newEntity))).willReturn(List.of(savedNewEntity));
             given(categoryMapper.toDto(savedNewEntity)).willReturn(new CategoryDto(2L, "New", "https://e.com/n.png"));
@@ -134,7 +139,7 @@ class CategoryUseCaseTest {
             assertThat(result).hasSize(1);
             assertThat(result.get(0).name()).isEqualTo("New");
 
-            verify(productSupport).getAllCategories();
+            verify(productSupport).getAllCategoriesByName(anyList());
             verify(categoryRepository).saveAll(List.of(newEntity));
             verify(categoryMapper, times(1)).toEntity(any(CategoryDataCommand.class));
             verify(categoryMapper, times(1)).toDto(any(Category.class));
@@ -159,7 +164,7 @@ class CategoryUseCaseTest {
                     .build();
 
             given(productSupport.findCategoryById(CATEGORY_ID)).willReturn(Optional.of(categoryToModify));
-            given(productSupport.getAllCategories()).willReturn(List.of(categoryToModify));
+            given(productSupport.existsCategoryByName(anyString())).willReturn(false);
             given(categoryMapper.toDto(categoryToModify)).willReturn(new CategoryDto(CATEGORY_ID, "Modified", "modified.png"));
 
             // when
@@ -169,7 +174,7 @@ class CategoryUseCaseTest {
             assertThat(result.name()).isEqualTo("Modified");
             assertThat(result.imageUrl()).isEqualTo("modified.png");
             verify(productSupport).findCategoryById(CATEGORY_ID);
-            verify(productSupport).getAllCategories();
+            verify(productSupport).existsCategoryByName(anyString());
             verify(categoryToModify).modifyName("Modified");
             verify(categoryToModify).modifyImageUrl("modified.png");
             verify(categoryMapper).toDto(categoryToModify);
@@ -190,7 +195,7 @@ class CategoryUseCaseTest {
                     .hasFieldOrPropertyWithValue("failureCode", FailureCode.CATEGORY_NOT_FOUND);
 
             verify(productSupport).findCategoryById(NON_EXISTENT_ID);
-            verify(productSupport, never()).getAllCategories();
+            verify(productSupport, never()).existsCategoryByName(anyString());
         }
 
         @Test
@@ -198,11 +203,10 @@ class CategoryUseCaseTest {
         void modifyCategory_Fail_DuplicateName() {
             // given
             final Long CATEGORY_ID = 1L;
-            Category existingCategoryWithSameName = Category.builder().id(2L).name("Existing").imageUrl("existing.png").build();
             CategoryDataCommand requestDto = CategoryDataCommand.builder().name("Existing").imageUrl("modified.png").build();
 
             given(productSupport.findCategoryById(CATEGORY_ID)).willReturn(Optional.of(categoryToModify));
-            given(productSupport.getAllCategories()).willReturn(List.of(categoryToModify, existingCategoryWithSameName));
+            given(productSupport.existsCategoryByName(anyString())).willReturn(true);
 
             // when & then
             assertThatThrownBy(() -> categoryUseCase.modifyCategory(CATEGORY_ID, requestDto))
@@ -210,7 +214,7 @@ class CategoryUseCaseTest {
                     .hasFieldOrPropertyWithValue("failureCode", FailureCode.CATEGORY_NAME_DUPLICATE);
 
             verify(productSupport).findCategoryById(CATEGORY_ID);
-            verify(productSupport).getAllCategories();
+            verify(productSupport).existsCategoryByName(anyString());
             verify(categoryToModify, never()).modifyName(anyString());
         }
     }

@@ -8,6 +8,7 @@ import com.back.product.app.facade.BrandFacade;
 import com.back.product.dto.request.BrandDataRequestDto;
 import com.back.product.dto.request.BrandListCreateRequestDto;
 import com.back.product.dto.response.BrandListResponseDto;
+import com.back.product.dto.response.BrandPageResponseDto;
 import com.back.product.dto.response.BrandResponseDto;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -32,10 +34,11 @@ public class ApiV1BrandController implements BrandApiController {
     @Override
     @Loggable
     @GetMapping
-    public CommonResponse<BrandListResponseDto> getBrands() {
-        BrandListResponseDto response = BrandListResponseDto.builder()
-                .brands(brandFacade.getBrands())
-                .build();
+    public CommonResponse<BrandPageResponseDto> getBrands(
+            @RequestParam(defaultValue = "0") Long page,
+            @RequestParam(defaultValue = "10") Long size
+    ) {
+        BrandPageResponseDto response = brandFacade.getBrands(page, size);
         return CommonResponse.success(SuccessCode.OK, response);
     }
 

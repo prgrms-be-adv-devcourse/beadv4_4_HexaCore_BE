@@ -8,6 +8,7 @@ import com.back.product.dto.model.BrandDto;
 import com.back.product.dto.request.BrandDataRequestDto;
 import com.back.product.dto.request.BrandListCreateRequestDto;
 import com.back.product.dto.response.BrandListResponseDto;
+import com.back.product.dto.response.BrandPageResponseDto;
 import com.back.product.dto.response.BrandResponseDto;
 import com.back.security.jwt.JWTUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -25,6 +26,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doNothing;
@@ -62,16 +64,25 @@ class ApiV1BrandControllerTest {
         @WithMockUser
         void getBrands() throws Exception {
             // given
-            given(brandFacade.getBrands()).willReturn(Collections.emptyList());
+            BrandPageResponseDto responseDto = BrandPageResponseDto.builder()
+                    .brands(Collections.emptyList())
+                    .totalPages(0)
+                    .totalElements(0L)
+                    .currentPage(0)
+                    .build();
+
+            given(brandFacade.getBrands(anyLong(), anyLong())).willReturn(responseDto);
 
             // when & then
             mockMvc.perform(
                             get("/api/v1/products/brands")
+                                    .param("page", "0")
+                                    .param("size", "10")
                                     .contentType(MediaType.APPLICATION_JSON)
                     ).andDo(print())
                     .andExpect(status().isOk());
 
-            verify(brandFacade).getBrands();
+            verify(brandFacade).getBrands(0L, 10L);
         }
     }
 

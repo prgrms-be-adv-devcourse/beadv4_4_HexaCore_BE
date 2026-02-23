@@ -10,11 +10,13 @@ import com.back.product.dto.model.CategoryDto;
 import com.back.product.dto.request.CategoryDataRequestDto;
 import com.back.product.dto.request.CategoryListCreateRequestDto;
 import com.back.product.dto.response.CategoryListResponseDto;
+import com.back.product.dto.response.CategoryPageResponseDto;
 import com.back.product.dto.response.CategoryResponseDto;
 import com.back.product.mapper.CategoryDataCommandMapper;
 import com.back.product.mapper.CategoryMapper;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,8 +32,14 @@ public class CategoryFacade {
 
     @Loggable
     @Transactional(readOnly = true)
-    public List<CategoryDto> getCategories() {
-        return categoryUseCase.getCategories();
+    public CategoryPageResponseDto getCategories(Long page, Long size) {
+        Page<CategoryDto> categories = categoryUseCase.getCategories(page, size);
+        return categoryMapper.toPageResponseDto(
+                categories.getContent(),
+                categories.getTotalPages(),
+                categories.getTotalElements(),
+                categories.getNumber()
+        );
     }
 
     @Loggable

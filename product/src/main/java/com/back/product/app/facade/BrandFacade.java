@@ -11,11 +11,13 @@ import com.back.product.dto.model.BrandDto;
 import com.back.product.dto.request.BrandDataRequestDto;
 import com.back.product.dto.request.BrandListCreateRequestDto;
 import com.back.product.dto.response.BrandListResponseDto;
+import com.back.product.dto.response.BrandPageResponseDto;
 import com.back.product.dto.response.BrandResponseDto;
 import com.back.product.mapper.BrandDataCommandMapper;
 import com.back.product.mapper.BrandMapper;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,8 +34,14 @@ public class BrandFacade {
 
     @Loggable
     @Transactional(readOnly = true)
-    public List<BrandDto> getBrands() {
-        return brandUseCase.getBrands();
+    public BrandPageResponseDto getBrands(Long page, Long size) {
+        Page<BrandDto> brands = brandUseCase.getBrands(page, size);
+        return brandMapper.toPageResponseDto(
+                brands.getContent(),
+                brands.getTotalPages(),
+                brands.getTotalElements(),
+                brands.getNumber()
+        );
     }
 
     @Loggable

@@ -10,6 +10,9 @@ import com.back.product.dto.command.CategoryDataCommand;
 import com.back.product.dto.model.CategoryDto;
 import com.back.product.mapper.CategoryMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,14 +29,15 @@ public class CategoryUseCase {
 
     @Loggable
     @Transactional(readOnly = true)
-    public List<CategoryDto> getCategories() {
-        return productSupport.getAllCategories().stream().map(categoryMapper::toDto).toList();
+    public Page<CategoryDto> getCategories(Long page, Long size) {
+        Pageable pageable = PageRequest.of(page.intValue(), size.intValue());
+        return productSupport.getAllCategories(pageable).map(categoryMapper::toDto);
     }
 
     @Loggable
     @Transactional
     public List<CategoryDto> createCategories(List<CategoryDataCommand> categories) {
-        List<String> newCategoryNames = categories.stream().map(CategoryDataCommand::name).toList();
+        List<String> newCategoryNames = categories.stream().map(category -> category.name().toLowerCase()).toList();
 
         Map<String, Category> existsCategories = productSupport.getAllCategoriesByName(newCategoryNames).stream()
                 .collect(Collectors.toMap(

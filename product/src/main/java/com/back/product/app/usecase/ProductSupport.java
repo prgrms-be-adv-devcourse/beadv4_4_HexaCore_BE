@@ -19,6 +19,8 @@ import com.back.product.domain.ProductImage;
 import com.back.product.domain.ProductInfo;
 import com.back.product.domain.ProductOptionValues;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,8 +40,8 @@ public class ProductSupport {
     private final OptionGroupRepository optionGroupRepository;
 
     @Transactional(readOnly = true)
-    public List<Brand> getAllBrands() {
-        return brandRepository.findAll();
+    public Page<Brand> getAllBrands(Pageable pageable) {
+        return brandRepository.findAll(pageable);
     }
 
     @Transactional(readOnly = true)
@@ -53,8 +55,8 @@ public class ProductSupport {
     }
 
     @Transactional(readOnly = true)
-    public List<Category> getAllCategories() {
-        return categoryRepository.findAll();
+    public Page<Category> getAllCategories(Pageable pageable) {
+        return categoryRepository.findAll(pageable);
     }
 
     @Transactional(readOnly = true)

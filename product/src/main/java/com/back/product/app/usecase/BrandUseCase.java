@@ -10,6 +10,9 @@ import com.back.product.dto.command.BrandDataCommand;
 import com.back.product.dto.model.BrandDto;
 import com.back.product.mapper.BrandMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,14 +29,15 @@ public class BrandUseCase {
 
     @Loggable
     @Transactional(readOnly = true)
-    public List<BrandDto> getBrands() {
-        return productSupport.getAllBrands().stream().map(brandMapper::toDto).toList();
+    public Page<BrandDto> getBrands(Long page, Long size) {
+        Pageable pageable = PageRequest.of(page.intValue(), size.intValue());
+        return productSupport.getAllBrands(pageable).map(brandMapper::toDto);
     }
 
     @Loggable
     @Transactional
     public List<BrandDto> createBrands(List<BrandDataCommand> brands) {
-        List<String> newBrandNames = brands.stream().map(BrandDataCommand::name).toList();
+        List<String> newBrandNames = brands.stream().map(brand -> brand.name().toLowerCase()).toList();
 
         Map<String, Brand> existsBrands = productSupport.getAllBrandsByName(newBrandNames).stream()
                 .collect(Collectors.toMap(

@@ -8,6 +8,7 @@ import com.back.product.dto.model.CategoryDto;
 import com.back.product.dto.request.CategoryDataRequestDto;
 import com.back.product.dto.request.CategoryListCreateRequestDto;
 import com.back.product.dto.response.CategoryListResponseDto;
+import com.back.product.dto.response.CategoryPageResponseDto;
 import com.back.product.dto.response.CategoryResponseDto;
 import com.back.security.jwt.JWTUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -25,6 +26,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doNothing;
@@ -62,16 +64,25 @@ class ApiV1CategoryControllerTest {
         @WithMockUser
         void getCategories() throws Exception {
             // given
-            given(categoryFacade.getCategories()).willReturn(Collections.emptyList());
+            CategoryPageResponseDto responseDto = CategoryPageResponseDto.builder()
+                    .categories(Collections.emptyList())
+                    .totalPages(0)
+                    .totalElements(0L)
+                    .currentPage(0)
+                    .build();
+
+            given(categoryFacade.getCategories(anyLong(), anyLong())).willReturn(responseDto);
 
             // when & then
             mockMvc.perform(
                             get("/api/v1/products/categories")
+                                    .param("page", "0")
+                                    .param("size", "10")
                                     .contentType(MediaType.APPLICATION_JSON)
                     ).andDo(print())
                     .andExpect(status().isOk());
 
-            verify(categoryFacade).getCategories();
+            verify(categoryFacade).getCategories(0L, 10L);
         }
     }
 
