@@ -12,7 +12,7 @@ public interface BrandRepository extends JpaRepository<Brand, Long> {
 
     @Query("""
                 SELECT b FROM Brand b
-                WHERE LOWER(b.name) IN LOWER(:brandNames)
+                WHERE LOWER(b.name) IN :brandNames
             """)
     List<Brand> findAllByNameIgnoreCaseIn(@Param("brandNames") List<String> brandNames);
 }

@@ -12,7 +12,7 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
 
     @Query("""
                 SELECT c FROM Category c
-                WHERE LOWER(c.name) IN LOWER(:categoryNames)
+                WHERE LOWER(c.name) IN :categoryNames
             """)
     List<Category> findAllByNameIgnoreCaseIn(@Param("categoryNames") List<String> categoryNames);
 }
