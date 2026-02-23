@@ -44,6 +44,8 @@ jobs:
               - 'settlement/**'
             detector:
               - 'detector/**'
+            gateway:
+              - 'gateway/**'
             all:
               - 'common/**'
               - 'security/**'
@@ -65,7 +67,7 @@ jobs:
       matrix:
         # 'changes' job의 출력(JSON 배열)을 사용하여 'module' 변수를 설정합니다.
         # 만약 'all' 필터가 감지되었다면, 모든 서비스 목록으로 매트릭스를 구성합니다.
-        module: ${{ contains(needs.changes.outputs.modules, '"all"') && fromJson('["user", "product", "market", "chat", "cash", "notification", "settlement", "detector"]') || fromJson(needs.changes.outputs.modules) }}
+        module: ${{ contains(needs.changes.outputs.modules, '"all"') && fromJson('["user", "product", "market", "chat", "cash", "notification", "settlement", "detector", "gateway"]') || fromJson(needs.changes.outputs.modules) }}
 
     steps:
       - name: Checkout code
@@ -141,7 +143,7 @@ jobs:
           MODULES_JSON:
             ${{ 
               contains(needs.changes.outputs.modules, '"all"') && 
-              '["user", "product", "market", "chat", "cash", "notification", "settlement", "detector"]' ||
+              '["user", "product", "market", "chat", "cash", "notification", "settlement", "detector", "gateway"]' ||
               needs.changes.outputs.modules 
             }}
         run: |
