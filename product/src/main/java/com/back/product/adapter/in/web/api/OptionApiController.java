@@ -1,7 +1,10 @@
 package com.back.product.adapter.in.web.api;
 
 import com.back.common.response.CommonResponse;
-import com.back.product.dto.request.*;
+import com.back.product.dto.request.OptionAppendRequestDto;
+import com.back.product.dto.request.OptionGroupModifyRequestDto;
+import com.back.product.dto.request.OptionListCreateRequestDto;
+import com.back.product.dto.request.OptionValueModifyRequestDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;

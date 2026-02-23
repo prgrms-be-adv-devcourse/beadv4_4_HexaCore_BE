@@ -2,7 +2,9 @@ package com.back.product.adapter.in.event;
 
 import com.back.product.app.usecase.ProductOutboxUseCase;
 import com.back.product.dto.model.BrandDto;
-import com.back.product.event.kafka.*;
+import com.back.product.event.kafka.BrandCreatedPayload;
+import com.back.product.event.kafka.BrandDeletedPayload;
+import com.back.product.event.kafka.BrandUpdatedPayload;
 import com.back.product.event.spring.BrandCreationCompletedEvent;
 import com.back.product.event.spring.BrandDeletionCompletedEvent;
 import com.back.product.event.spring.BrandUpdateCompletedEvent;

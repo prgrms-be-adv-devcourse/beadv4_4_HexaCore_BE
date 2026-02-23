@@ -4,12 +4,12 @@ import com.back.common.code.FailureCode;
 import com.back.common.code.SuccessCode;
 import com.back.common.exception.CustomException;
 import com.back.product.adapter.in.web.controller.ApiV1OptionController;
-import com.back.product.app.facade.ProductFacade;
+import com.back.product.app.facade.OptionFacade;
 import com.back.product.dto.model.OptionDto;
 import com.back.product.dto.request.OptionAppendRequestDto;
-import com.back.product.dto.request.OptionListCreateRequestDto;
 import com.back.product.dto.request.OptionCreateRequestDto;
 import com.back.product.dto.request.OptionGroupModifyRequestDto;
+import com.back.product.dto.request.OptionListCreateRequestDto;
 import com.back.product.dto.request.OptionValueModifyRequestDto;
 import com.back.product.dto.response.OptionGroupModifyResponseDto;
 import com.back.product.dto.response.OptionListResponseDto;
@@ -34,8 +34,14 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -52,7 +58,7 @@ public class ApiV1OptionControllerTest {
     private JWTUtil jwtUtil;
 
     @MockitoBean
-    private ProductFacade productFacade;
+    private OptionFacade optionFacade;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -80,7 +86,7 @@ public class ApiV1OptionControllerTest {
                     ))
                     .build();
 
-            given(productFacade.getOptions()).willReturn(response);
+            given(optionFacade.getOptions()).willReturn(response);
 
             // when & then
             mockMvc.perform(get("/api/v1/products/options")
@@ -88,7 +94,7 @@ public class ApiV1OptionControllerTest {
                     .andDo(print())
                     .andExpect(status().isOk());
 
-            verify(productFacade).getOptions();
+            verify(optionFacade).getOptions();
         }
     }
 
@@ -128,7 +134,7 @@ public class ApiV1OptionControllerTest {
                     ))
                     .build();
 
-            given(productFacade.createOptions(any(OptionListCreateRequestDto.class))).willReturn(expectedResponseDto);
+            given(optionFacade.createOptions(any(OptionListCreateRequestDto.class))).willReturn(expectedResponseDto);
 
             // when & then
             mockMvc.perform(post("/api/v1/products/options")
@@ -143,7 +149,7 @@ public class ApiV1OptionControllerTest {
                     .andExpect(jsonPath("$.data.options[1].group.name").value("size"))
                     .andExpect(jsonPath("$.data.options[1].values[1].name").value("large"));
 
-            verify(productFacade).createOptions(any(OptionListCreateRequestDto.class));
+            verify(optionFacade).createOptions(any(OptionListCreateRequestDto.class));
         }
 
         @Test
@@ -159,7 +165,7 @@ public class ApiV1OptionControllerTest {
                     .andDo(print())
                     .andExpect(status().isBadRequest());
 
-            verify(productFacade, never()).createOptions(any(OptionListCreateRequestDto.class));
+            verify(optionFacade, never()).createOptions(any(OptionListCreateRequestDto.class));
         }
     }
 
@@ -185,7 +191,7 @@ public class ApiV1OptionControllerTest {
                     .option(OptionDto.builder().group(responseGroup).values(responseValues).build())
                     .build();
 
-            given(productFacade.appendOptions(anyLong(), any(OptionAppendRequestDto.class))).willReturn(expectedResponseDto);
+            given(optionFacade.appendOptions(anyLong(), any(OptionAppendRequestDto.class))).willReturn(expectedResponseDto);
 
             // when & then
             mockMvc.perform(post("/api/v1/products/options/{optionGroupId}", optionGroupId)
@@ -197,7 +203,7 @@ public class ApiV1OptionControllerTest {
                     .andExpect(jsonPath("$.data.option.group.name").value("color"))
                     .andExpect(jsonPath("$.data.option.values.length()").value(3));
 
-            verify(productFacade).appendOptions(eq(optionGroupId), any(OptionAppendRequestDto.class));
+            verify(optionFacade).appendOptions(eq(optionGroupId), any(OptionAppendRequestDto.class));
         }
     }
 
@@ -224,7 +230,7 @@ public class ApiV1OptionControllerTest {
                     )
                     .build();
 
-            given(productFacade.modifyOptionGroup(eq(optionGroupId), any(OptionGroupModifyRequestDto.class))).willReturn(expectedResponseDto);
+            given(optionFacade.modifyOptionGroup(eq(optionGroupId), any(OptionGroupModifyRequestDto.class))).willReturn(expectedResponseDto);
 
             // when & then
             mockMvc.perform(put("/api/v1/products/options/groups/{optionGroupId}", optionGroupId)
@@ -236,7 +242,7 @@ public class ApiV1OptionControllerTest {
                     .andExpect(jsonPath("$.data.group.id").value(optionGroupId))
                     .andExpect(jsonPath("$.data.group.name").value(newGroupName));
 
-            verify(productFacade).modifyOptionGroup(eq(optionGroupId), any(OptionGroupModifyRequestDto.class));
+            verify(optionFacade).modifyOptionGroup(eq(optionGroupId), any(OptionGroupModifyRequestDto.class));
         }
     }
 
@@ -266,7 +272,7 @@ public class ApiV1OptionControllerTest {
                     )
                     .build();
 
-            given(productFacade.modifyOptionValue(eq(optionValueId), any(OptionValueModifyRequestDto.class))).willReturn(expectedResponseDto);
+            given(optionFacade.modifyOptionValue(eq(optionValueId), any(OptionValueModifyRequestDto.class))).willReturn(expectedResponseDto);
 
             // when & then
             mockMvc.perform(put("/api/v1/products/options/values/{optionValueId}", optionValueId)
@@ -279,7 +285,7 @@ public class ApiV1OptionControllerTest {
                     .andExpect(jsonPath("$.data.value.optionGroupId").value(newOptionGroupId))
                     .andExpect(jsonPath("$.data.value.value").value(newName));
 
-            verify(productFacade).modifyOptionValue(eq(optionValueId), any(OptionValueModifyRequestDto.class));
+            verify(optionFacade).modifyOptionValue(eq(optionValueId), any(OptionValueModifyRequestDto.class));
         }
     }
 
@@ -292,14 +298,14 @@ public class ApiV1OptionControllerTest {
         void deleteOptionGroup_success() throws Exception {
             // given
             Long optionGroupId = 1L;
-            doNothing().when(productFacade).deleteOptionGroup(anyLong());
+            doNothing().when(optionFacade).deleteOptionGroup(anyLong());
 
             // when & then
             mockMvc.perform(delete("/api/v1/products/options/groups/{optionGroupId}", optionGroupId))
                     .andDo(print())
                     .andExpect(status().isNoContent());
 
-            verify(productFacade).deleteOptionGroup(eq(optionGroupId));
+            verify(optionFacade).deleteOptionGroup(eq(optionGroupId));
         }
 
         @Test
@@ -308,7 +314,7 @@ public class ApiV1OptionControllerTest {
             // given
             Long optionGroupId = 1L;
             doThrow(new CustomException(FailureCode.OPTION_GROUP_IN_USE))
-                    .when(productFacade)
+                    .when(optionFacade)
                     .deleteOptionGroup(anyLong());
 
             // when & then
@@ -329,14 +335,14 @@ public class ApiV1OptionControllerTest {
         void deleteOptionValue_success() throws Exception {
             // given
             Long optionValueId = 1L;
-            doNothing().when(productFacade).deleteOptionValue(anyLong());
+            doNothing().when(optionFacade).deleteOptionValue(anyLong());
 
             // when & then
             mockMvc.perform(delete("/api/v1/products/options/values/{optionValueId}", optionValueId))
                     .andDo(print())
                     .andExpect(status().isNoContent());
 
-            verify(productFacade).deleteOptionValue(eq(optionValueId));
+            verify(optionFacade).deleteOptionValue(eq(optionValueId));
         }
 
         @Test
@@ -345,7 +351,7 @@ public class ApiV1OptionControllerTest {
             // given
             Long optionValueId = 1L;
             doThrow(new CustomException(FailureCode.OPTION_VALUE_IN_USE))
-                    .when(productFacade)
+                    .when(optionFacade)
                     .deleteOptionValue(anyLong());
 
             // when & then

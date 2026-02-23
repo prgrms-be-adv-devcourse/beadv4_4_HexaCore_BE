@@ -4,7 +4,7 @@ import com.back.common.annotation.Loggable;
 import com.back.common.code.SuccessCode;
 import com.back.common.response.CommonResponse;
 import com.back.product.adapter.in.web.api.CategoryApiController;
-import com.back.product.app.facade.ProductFacade;
+import com.back.product.app.facade.CategoryFacade;
 import com.back.product.dto.request.CategoryDataRequestDto;
 import com.back.product.dto.request.CategoryListCreateRequestDto;
 import com.back.product.dto.response.CategoryListResponseDto;
@@ -13,20 +13,28 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping(path = "/api/v1/products/categories", produces = MediaType.APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
 public class ApiV1CategoryController implements CategoryApiController {
-    private final ProductFacade productFacade;
+    private final CategoryFacade categoryFacade;
 
     @Override
     @Loggable
     @GetMapping
     public CommonResponse<CategoryListResponseDto> getCategories() {
         CategoryListResponseDto response = CategoryListResponseDto.builder()
-                .categories(productFacade.getCategories())
+                .categories(categoryFacade.getCategories())
                 .build();
         return CommonResponse.success(SuccessCode.OK, response);
     }
@@ -36,7 +44,7 @@ public class ApiV1CategoryController implements CategoryApiController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public CommonResponse<CategoryListResponseDto> createCategories(@RequestBody @Valid CategoryListCreateRequestDto request) {
-        CategoryListResponseDto response = productFacade.createCategories(request);
+        CategoryListResponseDto response = categoryFacade.createCategories(request);
         return CommonResponse.success(SuccessCode.CREATED, response);
     }
 
@@ -46,7 +54,7 @@ public class ApiV1CategoryController implements CategoryApiController {
     public CommonResponse<CategoryResponseDto> modifyCategory(
             @PathVariable Long categoryId,
             @Valid @RequestBody CategoryDataRequestDto request) {
-        CategoryResponseDto response = productFacade.modifyCategory(categoryId, request);
+        CategoryResponseDto response = categoryFacade.modifyCategory(categoryId, request);
         return CommonResponse.success(SuccessCode.OK, response);
     }
 
@@ -55,7 +63,7 @@ public class ApiV1CategoryController implements CategoryApiController {
     @DeleteMapping("/{categoryId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public CommonResponse<?> deleteCategory(@PathVariable Long categoryId) {
-        productFacade.deleteCategory(categoryId);
+        categoryFacade.deleteCategory(categoryId);
         return CommonResponse.success(SuccessCode.NO_CONTENT, null);
     }
 }

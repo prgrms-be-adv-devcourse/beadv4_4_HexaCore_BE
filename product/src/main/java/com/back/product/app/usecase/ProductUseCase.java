@@ -6,18 +6,30 @@ import com.back.common.exception.CustomException;
 import com.back.product.adapter.out.persistence.ProductImageRepository;
 import com.back.product.adapter.out.persistence.ProductOptionValuesRepository;
 import com.back.product.adapter.out.persistence.ProductRepository;
-import com.back.product.domain.*;
+import com.back.product.domain.OptionValue;
+import com.back.product.domain.Product;
+import com.back.product.domain.ProductImage;
+import com.back.product.domain.ProductInfo;
+import com.back.product.domain.ProductOptionValues;
 import com.back.product.dto.command.ProductVariantCreateCommand;
 import com.back.product.dto.command.ProductVariantUpdateCommand;
 import com.back.product.dto.model.ProductDetailDto;
 import com.back.product.dto.model.ProductDto;
 import com.back.product.dto.model.ProductInfoDto;
-import com.back.product.mapper.*;
+import com.back.product.mapper.ProductImageMapper;
+import com.back.product.mapper.ProductInfoMapper;
+import com.back.product.mapper.ProductMapper;
+import com.back.product.mapper.ProductOptionValuesMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -219,7 +231,7 @@ public class ProductUseCase {
         }
         
         return optionValues.stream().collect(Collectors.toMap(
-                OptionValue::getId, 
+                OptionValue::getId,
                 value -> value
         ));
     }
