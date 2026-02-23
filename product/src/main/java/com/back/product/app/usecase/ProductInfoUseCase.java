@@ -1,10 +1,9 @@
-package com.back.product.app.usecase.command;
+package com.back.product.app.usecase;
 
 import com.back.common.annotation.Loggable;
 import com.back.common.code.FailureCode;
 import com.back.common.exception.CustomException;
 import com.back.product.adapter.out.persistence.ProductInfoRepository;
-import com.back.product.app.usecase.query.ProductSupport;
 import com.back.product.domain.Brand;
 import com.back.product.domain.ProductInfo;
 import com.back.product.dto.command.ProductInfoDataCommand;

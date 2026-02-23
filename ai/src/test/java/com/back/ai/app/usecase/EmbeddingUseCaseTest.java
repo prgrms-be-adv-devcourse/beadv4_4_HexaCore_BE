@@ -1,6 +1,5 @@
 package com.back.ai.app.usecase;
 
-import com.back.common.exception.CustomException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -9,7 +8,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ai.embedding.EmbeddingModel;
-import org.springframework.web.client.HttpServerErrorException;
 
 import java.util.List;
 

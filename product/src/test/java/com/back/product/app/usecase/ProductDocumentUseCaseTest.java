@@ -4,8 +4,6 @@ import com.back.ai.app.usecase.EmbeddingUseCase;
 import com.back.common.code.FailureCode;
 import com.back.common.exception.CustomException;
 import com.back.product.adapter.out.document.ProductDocumentRepository;
-import com.back.product.app.usecase.command.ProductDocumentUseCase;
-import com.back.product.app.usecase.query.ProductDocumentSupport;
 import com.back.product.document.ProductDocument;
 import com.back.product.dto.command.ProductSearchCommand;
 import com.back.product.dto.enums.ProductSortType;

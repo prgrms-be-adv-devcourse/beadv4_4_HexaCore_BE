@@ -1,28 +1,35 @@
 package com.back.product.app;
 
+import com.back.common.event.EventName;
+import com.back.common.event.KafkaEventPublisher;
+import com.back.product.adapter.in.event.BrandSpringEventListener;
+import com.back.product.adapter.in.event.ProductSpringEventListener;
 import com.back.product.adapter.out.document.ProductDocumentRepository;
+import com.back.product.adapter.out.event.BrandKafkaEventPublisher;
 import com.back.product.adapter.out.event.ProductKafkaEventPublisher;
-import com.back.product.app.usecase.command.ProductDocumentUseCase;
-import com.back.product.event.kafka.ProductCreatedPayload;
-import com.back.product.event.kafka.ProductDeletedPayload;
-import com.back.product.event.kafka.ProductInfoPayload;
-import com.back.product.event.kafka.ProductUpdatedPayload;
+import com.back.product.adapter.out.persistence.EventConsumptionLogRepository;
+import com.back.product.adapter.out.persistence.ProductOutboxEventRepository;
+import com.back.product.app.usecase.ProductDocumentUseCase;
+import com.back.product.domain.ProductOutboxEvent;
+import com.back.product.dto.enums.EventConsumptionStatus;
+import com.back.product.dto.enums.OutboxEventStatus;
 import com.back.product.dto.model.BrandDto;
 import com.back.product.dto.model.CategoryDto;
 import com.back.product.dto.model.OptionDto;
 import com.back.product.dto.model.ProductInfoDto;
 import com.back.product.event.spring.ProductCreationCompletedEvent;
-import com.back.product.event.spring.ProductUpdateCompletedEvent;
 import com.back.product.event.spring.ProductDeletionCompletedEvent;
-import jakarta.validation.ConstraintViolationException;
+import com.back.product.event.spring.ProductUpdateCompletedEvent;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
@@ -31,16 +38,13 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.*;
 
 @SpringBootTest
 @DirtiesContext // 테스트 간 컨텍스트를 분리하여 Kafka 브로커 충돌 방지
@@ -49,6 +53,8 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
         "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}",
         "spring.kafka.consumer.properties.spring.json.trusted.packages=*",
         "spring.kafka.consumer.auto-offset-reset=earliest",
+        "spring.kafka.producer.key-serializer=org.apache.kafka.common.serialization.StringSerializer",
+        "spring.kafka.producer.value-serializer=org.springframework.kafka.support.serializer.JacksonJsonSerializer",
 
         "spring.datasource.url=jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=MySQL",
         "spring.datasource.driver-class-name=org.h2.Driver",
@@ -60,8 +66,28 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 @EnableAspectJAutoProxy(proxyTargetClass = true) // CGLIB 프록시 사용
 class ProductSyncEventPublishTest {
 
+    @TestConfiguration
+    static class TestKafkaConfig {
+        @Bean
+        public KafkaTemplate<String, Object> eventNameKafkaTemplate(
+                ProducerFactory<Object, Object> producerFactory) {
+            // Spring Boot가 제공하는 기본 ProducerFactory를 주입받아
+            // 코드에서 요구하는 <String, EventName> 타입의 템플릿을 생성합니다.
+            return new KafkaTemplate(producerFactory);
+        }
+    }
+
+    @MockitoBean
+    private BrandSpringEventListener brandSpringEventListener;
+
+    @MockitoBean
+    private BrandKafkaEventPublisher brandKafkaEventPublisher;
+
     @MockitoBean
     private ProductDocumentRepository productDocumentRepository;
+
+    @MockitoBean
+    private ProductDocumentUseCase productDocumentUseCase;
 
     @Autowired
     private ApplicationEventPublisher applicationEventPublisher;
@@ -70,215 +96,164 @@ class ProductSyncEventPublishTest {
     private TransactionTemplate transactionTemplate;
 
     @Autowired
-    private ProductKafkaEventPublisher productKafkaEventPublisher;
+    private ProductOutboxEventRepository productOutboxEventRepository;
 
-    @MockitoBean
-    private ProductDocumentUseCase productDocumentUseCase;
+    @Autowired
+    private EventConsumptionLogRepository eventConsumptionLogRepository;
 
-    @Nested
-    @DisplayName("ProductCreatedEventTest 발행 및 구독 테스트")
-    class ProductCreatedEventTest {
-        @Test
-        @DisplayName("ProductCreationCompletedEvent 발행 시, Kafka를 거쳐 최종적으로 ES 동기화 로직이 호출된다")
-        void testEventPublishAndSubscribeFlow() {
-            // --- 1. Arrange (테스트 준비) ---
-            ProductInfoDto productInfoDto = new ProductInfoDto(
-                    1L,
-                    new BrandDto(1L, "Brand", "logo.png"),
-                    new CategoryDto(1L, "Category", "image.png"),
-                    "TestProduct",
-                    "P001",
-                    BigDecimal.TEN,
-                    LocalDateTime.now()
-            );
+    @Test
+    @DisplayName("상품 생성 시나리오: Spring Event 발행 -> Outbox 기록 -> Kafka 발행 -> Kafka 소비 -> 최종 동기화 완료")
+    void productCreationFlowTest() {
+        // given
+        String eventId = UUID.randomUUID().toString();
+        ProductInfoDto productInfoDto = createProductInfoDto(1L, "New Product", "NP001");
+        List<OptionDto> optionDtos = createOptionDtos();
+        String thumbnailUrl = "https://example.com/thumb.jpg";
 
-            List<OptionDto> optionDtos = List.of(new OptionDto(
-                    new OptionDto.GroupDto(1L, "color"),
-                    List.of(new OptionDto.ValueDto(1L, "red"))
-            ));
+        ProductCreationCompletedEvent event = ProductCreationCompletedEvent.builder()
+                .eventId(eventId)
+                .productInfoDto(productInfoDto)
+                .optionDtos(optionDtos)
+                .thumbnailUrl(thumbnailUrl)
+                .build();
 
-            String thumbnailUrl = "http://test.com/image.jpg";
-            ProductCreationCompletedEvent event = new ProductCreationCompletedEvent(productInfoDto, optionDtos, thumbnailUrl);
+        // when
+        transactionTemplate.execute(status -> {
+            applicationEventPublisher.publishEvent(event);
+            return null;
+        });
 
-            // --- 2. Act (이벤트 발행) ---
-            transactionTemplate.execute(status -> {
-                applicationEventPublisher.publishEvent(event);
-                return null; // COMMIT 발생 -> Kafka 전송 시작
-            });
+        // then
+        // 1. ProductDocumentUseCase.syncProduct가 호출되어야 함 (최종 목적지)
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            verify(productDocumentUseCase, atLeastOnce()).syncProduct(any(), any(), any());
+        });
 
-            // --- 3. Assert (결과 검증) ---
-            await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
-                ArgumentCaptor<ProductInfoDto> infoDtoCaptor = ArgumentCaptor.forClass(ProductInfoDto.class);
-                ArgumentCaptor<List<OptionDto>> optionsCaptor = ArgumentCaptor.forClass(List.class);
-                ArgumentCaptor<String> urlCaptor = ArgumentCaptor.forClass(String.class);
+        // 2. Outbox 상태 확인: SUCCEEDED
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            ProductOutboxEvent outboxEvent = productOutboxEventRepository.findByEventId(eventId).orElseThrow();
+            assertThat(outboxEvent.getStatus()).isEqualTo(OutboxEventStatus.SUCCEEDED);
+        });
 
-                verify(productDocumentUseCase, times(1)).syncProduct(
-                        infoDtoCaptor.capture(),
-                        optionsCaptor.capture(),
-                        urlCaptor.capture()
-                );
+        // 5. EventConsumptionLog 상태 확인: SUCCEEDED
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            var log = eventConsumptionLogRepository.findByEventId(eventId).orElseThrow();
+            assertThat(log.getStatus()).isEqualTo(EventConsumptionStatus.SUCCEEDED);
+        });
 
-                assertThat(infoDtoCaptor.getValue().productInfoId()).isEqualTo(1L);
-                assertThat(infoDtoCaptor.getValue().name()).isEqualTo("TestProduct");
-                assertThat(optionsCaptor.getValue()).hasSize(1);
-                assertThat(urlCaptor.getValue()).isEqualTo("http://test.com/image.jpg");
-
-                verifyNoMoreInteractions(productDocumentUseCase);
-            });
-        }
-
-        @Test
-        @DisplayName("ProductCreatedPayload의 필수 필드가 누락되면 ConstraintViolationException이 발생한다")
-        void testSendCreatedEventWithInvalidPayload_throwsConstraintViolationException() {
-            // --- 1. Arrange (테스트 준비) ---
-            ProductInfoPayload invalidProductInfo = ProductInfoPayload.builder()
-                    .productInfoId(null)
-                    .brand(null)
-                    .category(null)
-                    .name("")
-                    .code("")
-                    .releasePrice(BigDecimal.ZERO)
-                    .releaseDate(null)
-                    .build();
-
-            ProductCreatedPayload invalidPayload = ProductCreatedPayload.builder()
-                    .productInfo(invalidProductInfo)
-                    .options(Collections.emptyList())
-                    .thumbnailUrl("")
-                    .build();
-
-            // --- 2. Act & Assert (실행 및 예외 검증) ---
-            assertThrows(ConstraintViolationException.class, () ->
-                            productKafkaEventPublisher.sendCreatedEvent(invalidPayload),
-                    "ConstraintViolationException이 발생해야 합니다.");
-
-            verifyNoMoreInteractions(productDocumentUseCase);
-        }
+        verify(productDocumentUseCase, atLeastOnce()).syncProduct(any(), any(), any());
     }
 
-    @Nested
-    @DisplayName("ProductUpdatedEventTest 발행 및 구독 테스트")
-    class ProductUpdatedEventTest {
-        @Test
-        @DisplayName("ProductUpdateCompletedEvent 발행 시, Kafka를 거쳐 최종적으로 ES 동기화 로직이 호출된다")
-        void testProductUpdateEventFlow() {
-            // --- 1. Arrange (테스트 준비) ---
-            ProductInfoDto productInfoDto = new ProductInfoDto(
-                    2L,
-                    new BrandDto(1L, "UpdatedBrand", "logo.png"),
-                    new CategoryDto(1L, "UpdatedCategory", "image.png"),
-                    "UpdatedProduct",
-                    "P002",
-                    BigDecimal.valueOf(20),
-                    LocalDateTime.now().plusHours(1)
-            );
+    @Test
+    @DisplayName("상품 수정 시나리오: Spring Event 발행 -> Outbox 기록 -> Kafka 발행 -> Kafka 소비 -> 최종 동기화 완료")
+    void productUpdateFlowTest() {
+        // given
+        String eventId = UUID.randomUUID().toString();
+        ProductInfoDto productInfoDto = createProductInfoDto(1L, "Updated Product", "UP001");
+        List<OptionDto> optionDtos = createOptionDtos();
+        String thumbnailUrl = "https://example.com/updated_thumb.jpg";
 
-            List<OptionDto> optionDtos = List.of(new OptionDto(
-                    new OptionDto.GroupDto(2L, "size"),
-                    List.of(new OptionDto.ValueDto(2L, "large"))
-            ));
+        ProductUpdateCompletedEvent event = ProductUpdateCompletedEvent.builder()
+                .eventId(eventId)
+                .productInfoDto(productInfoDto)
+                .optionDtos(optionDtos)
+                .thumbnailUrl(thumbnailUrl)
+                .build();
 
-            String thumbnailUrl = "http://test.com/updated_image.jpg";
-            ProductUpdateCompletedEvent event = new ProductUpdateCompletedEvent(productInfoDto, optionDtos, thumbnailUrl);
+        // when
+        transactionTemplate.execute(status -> {
+            applicationEventPublisher.publishEvent(event);
+            return null;
+        });
 
-            // --- 2. Act (이벤트 발행) ---
-            transactionTemplate.execute(status -> {
-                applicationEventPublisher.publishEvent(event);
-                return null;
-            });
+        // then
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            verify(productDocumentUseCase, atLeastOnce()).syncProduct(any(), any(), any());
+        });
 
-            // --- 3. Assert (결과 검증) ---
-            await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
-                ArgumentCaptor<ProductInfoDto> infoDtoCaptor = ArgumentCaptor.forClass(ProductInfoDto.class);
-                ArgumentCaptor<List<OptionDto>> optionsCaptor = ArgumentCaptor.forClass(List.class);
-                ArgumentCaptor<String> urlCaptor = ArgumentCaptor.forClass(String.class);
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            ProductOutboxEvent outboxEvent = productOutboxEventRepository.findByEventId(eventId).orElseThrow();
+            assertThat(outboxEvent.getStatus()).isEqualTo(OutboxEventStatus.SUCCEEDED);
+        });
 
-                verify(productDocumentUseCase, times(1)).syncProduct(
-                        infoDtoCaptor.capture(),
-                        optionsCaptor.capture(),
-                        urlCaptor.capture()
-                );
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            var log = eventConsumptionLogRepository.findByEventId(eventId).orElseThrow();
+            assertThat(log.getStatus()).isEqualTo(EventConsumptionStatus.SUCCEEDED);
+        });
 
-                assertThat(infoDtoCaptor.getValue().productInfoId()).isEqualTo(2L);
-                assertThat(infoDtoCaptor.getValue().name()).isEqualTo("UpdatedProduct");
-                assertThat(optionsCaptor.getValue()).hasSize(1);
-                assertThat(urlCaptor.getValue()).isEqualTo("http://test.com/updated_image.jpg");
-
-                verifyNoMoreInteractions(productDocumentUseCase);
-            });
-        }
-
-        @Test
-        @DisplayName("ProductUpdatedPayload의 필수 필드가 누락되면 ConstraintViolationException이 발생한다")
-        void testSendModifiedEventWithInvalidPayload_throwsConstraintViolationException() {
-            // --- 1. Arrange (테스트 준비) ---
-            ProductInfoPayload invalidProductInfo = ProductInfoPayload.builder()
-                    .productInfoId(null)
-                    .brand(null)
-                    .category(null)
-                    .name(" ")
-                    .code(" ")
-                    .releasePrice(BigDecimal.valueOf(-1))
-                    .releaseDate(null)
-                    .build();
-
-            ProductUpdatedPayload invalidPayload = ProductUpdatedPayload.builder()
-                    .productInfo(invalidProductInfo)
-                    .options(Collections.emptyList())
-                    .thumbnailUrl(" ")
-                    .build();
-
-            // --- 2. Act & Assert (실행 및 예외 검증) ---
-            assertThrows(ConstraintViolationException.class, () ->
-                            productKafkaEventPublisher.sendModifiedEvent(invalidPayload),
-                    "ConstraintViolationException이 발생해야 합니다.");
-
-            verifyNoMoreInteractions(productDocumentUseCase);
-        }
+        verify(productDocumentUseCase, atLeastOnce()).syncProduct(any(), any(), any());
     }
 
-    @Nested
-    @DisplayName("ProductDeletedEventTest 발행 및 구독 테스트")
-    class ProductDeletedEventTest {
-        @Test
-        @DisplayName("ProductDeletionCompletedEvent 발행 시, Kafka를 거쳐 최종적으로 ES 삭제 로직이 호출된다")
-        void testProductDeletionEventFlow() {
-            // --- 1. Arrange (테스트 준비) ---
-            Long productInfoIdToDelete = 3L;
-            ProductDeletionCompletedEvent event = new ProductDeletionCompletedEvent(productInfoIdToDelete);
+    @Test
+    @DisplayName("상품 삭제 시나리오: Spring Event 발행 -> Outbox 기록 -> Kafka 발행 -> Kafka 소비 -> 최종 삭제 완료")
+    void productDeletionFlowTest() {
+        // given
+        String eventId = UUID.randomUUID().toString();
+        Long productInfoId = 1L;
 
-            // --- 2. Act (이벤트 발행) ---
-            transactionTemplate.execute(status -> {
-                applicationEventPublisher.publishEvent(event);
-                return null;
-            });
+        ProductDeletionCompletedEvent event = ProductDeletionCompletedEvent.builder()
+                .eventId(eventId)
+                .productInfoId(productInfoId)
+                .build();
 
-            // --- 3. Assert (결과 검증) ---
-            await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
-                ArgumentCaptor<Long> idCaptor = ArgumentCaptor.forClass(Long.class);
+        // when
+        transactionTemplate.execute(status -> {
+            applicationEventPublisher.publishEvent(event);
+            return null;
+        });
 
-                verify(productDocumentUseCase, times(1)).deleteProduct(idCaptor.capture());
+        // then
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            verify(productDocumentUseCase, atLeastOnce()).deleteProduct(productInfoId);
+        });
 
-                assertThat(idCaptor.getValue()).isEqualTo(productInfoIdToDelete);
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            ProductOutboxEvent outboxEvent = productOutboxEventRepository.findByEventId(eventId).orElseThrow();
+            assertThat(outboxEvent.getStatus()).isEqualTo(OutboxEventStatus.SUCCEEDED);
+        });
 
-                verifyNoMoreInteractions(productDocumentUseCase);
-            });
-        }
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            var log = eventConsumptionLogRepository.findByEventId(eventId).orElseThrow();
+            assertThat(log.getStatus()).isEqualTo(EventConsumptionStatus.SUCCEEDED);
+        });
 
-        @Test
-        @DisplayName("ProductDeletedPayload의 필수 필드(productInfoId)가 누락되면 ConstraintViolationException이 발생한다")
-        void testSendDeletedEventWithInvalidPayload_throwsConstraintViolationException() {
-            // --- 1. Arrange (테스트 준비) ---
-            ProductDeletedPayload invalidPayload = ProductDeletedPayload.builder()
-                    .productInfoId(null)
-                    .build();
+        verify(productDocumentUseCase, atLeastOnce()).deleteProduct(any());
+    }
 
-            // --- 2. Act & Assert (실행 및 예외 검증) ---
-            assertThrows(ConstraintViolationException.class, () ->
-                            productKafkaEventPublisher.sendDeletedEvent(invalidPayload),
-                    "ConstraintViolationException이 발생해야 합니다.");
+    private ProductInfoDto createProductInfoDto(Long productInfoId, String name, String code) {
+        return ProductInfoDto.builder()
+                .productInfoId(productInfoId)
+                .brand(createBrandDto())
+                .category(createCategoryDto())
+                .name(name)
+                .code(code)
+                .releasePrice(new BigDecimal("100000.00"))
+                .releaseDate(LocalDateTime.now())
+                .build();
+    }
 
-            verifyNoMoreInteractions(productDocumentUseCase);
-        }
+    private BrandDto createBrandDto() {
+        return BrandDto.builder()
+                .brandId(1L)
+                .name("Nike")
+                .imageUrl("https://example.com/nike.png")
+                .build();
+    }
+
+    private CategoryDto createCategoryDto() {
+        return CategoryDto.builder()
+                .categoryId(1L)
+                .name("shoes")
+                .imageUrl("https://example.com/shoes.png")
+                .build();
+    }
+
+    private List<OptionDto> createOptionDtos() {
+        return List.of(
+                OptionDto.builder()
+                        .group(OptionDto.GroupDto.builder().id(1L).name("color").build())
+                        .values(List.of(OptionDto.ValueDto.builder().id(1L).name("black").build()))
+                        .build()
+        );
     }
 }

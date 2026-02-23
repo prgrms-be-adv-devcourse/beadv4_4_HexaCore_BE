@@ -4,7 +4,7 @@ import com.back.common.code.FailureCode;
 import com.back.common.exception.CustomException;
 import com.back.product.adapter.out.event.BrandSpringEventPublisher;
 import com.back.product.app.facade.ProductFacade;
-import com.back.product.app.usecase.command.*;
+import com.back.product.app.usecase.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

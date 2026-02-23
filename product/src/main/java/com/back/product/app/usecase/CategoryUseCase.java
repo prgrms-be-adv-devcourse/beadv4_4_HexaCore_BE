@@ -1,18 +1,14 @@
-package com.back.product.app.usecase.command;
+package com.back.product.app.usecase;
 
 import com.back.common.annotation.Loggable;
 import com.back.common.code.FailureCode;
 import com.back.common.exception.CustomException;
 import com.back.common.exception.InvalidValueException;
 import com.back.product.adapter.out.persistence.CategoryRepository;
-import com.back.product.app.usecase.query.ProductSupport;
 import com.back.product.domain.Category;
 import com.back.product.dto.command.CategoryDataCommand;
 import com.back.product.dto.model.CategoryDto;
-import com.back.product.dto.request.CategoryDataRequestDto;
-import com.back.product.dto.request.CategoryListCreateRequestDto;
 import com.back.product.mapper.CategoryMapper;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
