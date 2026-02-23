@@ -113,6 +113,7 @@ public enum FailureCode {
      * 429 Too Many Requests
      */
     TOO_MANY_REQUESTS(HttpStatus.TOO_MANY_REQUESTS, "TOO_MANY_REQUESTS", "요청이 너무 많습니다. 잠시 후 다시 시도해주세요."),
+    BID_SPAM_DETECTED(HttpStatus.TOO_MANY_REQUESTS, "BID_SPAM_DETECTED", "입찰 스팸이 감지되어 입찰이 제한됩니다."),
 
     /**
      * 500 Internal Server Error

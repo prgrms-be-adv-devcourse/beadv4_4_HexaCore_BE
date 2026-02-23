@@ -1,7 +1,8 @@
 package com.back.market.adapter.out.detector;
 
+import com.back.common.code.FailureCode;
+import com.back.common.exception.CustomException;
 import com.back.market.adapter.out.detector.dto.request.DetectHijackRequestDto;
-import com.back.market.exception.BidSpamDetectedException;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,8 +19,8 @@ public class MarketDetectorAdapter {
     public void detectBidSpam(Long userId) {
         try {
             detectorClient.detectBidSpam(userId);
-        } catch (FeignException.BadRequest e) {
-            throw new BidSpamDetectedException();
+        } catch (FeignException.TooManyRequests e) {
+            throw new CustomException(FailureCode.BID_SPAM_DETECTED);
         } catch (FeignException e) {
             log.error("[DetectorAdapter] Detector 서비스 호출 실패: userId={}", userId, e);
             // 탐지 서비스 장애 시 입찰은 허용

@@ -1,6 +1,7 @@
 package com.back.detector.app;
 
-import com.back.detector.exception.BidSpamException;
+import com.back.common.code.FailureCode;
+import com.back.common.exception.CustomException;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -29,7 +30,7 @@ class DetectorFacadeTest {
 
         @Test
         @DisplayName("스팸 아닌 경우 checkBidSpam이 호출되어야 한다")
-        void should_proceed_and_return_original_value() throws Throwable {
+        void should_proceed_and_return_original_value() {
             detectorFacade.detectBidSpam(USER_ID);
 
             verify(bidSpamDetector).checkBidSpam(USER_ID);
@@ -37,7 +38,7 @@ class DetectorFacadeTest {
 
         @Test
         @DisplayName("정상 흐름에서 예외 없이 완료되어야 한다")
-        void should_return_null_when_original_method_is_void() throws Throwable {
+        void should_return_null_when_original_method_is_void() {
             detectorFacade.detectBidSpam(USER_ID);
 
             verify(bidSpamDetector).checkBidSpam(USER_ID);
@@ -53,10 +54,11 @@ class DetectorFacadeTest {
         @Test
         @DisplayName("BidSpamException이 발생하면 그대로 상위로 전파되어야 한다")
         void should_rethrow_bid_spam_exception() {
-            doThrow(new BidSpamException()).when(bidSpamDetector).checkBidSpam(USER_ID);
+            doThrow(new CustomException(FailureCode.BID_SPAM_DETECTED)).when(bidSpamDetector).checkBidSpam(USER_ID);
 
             assertThatThrownBy(() -> detectorFacade.detectBidSpam(USER_ID))
-                    .isInstanceOf(BidSpamException.class);
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("failureCode", FailureCode.BID_SPAM_DETECTED);
         }
     }
 
