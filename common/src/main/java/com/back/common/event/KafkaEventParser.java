@@ -34,7 +34,7 @@ public class KafkaEventParser {
             Envelope<T> envelope = jsonMapper.readValue(message, typeReference);
 
             // 성공 로그: 헤더의 정보를 활용 (예: user-account-updated)
-            log.info("[KafkaEventParser] {} 수신 성공: {}",
+            log.info("[KafkaEventParser] {} 이벤트 수신 성공: {}",
                     envelope.header().eventType(), maskedMessage);
 
             return envelope.payload();
@@ -45,6 +45,11 @@ public class KafkaEventParser {
         }
     }
 
+    /**
+     * JSON 메시지에서 민감한 정보를 마스킹하는 메서드
+     * @param json 마스킹할 JSON 문자열
+     * @return 민감한 정보가 마스킹된 JSON 문자열
+     */
     private String maskSensitiveInfo(String json) {
         if (json == null) return null;
         // 1. 마스킹할 패턴 정의 (Case Insensitive 적용)
@@ -57,8 +62,8 @@ public class KafkaEventParser {
 
         // 2. 매칭되는 부분을 찾아서 교체
         while (matcher.find()) {
-            // matcher.group(1)은 email, phoneNumber 등 매칭된 키값입니다.
-            // 키값은 유지하고 값 부분만 "***"로 마스킹합니다.
+            // matcher.group(1)은 email, phoneNumber 등 매칭된 키값
+            // 키값은 유지하고 값 부분만 "***"로 마스킹
             matcher.appendReplacement(sb, "\"" + matcher.group(1) + "\":\"***\"");
         }
         matcher.appendTail(sb);
