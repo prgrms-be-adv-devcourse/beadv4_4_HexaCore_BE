@@ -12,19 +12,22 @@ import java.time.LocalDateTime;
 public class RedisChatRestrictionCache {
 
     private static final String KEY_PREFIX = "chat:restrictedUntil:";
+    private static final String FLAG = "1";
 
     private final StringRedisTemplate redis;
 
     public void put(Long userId, LocalDateTime restrictedUntil, LocalDateTime now) {
         Duration ttl = Duration.between(now, restrictedUntil);
         if (ttl.isZero() || ttl.isNegative()) {
-            // 이미 만료된 제한이면 캐시 제거
             delete(userId);
             return;
         }
 
-        String key = key(userId);
-        redis.opsForValue().set(key, restrictedUntil.toString(), ttl);
+        redis.opsForValue().set(key(userId), FLAG, ttl);
+    }
+
+    public boolean isRestricted(Long userId) {
+        return Boolean.TRUE.equals(redis.hasKey(key(userId)));
     }
 
     public void delete(Long userId) {

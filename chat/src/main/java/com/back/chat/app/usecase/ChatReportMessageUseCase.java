@@ -71,12 +71,15 @@ public class ChatReportMessageUseCase {
                             message.getUserId()
                     )
             );
-        }
+
+            LocalDateTime now = LocalDateTime.now();
+            String eventId = UUID.randomUUID().toString();
+
             ChatMessageBlindedKafkaEvent payload =
                     new ChatMessageBlindedKafkaEvent(
-                            UUID.randomUUID().toString(),
+                            eventId,
                             message.getUserId(),
-                            LocalDateTime.now()
+                            now
                     );
 
             String payloadJson;
@@ -86,17 +89,18 @@ public class ChatReportMessageUseCase {
                 throw new IllegalStateException("Outbox payload 직렬화 실패", e);
             }
 
-                ChatOutbox outbox = chatOutboxRepository.save(
+            ChatOutbox outbox = chatOutboxRepository.save(
                     ChatOutbox.pending(
                             UUID.fromString(payload.eventId()),
                             "CHAT_MESSAGE",
                             message.getId(),
                             ChatEventType.MESSAGE_BLINDED,
                             payloadJson,
-                            LocalDateTime.now()
+                            now
                     )
             );
-                eventPublisher.publishEvent(new ChatOutboxSavedEvent(outbox.getId()));
+            eventPublisher.publishEvent(new ChatOutboxSavedEvent(outbox.getId()));
+        }
 
         return ChatMessageMapper.toReportResponseDto(message);
     }

@@ -24,7 +24,7 @@ public class ChatMessageBlindedListener {
 
     private final OutboxPublisher outboxPublisher;
 
-    @Async
+    @Async("chatRedisExecutor")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handle(ChatMessageBlindedEvent event){
         try {
@@ -42,7 +42,7 @@ public class ChatMessageBlindedListener {
         }
     }
 
-    @Async
+    @Async("chatOutboxExecutor")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handle(ChatOutboxSavedEvent event){
         outboxPublisher.publish(event);

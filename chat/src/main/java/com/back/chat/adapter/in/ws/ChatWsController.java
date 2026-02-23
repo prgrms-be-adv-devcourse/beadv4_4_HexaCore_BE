@@ -19,9 +19,9 @@ public class ChatWsController {
     @MessageMapping("/message")
     public void sendMessage(
             @Valid @Payload ChatMessageSendRequestDto requestDto,
-            Authentication auth
+            Authentication authentication
     ) {
-        AuthPrincipal authPrincipal = (AuthPrincipal) auth.getPrincipal();
+        AuthPrincipal authPrincipal = (AuthPrincipal) authentication.getPrincipal();
 
         chatFacade.sendMessage(requestDto, authPrincipal.getUserId());
     }

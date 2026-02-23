@@ -12,7 +12,8 @@ import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
 @RequiredArgsConstructor
 public class RedisSubscriberConfig {
 
-    private static final String CHAT_ROOM_CHANNEL_PATTERN = "chatroom:*";
+    public static final String REDIS_PUBSUB_CHAT_ROOM_PATTERN = "chatroom:*";
+    public static final String WS_CHAT_ROOM_TOPIC_PREFIX = "/topic/chat/room/";
 
     private final RedisConnectionFactory redisConnectionFactory;
     private final RedisChatMessageSubscriber redisChatMessageSubscriber;
@@ -23,19 +24,10 @@ public class RedisSubscriberConfig {
         container.setConnectionFactory(redisConnectionFactory);
 
         container.addMessageListener(
-                messageListenerAdapter(),
-                new PatternTopic(CHAT_ROOM_CHANNEL_PATTERN)
+                redisChatMessageSubscriber,
+                new PatternTopic(REDIS_PUBSUB_CHAT_ROOM_PATTERN)
         );
 
         return container;
-    }
-
-    @Bean
-    public MessageListenerAdapter messageListenerAdapter() {
-        /*
-         * RedisChatMessageSubscriber가 MessageListener를 직접 구현했기 때문에
-         * 별도 메서드 지정 없이 그대로 감싸기만 하면 됨
-         */
-        return new MessageListenerAdapter(redisChatMessageSubscriber);
     }
 }

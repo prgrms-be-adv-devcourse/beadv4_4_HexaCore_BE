@@ -12,13 +12,14 @@ import org.springframework.stereotype.Component;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
+import static com.back.chat.adapter.in.redis.RedisSubscriberConfig.REDIS_PUBSUB_CHAT_ROOM_PATTERN;
+
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class RedisChatEventPublisher {
 
-    private static final String CHANNEL_PREFIX = "chatroom:";
 
     private final StringRedisTemplate stringRedisTemplate;
     private final JsonMapper jsonMapper;
@@ -36,7 +37,7 @@ public class RedisChatEventPublisher {
     }
 
     private void publish(Long roomId, ChatEventType type, JsonNode data) {
-        String channel = CHANNEL_PREFIX + roomId;
+        String channel = REDIS_PUBSUB_CHAT_ROOM_PATTERN + roomId;
         ChatEventEnvelope envelope = new ChatEventEnvelope(type, data);
 
         try {

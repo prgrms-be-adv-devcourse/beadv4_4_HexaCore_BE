@@ -106,13 +106,8 @@ class ChatRestrictionValidationTest {
         private final RedisChatRestrictionReader redisChatRestrictionReader;
 
         public void validate(Long userId, LocalDateTime now) {
-            LocalDateTime until = redisChatRestrictionReader.getRestrictedUntil(userId);
-            if (until != null) {
-                if (!until.isAfter(now)) {
-                    redisChatRestrictionReader.delete(userId);
-                } else {
-                    throw new ForbiddenException(FailureCode.CHAT_RESTRICTED);
-                }
+            if (redisChatRestrictionReader.isRestricted(userId)) {
+                throw new ForbiddenException(FailureCode.CHAT_RESTRICTED);
             }
         }
     }
