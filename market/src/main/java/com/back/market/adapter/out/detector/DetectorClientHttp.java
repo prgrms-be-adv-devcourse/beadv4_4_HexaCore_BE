@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 @Slf4j
-@Profile({"!local", "!test"})
+@Profile("!local & !test")
 @Component
 @RequiredArgsConstructor
 public class DetectorClientHttp implements DetectorClient {
