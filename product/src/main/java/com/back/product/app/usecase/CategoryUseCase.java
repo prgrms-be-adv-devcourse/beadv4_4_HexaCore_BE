@@ -72,7 +72,7 @@ public class CategoryUseCase {
 
         String newName = toPlainText(category.name());
 
-        if (productSupport.existsCategoryByName(newName)) {
+        if (productSupport.existsCategoryByNameAndIdNot(newName, categoryToModify.getId())) {
             throw new CustomException(FailureCode.CATEGORY_NAME_DUPLICATE);
         }
 

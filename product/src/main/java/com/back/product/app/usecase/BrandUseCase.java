@@ -71,7 +71,7 @@ public class BrandUseCase {
 
         String newName = brand.name().toLowerCase();
 
-        if (productSupport.existsBrandByName(newName)) {
+        if (productSupport.existsBrandByNameAndIdNot(newName, brandToModify.getId())) {
             throw new CustomException(FailureCode.BRAND_NAME_DUPLICATE);
         }
 

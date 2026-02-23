@@ -8,11 +8,11 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 public interface BrandRepository extends JpaRepository<Brand, Long> {
-    boolean existsBrandByNameIgnoreCase(String name);
-
     @Query("""
                 SELECT b FROM Brand b
                 WHERE LOWER(b.name) IN :brandNames
             """)
     List<Brand> findAllByNameIgnoreCaseIn(@Param("brandNames") List<String> brandNames);
+
+    boolean existsBrandByNameIgnoreCaseAndIdNot(String name, Long id);
 }

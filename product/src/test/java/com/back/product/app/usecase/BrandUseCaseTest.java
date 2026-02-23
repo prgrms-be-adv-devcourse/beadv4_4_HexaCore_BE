@@ -27,6 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
@@ -165,7 +166,7 @@ class BrandUseCaseTest {
                     .build();
 
             given(productSupport.findBrandById(BRAND_ID)).willReturn(Optional.of(brandToModify));
-            given(productSupport.existsBrandByName(anyString())).willReturn(false);
+            given(productSupport.existsBrandByNameAndIdNot(anyString(), anyLong())).willReturn(false);
             given(brandMapper.toDto(brandToModify)).willReturn(new BrandDto(BRAND_ID, "Modified Name", "modified.png"));
 
             // when
@@ -175,7 +176,7 @@ class BrandUseCaseTest {
             assertThat(result.name()).isEqualTo("Modified Name");
             assertThat(result.imageUrl()).isEqualTo("modified.png");
             verify(productSupport).findBrandById(BRAND_ID);
-            verify(productSupport).existsBrandByName(anyString());
+            verify(productSupport).existsBrandByNameAndIdNot(anyString(), anyLong());
             verify(brandToModify).modifyName("Modified Name");
             verify(brandToModify).modifyImageUrl("modified.png");
             verify(brandMapper).toDto(brandToModify);
@@ -196,7 +197,7 @@ class BrandUseCaseTest {
                     .hasFieldOrPropertyWithValue("failureCode", FailureCode.BRAND_NOT_FOUND);
 
             verify(productSupport).findBrandById(NON_EXISTENT_ID);
-            verify(productSupport, never()).existsBrandByName(anyString());
+            verify(productSupport, never()).existsBrandByNameAndIdNot(anyString(), anyLong());
         }
 
         @Test
@@ -207,7 +208,7 @@ class BrandUseCaseTest {
             BrandDataCommand command = BrandDataCommand.builder().name("Existing Name").imageUrl("modified.png").build();
 
             given(productSupport.findBrandById(BRAND_ID)).willReturn(Optional.of(brandToModify));
-            given(productSupport.existsBrandByName(anyString())).willReturn(true);
+            given(productSupport.existsBrandByNameAndIdNot(anyString(), anyLong())).willReturn(true);
 
             // when & then
             assertThatThrownBy(() -> brandUseCase.modifyBrand(BRAND_ID, command))
@@ -215,7 +216,7 @@ class BrandUseCaseTest {
                     .hasFieldOrPropertyWithValue("failureCode", FailureCode.BRAND_NAME_DUPLICATE);
 
             verify(productSupport).findBrandById(BRAND_ID);
-            verify(productSupport).existsBrandByName(anyString());
+            verify(productSupport).existsBrandByNameAndIdNot(anyString(), anyLong());
             verify(brandToModify, never()).modifyName(anyString());
         }
     }

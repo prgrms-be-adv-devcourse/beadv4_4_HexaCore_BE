@@ -45,8 +45,8 @@ public class ProductSupport {
     }
 
     @Transactional(readOnly = true)
-    public boolean existsBrandByName(String name) {
-        return brandRepository.existsBrandByNameIgnoreCase(name);
+    public boolean existsBrandByNameAndIdNot(String name, Long id) {
+        return brandRepository.existsBrandByNameIgnoreCaseAndIdNot(name, id);
     }
 
     @Transactional(readOnly = true)
@@ -65,8 +65,8 @@ public class ProductSupport {
     }
 
     @Transactional(readOnly = true)
-    public boolean existsCategoryByName(String name) {
-        return categoryRepository.existsCategoryByNameIgnoreCase(name);
+    public boolean existsCategoryByNameAndIdNot(String name, Long id) {
+        return categoryRepository.existsCategoryByNameIgnoreCaseAndIdNot(name, id);
     }
 
     @Transactional(readOnly = true)

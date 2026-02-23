@@ -164,7 +164,7 @@ class CategoryUseCaseTest {
                     .build();
 
             given(productSupport.findCategoryById(CATEGORY_ID)).willReturn(Optional.of(categoryToModify));
-            given(productSupport.existsCategoryByName(anyString())).willReturn(false);
+            given(productSupport.existsCategoryByNameAndIdNot(anyString(), anyLong())).willReturn(false);
             given(categoryMapper.toDto(categoryToModify)).willReturn(new CategoryDto(CATEGORY_ID, "Modified", "modified.png"));
 
             // when
@@ -174,7 +174,7 @@ class CategoryUseCaseTest {
             assertThat(result.name()).isEqualTo("Modified");
             assertThat(result.imageUrl()).isEqualTo("modified.png");
             verify(productSupport).findCategoryById(CATEGORY_ID);
-            verify(productSupport).existsCategoryByName(anyString());
+            verify(productSupport).existsCategoryByNameAndIdNot(anyString(), anyLong());
             verify(categoryToModify).modifyName("Modified");
             verify(categoryToModify).modifyImageUrl("modified.png");
             verify(categoryMapper).toDto(categoryToModify);
@@ -195,7 +195,7 @@ class CategoryUseCaseTest {
                     .hasFieldOrPropertyWithValue("failureCode", FailureCode.CATEGORY_NOT_FOUND);
 
             verify(productSupport).findCategoryById(NON_EXISTENT_ID);
-            verify(productSupport, never()).existsCategoryByName(anyString());
+            verify(productSupport, never()).existsCategoryByNameAndIdNot(anyString(), anyLong());
         }
 
         @Test
@@ -206,7 +206,7 @@ class CategoryUseCaseTest {
             CategoryDataCommand requestDto = CategoryDataCommand.builder().name("Existing").imageUrl("modified.png").build();
 
             given(productSupport.findCategoryById(CATEGORY_ID)).willReturn(Optional.of(categoryToModify));
-            given(productSupport.existsCategoryByName(anyString())).willReturn(true);
+            given(productSupport.existsCategoryByNameAndIdNot(anyString(), anyLong())).willReturn(true);
 
             // when & then
             assertThatThrownBy(() -> categoryUseCase.modifyCategory(CATEGORY_ID, requestDto))
@@ -214,7 +214,7 @@ class CategoryUseCaseTest {
                     .hasFieldOrPropertyWithValue("failureCode", FailureCode.CATEGORY_NAME_DUPLICATE);
 
             verify(productSupport).findCategoryById(CATEGORY_ID);
-            verify(productSupport).existsCategoryByName(anyString());
+            verify(productSupport).existsCategoryByNameAndIdNot(anyString(), anyLong());
             verify(categoryToModify, never()).modifyName(anyString());
         }
     }
