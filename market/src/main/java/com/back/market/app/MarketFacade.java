@@ -1,7 +1,9 @@
 package com.back.market.app;
 
 import com.back.common.dto.cash.response.PaymentCancelResponseDto;
+import com.back.market.adapter.out.detector.MarketDetectorAdapter;
 import com.back.market.app.usecase.*;
+import com.back.market.domain.MarketUser;
 import com.back.market.domain.Order;
 import com.back.market.dto.request.BiddingRequestDto;
 import com.back.market.dto.response.*;
@@ -25,6 +27,8 @@ public class MarketFacade {
     private final CompleteOrderUseCase completeOrderUseCase;
     private final GetOrdersUseCase getOrdersUseCase;
     private final ApplicationEventPublisher eventPublisher;
+    private final MarketDetectorAdapter marketDetectorAdapter;
+    private final MarketSupport marketSupport;
 
     /**
      * MARKET-010: 구매 입찰 등록
@@ -33,7 +37,10 @@ public class MarketFacade {
      * @return PayAndHoldResponseDto (결제/홀딩 상태 포함)
      */
     @Transactional
-    public MarketPaymentResponseDto registerBuyBid(Long userId, BiddingRequestDto requestDto) {
+    public MarketPaymentResponseDto registerBuyBid(Long userId, String ip, BiddingRequestDto requestDto) {
+        MarketUser user = marketSupport.findMarketUserById(userId);
+        marketDetectorAdapter.detectBidSpam(userId);
+        marketDetectorAdapter.detectHijack(userId, user.getEmail(), ip, requestDto.price());
         return registerBidUseCase.registerBuyBid(userId, requestDto);
     }
 
@@ -44,7 +51,10 @@ public class MarketFacade {
      * @return PayAndHoldResponseDto (결제 불필요, PAID 상태)
      */
     @Transactional
-    public MarketPaymentResponseDto registerSellBid(Long userId, BiddingRequestDto requestDto) {
+    public MarketPaymentResponseDto registerSellBid(Long userId, String ip, BiddingRequestDto requestDto) {
+        MarketUser user = marketSupport.findMarketUserById(userId);
+        marketDetectorAdapter.detectBidSpam(userId);
+        marketDetectorAdapter.detectHijack(userId, user.getEmail(), ip, requestDto.price());
         return registerBidUseCase.registerSellBid(userId, requestDto);
     }
 
@@ -74,7 +84,10 @@ public class MarketFacade {
      * @param requestDto BiddingRequestDto
      * @return 생성된 주문(Order)의 ID
      */
-    public MarketPaymentResponseDto purchaseNow(Long buyerId, BiddingRequestDto requestDto) {
+    public MarketPaymentResponseDto purchaseNow(Long buyerId, String ip, BiddingRequestDto requestDto) {
+        MarketUser user = marketSupport.findMarketUserById(buyerId);
+        marketDetectorAdapter.detectBidSpam(buyerId);
+        marketDetectorAdapter.detectHijack(buyerId, user.getEmail(), ip, requestDto.price());
         return matchInstantTradeUseCase.buyNow(buyerId, requestDto);
     }
 
@@ -84,7 +97,10 @@ public class MarketFacade {
      * @param requestDto BiddingRequestDto
      * @return 생성된 주문(Order)의 ID
      */
-    public MarketPaymentResponseDto sellNow(Long sellerId, BiddingRequestDto requestDto) {
+    public MarketPaymentResponseDto sellNow(Long sellerId, String ip, BiddingRequestDto requestDto) {
+        MarketUser user = marketSupport.findMarketUserById(sellerId);
+        marketDetectorAdapter.detectBidSpam(sellerId);
+        marketDetectorAdapter.detectHijack(sellerId, user.getEmail(), ip, requestDto.price());
         return matchInstantTradeUseCase.sellNow(sellerId, requestDto);
     }
 

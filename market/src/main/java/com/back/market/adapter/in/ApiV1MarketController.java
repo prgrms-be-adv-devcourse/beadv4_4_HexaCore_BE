@@ -2,11 +2,13 @@ package com.back.market.adapter.in;
 
 import com.back.common.code.SuccessCode;
 import com.back.common.response.CommonResponse;
+import com.back.common.util.IpAddressExtractor;
 import com.back.market.app.MarketFacade;
 import com.back.market.dto.request.BiddingRequestDto;
 import com.back.market.dto.response.*;
 import com.back.common.dto.cash.response.PaymentCancelResponseDto;
 import com.back.security.principal.AuthPrincipal;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -24,24 +26,24 @@ public class ApiV1MarketController implements ApiV1Market{
     @Override
     public CommonResponse<MarketPaymentResponseDto> registerBuyBid(
             @AuthenticationPrincipal AuthPrincipal principal,
-            @RequestBody @Valid BiddingRequestDto requestDto
+            @RequestBody @Valid BiddingRequestDto requestDto,
+            HttpServletRequest request
     ) {
         Long userId = principal.getUserId();
-
-        MarketPaymentResponseDto response = marketFacade.registerBuyBid(userId, requestDto);
-
+        String ip = IpAddressExtractor.extractClientIp(request);
+        MarketPaymentResponseDto response = marketFacade.registerBuyBid(userId, ip, requestDto);
         return CommonResponse.successWithData(HttpStatus.CREATED, response);
     }
 
     @Override
     public CommonResponse<MarketPaymentResponseDto> registerSellBid(
             @AuthenticationPrincipal AuthPrincipal principal,
-            @RequestBody @Valid BiddingRequestDto requestDto
+            @RequestBody @Valid BiddingRequestDto requestDto,
+            HttpServletRequest request
     ) {
         Long userId = principal.getUserId();
-
-        MarketPaymentResponseDto response = marketFacade.registerSellBid(userId, requestDto);
-
+        String ip = IpAddressExtractor.extractClientIp(request);
+        MarketPaymentResponseDto response = marketFacade.registerSellBid(userId, ip, requestDto);
         return CommonResponse.successWithData(HttpStatus.CREATED, response);
     }
 
@@ -60,22 +62,22 @@ public class ApiV1MarketController implements ApiV1Market{
     @Override
     public CommonResponse<MarketPaymentResponseDto> buyNow(
             @AuthenticationPrincipal AuthPrincipal principal,
-            @RequestBody @Valid BiddingRequestDto requestDto) {
-
+            @RequestBody @Valid BiddingRequestDto requestDto,
+            HttpServletRequest request) {
         Long userId = principal.getUserId();
-
-        MarketPaymentResponseDto response = marketFacade.purchaseNow(userId, requestDto);
+        String ip = IpAddressExtractor.extractClientIp(request);
+        MarketPaymentResponseDto response = marketFacade.purchaseNow(userId, ip, requestDto);
         return CommonResponse.successWithData(HttpStatus.CREATED, response);
     }
 
     @Override
     public CommonResponse<MarketPaymentResponseDto> sellNow(
             @AuthenticationPrincipal AuthPrincipal principal,
-            @RequestBody @Valid BiddingRequestDto requestDto) {
-
+            @RequestBody @Valid BiddingRequestDto requestDto,
+            HttpServletRequest request) {
         Long userId = principal.getUserId();
-
-        MarketPaymentResponseDto response = marketFacade.sellNow(userId, requestDto);
+        String ip = IpAddressExtractor.extractClientIp(request);
+        MarketPaymentResponseDto response = marketFacade.sellNow(userId, ip, requestDto);
         return CommonResponse.successWithData(HttpStatus.CREATED, response);
     }
 
