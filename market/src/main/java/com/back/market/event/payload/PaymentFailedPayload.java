@@ -5,6 +5,7 @@ import com.back.common.event.KafkaPayload;
 
 public record PaymentFailedPayload(
         RelType relType,
-        Long relId
+        Long relId,
+        String failReason
 ) implements KafkaPayload {
 }
