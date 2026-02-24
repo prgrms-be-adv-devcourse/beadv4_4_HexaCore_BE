@@ -49,7 +49,7 @@ public class ResizeImageUseCase {
                     .size(imageResizeProperties.getWidth(), imageResizeProperties.getHeight())
                     .rendering(Rendering.QUALITY)
                     .antialiasing(Antialiasing.ON)
-                    .outputQuality(0.9)
+                    .outputQuality(0.85)
                     .toFile(resizedImage);
 
             return resizedImage;
