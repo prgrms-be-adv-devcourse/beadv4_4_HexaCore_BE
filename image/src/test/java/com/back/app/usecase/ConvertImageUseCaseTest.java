@@ -21,6 +21,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.Mockito.*;
 
 class ConvertImageUseCaseTest {
@@ -56,6 +57,8 @@ class ConvertImageUseCaseTest {
         List<MultipartFile> multipartFiles = List.of(multipartFile1, multipartFile2);
 
         when(imageUtility.validateFileExtension(anyString())).thenReturn(true);
+        when(imageUtility.getFileExtension(contains("test1.jpg"))).thenReturn("jpg");
+        when(imageUtility.getFileExtension(contains("test2.png"))).thenReturn("png");
 
         // When
         List<File> convertedFiles = convertImageUseCase.convertMultipleFile(multipartFiles);
@@ -63,8 +66,8 @@ class ConvertImageUseCaseTest {
         // Then
         assertNotNull(convertedFiles);
         assertEquals(2, convertedFiles.size());
-        assertTrue(convertedFiles.stream().anyMatch(f -> f.getName().equals(filename1)));
-        assertTrue(convertedFiles.stream().anyMatch(f -> f.getName().equals(filename2)));
+        assertTrue(convertedFiles.stream().anyMatch(f -> f.getName().endsWith(".jpg")));
+        assertTrue(convertedFiles.stream().anyMatch(f -> f.getName().endsWith(".png")));
         convertedFiles.forEach(file -> {
             assertTrue(file.exists());
             assertTrue(file.length() > 0);
