@@ -1,6 +1,7 @@
 package com.back.user.adapter.in.auth.security.oauth;
 
 import com.back.user.domain.event.UserCreatedEvent;
+import com.back.user.domain.event.UserSettingCreatedEvent;
 import com.back.user.domain.event.WalletCreateRequestedEvent;
 import com.back.common.util.IpAddressExtractor;
 import com.back.user.adapter.in.auth.security.oauth.principal.CustomOAuth2User;
@@ -104,6 +105,13 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                     user.getProfileImageUrl(),
                     clientIp
                     ));
+            eventPublisher.publishEvent(new UserSettingCreatedEvent(
+                    user.getId(),
+                    userSetting.isBidStatusEnabled(),
+                    userSetting.isProductStatusEnabled(),
+                    userSetting.isPriceEnabled(),
+                    userSetting.isSettlementEnabled()
+            ));
         }
 
         return new CustomOAuth2User(user.getRole(), user.getId(), oAuth2User.getAttributes());
