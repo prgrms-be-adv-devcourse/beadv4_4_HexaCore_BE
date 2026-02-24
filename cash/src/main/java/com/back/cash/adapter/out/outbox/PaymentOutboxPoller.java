@@ -27,7 +27,7 @@ public class PaymentOutboxPoller {
     @Value("${custom.outbox.max-retry:10}")
     private int maxRetry;
 
-    @Value("${custom.outbox.retry-base-delay-seconds:60}")
+    @Value("${custom.outbox.retry-base-delay-seconds:10}")
     private int retryBaseDelaySeconds;
 
     @Value("${custom.outbox.retry-max-delay-seconds:300}")
