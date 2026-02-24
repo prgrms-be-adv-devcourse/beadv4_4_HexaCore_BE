@@ -39,7 +39,7 @@ public class ChatFacade {
         metrics.incWsSendTotal();
 
         metrics.recordRunnable(
-                "resello_chat_ws_send_seconds",
+                "resello_chat_ws_send",
                 Tags.of("result", "ok"),
                 () -> chatSendMessageUseCase.sendMessage(requestDto, userId)
         );
@@ -48,7 +48,7 @@ public class ChatFacade {
     @Transactional(readOnly = true)
     public ChatMessageHistoryResponseDto getHistory(Long roomId, Long cursorMessageId) {
         return metrics.recordCallable(
-                "resello_chat_history_query_seconds",
+                "resello_chat_history_query",
                 Tags.of("result","ok"),
                 () -> chatGetHistoryUseCase.getHistory(roomId, cursorMessageId)
         );
@@ -57,7 +57,7 @@ public class ChatFacade {
     @Transactional
     public ChatMessageReportResponseDto reportMessage(Long reporterUserId, ChatMessageReportRequestDto requestDto) {
         return metrics.recordCallable(
-                "resello_chat_report_seconds",
+                "resello_chat_report",
                 Tags.of("result","ok"),
                 () -> {
                     return chatReportMessageUseCase.reportMessage(reporterUserId, requestDto);

@@ -43,7 +43,7 @@ public class ChatSendMessageUseCase {
         }
 
         ChatMessage savedMessage = metrics.recordCallable(
-                "resello_chat_message_save_seconds",
+                "resello_chat_message_save",
                 Tags.of("result", "ok"),
                 () -> chatSupport.saveMessage(
                         ChatMessage.create(roomId, userId, requestDto.content())

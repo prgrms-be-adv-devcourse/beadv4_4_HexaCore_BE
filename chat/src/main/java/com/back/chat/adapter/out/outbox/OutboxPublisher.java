@@ -54,7 +54,7 @@ public class OutboxPublisher {
         final String eventType = outbox.getEventType().name();
 
         final Timer timer = metrics.timer(
-                "resello_chat_outbox_publish_seconds",
+                "resello_chat_outbox_publish",
                 Tags.of("eventType", outbox.getEventType().name())
         );
         final Timer.Sample sample = Timer.start(metrics.getRegistry());

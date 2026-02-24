@@ -96,7 +96,7 @@ public class ChatReportMessageUseCase {
             }
 
             ChatOutbox outbox = metrics.recordCallable(
-                    "resello_chat_outbox_save_seconds",
+                    "resello_chat_outbox_save",
                     Tags.of("eventType", ChatEventType.MESSAGE_BLINDED.name()),
                     () -> chatOutboxRepository.save(
                             ChatOutbox.pending(
