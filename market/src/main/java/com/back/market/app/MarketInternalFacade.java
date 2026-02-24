@@ -48,13 +48,13 @@ public class MarketInternalFacade {
 
     @Transactional
     public void handlePaymentCompletedEvent(PaymentCompletedPayload payload) {
-        log.info("[MarketInternalFacade] 결제 완료 이벤트 처리 시작 - Type: {}, ID: {}", payload.relType(), payload.relId());
+        //log.info("[MarketInternalFacade] 결제 완료 이벤트 처리 시작 - Type: {}, ID: {}", payload.relType(), payload.relId());
         confirmPaymentUseCase.confirmPayment(payload);
     }
 
     @Transactional
     public void handlePaymentFailedEvent(PaymentFailedPayload payload) {
-        log.info("[MarketInternalFacade] 결제 실패 이벤트 처리 시작 - Type: {}, ID: {}", payload.relType(), payload.relId());
+        //log.info("[MarketInternalFacade] 결제 실패 이벤트 처리 시작 - Type: {}, ID: {}", payload.relType(), payload.relId());
         confirmPaymentUseCase.handlePaymentFailure(payload);
     }
 

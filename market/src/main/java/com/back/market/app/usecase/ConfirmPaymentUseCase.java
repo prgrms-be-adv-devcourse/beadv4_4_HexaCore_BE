@@ -42,7 +42,7 @@ public class ConfirmPaymentUseCase {
      */
     @Transactional
     public void confirmPayment(PaymentCompletedPayload payload) {
-        log.info("[Market(Internal)] Kafka 결제 완료 이벤트 수신 - Type: {}, Id: {}, Amount: {}", payload.relType(), payload.relId(), payload.totalAmount());
+        //log.info("[Market(Internal)] Kafka 결제 완료 이벤트 수신 - Type: {}, Id: {}, Amount: {}", payload.relType(), payload.relId(), payload.totalAmount());
         processPaymentLogic(payload.relType(), payload.relId(), payload.totalAmount());
     }
 
@@ -52,7 +52,7 @@ public class ConfirmPaymentUseCase {
      */
     @Transactional
     public void handlePaymentFailure(PaymentFailedPayload payload) {
-        log.info("[Market(Internal)] Kafka 결제 실패 이벤트 수신 - Type: {}, Id: {}", payload.relType(), payload.relId());
+        //log.info("[Market(Internal)] Kafka 결제 실패 이벤트 수신 - Type: {}, Id: {}", payload.relType(), payload.relId());
         if (payload.relType() == RelType.ORDER) {
             Order order = marketSupport.findOrderById(payload.relId());
             if (order.getOrderStatus() == OrderStatus.HOLD) {
