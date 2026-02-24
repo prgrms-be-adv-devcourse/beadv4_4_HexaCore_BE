@@ -4,7 +4,10 @@ import com.back.common.dto.cash.enums.RelType;
 import com.back.common.event.Envelope;
 import com.back.common.event.KafkaEventPublisher;
 import com.back.market.adapter.out.OrderRepository;
+import com.back.market.app.MarketSupport;
+import com.back.market.domain.Bidding;
 import com.back.market.domain.Order;
+import com.back.market.domain.enums.BiddingStatus;
 import com.back.market.domain.enums.OrderStatus;
 import com.back.market.event.payload.PaymentCompletedPayload;
 import com.back.market.event.payload.PaymentFailedPayload;
@@ -34,6 +37,9 @@ public class PaymentResultEventTests {
 
     @Value("${custom.kafka.topic.cash-payment-failed}")
     private String paymentFailedTopic;
+
+    @Autowired
+    private MarketSupport marketSupport;
 
     @Test
     @DisplayName("결제 완료 이벤트를 수신하면 주문 상태가 PAID로 변경되어야 한다")
@@ -84,11 +90,19 @@ public class PaymentResultEventTests {
         Thread.sleep(3000);
 
         // 3. Then (검증)
-        Order updatedOrder = orderRepository.findById(testOrderId).orElseThrow();
-
-        // 상태가 HOLD -> CANCELLED(취소)로 잘 바뀌었는지 확인
+        // 주문 상태 검증 - 상태가 HOLD -> CANCELLED(취소)로 잘 바뀌었는지 확인
+        Order updatedOrder = marketSupport.findOrderById(testOrderId);
         assertThat(updatedOrder.getOrderStatus()).isEqualTo(OrderStatus.CANCELLED);
-        log.info("결제 실패 이벤트 수신 및 주문 상태 CANCELLED 변경 검증 완료");
+
+        // 구매 입찰 상태 검증 (CANCELLED_PAYMENT_FAILED)
+        Bidding buyBid = marketSupport.findBiddingById(updatedOrder.getBuyBidding().getId());
+        assertThat(buyBid.getStatus()).isEqualTo(BiddingStatus.CANCELLED_PAYMENT_FAILED);
+
+        // 판매 입찰 상태 검증 (PROCESS)
+        Bidding sellBid = marketSupport.findBiddingById(updatedOrder.getSellBidding().getId());
+        assertThat(sellBid.getStatus()).isEqualTo(BiddingStatus.PROCESS);
+
+        log.info("결제 실패 이벤트 수신 및 주문, 입찰 상태 변경 검증 완료");
 
     }
 }
