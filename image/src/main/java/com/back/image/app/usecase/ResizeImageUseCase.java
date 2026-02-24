@@ -7,6 +7,9 @@ import com.back.image.config.ImageResizeProperties;
 import com.back.image.utils.ImageUtility;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.coobird.thumbnailator.Thumbnails;
+import net.coobird.thumbnailator.resizers.configurations.Antialiasing;
+import net.coobird.thumbnailator.resizers.configurations.Rendering;
 import org.springframework.stereotype.Service;
 
 import javax.imageio.ImageIO;
@@ -69,26 +72,13 @@ public class ResizeImageUseCase {
         return originWidth <= imageResizeProperties.getWidth() && originHeight <= imageResizeProperties.getHeight();
     }
 
-    private BufferedImage handleResizeImage(BufferedImage originalImage, int originWidth, int originHeight) {
-        double widthScale = (double) imageResizeProperties.getWidth() / (double) originWidth;
-        double heightScale = (double) imageResizeProperties.getHeight() / (double) originHeight;
-        double scale = Math.min(widthScale, heightScale);
-
-        int resizedWidth = (int) Math.round(originWidth * scale);
-        int resizedHeight = (int) Math.round(originHeight * scale);
-
-        BufferedImage resizedImage = new BufferedImage(resizedWidth, resizedHeight, BufferedImage.TYPE_INT_RGB);
-        Graphics2D graphics2D = resizedImage.createGraphics();
-
-        // 품질과 속도의 균형을 위한 렌더링 힌트 설정
-        graphics2D.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-        graphics2D.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-        graphics2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-        graphics2D.drawImage(originalImage, 0, 0, resizedWidth, resizedHeight, null);
-        graphics2D.dispose();
-
-        return resizedImage;
+    private BufferedImage handleResizeImage(BufferedImage originalImage, int originWidth, int originHeight) throws IOException {
+        return Thumbnails.of(originalImage)
+                .size(imageResizeProperties.getWidth(), imageResizeProperties.getHeight())
+                .rendering(Rendering.QUALITY)
+                .antialiasing(Antialiasing.ON)
+                .outputQuality(0.9)
+                .asBufferedImage();
     }
 
     private File buildImageFile(BufferedImage resizedImage, File convertedImage) throws IOException {
