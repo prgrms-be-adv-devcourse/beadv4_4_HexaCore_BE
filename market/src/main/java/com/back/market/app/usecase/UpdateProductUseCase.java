@@ -1,6 +1,6 @@
 package com.back.market.app.usecase;
 
-import com.back.market.adapter.out.MarketProductRepository;
+import com.back.market.app.MarketSupport;
 import com.back.market.domain.MarketProduct;
 import com.back.market.dto.request.MarketProductDto;
 import com.back.market.event.resultpayload.ProductUpdatedResultPayload;
@@ -14,12 +14,12 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class UpdateProductUseCase {
-    private final MarketProductRepository marketProductRepository;
+    private final MarketSupport marketSupport;
 
     public int updateMarketProduct(List<ProductUpdatedResultPayload> payloads) {
         int updatedCount = 0;
         for(ProductUpdatedResultPayload payload: payloads) {
-            MarketProduct marketProduct = marketProductRepository.findById(payload.productOptionId()).orElse(null);
+            MarketProduct marketProduct = marketSupport.findMarketProductById(payload.productOptionId());
             if(marketProduct != null) {
                 MarketProductDto updateDto = new MarketProductDto(
                         payload.name(),
