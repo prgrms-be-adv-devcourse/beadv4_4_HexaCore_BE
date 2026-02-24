@@ -1,5 +1,6 @@
 package com.back.chat.app.usecase;
 
+import com.back.chat.adapter.out.metrics.ChatMetrics;
 import com.back.chat.adapter.out.outbox.ChatOutbox;
 import com.back.chat.adapter.out.outbox.ChatOutboxRepository;
 import com.back.chat.app.ChatSupport;
@@ -34,6 +35,8 @@ public class ChatReportMessageUseCase {
     private final ChatOutboxRepository chatOutboxRepository;
     private final JsonMapper jsonMapper;
 
+    private final ChatMetrics metrics;
+
     public ChatMessageReportResponseDto reportMessage(Long reporterUserId, ChatMessageReportRequestDto requestDto) {
         Long messageId = requestDto.chatMessageId();
 
@@ -63,6 +66,8 @@ public class ChatReportMessageUseCase {
         boolean blindedNow = chatSupport.blindIfReached(messageId, ChatMessageBlindPolicy.MESSAGE_BLIND_THRESHOLD) == 1;
 
         if (blindedNow) {
+
+            metrics.incBlindTrigger();
 
             eventPublisher.publishEvent(
                     new ChatMessageBlindedEvent(

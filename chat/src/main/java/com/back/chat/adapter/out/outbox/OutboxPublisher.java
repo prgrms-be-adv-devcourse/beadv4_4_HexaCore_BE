@@ -1,5 +1,6 @@
 package com.back.chat.adapter.out.outbox;
 
+import com.back.chat.adapter.out.metrics.ChatMetrics;
 import com.back.chat.domain.event.ChatEventType;
 import com.back.chat.domain.event.ChatOutboxSavedEvent;
 import com.back.common.chat.ChatMessageBlindedKafkaEvent;
@@ -30,6 +31,8 @@ public class OutboxPublisher {
 
     private final JsonMapper jsonMapper;
 
+    private final ChatMetrics metrics;
+
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void publish(ChatOutboxSavedEvent event){
         ChatOutbox outbox = outboxRepository.findById(event.outboxId()).orElseThrow(()->new BadRequestException(FailureCode.CHAT_OUTBOX_NOT_FOUND));
@@ -54,6 +57,8 @@ public class OutboxPublisher {
 
                     log.warn("[OUTBOX] publish failed outboxId={}, eventId={}, err={}",
                             outbox.getId(), outbox.getEventId(), safeMsg(ex));
+
+                    metrics.incOutboxPublishFail(outbox.getEventType().name(), ex.getClass().getSimpleName());
 
                     statusUpdater.markFailed(
                             outbox.getId(),
