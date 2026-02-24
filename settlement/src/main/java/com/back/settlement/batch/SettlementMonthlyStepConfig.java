@@ -2,6 +2,7 @@ package com.back.settlement.batch;
 
 import static com.back.settlement.domain.SettlementPolicy.CHUNK_SIZE;
 
+import com.back.settlement.batch.listener.SettlementEnrichListener;
 import com.back.settlement.batch.reader.PayeeIdItemReader;
 import com.back.settlement.batch.writer.SettlementChunkWriter;
 import lombok.RequiredArgsConstructor;
@@ -17,11 +18,12 @@ import org.springframework.transaction.PlatformTransactionManager;
 public class SettlementMonthlyStepConfig {
 
     @Bean
-    public Step createSettlementsStep(JobRepository jobRepository, PlatformTransactionManager transactionManager, PayeeIdItemReader reader, SettlementChunkWriter writer) {
+    public Step createSettlementsStep(JobRepository jobRepository, PlatformTransactionManager transactionManager, PayeeIdItemReader reader, SettlementChunkWriter writer, SettlementEnrichListener enrichListener) {
         return new StepBuilder("createSettlementsStep", jobRepository)
-                .<Long, Long>chunk(CHUNK_SIZE, transactionManager)
+                .<PayeeSettlementWriteItem, PayeeSettlementWriteItem>chunk(CHUNK_SIZE, transactionManager)
                 .reader(reader)
                 .writer(writer)
+                .listener(enrichListener)
                 .build();
     }
 }

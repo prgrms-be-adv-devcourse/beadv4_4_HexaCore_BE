@@ -2,6 +2,7 @@ package com.back.settlement.batch.reader;
 
 import com.back.settlement.app.support.LocalDateUtils;
 import com.back.settlement.app.support.SettlementSupport;
+import com.back.settlement.batch.PayeeSettlementWriteItem;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.ArrayList;
@@ -16,7 +17,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @StepScope
 @Component
-public class PayeeIdItemReader implements ItemReader<Long> {
+public class PayeeIdItemReader implements ItemReader<PayeeSettlementWriteItem> {
     private final SettlementSupport settlementSupport;
     private final Long systemPayeeId;
     private final YearMonth targetMonth;
@@ -30,7 +31,7 @@ public class PayeeIdItemReader implements ItemReader<Long> {
     }
 
     @Override
-    public Long read() {
+    public PayeeSettlementWriteItem read() {
         if (!initialized) {
             LocalDateTime startAt = LocalDateUtils.startOfMonth(targetMonth);
             LocalDateTime endAt = LocalDateUtils.endOfMonth(targetMonth);
@@ -43,6 +44,6 @@ public class PayeeIdItemReader implements ItemReader<Long> {
             initialized = true;
             log.info("정산 대상: 판매자 {}명 + 시스템계좌, targetMonth={}", sellerIds.size(), targetMonth);
         }
-        return iterator != null && iterator.hasNext() ? iterator.next() : null;
+        return iterator != null && iterator.hasNext() ? PayeeSettlementWriteItem.create(iterator.next()) : null;
     }
 }
