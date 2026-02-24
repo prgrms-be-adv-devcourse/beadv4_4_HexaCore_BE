@@ -11,6 +11,12 @@ import java.time.LocalDateTime;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Table(
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_payment_outbox_event_id",
+                columnNames = "eventId"
+        )
+)
 public class PaymentOutbox {
 
     @Id
