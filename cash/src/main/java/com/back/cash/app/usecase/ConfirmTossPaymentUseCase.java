@@ -36,7 +36,12 @@ public class ConfirmTossPaymentUseCase {
 
         // 결과 반영
         return switch (tossResult.status()) {
-            case SUCCESS -> confirmPaymentSupport.applySuccess(req.orderId(), req.paymentKey());
+            case SUCCESS -> {
+                // 토스 확정 상태를 즉시 별도 트랜잭션으로 기록
+                // applySuccess()가 롤백되더라도 상태 유지
+                confirmPaymentSupport.markAsTossConfirmed(req.orderId(), req.paymentKey());
+                yield confirmPaymentSupport.applySuccess(req.orderId(), req.paymentKey());
+            }
             case FAIL -> confirmPaymentSupport.applyFailure(req.orderId(), tossResult.errorCode(), tossResult.failReason());
             case UNKNOWN -> {
                 log.warn("[TOSS_CONFIRM_UNKNOWN] orderId={} - 결제 상태 불확실", req.orderId());
@@ -62,6 +67,12 @@ public class ConfirmTossPaymentUseCase {
                     req.orderId(), req.paymentKey(), e.getMessage(), e);
             return TossConfirmResult.unknown();
         } catch (TossPaymentException e) {
+            // 이미 처리된 결제 응답이 온 경우 success로 return
+            if ("ALREADY_PROCESSED_PAYMENT".equals(e.getCode())) {
+                log.warn("[TOSS_CONFIRM_ALREADY_DONE] orderId={}, paymentKey={} - 이미 처리된 결제, 성공으로 재처리",
+                        req.orderId(), req.paymentKey());
+                return TossConfirmResult.success();
+            }
             log.error("[TOSS_CONFIRM_REJECT] orderId={}, code={}, msg={}", req.orderId(), e.getCode(), e.getMessage());
             return TossConfirmResult.fail(e.getCode(), e.getMessage());
         } catch (Exception e) {

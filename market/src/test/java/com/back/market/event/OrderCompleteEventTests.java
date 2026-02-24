@@ -21,7 +21,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
-public class OrderCompleteEventTest {
+public class OrderCompleteEventTests {
     @Mock
     private CompleteOrderUseCase completeOrderUseCase;
 

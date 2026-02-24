@@ -429,6 +429,75 @@ class ConfirmTossPaymentUseCaseTest {
         assertThat(payment.getStatus()).isEqualTo(PaymentStatus.FAIL);
     }
 
+    // ========== ALREADY_PROCESSED_PAYMENT / TOSS_CONFIRMED 재처리 ==========
+
+    @Test
+    @DisplayName("[재처리] 토스가 ALREADY_PROCESSED_PAYMENT 반환 시 FAIL이 아닌 SUCCESS로 처리하여 DONE")
+    void execute_whenTossAlreadyProcessed_thenTreatAsSuccessAndMarkDone() {
+        // given: markAsTossConfirmed() 실패 등으로 Payment가 READY에 고착된 상태에서 재시도
+        BigDecimal pgAmount = bd("18000");
+        TossConfirmRequest req = req(pgAmount);
+        Payment payment = paymentBuilder(PaymentStatus.READY).build();
+
+        given(paymentRepository.findWithLockByTossOrderId(ORDER_ID)).willReturn(Optional.of(payment));
+        doThrow(new TossPaymentException("ALREADY_PROCESSED_PAYMENT", "이미 처리된 결제입니다."))
+                .when(tossPaymentsClient).confirm(PAYMENT_KEY, ORDER_ID, pgAmount);
+        givenWallets(bd("0"));
+
+        // when
+        ConfirmResultResponseDto result = confirmTossPaymentUseCase.execute(req);
+
+        // then: FAIL이 아닌 SUCCESS 처리
+        assertThat(result.isSuccess()).isTrue();
+        assertThat(payment.getStatus()).isEqualTo(PaymentStatus.DONE);
+        verify(cashLogSupport).recordUserPgTopUpLog(eq(buyerWallet), eq(pgAmount), eq(REL_TYPE), eq(REL_ID));
+        verify(eventPublisher).publishEvent(any(Object.class));
+    }
+
+    @Test
+    @DisplayName("[재처리-TOSS_CONFIRMED] applySuccess() 롤백 후 재시도 시 TOSS_CONFIRMED → DONE 복구")
+    void execute_whenTossConfirmedAndRetry_thenApplySuccessAndMarkDone() {
+        // given: markAsTossConfirmed()는 성공했으나 applySuccess()가 실패하여 TOSS_CONFIRMED에 고착된 상태
+        BigDecimal pgAmount = bd("18000");
+        TossConfirmRequest req = req(pgAmount);
+        Payment payment = paymentBuilder(PaymentStatus.TOSS_CONFIRMED).paymentKey(PAYMENT_KEY).build();
+
+        given(paymentRepository.findWithLockByTossOrderId(ORDER_ID)).willReturn(Optional.of(payment));
+        doThrow(new TossPaymentException("ALREADY_PROCESSED_PAYMENT", "이미 처리된 결제입니다."))
+                .when(tossPaymentsClient).confirm(PAYMENT_KEY, ORDER_ID, pgAmount);
+        givenWallets(bd("0"));
+
+        // when
+        ConfirmResultResponseDto result = confirmTossPaymentUseCase.execute(req);
+
+        // then: 정상 복구
+        assertThat(result.isSuccess()).isTrue();
+        assertThat(payment.getStatus()).isEqualTo(PaymentStatus.DONE);
+        verify(cashLogSupport).recordUserPgTopUpLog(eq(buyerWallet), eq(pgAmount), eq(REL_TYPE), eq(REL_ID));
+        verify(eventPublisher).publishEvent(any(Object.class));
+    }
+
+    @Test
+    @DisplayName("[TOSS_CONFIRMED 보호] TOSS_CONFIRMED 상태 결제에 다른 토스 에러 시 BadRequestException")
+    void execute_whenTossConfirmed_andTossReturnsOtherError_thenBlockApplyFailure() {
+        // given: 토스가 이미 확정한 결제인데 예상치 못한 에러 코드가 반환된 경우
+        BigDecimal pgAmount = bd("18000");
+        TossConfirmRequest req = req(pgAmount);
+        Payment payment = paymentBuilder(PaymentStatus.TOSS_CONFIRMED).paymentKey(PAYMENT_KEY).build();
+
+        given(paymentRepository.findWithLockByTossOrderId(ORDER_ID)).willReturn(Optional.of(payment));
+        doThrow(new TossPaymentException("REJECT_CARD_COMPANY", "카드사 거절"))
+                .when(tossPaymentsClient).confirm(PAYMENT_KEY, ORDER_ID, pgAmount);
+
+        // when & then: 토스가 확정한 결제는 FAIL 처리 차단
+        assertThatThrownBy(() -> confirmTossPaymentUseCase.execute(req))
+                .isInstanceOf(BadRequestException.class);
+
+        assertThat(payment.getStatus()).isEqualTo(PaymentStatus.TOSS_CONFIRMED);
+        verifyNoInteractions(walletSupport);
+        verifyNoInteractions(eventPublisher);
+    }
+
     // ========== 타임아웃/네트워크 오류 → PENDING ==========
 
     @Test

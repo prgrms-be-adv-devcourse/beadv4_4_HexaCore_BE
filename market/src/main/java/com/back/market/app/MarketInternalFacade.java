@@ -5,13 +5,11 @@ import com.back.market.adapter.out.MarketUserRepository;
 import com.back.market.app.usecase.*;
 import com.back.common.dto.cash.request.PaymentCompletedRequestDto;
 import com.back.market.domain.MarketUser;
-import com.back.market.event.payload.ProductCreatedPayload;
-import com.back.market.event.payload.ProductDeletedPayload;
-import com.back.market.event.payload.ProductUpdatedPayload;
-import com.back.market.event.payload.UserCreatedPayload;
+import com.back.market.event.payload.*;
 import com.back.market.event.resultpayload.ProductCreatedResultPayload;
 import com.back.market.event.resultpayload.ProductUpdatedResultPayload;
 import com.back.market.event.resultpayload.UserCreatedResultPayload;
+import com.back.market.event.resultpayload.UserUpdatedResultPayload;
 import com.back.market.mapper.MarketProductMapper;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +35,7 @@ public class MarketInternalFacade {
     private final CreateProductUseCase createProductUseCase;
     private final UpdateProductUseCase updateProductUseCase;
     private final DeleteProductUseCase deleteProductUseCase;
+    private final UpdateMarketUserUseCase updateMarketUserUseCase;
 
     /**
      * Cash 모듈로부터 결제 완료(입금 확인) 통지를 수신하여 주문 상태를 확정
@@ -45,6 +44,18 @@ public class MarketInternalFacade {
     @Transactional
     public boolean confirmPayment(PaymentCompletedRequestDto requestDto) {
         return confirmPaymentUseCase.confirmPayment(requestDto);
+    }
+
+    @Transactional
+    public void handlePaymentCompletedEvent(PaymentCompletedPayload payload) {
+        //log.info("[MarketInternalFacade] 결제 완료 이벤트 처리 시작 - Type: {}, ID: {}", payload.relType(), payload.relId());
+        confirmPaymentUseCase.confirmPayment(payload);
+    }
+
+    @Transactional
+    public void handlePaymentFailedEvent(PaymentFailedPayload payload) {
+        //log.info("[MarketInternalFacade] 결제 실패 이벤트 처리 시작 - Type: {}, ID: {}", payload.relType(), payload.relId());
+        confirmPaymentUseCase.handlePaymentFailure(payload);
     }
 
     /**
@@ -92,6 +103,15 @@ public class MarketInternalFacade {
     }
 
     @Transactional
+    public void handleUserUpdatedEvent(UserUpdatedPayload payload) {
+        log.info("[MarketInternalFacade] 유저 업데이트 이벤트 처리 시작 - ID: {}", payload.id());
+        UserUpdatedResultPayload resultPayload = UserUpdatedResultPayload.of(
+                payload.id(), payload.name(), payload.address(), payload.phone()
+        );
+        updateMarketUserUseCase.updateMarketUser(resultPayload);
+    }
+
+    @Transactional
     public void handleProductCreatedEvent(@Valid ProductCreatedPayload payload) {
         try {
             log.info("[MarketInternalFacade] 상품 생성 이벤트 수신, 처리 시작");
@@ -111,7 +131,7 @@ public class MarketInternalFacade {
                         payload.productInfo().name());
             }
         } catch (Exception e) {
-            log.error("[MarketInternalFacade] 상품 처리 중 예외 발생! - 상품명: {}, 사유: {}",
+            log.error("[MarketInternalFacade] 상품 처리 중 예외 발생 - 상품명: {}, 사유: {}",
                     payload.productInfo().name(), e.getMessage(), e);
             throw e;
         }

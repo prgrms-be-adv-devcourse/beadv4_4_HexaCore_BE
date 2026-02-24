@@ -53,6 +53,10 @@ public class Payment extends BaseTimeEntity {
 
     private LocalDateTime releasedAt;
 
+    public void markAsTossConfirmed() {
+        this.status = PaymentStatus.TOSS_CONFIRMED;
+    }
+
     public void markAsDone() {
         this.status = PaymentStatus.DONE;
     }

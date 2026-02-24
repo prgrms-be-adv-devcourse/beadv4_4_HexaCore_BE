@@ -19,7 +19,7 @@ public class MarketSpringEventListener {
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleOrderCompletedEvent(OrderCompletedEvent springEvent) {
-        marketKafkaEventPublisher.sendOrderConfirmed(springEvent);
+        marketKafkaEventPublisher.sendOrderCompleted(springEvent);
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)

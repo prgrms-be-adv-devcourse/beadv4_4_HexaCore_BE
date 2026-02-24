@@ -3,7 +3,6 @@ package com.back.market.adapter.out.event;
 import com.back.common.code.FailureCode;
 import com.back.common.event.Envelope;
 import com.back.common.event.KafkaEventPublisher;
-import com.back.common.event.KafkaPayload;
 import com.back.common.exception.CustomException;
 import com.back.market.event.OrderCreatedEvent;
 import com.back.market.event.SellBiddingCreatedEvent;
@@ -30,21 +29,9 @@ public class MarketKafkaEventPublisher {
     @Value("${custom.kafka.topic.market-order-created}")
     private String orderCreatedTopic;
 
-    // 공통 실행 템플릿 메서드
-    private <T extends KafkaPayload> void publishWithErrorHandler(String topic, Envelope<T> envelope, Runnable publishTask) {
-        try {
-            publishTask.run();
-            log.info("[MarketKafkaEventPublisher] 카프카 이벤트 발행 완료. | Topic: {}, Data: {}, eventId: {}", topic, envelope.payload(), envelope.header().eventId());
-        } catch (CustomException e) {
-            throw e;
-        } catch (Exception e) {
-            log.error("[MarketKafkaEventPublisher] 카프카 발행 중 시스템 오류 발생. | Topic: {}, Data: {}, , eventId: {}, Error: {}", topic, envelope.payload(), envelope.header().eventId(), e.getMessage());
-            throw new CustomException(FailureCode.INTERNAL_SERVER_ERROR);
-        }
-    }
 
     // 구매 확정 이벤트
-    public void sendOrderConfirmed(OrderCompletedEvent event) {
+    public void sendOrderCompleted(OrderCompletedEvent event) {
         // 1. 데이터 검증 및 예외 처리
         if(event.orderId() == null || event.sellerId() == null) {
             log.error("[MarketKafkaEventPublisher] 필수 데이터 누락: orderId={}, sellerId={}", event.orderId(), event.sellerId());
@@ -65,7 +52,7 @@ public class MarketKafkaEventPublisher {
 
         Envelope<OrderCompletedPayload> envelope = Envelope.of(orderCompletedTopic, payload);
 
-        publishWithErrorHandler(orderCompletedTopic, envelope, () -> kafkaEventPublisher.publish(orderCompletedTopic, envelope));
+        kafkaEventPublisher.publish(orderCompletedTopic, envelope);
     }
 
     // 판매 입찰 생성 이벤트
@@ -92,7 +79,7 @@ public class MarketKafkaEventPublisher {
 
         Envelope<SellBiddingCreatedPayload> envelope = Envelope.of(sellBiddingCreatedTopic, payload);
 
-        publishWithErrorHandler(sellBiddingCreatedTopic, envelope, () -> kafkaEventPublisher.publish(sellBiddingCreatedTopic, envelope));
+        kafkaEventPublisher.publish(sellBiddingCreatedTopic, envelope);
     }
 
     // 주문 생성 이벤트
@@ -122,6 +109,6 @@ public class MarketKafkaEventPublisher {
 
         Envelope<OrderCreatedPayload> envelope = Envelope.of(orderCreatedTopic, payload);
 
-        publishWithErrorHandler(orderCreatedTopic, envelope, () -> kafkaEventPublisher.publish(orderCreatedTopic, envelope));
+        kafkaEventPublisher.publish(orderCreatedTopic, envelope);
     }
 }
