@@ -78,7 +78,7 @@ public class GetInstantPriceUseCase {
     }
 
     private void verifyProductExists(Long productId) {
-        if (!marketSupport.existsByMarketProduct(productId)) {
+        if (marketSupport.isMarketProductMissing(productId)) {
             throw new BadRequestException(FailureCode.PRODUCT_NOT_FOUND);
         }
     }

@@ -22,7 +22,7 @@ public class CreateProductUseCase {
     public int createMarketProduct(List<ProductCreatedResultPayload> payloads) {
         int savedCount = 0;
         for(ProductCreatedResultPayload payload: payloads) {
-            if(!marketSupport.existsByMarketProduct(payload.productOptionId())) {
+            if(marketSupport.isMarketProductMissing(payload.productOptionId())) {
                 MarketProduct product = marketProductMapper.toEntity(payload);
                 marketProductRepository.save(product);
                 savedCount++;

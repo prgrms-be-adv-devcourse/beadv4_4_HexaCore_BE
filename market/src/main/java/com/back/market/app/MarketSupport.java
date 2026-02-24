@@ -82,10 +82,10 @@ public class MarketSupport {
     /**
      * MarketProduct 존재 여부 확인
      * @param productId PK
-     * @return boolean
+     * @return boolean 상품이 없는 경우 true 반환
      */
-    public boolean existsByMarketProduct(Long productId) {
-        return marketProductRepository.existsById(productId);
+    public boolean isMarketProductMissing(Long productId) {
+        return !marketProductRepository.existsById(productId);
     }
 
     /**
