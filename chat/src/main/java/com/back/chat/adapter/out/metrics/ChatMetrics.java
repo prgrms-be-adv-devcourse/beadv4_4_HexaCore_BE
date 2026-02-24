@@ -98,4 +98,6 @@ public class ChatMetrics {
         if (v.length() > 50) return v.substring(0, 50);
         return v;
     }
+
+    public MeterRegistry getRegistry() { return registry; }
 }

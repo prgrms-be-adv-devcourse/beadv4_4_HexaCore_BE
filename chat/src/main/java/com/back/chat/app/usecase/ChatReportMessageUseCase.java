@@ -17,6 +17,7 @@ import com.back.common.chat.ChatMessageBlindedKafkaEvent;
 import com.back.common.code.FailureCode;
 import com.back.common.exception.BadRequestException;
 import com.back.common.exception.ConflictException;
+import io.micrometer.core.instrument.Tags;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -94,16 +95,21 @@ public class ChatReportMessageUseCase {
                 throw new IllegalStateException("Outbox payload 직렬화 실패", e);
             }
 
-            ChatOutbox outbox = chatOutboxRepository.save(
-                    ChatOutbox.pending(
-                            UUID.fromString(payload.eventId()),
-                            "CHAT_MESSAGE",
-                            message.getId(),
-                            ChatEventType.MESSAGE_BLINDED,
-                            payloadJson,
-                            now
+            ChatOutbox outbox = metrics.recordCallable(
+                    "resello_chat_outbox_save_seconds",
+                    Tags.of("eventType", ChatEventType.MESSAGE_BLINDED.name()),
+                    () -> chatOutboxRepository.save(
+                            ChatOutbox.pending(
+                                    UUID.fromString(payload.eventId()),
+                                    "CHAT_MESSAGE",
+                                    message.getId(),
+                                    ChatEventType.MESSAGE_BLINDED,
+                                    payloadJson,
+                                    now
+                            )
                     )
             );
+
             eventPublisher.publishEvent(new ChatOutboxSavedEvent(outbox.getId()));
         }
 

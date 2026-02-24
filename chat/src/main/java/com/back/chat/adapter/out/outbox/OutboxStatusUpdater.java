@@ -5,7 +5,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -18,8 +17,7 @@ public class OutboxStatusUpdater {
     }
 
     @Transactional
-    public void markFailed(Long outboxId, String error, LocalDateTime now,
-                           int retryBaseDelaySeconds) {
+    public void markFailed(Long outboxId, String error, int retryBaseDelaySeconds) {
         chatOutboxRepository.markInitialFailed(outboxId, error, retryBaseDelaySeconds);
     }
 

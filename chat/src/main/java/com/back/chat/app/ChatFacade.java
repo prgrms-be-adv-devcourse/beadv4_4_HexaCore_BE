@@ -56,7 +56,13 @@ public class ChatFacade {
 
     @Transactional
     public ChatMessageReportResponseDto reportMessage(Long reporterUserId, ChatMessageReportRequestDto requestDto) {
-        return chatReportMessageUseCase.reportMessage(reporterUserId, requestDto);
+        return metrics.recordCallable(
+                "resello_chat_report_seconds",
+                Tags.of("result","ok"),
+                () -> {
+                    return chatReportMessageUseCase.reportMessage(reporterUserId, requestDto);
+                }
+        );
     }
 
     @Transactional

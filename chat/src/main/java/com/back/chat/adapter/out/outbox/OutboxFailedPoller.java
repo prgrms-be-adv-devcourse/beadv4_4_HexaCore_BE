@@ -1,5 +1,6 @@
 package com.back.chat.adapter.out.outbox;
 
+import com.back.chat.adapter.out.metrics.ChatMetrics;
 import com.back.chat.domain.event.ChatEventType;
 import com.back.common.chat.ChatDeadLetterPayload;
 import com.back.common.chat.ChatMessageBlindedKafkaEvent;
@@ -13,6 +14,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static com.back.chat.adapter.out.outbox.OutboxUtil.safeMsg;
 
@@ -29,9 +31,16 @@ public class OutboxFailedPoller {
 
     private final JsonMapper jsonMapper;
 
+    private final ChatMetrics metrics;
+
+    private final AtomicLong lastBacklogUpdateEpochMs = new AtomicLong(0);
+
     @Scheduled(fixedDelay = OutboxPollingProperties.failedPollIntervalMs)
     public void tickFailedOnly() {
         LocalDateTime now = LocalDateTime.now();
+
+        // 30초에 한번 FAILED 상태의 대기 Outbox 개수 조회 및 게이지 갱신.
+        updateBacklogIfNeeded();
 
         // 1) FAILED 중 재시도 시간 도달한 것만 선점
         List<Long> claimedIds =
@@ -98,5 +107,15 @@ public class OutboxFailedPoller {
                         }
                     });
         }
+    }
+
+    private void updateBacklogIfNeeded() {
+        long nowMs = System.currentTimeMillis();
+        long prev = lastBacklogUpdateEpochMs.get();
+        if (nowMs - prev < 30_000) return;
+
+        if (!lastBacklogUpdateEpochMs.compareAndSet(prev, nowMs)) return;
+
+        metrics.setOutboxRetryBacklog(Math.toIntExact(outboxRepository.countByStatus(OutboxStatus.FAILED)));
     }
 }
