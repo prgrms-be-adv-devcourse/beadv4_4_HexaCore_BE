@@ -83,7 +83,7 @@ public class MatchInstantTradeRollbackTests {
                     "신발",        // name
                     "N1",         // productNumber
                     "270",        // productOption (사이즈)
-                    100000L,      // price
+                    BigDecimal.valueOf(100000L),      // price
                     "스니커즈",     // categoryName
                     "img"
             ));
