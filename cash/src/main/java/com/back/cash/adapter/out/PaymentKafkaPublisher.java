@@ -1,8 +1,6 @@
 package com.back.cash.adapter.out;
 
-import com.back.cash.app.event.PaymentCompletedPayload;
 import com.back.cash.app.event.PaymentFailPayload;
-import com.back.cash.domain.event.PaymentCompletedEvent;
 import com.back.cash.domain.event.PaymentFailedEvent;
 import com.back.common.event.Envelope;
 import com.back.common.event.KafkaEventPublisher;
@@ -18,27 +16,10 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @Slf4j
 public class PaymentKafkaPublisher {
 
-    @Value("${custom.kafka.topic.cash-payment-completed}")
-    private String paymentCompletedTopic;
-
     @Value("${custom.kafka.topic.cash-payment-failed}")
     private String paymentFailedTopic;
 
     private final KafkaEventPublisher kafkaEventPublisher;
-
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void publishCompleted(PaymentCompletedEvent event) {
-        Envelope<PaymentCompletedPayload> envelope = Envelope.of(
-                paymentCompletedTopic,
-                new PaymentCompletedPayload(event.relType(), event.relId(), event.totalAmount())
-        );
-
-        kafkaEventPublisher.publish(paymentCompletedTopic, envelope);
-
-        log.info("[PAYMENT_COMPLETED_KAFKA_PUBLISH] 결제 검증 완료 이벤트 발행 eventId={}, occurredAt={}, topic={}, relType={}, relId={}",
-                envelope.header().eventId(), envelope.header().occurrenceAt(), paymentCompletedTopic, event.relType(), event.relId());
-    }
-
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void publishFailed(PaymentFailedEvent event) {
