@@ -33,9 +33,6 @@ public class UserUpdatedKafkaPublisher {
                 .build());
 
         kafkaEventPublisher.publish(userUpdatedTopic, envelope);
-
-        log.info("[ACCOUNT_UPDATED_KAFKA_PUBLISH] 회원 정보 수정 이벤트 발행 eventId={}, occurredAt={}, topic={}, userId={}",
-                envelope.header().eventId(), envelope.header().occurrenceAt(), userUpdatedTopic, event.id());
     }
 
 }
