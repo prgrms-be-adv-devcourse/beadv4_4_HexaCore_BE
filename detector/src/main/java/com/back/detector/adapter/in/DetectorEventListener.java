@@ -1,6 +1,6 @@
 package com.back.detector.adapter.in;
 
-import com.back.common.user.event.UserCreatedEvent;
+import com.back.detector.app.event.payload.UserCreatedEvent;
 import com.back.detector.app.HijackDetector;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

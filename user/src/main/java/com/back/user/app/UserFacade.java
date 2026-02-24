@@ -1,7 +1,7 @@
 package com.back.user.app;
 
 import com.back.common.event.KafkaEventPublisher;
-import com.back.common.user.event.FcmTokenChangedEvent;
+import com.back.user.app.event.FcmTokenChangedEvent;
 import com.back.user.domain.User;
 import com.back.user.dto.request.UpdateFcmTokenRequest;
 import com.back.user.dto.request.UpdateNotificationSettingsRequest;

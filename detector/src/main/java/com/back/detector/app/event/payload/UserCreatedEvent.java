@@ -1,4 +1,4 @@
-package com.back.common.user.event;
+package com.back.detector.app.event.payload;
 
 import com.back.common.event.EventName;
 
