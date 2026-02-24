@@ -1,6 +1,6 @@
 package com.back.cash.adapter.out.outbox;
 
-import com.back.cash.domain.outbox.PaymentCompletedOutbox;
+import com.back.cash.domain.outbox.PaymentOutbox;
 import com.back.cash.domain.outbox.enums.OutboxStatus;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -44,18 +44,18 @@ public class PaymentCompletedOutboxPoller {
     @Scheduled(fixedDelay = 5000)
     @Transactional
     public void poll() {
-        List<PaymentCompletedOutbox> pending =
+        List<PaymentOutbox> pending =
                 outboxRepository.findByStatusOrderByCreatedAtAsc(OutboxStatus.PENDING, Limit.of(pollSize));
 
-        List<PaymentCompletedOutbox> retryable =
+        List<PaymentOutbox> retryable =
                 outboxRepository.findRetryable(maxRetry, LocalDateTime.now(), Limit.of(pollSize));
 
         process(pending);
         process(retryable);
     }
 
-    private void process(List<PaymentCompletedOutbox> list) {
-        for (PaymentCompletedOutbox outbox : list) {
+    private void process(List<PaymentOutbox> list) {
+        for (PaymentOutbox outbox : list) {
             try {
                 outboxKafkaTemplate.send(outbox.getTopic(), outbox.getPayload()).get();
                 outbox.markAsSent();
