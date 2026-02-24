@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class PaymentCompletedOutbox {
+public class PaymentOutbox {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -35,8 +35,8 @@ public class PaymentCompletedOutbox {
 
     private LocalDateTime nextRetryAt;
 
-    public static PaymentCompletedOutbox createPending(String eventId, String topic, String payload) {
-        PaymentCompletedOutbox outbox = new PaymentCompletedOutbox();
+    public static PaymentOutbox createPending(String eventId, String topic, String payload) {
+        PaymentOutbox outbox = new PaymentOutbox();
         outbox.eventId = eventId;
         outbox.topic = topic;
         outbox.payload = payload;

@@ -1,6 +1,6 @@
 package com.back.cash.adapter.out.outbox;
 
-import com.back.cash.domain.outbox.PaymentCompletedOutbox;
+import com.back.cash.domain.outbox.PaymentOutbox;
 import com.back.cash.domain.outbox.enums.OutboxStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -25,12 +25,12 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class PaymentCompletedOutboxPollerTest {
+class PaymentOutboxPollerTest {
 
-    private PaymentCompletedOutboxPoller poller;
+    private PaymentOutboxPoller poller;
 
     @Mock
-    private PaymentCompletedOutboxRepository outboxRepository;
+    private PaymentOutboxRepository outboxRepository;
 
     @Mock
     private KafkaTemplate<String, String> outboxKafkaTemplate;
@@ -40,7 +40,7 @@ class PaymentCompletedOutboxPollerTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        poller = new PaymentCompletedOutboxPoller(outboxRepository, outboxKafkaTemplate);
+        poller = new PaymentOutboxPoller(outboxRepository, outboxKafkaTemplate);
         setField(poller, "pollSize", 100);
         setField(poller, "maxRetry", 10);
         setField(poller, "retryBaseDelaySeconds", 60);
@@ -67,7 +67,7 @@ class PaymentCompletedOutboxPollerTest {
     @DisplayName("poll - PENDING 발행 성공 시 SENT 상태로 변경")
     void poll_whenSendSuccess_thenMarkAsSent() {
         // given
-        PaymentCompletedOutbox outbox = PaymentCompletedOutbox.createPending("event-id-1", TOPIC, PAYLOAD);
+        PaymentOutbox outbox = PaymentOutbox.createPending("event-id-1", TOPIC, PAYLOAD);
         given(outboxRepository.findByStatusOrderByCreatedAtAsc(eq(OutboxStatus.PENDING), any(Limit.class)))
                 .willReturn(List.of(outbox));
         given(outboxRepository.findRetryable(anyInt(), any(), any(Limit.class)))
@@ -88,7 +88,7 @@ class PaymentCompletedOutboxPollerTest {
     @DisplayName("poll - 발행 실패 시 FAILED 상태, retryCount 증가, nextRetryAt 세팅")
     void poll_whenSendFails_thenMarkAsFailed() {
         // given
-        PaymentCompletedOutbox outbox = PaymentCompletedOutbox.createPending("event-id-2", TOPIC, PAYLOAD);
+        PaymentOutbox outbox = PaymentOutbox.createPending("event-id-2", TOPIC, PAYLOAD);
         given(outboxRepository.findByStatusOrderByCreatedAtAsc(eq(OutboxStatus.PENDING), any(Limit.class)))
                 .willReturn(List.of(outbox));
         given(outboxRepository.findRetryable(anyInt(), any(), any(Limit.class)))
@@ -111,7 +111,7 @@ class PaymentCompletedOutboxPollerTest {
     @DisplayName("poll - FAILED 재시도 대상 발행 성공 시 SENT 상태로 변경")
     void poll_whenRetryableSuccess_thenMarkAsSent() {
         // given
-        PaymentCompletedOutbox retryable = PaymentCompletedOutbox.createPending("event-id-3", TOPIC, PAYLOAD);
+        PaymentOutbox retryable = PaymentOutbox.createPending("event-id-3", TOPIC, PAYLOAD);
         retryable.markAsFailed(60, 300);
 
         given(outboxRepository.findByStatusOrderByCreatedAtAsc(eq(OutboxStatus.PENDING), any(Limit.class)))
@@ -132,8 +132,8 @@ class PaymentCompletedOutboxPollerTest {
     @DisplayName("poll - 여러 건 중 일부 실패해도 나머지는 정상 처리")
     void poll_whenPartialFailure_thenProcessesEachIndependently() {
         // given
-        PaymentCompletedOutbox success = PaymentCompletedOutbox.createPending("event-id-1", TOPIC, PAYLOAD);
-        PaymentCompletedOutbox fail = PaymentCompletedOutbox.createPending("event-id-2", TOPIC, PAYLOAD);
+        PaymentOutbox success = PaymentOutbox.createPending("event-id-1", TOPIC, PAYLOAD);
+        PaymentOutbox fail = PaymentOutbox.createPending("event-id-2", TOPIC, PAYLOAD);
 
         given(outboxRepository.findByStatusOrderByCreatedAtAsc(eq(OutboxStatus.PENDING), any(Limit.class)))
                 .willReturn(List.of(success, fail));
@@ -159,7 +159,7 @@ class PaymentCompletedOutboxPollerTest {
     @DisplayName("poll - FAILED 재시도가 또 실패하면 retryCount 누적, nextRetryAt 더 뒤로 밀림")
     void poll_whenRetryableFails_thenRetryCountAccumulatesAndNextRetryAtDelayed() {
         // given
-        PaymentCompletedOutbox retryable = PaymentCompletedOutbox.createPending("event-id-4", TOPIC, PAYLOAD);
+        PaymentOutbox retryable = PaymentOutbox.createPending("event-id-4", TOPIC, PAYLOAD);
         retryable.markAsFailed(60, 300); // retryCount=1, nextRetryAt=+60s
         LocalDateTime firstNextRetryAt = retryable.getNextRetryAt();
 

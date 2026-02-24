@@ -10,7 +10,7 @@ import org.springframework.data.repository.query.Param;
 import java.time.LocalDateTime;
 import java.util.List;
 
-public interface PaymentCompletedOutboxRepository extends JpaRepository<PaymentOutbox, Long> {
+public interface PaymentOutboxRepository extends JpaRepository<PaymentOutbox, Long> {
 
     List<PaymentOutbox> findByStatusOrderByCreatedAtAsc(OutboxStatus status, Limit limit);
 

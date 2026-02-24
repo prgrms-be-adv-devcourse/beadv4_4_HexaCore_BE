@@ -1,8 +1,8 @@
 package com.back.cash.adapter.in.listener;
 
-import com.back.cash.adapter.out.outbox.PaymentCompletedOutboxRepository;
+import com.back.cash.adapter.out.outbox.PaymentOutboxRepository;
 import com.back.cash.domain.event.PaymentCompletedEvent;
-import com.back.cash.domain.outbox.PaymentCompletedOutbox;
+import com.back.cash.domain.outbox.PaymentOutbox;
 import com.back.cash.domain.outbox.enums.OutboxStatus;
 import com.back.common.dto.cash.enums.RelType;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,18 +24,18 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
-class PaymentCompletedOutboxListenerTest {
+class PaymentOutboxListenerTest {
 
     private PaymentCompletedOutboxListener listener;
 
     @Mock
-    private PaymentCompletedOutboxRepository outboxRepository;
+    private PaymentOutboxRepository outboxRepository;
 
     @Mock
     private JsonMapper jsonMapper;
 
     @Captor
-    private ArgumentCaptor<PaymentCompletedOutbox> outboxCaptor;
+    private ArgumentCaptor<PaymentOutbox> outboxCaptor;
 
     private static final String TOPIC = "cash.payment.completed";
     private static final String MOCKED_JSON = "{\"header\":{\"eventId\":\"uuid\"},\"payload\":{}}";
@@ -59,7 +59,7 @@ class PaymentCompletedOutboxListenerTest {
         // then
         verify(outboxRepository).save(outboxCaptor.capture());
 
-        PaymentCompletedOutbox saved = outboxCaptor.getValue();
+        PaymentOutbox saved = outboxCaptor.getValue();
         assertThat(saved.getTopic()).isEqualTo(TOPIC);
         assertThat(saved.getPayload()).isEqualTo(MOCKED_JSON);
         assertThat(saved.getStatus()).isEqualTo(OutboxStatus.PENDING);

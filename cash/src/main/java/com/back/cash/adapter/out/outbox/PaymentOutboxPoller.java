@@ -16,9 +16,9 @@ import java.util.List;
 
 @Component
 @Slf4j
-public class PaymentCompletedOutboxPoller {
+public class PaymentOutboxPoller {
 
-    private final PaymentCompletedOutboxRepository outboxRepository;
+    private final PaymentOutboxRepository outboxRepository;
     private final KafkaTemplate<String, String> outboxKafkaTemplate;
 
     @Value("${custom.outbox.poll-size:100}")
@@ -33,8 +33,8 @@ public class PaymentCompletedOutboxPoller {
     @Value("${custom.outbox.retry-max-delay-seconds:300}")
     private int retryMaxDelaySeconds;
 
-    public PaymentCompletedOutboxPoller(
-            PaymentCompletedOutboxRepository outboxRepository,
+    public PaymentOutboxPoller(
+            PaymentOutboxRepository outboxRepository,
             @Qualifier("outboxKafkaTemplate") KafkaTemplate<String, String> outboxKafkaTemplate
     ) {
         this.outboxRepository = outboxRepository;
@@ -59,10 +59,10 @@ public class PaymentCompletedOutboxPoller {
             try {
                 outboxKafkaTemplate.send(outbox.getTopic(), outbox.getPayload()).get();
                 outbox.markAsSent();
-                log.info("[PAYMENT_COMPLETED_OUTBOX_SENT] 결제 검증 완료 이벤트 발행 eventId={}, topic={}", outbox.getEventId(), outbox.getTopic());
+                log.info("[PAYMENT_OUTBOX_SENT] 결제 검증 이벤트 발행 eventId={}, topic={}", outbox.getEventId(), outbox.getTopic());
             } catch (Exception e) {
                 outbox.markAsFailed(retryBaseDelaySeconds, retryMaxDelaySeconds);
-                log.error("[PAYMENT_COMPLETED_OUTBOX_SEND_FAILED] 결제 검증 완료 이벤트 실패 eventId={}, retryCount={}, nextRetryAt={}",
+                log.error("[PAYMENT_OUTBOX_SEND_FAILED] 결제 검증 이벤트 발행 실패 eventId={}, retryCount={}, nextRetryAt={}",
                         outbox.getEventId(), outbox.getRetryCount(), outbox.getNextRetryAt(), e);
             }
         }

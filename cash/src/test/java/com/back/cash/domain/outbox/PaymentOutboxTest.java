@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class PaymentCompletedOutboxTest {
+class PaymentOutboxTest {
 
     private static final String EVENT_ID = "test-event-id";
     private static final String TOPIC = "cash.payment.completed";
@@ -19,7 +19,7 @@ class PaymentCompletedOutboxTest {
     @Test
     @DisplayName("createPending - PENDING 상태로 생성, retryCount=0, createdAt 세팅")
     void createPending_initialState() {
-        PaymentCompletedOutbox outbox = PaymentCompletedOutbox.createPending(EVENT_ID, TOPIC, PAYLOAD);
+        PaymentOutbox outbox = PaymentOutbox.createPending(EVENT_ID, TOPIC, PAYLOAD);
 
         assertThat(outbox.getEventId()).isEqualTo(EVENT_ID);
         assertThat(outbox.getTopic()).isEqualTo(TOPIC);
@@ -34,7 +34,7 @@ class PaymentCompletedOutboxTest {
     @Test
     @DisplayName("markAsSent - SENT 상태로 변경, processedAt 세팅")
     void markAsSent_changeStatusToSent() {
-        PaymentCompletedOutbox outbox = PaymentCompletedOutbox.createPending(EVENT_ID, TOPIC, PAYLOAD);
+        PaymentOutbox outbox = PaymentOutbox.createPending(EVENT_ID, TOPIC, PAYLOAD);
 
         outbox.markAsSent();
 
@@ -45,7 +45,7 @@ class PaymentCompletedOutboxTest {
     @Test
     @DisplayName("markAsFailed - FAILED 상태로 변경, retryCount 증가, nextRetryAt 세팅")
     void markAsFailed_changeStatusAndIncrementRetryCount() {
-        PaymentCompletedOutbox outbox = PaymentCompletedOutbox.createPending(EVENT_ID, TOPIC, PAYLOAD);
+        PaymentOutbox outbox = PaymentOutbox.createPending(EVENT_ID, TOPIC, PAYLOAD);
         LocalDateTime before = LocalDateTime.now();
 
         outbox.markAsFailed(BASE_DELAY, MAX_DELAY);
@@ -59,7 +59,7 @@ class PaymentCompletedOutboxTest {
     @Test
     @DisplayName("markAsFailed - 지수 백오프: 반복 실패 시 nextRetryAt이 점점 늘어남")
     void markAsFailed_exponentialBackoff() {
-        PaymentCompletedOutbox outbox = PaymentCompletedOutbox.createPending(EVENT_ID, TOPIC, PAYLOAD);
+        PaymentOutbox outbox = PaymentOutbox.createPending(EVENT_ID, TOPIC, PAYLOAD);
 
         outbox.markAsFailed(BASE_DELAY, MAX_DELAY); // 1번: 60초
         LocalDateTime firstRetryAt = outbox.getNextRetryAt();
@@ -78,7 +78,7 @@ class PaymentCompletedOutboxTest {
     @Test
     @DisplayName("markAsFailed - 지수 백오프가 maxDelay를 초과하면 maxDelay로 고정")
     void markAsFailed_cappedAtMaxDelay() {
-        PaymentCompletedOutbox outbox = PaymentCompletedOutbox.createPending(EVENT_ID, TOPIC, PAYLOAD);
+        PaymentOutbox outbox = PaymentOutbox.createPending(EVENT_ID, TOPIC, PAYLOAD);
         int smallMax = 50;
 
         outbox.markAsFailed(BASE_DELAY, smallMax); // 2^0 * 60 = 60 → cap 50
