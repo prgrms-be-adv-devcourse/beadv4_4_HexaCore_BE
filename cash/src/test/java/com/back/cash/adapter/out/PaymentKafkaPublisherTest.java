@@ -1,8 +1,6 @@
 package com.back.cash.adapter.out;
 
-import com.back.cash.app.event.PaymentCompletedPayload;
 import com.back.cash.app.event.PaymentFailPayload;
-import com.back.cash.domain.event.PaymentCompletedEvent;
 import com.back.cash.domain.event.PaymentFailedEvent;
 import com.back.common.dto.cash.enums.RelType;
 import com.back.common.event.Envelope;
@@ -17,7 +15,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.lang.reflect.Field;
-import java.math.BigDecimal;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -34,39 +31,12 @@ class PaymentKafkaPublisherTest {
     @Captor
     private ArgumentCaptor<Envelope<?>> envelopeCaptor;
 
-    private static final String COMPLETED_TOPIC = "cash.payment.completed";
     private static final String FAILED_TOPIC = "cash.payment.failed";
 
     @BeforeEach
     void setUp() throws Exception {
         publisher = new PaymentKafkaPublisher(kafkaEventPublisher);
-        setField(publisher, "paymentCompletedTopic", COMPLETED_TOPIC);
         setField(publisher, "paymentFailedTopic", FAILED_TOPIC);
-    }
-
-    @Test
-    @DisplayName("[publishCompleted] PaymentCompletedEvent → PAYMENT_COMPLETED Envelope로 발행")
-    void publishCompleted_sendsEnvelopeWithCorrectPayload() {
-        // given
-        PaymentCompletedEvent event = new PaymentCompletedEvent(
-                RelType.ORDER, 100L, new BigDecimal("30000")
-        );
-
-        // when
-        publisher.publishCompleted(event);
-
-        // then
-        verify(kafkaEventPublisher).publish(eq(COMPLETED_TOPIC), envelopeCaptor.capture());
-
-        Envelope<?> envelope = envelopeCaptor.getValue();
-        assertThat(envelope.header().eventType()).isEqualTo(COMPLETED_TOPIC);
-        assertThat(envelope.header().eventId()).isNotBlank();
-        assertThat(envelope.header().occurrenceAt()).isNotNull();
-
-        PaymentCompletedPayload payload = (PaymentCompletedPayload) envelope.payload();
-        assertThat(payload.relType()).isEqualTo(RelType.ORDER);
-        assertThat(payload.relId()).isEqualTo(100L);
-        assertThat(payload.totalAmount()).isEqualByComparingTo("30000");
     }
 
     @Test
@@ -88,6 +58,7 @@ class PaymentKafkaPublisherTest {
         PaymentFailPayload payload = (PaymentFailPayload) envelope.payload();
         assertThat(payload.relType()).isEqualTo(RelType.BIDDING);
         assertThat(payload.relId()).isEqualTo(200L);
+        assertThat(payload.failReason()).isEqualTo("FAIL_REASON");
     }
 
     private static void setField(Object target, String fieldName, Object value) throws Exception {
