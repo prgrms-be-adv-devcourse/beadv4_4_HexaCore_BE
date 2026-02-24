@@ -13,7 +13,7 @@ public class ChatMetrics {
     private final MeterRegistry registry;
 
     // Gauge
-    private final AtomicInteger outboxPending = new AtomicInteger(0);
+    private final AtomicInteger outboxRetryBacklog = new AtomicInteger(0);
 
     // Fixed counters (no tags)
     private final Counter wsSendTotal;
@@ -26,8 +26,8 @@ public class ChatMetrics {
     public ChatMetrics(MeterRegistry registry) {
         this.registry = registry;
 
-        Gauge.builder("resello_chat_outbox_pending", outboxPending, AtomicInteger::get)
-                .description("Current pending outbox count")
+        Gauge.builder("resello_chat_outbox_retry_backlog", outboxRetryBacklog, AtomicInteger::get)
+                .description("Outbox FAILED records waiting for retry publish")
                 .register(registry);
 
         this.wsSendTotal = Counter.builder("resello_chat_ws_send_total")
@@ -88,8 +88,8 @@ public class ChatMetrics {
     }
 
     // ---------- Gauge setter ----------
-    public void setOutboxPending(int count) {
-        outboxPending.set(Math.max(count, 0));
+    public void setOutboxRetryBacklog(int failedCount) {
+        outboxRetryBacklog.set(Math.max(failedCount, 0));
     }
 
     private String safeTag(String v) {
