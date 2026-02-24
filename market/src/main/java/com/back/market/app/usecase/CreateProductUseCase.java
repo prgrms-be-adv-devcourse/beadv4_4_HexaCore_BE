@@ -1,6 +1,7 @@
 package com.back.market.app.usecase;
 
 import com.back.market.adapter.out.MarketProductRepository;
+import com.back.market.app.MarketSupport;
 import com.back.market.domain.MarketProduct;
 import com.back.market.event.resultpayload.ProductCreatedResultPayload;
 import com.back.market.mapper.MarketProductMapper;
@@ -16,11 +17,12 @@ import java.util.List;
 public class CreateProductUseCase {
     private final MarketProductRepository marketProductRepository;
     private final MarketProductMapper marketProductMapper;
+    private final MarketSupport marketSupport;
 
     public int createMarketProduct(List<ProductCreatedResultPayload> payloads) {
         int savedCount = 0;
         for(ProductCreatedResultPayload payload: payloads) {
-            if(!marketProductRepository.existsById(payload.productOptionId())) {
+            if(!marketSupport.existsByMarketProduct(payload.productOptionId())) {
                 MarketProduct product = marketProductMapper.toEntity(payload);
                 marketProductRepository.save(product);
                 savedCount++;
