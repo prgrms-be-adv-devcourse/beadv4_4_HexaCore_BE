@@ -17,7 +17,7 @@ public class DetectorEventListener {
 
     @KafkaListener(
             topics = "${custom.kafka.topic.user-account-created}",
-            groupId = "${custom.kafka.consumer.group-id}"
+            groupId = "${spring.kafka.consumer.group-id}"
     )
     @Transactional
     public void handleUserCreated(UserCreatedEvent event) {
