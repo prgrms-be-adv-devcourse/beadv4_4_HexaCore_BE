@@ -2,9 +2,18 @@ package com.back.notification.adapter.in;
 
 import com.back.common.event.Envelope;
 import com.back.notification.app.NotificationFacade;
+import com.back.notification.app.NotificationUserSettingUsecase;
 import com.back.notification.app.NotificationUserUsecase;
 import com.back.notification.domain.enums.Type;
-import com.back.notification.dto.payload.*;
+import com.back.notification.dto.payload.BiddingCompletedPayload;
+import com.back.notification.dto.payload.BiddingFailedPayload;
+import com.back.notification.dto.payload.FcmTokenChangedPayload;
+import com.back.notification.dto.payload.InspectionCompletedPayload;
+import com.back.notification.dto.payload.PurchaseCanceledPayload;
+import com.back.notification.dto.payload.SellBiddingCreatedPayload;
+import com.back.notification.dto.payload.SettlementCompletedPayload;
+import com.back.notification.dto.payload.UserSettingCreatedPayload;
+import com.back.notification.dto.payload.UserSettingUpdatedPayload;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -19,6 +28,7 @@ import tools.jackson.databind.json.JsonMapper;
 public class NotificationEventListener {
     private final NotificationFacade notificationFacade;
     private final NotificationUserUsecase notificationUserUsecase;
+    private final NotificationUserSettingUsecase notificationUserSettingUsecase;
     private final JsonMapper jsonMapper;
 
     @KafkaListener(
@@ -126,7 +136,7 @@ public class NotificationEventListener {
     }
 
     @KafkaListener(
-            topics = "${custom.kafka.topic.user-account-updated}",
+            topics = "${custom.kafka.topic.user-fcm-token-changed}",
             groupId = "${spring.kafka.consumer.group-id}"
     )
     public void handleFcmTokenChanged(String message) {
@@ -138,6 +148,52 @@ public class NotificationEventListener {
             log.info("[KafkaListenerSuccess] FcmTokenChangedPayload 수신 : userId = {}", payload.userId());
         } catch (JacksonException e) {
             log.error("[KafkaListenerFailed] FcmTokenChangedPayload 역직렬화 중 에러 발생 : {}", e.getMessage(), e);
+            throw new RuntimeException("Deserialization failed", e);
+        }
+    }
+
+    @KafkaListener(
+            topics = "${custom.kafka.topic.user-setting-created}",
+            groupId = "${spring.kafka.consumer.group-id}"
+    )
+    public void handleUserSettingCreated(String message) {
+        try {
+            Envelope<UserSettingCreatedPayload> envelope = jsonMapper.readValue(message, new TypeReference<>() {});
+            UserSettingCreatedPayload payload = envelope.payload();
+
+            notificationUserSettingUsecase.createUserSetting(
+                    payload.userId(),
+                    payload.bidStatusEnabled(),
+                    payload.productStatusEnabled(),
+                    payload.priceEnabled(),
+                    payload.settlementEnabled()
+            );
+            log.info("[KafkaListenerSuccess] UserSettingCreatedPayload 수신 : userId = {}", payload.userId());
+        } catch (JacksonException e) {
+            log.error("[KafkaListenerFailed] UserSettingCreatedPayload 역직렬화 중 에러 발생 : {}", e.getMessage(), e);
+            throw new RuntimeException("Deserialization failed", e);
+        }
+    }
+
+    @KafkaListener(
+            topics = "${custom.kafka.topic.user-setting-updated}",
+            groupId = "${spring.kafka.consumer.group-id}"
+    )
+    public void handleUserSettingUpdated(String message) {
+        try {
+            Envelope<UserSettingUpdatedPayload> envelope = jsonMapper.readValue(message, new TypeReference<>() {});
+            UserSettingUpdatedPayload payload = envelope.payload();
+
+            notificationUserSettingUsecase.updateUserSetting(
+                    payload.userId(),
+                    payload.bidStatusEnabled(),
+                    payload.productStatusEnabled(),
+                    payload.priceEnabled(),
+                    payload.settlementEnabled()
+            );
+            log.info("[KafkaListenerSuccess] UserSettingUpdatedPayload 수신 : userId = {}", payload.userId());
+        } catch (JacksonException e) {
+            log.error("[KafkaListenerFailed] UserSettingUpdatedPayload 역직렬화 중 에러 발생 : {}", e.getMessage(), e);
             throw new RuntimeException("Deserialization failed", e);
         }
     }

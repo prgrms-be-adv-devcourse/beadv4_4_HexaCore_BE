@@ -31,4 +31,11 @@ public class NotificationUserSetting extends BaseTimeEntity {
     @Builder.Default
     private boolean settlementEnabled = true;
 
+    public void update(boolean bidStatusEnabled, boolean productStatusEnabled,
+                       boolean priceEnabled, boolean settlementEnabled) {
+        this.bidStatusEnabled = bidStatusEnabled;
+        this.productStatusEnabled = productStatusEnabled;
+        this.priceEnabled = priceEnabled;
+        this.settlementEnabled = settlementEnabled;
+    }
 }
