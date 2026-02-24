@@ -17,6 +17,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 public class ApiV1MarketController implements ApiV1Market{
@@ -45,6 +47,12 @@ public class ApiV1MarketController implements ApiV1Market{
         String ip = IpAddressExtractor.extractClientIp(request);
         MarketPaymentResponseDto response = marketFacade.registerSellBid(userId, ip, requestDto);
         return CommonResponse.successWithData(HttpStatus.CREATED, response);
+    }
+
+    @Override
+    public CommonResponse<List<ProductSizePriceResponseDto>> getAllSizePrices(Long productInfoId) {
+        List<ProductSizePriceResponseDto> response = marketFacade.getAllSizePrices(productInfoId);
+        return CommonResponse.successWithData(HttpStatus.OK, response);
     }
 
     @Override

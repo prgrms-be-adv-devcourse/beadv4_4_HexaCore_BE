@@ -1,6 +1,7 @@
 package com.back.market.mapper;
 
 import com.back.market.domain.MarketProduct;
+import com.back.market.dto.response.ProductSizePriceResponseDto;
 import com.back.market.event.payload.OptionPayload;
 import com.back.market.event.payload.ProductCreatedPayload;
 import com.back.market.event.payload.ProductUpdatedPayload;
@@ -12,6 +13,15 @@ import java.math.BigDecimal;
 
 @Component
 public class MarketProductMapper {
+
+    public ProductSizePriceResponseDto toSizePriceDto(MarketProduct product, BigDecimal buyPrice, BigDecimal sellPrice) {
+        return new ProductSizePriceResponseDto(
+                product.getId(),
+                product.getProductOption(),
+                buyPrice,
+                sellPrice
+        );
+    }
 
     // 1단계: 원본(Payload)을 중간재(ResultPayload)로 변환
     public ProductCreatedResultPayload toResultPayload(ProductCreatedPayload payload, OptionPayload.ValuePayload optionValue) {
@@ -78,7 +88,7 @@ public class MarketProductMapper {
             String name,
             String productNumber,
             String productOption,
-            Long price,
+            BigDecimal price,
             String categoryName,
             String thumbnailImage
     ) {
@@ -89,7 +99,7 @@ public class MarketProductMapper {
                 .name(name)
                 .productNumber(productNumber)
                 .productOption(productOption) // 사이즈 등 옵션
-                .releasePrice(BigDecimal.valueOf(price)) // 편의상 long으로 받아 여기에서 BigDecimal 변환
+                .releasePrice(price) // 편의상 long으로 받아 여기에서 BigDecimal 변환
                 .categoryName(categoryName)
                 .thumbnailImage(thumbnailImage)
                 .build();
