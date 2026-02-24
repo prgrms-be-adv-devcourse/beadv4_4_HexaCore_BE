@@ -56,14 +56,28 @@ public class ConfirmPaymentUseCase {
         if (payload.relType() == RelType.ORDER) {
             Order order = marketSupport.findOrderById(payload.relId());
             if (order.getOrderStatus() == OrderStatus.HOLD) {
+                // 1. 주문 취소
                 order.changeStatus(OrderStatus.CANCELLED);
-                log.info("[Market] 결제 실패로 인한 주문 취소 완료 - OrderId: {}", order.getId());
+                log.info("[Market] 결제 실패로 인한 주문 취소 완료 - OrderId: {}, status: {}", order.getId(), order.getOrderStatus());
+
+                // 2. 구매자의 입찰 취소(결제 실패 책임)
+                Bidding buyBidding = marketSupport.findBiddingById(order.getBuyBidding().getId());
+                buyBidding.changeStatus(BiddingStatus.CANCELLED_PAYMENT_FAILED);
+                log.info("[Market] 결제 실패로 인한 구매 입찰 취소 완료 - BuyBiddingId: {}, status: {}", buyBidding.getId(), buyBidding.getStatus());
+
+                // 3. 판매자의 입찰 롤백
+                Bidding sellBidding = marketSupport.findBiddingById(order.getSellBidding().getId());
+                sellBidding.changeStatus(BiddingStatus.PROCESS);
+                log.info("[Market] 결제 실패로 인한 판매 입찰 롤백 완료 - BuyBiddingId: {}, status: {}", sellBidding.getId(), sellBidding.getStatus());
+
+            } else {
+                log.info("[Market] 이미 취소되었거나 결제 실패 처리가 불가능한 주문입니다. - OrderId: {}, status: {}", order.getId(), order.getOrderStatus());
             }
         } else if (payload.relType() == RelType.BIDDING) {
             Bidding bidding = marketSupport.findBiddingById(payload.relId());
             if (bidding.getStatus() == BiddingStatus.HOLD) {
-                bidding.changeStatus(BiddingStatus.CANCELLED);
-                log.info("[Market] 결제 실패로 인한 입찰 취소 완료 - BiddingId: {}", bidding.getId());
+                bidding.changeStatus(BiddingStatus.CANCELLED_PAYMENT_FAILED);
+                log.info("[Market] 결제 실패로 인한 입찰 취소 완료 - BiddingId: {}, status: {}", bidding.getId(), bidding.getStatus());
             }
         }
     }
