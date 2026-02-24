@@ -68,7 +68,7 @@ public class ConfirmPaymentUseCase {
                 // 3. 판매자의 입찰 롤백
                 Bidding sellBidding = marketSupport.findBiddingById(order.getSellBidding().getId());
                 sellBidding.changeStatus(BiddingStatus.PROCESS);
-                log.info("[Market] 결제 실패로 인한 판매 입찰 롤백 완료 - BuyBiddingId: {}, status: {}", sellBidding.getId(), sellBidding.getStatus());
+                log.info("[Market] 결제 실패로 인한 판매 입찰 롤백 완료 - SellBiddingId: {}, status: {}", sellBidding.getId(), sellBidding.getStatus());
 
             } else {
                 log.info("[Market] 이미 취소되었거나 결제 실패 처리가 불가능한 주문입니다. - OrderId: {}, status: {}", order.getId(), order.getOrderStatus());
