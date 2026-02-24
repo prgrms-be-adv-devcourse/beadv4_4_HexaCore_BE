@@ -110,11 +110,11 @@ public class SettlementCustomRepositoryImpl implements SettlementCustomRepositor
                 .fetch();
     }
 
-    public List<SettlementItem> findUnsettledItemsByPayeeId(Long payeeId, LocalDateTime startAt, LocalDateTime endAt) {
+    public List<SettlementItem> findUnsettledItemsByPayeeIds(List<Long> payeeIds, LocalDateTime startAt, LocalDateTime endAt) {
         return queryFactory
                 .selectFrom(settlementItem)
                 .where(
-                        settlementItem.payeeId.eq(payeeId),
+                        settlementItem.payeeId.in(payeeIds),
                         settlementItem.status.eq(SettlementItemStatus.COLLECTED),
                         settlementItem.confirmedAt.goe(startAt),
                         settlementItem.confirmedAt.loe(endAt)

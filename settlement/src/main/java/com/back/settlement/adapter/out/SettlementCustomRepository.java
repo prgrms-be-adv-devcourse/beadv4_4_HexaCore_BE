@@ -30,5 +30,5 @@ public interface SettlementCustomRepository {
 
     List<Long> findDistinctUnsettledSellerIds(LocalDateTime startAt, LocalDateTime endAt, Long systemPayeeId);
 
-    List<SettlementItem> findUnsettledItemsByPayeeId(Long payeeId, LocalDateTime startAt, LocalDateTime endAt);
+    List<SettlementItem> findUnsettledItemsByPayeeIds(List<Long> payeeIds, LocalDateTime startAt, LocalDateTime endAt);
 }

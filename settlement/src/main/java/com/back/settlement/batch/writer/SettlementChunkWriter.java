@@ -21,6 +21,7 @@ import org.springframework.stereotype.Component;
 public class SettlementChunkWriter implements ItemWriter<Long> {
     private final SettlementCreateUseCase settlementCreateUseCase;
 
+    // Spring Data JPA의 Repository는 clear()를 제공하지 않으므로 EntityManager를 직접 사용한다.
     @PersistenceContext
     private EntityManager entityManager;
 
@@ -35,16 +36,12 @@ public class SettlementChunkWriter implements ItemWriter<Long> {
     public void write(Chunk<? extends Long> chunk) {
         YearMonth targetMonth = LocalDateUtils.parseYearMonthOrDefault(targetMonthStr);
         List<Long> payeeIds = new ArrayList<>(chunk.getItems());
-
-        // 1) IN절 배치 조회: 청크 내 모든 payeeId의 미정산 항목을 1회 SELECT
         List<SettlementWithItems> settlements = settlementCreateUseCase.createSettlements(payeeIds, targetMonth);
 
-        // 2) 정산별 저장: 도메인 이벤트(SettlementLog, Outbox) 정상 발행
         for (SettlementWithItems swi : settlements) {
             settlementCreateUseCase.saveSettlement(swi.settlement(), swi.items());
         }
 
-        // 3) 변경사항 DB 반영 후 1차 캐시 정리 (flush 없이 clear하면 dirty 변경 소실)
         entityManager.flush();
         entityManager.clear();
 
