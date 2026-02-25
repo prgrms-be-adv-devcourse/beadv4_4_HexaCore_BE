@@ -10,11 +10,17 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.serializer.GenericJacksonJsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
+import tools.jackson.databind.DefaultTyping;
 import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
+import tools.jackson.databind.jsontype.PolymorphicTypeValidator;
 
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
+
+import static tools.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
+import static tools.jackson.databind.cfg.DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS;
 
 @Configuration
 public class RedisConfig {
@@ -34,7 +40,7 @@ public class RedisConfig {
                 .disableCachingNullValues() // null 값은 캐싱 X
                 // <K, V> = <String, Json> 형식으로 직렬화
                 .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
-                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new GenericJacksonJsonRedisSerializer(new JsonMapper())));
+                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new GenericJacksonJsonRedisSerializer(createJsonMapper())));
 
         // 2. 캐시 이름별 개별 설정 (만료 시간 차별화)
         Map<String, RedisCacheConfiguration> redisCacheConfigurations = new HashMap<>();
@@ -49,6 +55,24 @@ public class RedisConfig {
                 .fromConnectionFactory(redisConnectionFactory)
                 .cacheDefaults(defaultCacheConfig)
                 .withInitialCacheConfigurations(redisCacheConfigurations)
+                .build();
+    }
+
+    private JsonMapper createJsonMapper() {
+        // 1. 다형성 타입 검증기 설정
+        PolymorphicTypeValidator typeValidator = BasicPolymorphicTypeValidator.builder()
+                .allowIfBaseType(Object.class)
+                .build();
+
+        // 2. 소스코드의 실제 생성자 시그니처에 맞게 초기화
+        RecordSupportingTypeResolver typer = new RecordSupportingTypeResolver(typeValidator, DefaultTyping.NON_FINAL);
+
+        // 3. JsonMapper 빌드 시 커스텀 TypeResolver 적용
+        return JsonMapper.builder()
+                .findAndAddModules() // JSR-310 (JavaTimeModule) 자동 등록
+                .disable(WRITE_DATES_AS_TIMESTAMPS)
+                .disable(FAIL_ON_UNKNOWN_PROPERTIES)
+                .setDefaultTyping(typer)
                 .build();
     }
 }
