@@ -37,6 +37,7 @@ public enum FailureCode {
     CONSTRAINT_VIOLATION(HttpStatus.BAD_REQUEST, "CONSTRAINT_VIOLATION", "제약 조건 위반으로 작업을 수행할 수 없습니다."),
     ORDER_ACCESS_DENIED(HttpStatus.BAD_REQUEST, "ORDER_ACCESS_DENIED", "해당 주문에 대한 접근 권한이 없습니다."),
     ORDER_NOT_DELIVERED(HttpStatus.BAD_REQUEST, "ORDER_NOT_DELIVERED", "배송 완료된 주문만 구매 확정할 수 있습니다."),
+    INVALID_ORDER_STATUS(HttpStatus.BAD_REQUEST, "INVALID_ORDER_STATUS", "유효하지 않은 주문 상태입니다."),
 
     /**
      * 401 Unauthorized
