@@ -27,7 +27,7 @@ import com.back.product.dto.request.ProductUpdateRequestDto;
 import com.back.product.dto.response.ProductDetailListResponseDto;
 import com.back.product.dto.response.ProductDetailResponseDto;
 import com.back.product.dto.response.ProductSearchResponseDto;
-import com.back.product.global.config.CacheNames;
+import com.back.product.global.config.ProductCacheNames;
 import com.back.product.mapper.ProductInfoDataCommandMapper;
 import com.back.product.mapper.ProductInfoMapper;
 import com.back.product.mapper.ProductMapper;
@@ -72,8 +72,8 @@ public class ProductFacade {
     @Loggable
     @Transactional
     @Caching(evict = {
-            @CacheEvict(value = CacheNames.PRODUCT_SEARCH, allEntries = true),
-            @CacheEvict(value = CacheNames.PRODUCT_SIMILAR, allEntries = true),
+            @CacheEvict(value = ProductCacheNames.PRODUCT_SEARCH, allEntries = true),
+            @CacheEvict(value = ProductCacheNames.PRODUCT_SIMILAR, allEntries = true),
     })
     public ProductDetailResponseDto createProduct(@Valid ProductCreateRequestDto request) {
         Brand brand = brandUseCase.findBrandExists(request.productInfo().brandId());
@@ -97,9 +97,9 @@ public class ProductFacade {
     @Loggable
     @Transactional
     @Caching(evict = {
-            @CacheEvict(value = CacheNames.PRODUCT_DETAIL, key = "#productInfoId"),
-            @CacheEvict(value = CacheNames.PRODUCT_SEARCH, allEntries = true),
-            @CacheEvict(value = CacheNames.PRODUCT_SIMILAR, allEntries = true),
+            @CacheEvict(value = ProductCacheNames.PRODUCT_DETAIL, key = "#productInfoId"),
+            @CacheEvict(value = ProductCacheNames.PRODUCT_SEARCH, allEntries = true),
+            @CacheEvict(value = ProductCacheNames.PRODUCT_SIMILAR, allEntries = true),
     })
     public ProductDetailResponseDto updateProduct(Long productInfoId, @Valid ProductUpdateRequestDto request) {
         Brand brand = brandUseCase.findBrandExists(request.productInfo().brandId());
@@ -123,9 +123,9 @@ public class ProductFacade {
     @Loggable
     @Transactional
     @Caching(evict = {
-            @CacheEvict(value = CacheNames.PRODUCT_DETAIL, key = "#productInfoId"),
-            @CacheEvict(value = CacheNames.PRODUCT_SEARCH, allEntries = true),
-            @CacheEvict(value = CacheNames.PRODUCT_SIMILAR, allEntries = true),
+            @CacheEvict(value = ProductCacheNames.PRODUCT_DETAIL, key = "#productInfoId"),
+            @CacheEvict(value = ProductCacheNames.PRODUCT_SEARCH, allEntries = true),
+            @CacheEvict(value = ProductCacheNames.PRODUCT_SIMILAR, allEntries = true),
     })
     public void deleteProduct(Long productInfoId) {
         productUseCase.deleteMultipleProduct(productInfoId);
@@ -137,7 +137,7 @@ public class ProductFacade {
 
     @Loggable
     @Transactional(readOnly = true)
-    @Cacheable(value = CacheNames.PRODUCT_DETAIL, key = "#productInfoId")
+    @Cacheable(value = ProductCacheNames.PRODUCT_DETAIL, key = "#productInfoId")
     public ProductDetailResponseDto getProductDetail(Long productInfoId) {
         ProductInfo productInfo = productInfoUseCase.findProductInfo(productInfoId);
 
@@ -150,7 +150,7 @@ public class ProductFacade {
 
     @Loggable
     @Transactional(readOnly = true)
-    @Cacheable(value = CacheNames.PRODUCT_SEARCH, key = "#request")
+    @Cacheable(value = ProductCacheNames.PRODUCT_SEARCH, key = "#request")
     public ProductSearchResponseDto findProductPage(@Valid ProductSearchRequestDto request) {
         ProductSearchCommand productSearchCommand = productSearchCommandMapper.toCommand(request);
         return productDocumentUseCase.findProductPage(productSearchCommand);
@@ -158,7 +158,7 @@ public class ProductFacade {
 
     @Loggable
     @Transactional(readOnly = true)
-    @Cacheable(value = CacheNames.PRODUCT_SIMILAR, key = "#productInfoId + '-' + #request.page() + '-' + #request.size()")
+    @Cacheable(value = ProductCacheNames.PRODUCT_SIMILAR, key = "#productInfoId + '-' + #request.page() + '-' + #request.size()")
     public ProductSearchResponseDto findSimilarProducts(Long productInfoId, PageRequestDto request) {
         return productDocumentUseCase.findSimilarProducts(productInfoId, request.page(), request.size());
     }

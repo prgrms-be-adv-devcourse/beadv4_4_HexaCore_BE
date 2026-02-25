@@ -7,9 +7,9 @@ import tools.jackson.databind.JavaType;
 import tools.jackson.databind.jsontype.PolymorphicTypeValidator;
 import tools.jackson.databind.jsontype.impl.DefaultTypeResolverBuilder;
 
-public class RecordSupportingTypeResolver extends DefaultTypeResolverBuilder {
+public class ProductRecordSupportingTypeResolver extends DefaultTypeResolverBuilder {
 
-    public RecordSupportingTypeResolver(PolymorphicTypeValidator typeValidator, DefaultTyping t) {
+    public ProductRecordSupportingTypeResolver(PolymorphicTypeValidator typeValidator, DefaultTyping t) {
         super(typeValidator, t, JsonTypeInfo.As.PROPERTY);
     }
 
