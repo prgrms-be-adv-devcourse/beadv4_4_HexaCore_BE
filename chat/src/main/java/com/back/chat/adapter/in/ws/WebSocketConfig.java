@@ -48,7 +48,6 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws/chat")
-                .setAllowedOriginPatterns("https://www.resello.co.kr")
                 .addInterceptors(new WsHandshakeInterceptor())
                 .withSockJS();
     }
