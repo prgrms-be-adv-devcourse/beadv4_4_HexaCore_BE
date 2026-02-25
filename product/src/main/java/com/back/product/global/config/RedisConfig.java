@@ -38,11 +38,11 @@ public class RedisConfig {
 
         // 2. 캐시 이름별 개별 설정 (만료 시간 차별화)
         Map<String, RedisCacheConfiguration> redisCacheConfigurations = new HashMap<>();
-        redisCacheConfigurations.put("embedding", defaultCacheConfig.entryTtl(Duration.ofDays(7))); // AI 임베딩 7일
-        redisCacheConfigurations.put("brands", defaultCacheConfig.entryTtl(Duration.ofDays(1))); // 브랜드 목록 (1일)
-        redisCacheConfigurations.put("categories", defaultCacheConfig.entryTtl(Duration.ofDays(1))); // 카테고리 목록 (1일)
-        redisCacheConfigurations.put("productDetails", defaultCacheConfig.entryTtl(Duration.ofHours(1))); // 상품 상세 (1시간)
-        redisCacheConfigurations.put("productSearch", defaultCacheConfig.entryTtl(Duration.ofMinutes(10))); // 검색 결과 (10분)
+        redisCacheConfigurations.put(CacheNames.EMBEDDING, defaultCacheConfig.entryTtl(Duration.ofDays(7))); // AI 임베딩 7일
+        redisCacheConfigurations.put(CacheNames.BRANDS, defaultCacheConfig.entryTtl(Duration.ofDays(1))); // 브랜드 목록 (1일)
+        redisCacheConfigurations.put(CacheNames.CATEGORIES, defaultCacheConfig.entryTtl(Duration.ofDays(1))); // 카테고리 목록 (1일)
+        redisCacheConfigurations.put(CacheNames.PRODUCT_DETAIL, defaultCacheConfig.entryTtl(Duration.ofHours(1))); // 상품 상세 (1시간)
+        redisCacheConfigurations.put(CacheNames.PRODUCT_SEARCH, defaultCacheConfig.entryTtl(Duration.ofMinutes(10))); // 검색 결과 (10분)
 
         return RedisCacheManager.RedisCacheManagerBuilder
                 .fromConnectionFactory(redisConnectionFactory)
