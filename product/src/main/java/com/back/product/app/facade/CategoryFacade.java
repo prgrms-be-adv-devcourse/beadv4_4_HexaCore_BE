@@ -12,10 +12,13 @@ import com.back.product.dto.request.CategoryListCreateRequestDto;
 import com.back.product.dto.response.CategoryListResponseDto;
 import com.back.product.dto.response.CategoryPageResponseDto;
 import com.back.product.dto.response.CategoryResponseDto;
+import com.back.product.global.config.CacheNames;
 import com.back.product.mapper.CategoryDataCommandMapper;
 import com.back.product.mapper.CategoryMapper;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +35,7 @@ public class CategoryFacade {
 
     @Loggable
     @Transactional(readOnly = true)
+    @Cacheable(value = CacheNames.CATEGORIES, key = "#page + '-' + #size")
     public CategoryPageResponseDto getCategories(Integer page, Integer size) {
         Page<CategoryDto> categories = categoryUseCase.getCategories(page, size);
         return categoryMapper.toPageResponseDto(
@@ -44,6 +48,7 @@ public class CategoryFacade {
 
     @Loggable
     @Transactional
+    @CacheEvict(value = CacheNames.CATEGORIES, allEntries = true)
     public CategoryListResponseDto createCategories(@Valid CategoryListCreateRequestDto request) {
         List<CategoryDataCommand> categoryCommands = request.categories().stream().map(categoryDataCommandMapper::toCommand).toList();
         List<CategoryDto> categoryDtos =  categoryUseCase.createCategories(categoryCommands);
@@ -52,6 +57,7 @@ public class CategoryFacade {
 
     @Loggable
     @Transactional
+    @CacheEvict(value = CacheNames.CATEGORIES, allEntries = true)
     public CategoryResponseDto modifyCategory(Long categoryId, @Valid CategoryDataRequestDto request) {
         CategoryDataCommand categoryCommand = categoryDataCommandMapper.toCommand(request);
         CategoryDto categoryDto = categoryUseCase.modifyCategory(categoryId, categoryCommand);
@@ -60,6 +66,7 @@ public class CategoryFacade {
 
     @Loggable
     @Transactional
+    @CacheEvict(value = CacheNames.CATEGORIES, allEntries = true)
     public void deleteCategory(Long categoryId) {
         Boolean isUsed = productInfoUseCase.isCategoryInUse(categoryId);
 
