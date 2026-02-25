@@ -90,9 +90,9 @@ public class PaymentResultEventTests {
         Thread.sleep(3000);
 
         // 3. Then (검증)
-        // 주문 상태 검증 - 상태가 HOLD -> CANCELLED(취소)로 잘 바뀌었는지 확인
+        // 주문 상태 검증 - 상태가 HOLD -> CANCELLED_PAYMENT_FAILED(취소)로 잘 바뀌었는지 확인
         Order updatedOrder = marketSupport.findOrderById(testOrderId);
-        assertThat(updatedOrder.getOrderStatus()).isEqualTo(OrderStatus.CANCELLED);
+        assertThat(updatedOrder.getOrderStatus()).isEqualTo(OrderStatus.CANCELLED_PAYMENT_FAILED);
 
         // 구매 입찰 상태 검증 (CANCELLED_PAYMENT_FAILED)
         Bidding buyBid = marketSupport.findBiddingById(updatedOrder.getBuyBidding().getId());

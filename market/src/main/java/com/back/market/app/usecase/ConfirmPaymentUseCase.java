@@ -57,7 +57,7 @@ public class ConfirmPaymentUseCase {
             Order order = marketSupport.findOrderById(payload.relId());
             if (order.getOrderStatus() == OrderStatus.HOLD) {
                 // 1. 주문 취소
-                order.changeStatus(OrderStatus.CANCELLED);
+                order.changeStatus(OrderStatus.CANCELLED_PAYMENT_FAILED);
                 log.info("[Market] 결제 실패로 인한 주문 취소 완료 - OrderId: {}, status: {}", order.getId(), order.getOrderStatus());
 
                 // 2. 구매자의 입찰 취소(결제 실패 책임)
