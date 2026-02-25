@@ -1,11 +1,14 @@
 package com.back.product.adapter.in.event;
 
 import com.back.product.adapter.out.event.ProductKafkaEventPublisher;
+import com.back.product.app.facade.ProductFacade;
 import com.back.product.app.facade.ProductOutboxFacade;
 import com.back.product.event.spring.ProductCreationCompletedEvent;
 import com.back.product.event.spring.ProductDeletionCompletedEvent;
+import com.back.product.event.spring.ProductResyncRequestEvent;
 import com.back.product.event.spring.ProductUpdateCompletedEvent;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.event.TransactionPhase;
@@ -14,6 +17,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @Service
 @RequiredArgsConstructor
 public class ProductSpringEventListener {
+    private final ProductFacade productFacade;
     private final ProductKafkaEventPublisher eventPublisher;
     private final ProductOutboxFacade productOutboxFacade;
 
@@ -33,5 +37,11 @@ public class ProductSpringEventListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleProductDelete(ProductDeletionCompletedEvent event) {
         productOutboxFacade.publish(event.eventId(), eventPublisher::sendDeletedEvent);
+    }
+
+    @Async
+    @EventListener
+    public void handleProductResync(ProductResyncRequestEvent event) {
+        productFacade.resyncProduct(event.productInfoId());
     }
 }

@@ -1,10 +1,11 @@
 package com.back.product.mapper;
 
-import com.back.product.event.spring.ProductCreationCompletedEvent;
-import com.back.product.event.spring.ProductDeletionCompletedEvent;
-import com.back.product.event.spring.ProductUpdateCompletedEvent;
 import com.back.product.dto.model.OptionDto;
 import com.back.product.dto.model.ProductInfoDto;
+import com.back.product.event.spring.ProductCreationCompletedEvent;
+import com.back.product.event.spring.ProductDeletionCompletedEvent;
+import com.back.product.event.spring.ProductResyncRequestEvent;
+import com.back.product.event.spring.ProductUpdateCompletedEvent;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -39,6 +40,12 @@ public class ProductSpringEventMapper {
 
         return ProductDeletionCompletedEvent.builder()
                 .eventId(eventId)
+                .productInfoId(productInfoId)
+                .build();
+    }
+
+    public ProductResyncRequestEvent toResyncRequestEvent(Long productInfoId) {
+        return ProductResyncRequestEvent.builder()
                 .productInfoId(productInfoId)
                 .build();
     }

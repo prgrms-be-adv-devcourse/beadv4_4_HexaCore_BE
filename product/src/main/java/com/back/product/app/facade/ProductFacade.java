@@ -142,6 +142,18 @@ public class ProductFacade {
         return productDocumentUseCase.findSimilarProducts(productInfoId, request.page(), request.size());
     }
 
+    @Loggable
+    @Transactional
+    public void resyncProduct(Long productInfoId) {
+        ProductInfo productInfo = productInfoUseCase.findProductInfo(productInfoId);
+        List<ProductDto> productDtos = productUseCase.findAllProduct(productInfo);
+
+        ProductInfoDto productInfoDto = productInfoMapper.toDto(productInfo);
+        String thumbnail = findThumbnailUrl(productDtos);
+
+        productSpringEventPublisher.sendModifiedEvent(productInfoDto, productDtos, thumbnail);
+    }
+
     private String findThumbnailUrl(List<ProductDto> productDtos) {
         return productDtos.stream()
                 .map(ProductDto::imageUrls)

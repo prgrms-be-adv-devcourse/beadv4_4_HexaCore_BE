@@ -9,6 +9,7 @@ import com.back.common.annotation.Loggable;
 import com.back.common.code.FailureCode;
 import com.back.common.exception.CustomException;
 import com.back.product.adapter.out.document.ProductDocumentRepository;
+import com.back.product.adapter.out.event.ProductSpringEventPublisher;
 import com.back.product.document.ProductDocument;
 import com.back.product.dto.command.ProductSearchCommand;
 import com.back.product.dto.enums.ProductSortType;
@@ -32,6 +33,7 @@ import org.springframework.util.StringUtils;
 import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -41,6 +43,7 @@ public class ProductDocumentUseCase {
     private final ProductDocumentMapper productDocumentMapper;
     private final ProductDocumentSupport productDocumentSupport;
     private final ProductDocumentRepository productDocumentRepository;
+    private final ProductSpringEventPublisher eventPublisher;
 
     private final EmbeddingUseCase embeddingUseCase;
 
@@ -100,8 +103,8 @@ public class ProductDocumentUseCase {
         if (embedding == null || embedding.isEmpty()) {
             log.warn("[ProductDocumentUseCase] Embedding not found for product: {}. Returning empty results.", productInfoId);
 
-            // TODO: 상품 업데이트 이벤트 발행하여 임베딩 생성 유도 or @Async 메소드를 통한 비동기 업데이트
-
+            Long productInfoIdToResync = Long.valueOf(Objects.requireNonNull(document.getId()));
+            eventPublisher.sendResyncRequestEvent(productInfoIdToResync);
 
             return convertToDto(List.of(), 0, 0L, page);
         }
