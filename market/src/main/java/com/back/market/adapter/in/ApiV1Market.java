@@ -16,6 +16,8 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @Tag(name = "Market API", description = "상품 구매 및 주문 관련 API")
 @RequestMapping("/api/v1/market")
 public interface ApiV1Market {
@@ -33,11 +35,15 @@ public interface ApiV1Market {
             @RequestBody @Valid BiddingRequestDto requestDto,
             HttpServletRequest request);
 
-    @Operation(summary = "즉시 구매가 조회", description = "특정 상품에 대해 즉시 구매 가능한(판매 입찰 중 가장 낮은) 가격을 조회한다.")
+    @Operation(summary = "전체 사이즈별 즉시구매, 판매가 조회", description = "특정 상품에 대해 사이즈별로 즉시 구매 가능한 가격과 즉시 판매 가능한 가격을 조회한다.")
+    @GetMapping("/products/{productInfoId}/size-prices")
+    CommonResponse<List<ProductSizePriceResponseDto>> getAllSizePrices(@PathVariable Long productInfoId);
+
+    @Operation(summary = "즉시 구매가 조회(단건)", description = "특정 상품에 대해 즉시 구매 가능한(판매 입찰 중 가장 낮은) 가격을 조회한다.")
     @GetMapping("/products/{productId}/buy-now-price")
     CommonResponse<InstantBuyPriceResponseDto> getBuyNowPrice(@PathVariable Long productId);
 
-    @Operation(summary = "즉시 판매가 조회", description = "특정 상품에 대해 즉시 판매 가능한(구매 입찰 중 가장 높은) 가격을 조회한다.")
+    @Operation(summary = "즉시 판매가 조회(단건)", description = "특정 상품에 대해 즉시 판매 가능한(구매 입찰 중 가장 높은) 가격을 조회한다.")
     @GetMapping("/products/{productId}/sell-now-price")
     CommonResponse<InstantSellPriceResponseDto> getSellNowPrice(@PathVariable Long productId);
 

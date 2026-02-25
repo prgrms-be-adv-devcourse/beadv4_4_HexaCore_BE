@@ -73,7 +73,7 @@ public class PaymentResultEventTests {
 
         // 결제 실패는 금액 정보 없이 RelType과 ID만 전송
         PaymentFailedPayload payload = new PaymentFailedPayload(
-                RelType.ORDER, testOrderId
+                RelType.ORDER, testOrderId, "실패이유"
         );
         Envelope<PaymentFailedPayload> envelope = Envelope.of("PaymentFailedEvent", payload);
 

@@ -82,10 +82,10 @@ public class MarketSupport {
     /**
      * MarketProduct 존재 여부 확인
      * @param productId PK
-     * @return boolean
+     * @return boolean 상품이 없는 경우 true 반환
      */
-    public boolean existsByMarketProduct(Long productId) {
-        return marketProductRepository.existsById(productId);
+    public boolean isMarketProductMissing(Long productId) {
+        return !marketProductRepository.existsById(productId);
     }
 
     /**
@@ -110,7 +110,7 @@ public class MarketSupport {
     }
 
     /**
-     * 즉시 구매가 조회(최저가 판매 입찰 조회)
+     * 즉시 구매가 조회(최저가 판매 입찰 조회) (단건 조회)
      * @param productId 상품 PK
      * @param position 구매/판매
      * @param status 구매 상태
@@ -121,7 +121,7 @@ public class MarketSupport {
     }
 
     /**
-     * 즉시 판매가 조회(최고가 구매 입찰 조회)
+     * 즉시 판매가 조회(최고가 구매 입찰 조회) (단건 조회)
      * @param productId 상품 PK
      * @param position 구매/판매
      * @param status 구매 상태
@@ -165,6 +165,19 @@ public class MarketSupport {
      */
     public Order findOrderWithDetails(Long userId, Long orderId) {
         return orderRepository.findOrderWithDetails(userId, orderId).orElseThrow(() -> new BadRequestException(FailureCode.ORDER_NOT_FOUND));
+    }
+
+    /**
+     * 특정 상품에 대한 즉시구매/판매가 일괄 조회
+     * @param productInfoId 상품 정보 ID
+     * @return List<MarketProduct>
+     */
+    public List<MarketProduct> findAllByProductInfoId(Long productInfoId) {
+        List<MarketProduct> products = marketProductRepository.findAllByProductInfoId(productInfoId);
+        if(products.isEmpty()) {
+            throw new BadRequestException(FailureCode.PRODUCT_NOT_FOUND);
+        }
+        return products;
     }
 
 }

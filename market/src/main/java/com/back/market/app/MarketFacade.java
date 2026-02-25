@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -56,6 +57,16 @@ public class MarketFacade {
         marketDetectorAdapter.detectBidSpam(userId);
         marketDetectorAdapter.detectHijack(userId, user.getEmail(), ip, requestDto.price());
         return registerBidUseCase.registerSellBid(userId, requestDto);
+    }
+
+    /**
+     * 사이즈별 즉시 구매가/판매가 조회
+     * @param productInfoId 상품 정보 ID
+     * @return List<ProductSizePriceResponseDto>
+     */
+    @Transactional(readOnly = true)
+    public List<ProductSizePriceResponseDto> getAllSizePrices(Long productInfoId) {
+        return getInstantPriceUseCase.getAllSizePrices(productInfoId);
     }
 
     /**
