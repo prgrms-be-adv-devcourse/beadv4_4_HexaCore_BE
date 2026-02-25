@@ -27,5 +27,5 @@ public interface PriceAlertRepository extends JpaRepository<PriceAlert, Long> {
             @Param("threshold") LocalDateTime threshold
     );
 
-    List<PriceAlert> findByUserId(Long userId);
+    List<PriceAlert> findByUserIdOrderByIdDesc(Long userId);
 }

@@ -34,4 +34,8 @@ public class NotificationUser extends BaseTimeEntity {
     public void updateFcmToken(String fcmToken) {
         this.fcmToken = fcmToken;
     }
+
+    public void update(String nickname) {
+        this.nickname = nickname;
+    }
 }

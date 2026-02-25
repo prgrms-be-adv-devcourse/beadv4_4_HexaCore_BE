@@ -13,4 +13,7 @@ dependencies {
 
     // AWS SQS
     implementation 'io.awspring.cloud:spring-cloud-aws-starter-sqs:4.0.0-RC1'
+
+    // Apache HttpClient 5
+    implementation 'org.apache.httpcomponents.client5:httpclient5'
 }

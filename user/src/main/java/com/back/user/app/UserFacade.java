@@ -1,7 +1,7 @@
 package com.back.user.app;
 
-import com.back.common.event.KafkaEventPublisher;
-import com.back.common.user.event.FcmTokenChangedEvent;
+import com.back.user.app.event.FcmTokenChangedEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import com.back.user.domain.User;
 import com.back.user.dto.request.UpdateFcmTokenRequest;
 import com.back.user.dto.request.UpdateNotificationSettingsRequest;
@@ -26,7 +26,7 @@ public class UserFacade {
     private final UserGetProfileUseCase userGetProfileUseCase;
     private final UserIncrementBlindCountUseCase userIncrementBlindCountUseCase;
     private final GetNotificationSettingsUseCase getNotificationSettingsUseCase;
-    private final KafkaEventPublisher kafkaEventPublisher;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Transactional
     public UserIdResponse registerOrUpdateFcmToken(Long userId, UpdateFcmTokenRequest request) {
@@ -36,7 +36,7 @@ public class UserFacade {
 
         // FCM 토큰 변경 이벤트 발행
         FcmTokenChangedEvent event = new FcmTokenChangedEvent(userId, request.fcmToken());
-        kafkaEventPublisher.publish(event);
+        applicationEventPublisher.publishEvent(event);
         log.info("[UserFacade] FCM 토큰 변경 이벤트 발행 - UserId: {}", userId);
 
         return UserIdResponse.of(user);

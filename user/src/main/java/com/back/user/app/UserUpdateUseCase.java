@@ -2,6 +2,7 @@ package com.back.user.app;
 
 import com.back.user.domain.User;
 import com.back.user.domain.UserSetting;
+import com.back.user.domain.event.UserSettingUpdatedEvent;
 import com.back.user.domain.event.UserUpdatedEvent;
 import com.back.user.dto.request.UpdateFcmTokenRequest;
 import com.back.user.dto.request.UpdateNotificationSettingsRequest;
@@ -36,6 +37,13 @@ public class UserUpdateUseCase {
         if (request.settlementEnabled() != null) {
             setting.setSettlementEnabled(request.settlementEnabled());
         }
+        eventPublisher.publishEvent(new UserSettingUpdatedEvent(
+                user.getId(),
+                setting.isBidStatusEnabled(),
+                setting.isProductStatusEnabled(),
+                setting.isPriceEnabled(),
+                setting.isSettlementEnabled()
+        ));
     }
 
     public void updateUserProfile(User user, UpdateUserProfileRequestDto request) {

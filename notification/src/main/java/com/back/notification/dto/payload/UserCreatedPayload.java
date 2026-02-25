@@ -1,8 +1,8 @@
-package com.back.common.user.event;
+package com.back.notification.dto.payload;
 
-import com.back.common.event.EventName;
+import com.back.common.event.KafkaPayload;
 
-public record UserCreatedEvent(
+public record UserCreatedPayload(
         Long id,
         String nickname,
         String name,
@@ -11,5 +11,5 @@ public record UserCreatedEvent(
         String phone,
         String profileImageUrl,
         String ipAddress
-) implements EventName {
+) implements KafkaPayload {
 }

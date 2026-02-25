@@ -17,6 +17,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+import java.util.Map;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -31,44 +34,62 @@ public class NotificationEventPublisher {
     @Value("${spring.cloud.aws.sqs.notification-queue}")
     private String queue;
 
+    private static final int CHUNK_SIZE = 1000;
+
+
     public void send(NotificationCreatedEvent event) {
+        List<String> notificationIds = event.notificationIds();
+        log.info("푸시 알림 발송 시작 - 대상 수={}", notificationIds.size());
 
-        for (String notificationId : event.notificationIds()) {
-            try {
-                Notification notification =
-                        notificationSupport.findById(notificationId);
+        for (int i = 0; i < notificationIds.size(); i += CHUNK_SIZE) {
+            List<String> chunk = notificationIds.subList(i, Math.min(i + CHUNK_SIZE, notificationIds.size()));
 
-                NotificationUser user =
-                        notificationUserSupport.findById(notification.getUserId());
+            List<Notification> notifications = notificationSupport.findAllById(chunk);
 
-                if (!isAlertEnabled(user, notification))
-                    continue;
+            List<Long> userIds = notifications.stream()
+                    .map(Notification::getUserId)
+                    .distinct()
+                    .toList();
+            Map<Long, NotificationUser> userMap = notificationUserSupport.findAllByIdAsMap(userIds);
 
-                String fcmToken = user.getFcmToken();
+            for (Notification notification : notifications) {
+                try {
+                    NotificationUser user = userMap.get(notification.getUserId());
 
-                if (fcmToken == null) {
-                    log.info("FCM 토큰 없음 - userId={}", notification.getUserId());
-                    continue;
+                    if (user == null) {
+                        log.warn("유저 없음 - userId={}", notification.getUserId());
+                        continue;
+                    }
+
+                    if (!isAlertEnabled(user, notification))
+                        continue;
+
+                    String fcmToken = user.getFcmToken();
+
+                    if (fcmToken == null) {
+                        log.info("FCM 토큰 없음 - userId={}", notification.getUserId());
+                        continue;
+                    }
+
+                    PushDispatchMessage payload =
+                            mapper.toPushDispatchMessage(notification, fcmToken);
+
+                    sqsTemplate.send(to -> to
+                            .queue(queue)
+                            .payload(payload)
+                    );
+
+                } catch (Exception e) {
+                    log.error(
+                            "알림 전송 실패 - notificationId={}, error={}",
+                            notification.getId(),
+                            e.getMessage(),
+                            e
+                    );
                 }
-
-                PushDispatchMessage payload =
-                        mapper.toPushDispatchMessage(notification, fcmToken);
-
-                sqsTemplate.send(to -> to
-                        .queue(queue)
-                        .payload(payload)
-                );
-
-
-            } catch (Exception e) {
-                log.error(
-                        "알림 전송 실패 - notificationId={}, error={}",
-                        notificationId,
-                        e.getMessage(),
-                        e
-                );
             }
         }
+        log.info("푸시 알림 발송 완료 - 대상 수={}", notificationIds.size());
     }
 
     private boolean isAlertEnabled(NotificationUser user, Notification notification) {
