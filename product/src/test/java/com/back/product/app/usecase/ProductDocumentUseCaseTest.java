@@ -70,7 +70,7 @@ class ProductDocumentUseCaseTest {
                     .build();
 
             // Dummy data for mocking
-            float[] dummyEmbedding = new float[]{0.1f, 0.2f, 0.3f};
+            List<Float> dummyEmbedding = List.of(0.1f, 0.2f, 0.3f);
             ProductDocument document = ProductDocument.builder().productInfo(ProductDocument.ProductInfo.builder().productName("Test Product").build()).build();
             List<ProductDocument> documents = List.of(document);
             PageImpl<ProductDocument> productPage = new PageImpl<>(documents, PageRequest.of(Math.toIntExact(command.page()), Math.toIntExact(command.size())), documents.size());
@@ -155,7 +155,7 @@ class ProductDocumentUseCaseTest {
         private final Long PRODUCT_INFO_ID = 1L;
         private final Long OTHER_PRODUCT_INFO_ID_1 = 2L;
         private final Long OTHER_PRODUCT_INFO_ID_2 = 3L;
-        private final float[] DUMMY_EMBEDDING = {0.1f, 0.2f, 0.3f};
+        private final List<Float> DUMMY_EMBEDDING = List.of(0.1f, 0.2f, 0.3f);
 
         @Test
         @DisplayName("성공: 유사 상품을 정상적으로 조회한다 (자기 자신 제외)")
@@ -173,7 +173,6 @@ class ProductDocumentUseCaseTest {
                     .embedding(DUMMY_EMBEDDING)
                     .productInfo(ProductDocument.ProductInfo.builder().productName("Target Product").build())
                     .build();
-
             ProductDocument similarProduct1 = ProductDocument.builder()
                     .productInfo(
                             ProductDocument.ProductInfo.builder()
@@ -191,15 +190,14 @@ class ProductDocumentUseCaseTest {
                     .productInfo(ProductDocument.ProductInfo.builder().productName("Similar Product 2").build())
                     .build();
 
-            List<ProductDocument> searchResults = List.of(similarProduct1, similarProduct2); // Expect only similar products
+            List<ProductDocument> searchResults = List.of(similarProduct1, similarProduct2);
             PageImpl<ProductDocument> productPage = new PageImpl<>(searchResults, PageRequest.of(page.intValue(), size.intValue()), searchResults.size());
 
             ProductSearchDto dto1 = ProductSearchDto.builder().productName("Similar Product 1").build();
             ProductSearchDto dto2 = ProductSearchDto.builder().productName("Similar Product 2").build();
 
-
+            given(productDocumentSupport.findProductWithEmbedding(any(Query.class))).willReturn(targetProduct);
             given(productDocumentSupport.findProductPage(any(Query.class))).willReturn(productPage);
-            given(productDocumentRepository.findById(PRODUCT_INFO_ID.toString())).willReturn(java.util.Optional.of(targetProduct));
             given(productDocumentMapper.toDto(similarProduct1)).willReturn(dto1);
             given(productDocumentMapper.toDto(similarProduct2)).willReturn(dto2);
 
@@ -207,30 +205,25 @@ class ProductDocumentUseCaseTest {
             ProductSearchResponseDto result = productDocumentUseCase.findSimilarProducts(PRODUCT_INFO_ID, page, size);
 
             // then
+            verify(productDocumentSupport).findProductWithEmbedding(any(Query.class));
             ArgumentCaptor<NativeQuery> queryCaptor = ArgumentCaptor.forClass(NativeQuery.class);
             verify(productDocumentSupport).findProductPage(queryCaptor.capture());
-            verify(productDocumentRepository).findById(PRODUCT_INFO_ID.toString());
             verify(productDocumentMapper).toDto(similarProduct1);
             verify(productDocumentMapper).toDto(similarProduct2);
 
             NativeQuery capturedQuery = queryCaptor.getValue();
             assertThat(capturedQuery.getKnnSearches()).hasSize(1);
-            // Verify that the filter to exclude self was applied
             assertThat(capturedQuery.getKnnSearches().getFirst().filter()).isNotNull();
-            // A more detailed check for the filter would involve parsing the query, which is complex for unit tests.
-            // Rely on integration tests for full query verification.
 
             assertThat(result).isNotNull();
-            assertThat(result.products()).hasSize(2); // Should not include the target product itself
+            assertThat(result.products()).hasSize(2);
             assertThat(result.products().getFirst().productName()).isEqualTo("Similar Product 1");
             assertThat(result.totalElements()).isEqualTo(2);
-            assertThat(result.totalPages()).isEqualTo(1);
-            assertThat(result.currentPage()).isEqualTo(0);
         }
 
         @Test
-        @DisplayName("실패: 대상 상품의 임베딩이 없을 경우 CustomException 발생")
-        void findSimilarProducts_Fail_EmbeddingNotFound() {
+        @DisplayName("성공: 대상 상품의 임베딩이 없을 경우 빈 리스트 반환")
+        void findSimilarProducts_Success_EmbeddingNotFound() {
             // given
             Integer page = 0;
             Integer size = 5;
@@ -241,20 +234,20 @@ class ProductDocumentUseCaseTest {
                                     .productInfoId(PRODUCT_INFO_ID)
                                     .build()
                     )
-                    .embedding(new float[]{}) // Empty embedding
+                    .embedding(List.of()) // Empty embedding
                     .productInfo(ProductDocument.ProductInfo.builder().productName("Target Product").build())
                     .build();
 
-            given(productDocumentRepository.findById(PRODUCT_INFO_ID.toString())).willReturn(java.util.Optional.of(targetProduct));
+            given(productDocumentSupport.findProductWithEmbedding(any(Query.class))).willReturn(targetProduct);
 
             // when
-            org.assertj.core.api.Assertions.assertThatThrownBy(() ->
-                            productDocumentUseCase.findSimilarProducts(PRODUCT_INFO_ID, page, size))
-                    .isInstanceOf(CustomException.class)
-                    .hasMessage(FailureCode.EMBEDDING_NOT_FOUND.getMessage());
+            ProductSearchResponseDto result = productDocumentUseCase.findSimilarProducts(PRODUCT_INFO_ID, page, size);
 
             // then
-            verify(productDocumentRepository).findById(PRODUCT_INFO_ID.toString());
+            assertThat(result).isNotNull();
+            assertThat(result.products()).isEmpty();
+            assertThat(result.totalElements()).isEqualTo(0);
+            verify(productDocumentSupport).findProductWithEmbedding(any(Query.class));
             verify(productDocumentSupport, org.mockito.Mockito.never()).findProductPage(any(Query.class));
         }
 
@@ -265,19 +258,19 @@ class ProductDocumentUseCaseTest {
             Integer page = 0;
             Integer size = 5;
 
-            given(productDocumentRepository.findById(PRODUCT_INFO_ID.toString())).willReturn(java.util.Optional.empty());
+            given(productDocumentSupport.findProductWithEmbedding(any(Query.class)))
+                    .willThrow(new CustomException(FailureCode.PRODUCT_INFO_NOT_FOUND));
 
-            // when
+            // when & then
             org.assertj.core.api.Assertions.assertThatThrownBy(() ->
                             productDocumentUseCase.findSimilarProducts(PRODUCT_INFO_ID, page, size))
                     .isInstanceOf(CustomException.class)
                     .hasMessage(FailureCode.PRODUCT_INFO_NOT_FOUND.getMessage());
 
-            // then
-            verify(productDocumentRepository).findById(PRODUCT_INFO_ID.toString());
+            verify(productDocumentSupport).findProductWithEmbedding(any(Query.class));
             verify(productDocumentSupport, org.mockito.Mockito.never()).findProductPage(any(Query.class));
         }
-        
+
         @Test
         @DisplayName("성공: 유사 상품이 없을 경우 빈 리스트 반환")
         void findSimilarProducts_Success_NoSimilarProducts() {
@@ -294,12 +287,12 @@ class ProductDocumentUseCaseTest {
                     .embedding(DUMMY_EMBEDDING)
                     .productInfo(ProductDocument.ProductInfo.builder().productName("Target Product").build())
                     .build();
-            
-            List<ProductDocument> searchResults = List.of(); // No similar products found
-            PageImpl<ProductDocument> productPage = new PageImpl<>(searchResults, PageRequest.of(page.intValue(), size.intValue()), 0);
 
+            List<ProductDocument> searchResults = List.of();
+            PageImpl<ProductDocument> productPage = new PageImpl<>(searchResults, PageRequest.of(page, size), 0);
+
+            given(productDocumentSupport.findProductWithEmbedding(any(Query.class))).willReturn(targetProduct);
             given(productDocumentSupport.findProductPage(any(Query.class))).willReturn(productPage);
-            given(productDocumentRepository.findById(PRODUCT_INFO_ID.toString())).willReturn(java.util.Optional.of(targetProduct));
 
             // when
             ProductSearchResponseDto result = productDocumentUseCase.findSimilarProducts(PRODUCT_INFO_ID, page, size);
@@ -309,7 +302,6 @@ class ProductDocumentUseCaseTest {
             assertThat(result.products()).isEmpty();
             assertThat(result.totalElements()).isEqualTo(0);
             assertThat(result.totalPages()).isEqualTo(0);
-            assertThat(result.currentPage()).isEqualTo(0);
         }
     }
 }

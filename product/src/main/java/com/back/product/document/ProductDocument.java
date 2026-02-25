@@ -37,7 +37,7 @@ public class ProductDocument extends BaseDocument<String> {
     private List<Option> totalOptions;
 
     @Field(type = FieldType.Dense_Vector, dims = 384)
-    private float[] embedding;
+    private List<Float> embedding;
 
     @Getter
     @Builder

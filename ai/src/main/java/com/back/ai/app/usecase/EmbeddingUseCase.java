@@ -14,8 +14,8 @@ public class EmbeddingUseCase {
     private final EmbeddingModel embeddingModel;
 
     @Loggable
-    public float[] generateEmbeddings(String texts) {
-        return embeddingModel.embed(texts);
+    public List<Float> generateEmbeddings(String texts) {
+        return convertArrayToList(embeddingModel.embed(texts));
     }
 
     @Loggable

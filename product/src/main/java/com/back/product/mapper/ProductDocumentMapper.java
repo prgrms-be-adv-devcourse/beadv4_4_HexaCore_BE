@@ -27,7 +27,7 @@ public class ProductDocumentMapper {
                 .build();
     }
     
-    public ProductDocument toDocument(ProductInfoDto productInfoDto, List<OptionDto>optionDtos, String thumbnailUrl, float[] embedding) {
+    public ProductDocument toDocument(ProductInfoDto productInfoDto, List<OptionDto>optionDtos, String thumbnailUrl, List<Float> embedding) {
         ProductDocument.ProductInfo productInfoDocument = toProductInfoDocument(productInfoDto);
 
         List<ProductDocument.Option> optionDocuments = optionDtos.stream()
