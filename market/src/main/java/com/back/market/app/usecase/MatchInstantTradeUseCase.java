@@ -110,6 +110,8 @@ public class MatchInstantTradeUseCase {
         MarketUser me = marketSupport.findMarketUserById(userId);
         Order savedOrder;
         Bidding myBid;
+        boolean isOrderNew = false;
+        boolean isMyBidNew = false;
 
         if (myPosition == BiddingPosition.BUY) {
             try {
@@ -129,8 +131,10 @@ public class MatchInstantTradeUseCase {
                 if (e.getFailureCode() == FailureCode.ORDER_NOT_FOUND) {
                     log.info("[MatchTrade] 신규 주문 생성 - SellBiddingId: {}", targetBid.getId());
                     myBid = createAndSaveNewBidding(requestDto, me, targetBid, myPosition);
+                    isMyBidNew = true;
                     targetBid.changeStatus(BiddingStatus.MATCHED);
                     savedOrder = orderRepository.save(orderMapper.toEntity(myBid, targetBid, me.getAddress()));
+                    isOrderNew = true;
                 } else {
                     throw e;
                 }
@@ -138,8 +142,10 @@ public class MatchInstantTradeUseCase {
         } else {
             //즉시 판매 로직
             myBid = createAndSaveNewBidding(requestDto, me, targetBid, myPosition);
+            isMyBidNew = true;
             targetBid.changeStatus(BiddingStatus.MATCHED);
             savedOrder = orderRepository.save(orderMapper.toEntity(targetBid, myBid, targetBid.getMarketUser().getAddress()));
+            isOrderNew = true;
         }
 
         // 5. 실제 결제 요청(FeignClient 사용)
@@ -152,9 +158,19 @@ public class MatchInstantTradeUseCase {
             if (resultData == null) {
                 log.error("[MatchInstantTrade] Cash 모듈이 null을 반환했습니다. 주문 취소 처리합니다. orderId={}, buyBiddingId={}, sellBiddingId={}", savedOrder.getId(), myBid.getId(), targetBid.getId());
                 // 보상: 주문/입찰 상태를 REQUIRES_NEW로 저장
-                orderStatusService.markStatusInNewTx(savedOrder.getId(), OrderStatus.CANCELLED_PAYMENT_FAILED);
-                biddingStatusService.markStatusInNewTx(myBid.getId(), BiddingStatus.CANCELLED_PAYMENT_FAILED);
-                // 판매자의 매물은 다시 판매중(PROCESS)으로 복원해야 함
+                if (!isOrderNew) {
+                    orderStatusService.markStatusInNewTx(savedOrder.getId(), OrderStatus.CANCELLED_PAYMENT_FAILED);
+                } else {
+                    log.info("[MatchInstantTrade] 신규 주문이므로 REQUIRES_NEW로 주문 상태를 기록하지 않습니다. orderId={}", savedOrder.getId());
+                }
+
+                if (!isMyBidNew) {
+                    biddingStatusService.markStatusInNewTx(myBid.getId(), BiddingStatus.CANCELLED_PAYMENT_FAILED);
+                } else {
+                    log.info("[MatchInstantTrade] 신규 구매 입찰이므로 REQUIRES_NEW로 구매자 입찰 상태를 기록하지 않습니다. buyBiddingId={}", myBid.getId());
+                }
+
+                // 판매자의 매물은 다시 판매중(PROCESS)으로 복원해야 함 (대상 입찰은 기존 엔티티임)
                 biddingStatusService.markStatusInNewTx(targetBid.getId(), BiddingStatus.PROCESS);
 
                 // 메인 트랜잭션의 영속성 컨텍스트와 DB 상태 동기화
@@ -178,9 +194,19 @@ public class MatchInstantTradeUseCase {
             } else {
                 // 기타 상태(실패 등) -> 주문/입찰 취소 및 보상 처리
                 log.warn("[MatchInstantTrade] 결제 실패 상태 감지 ({}). 주문/입찰을 취소합니다. orderId={}, buyBiddingId={}, sellBiddingId={}", resultData.status(), savedOrder.getId(), myBid.getId(), targetBid.getId());
-                // 주문 및 구매자 입찰만 실패로 기록; 판매자의 매물은 다시 판매중으로 복원
-                orderStatusService.markStatusInNewTx(savedOrder.getId(), OrderStatus.CANCELLED_PAYMENT_FAILED);
-                biddingStatusService.markStatusInNewTx(myBid.getId(), BiddingStatus.CANCELLED_PAYMENT_FAILED);
+                if (!isOrderNew) {
+                    orderStatusService.markStatusInNewTx(savedOrder.getId(), OrderStatus.CANCELLED_PAYMENT_FAILED);
+                } else {
+                    log.info("[MatchInstantTrade] 신규 주문이므로 REQUIRES_NEW로 주문 상태를 기록하지 않습니다. orderId={}", savedOrder.getId());
+                }
+
+                if (!isMyBidNew) {
+                    biddingStatusService.markStatusInNewTx(myBid.getId(), BiddingStatus.CANCELLED_PAYMENT_FAILED);
+                } else {
+                    log.info("[MatchInstantTrade] 신규 구매 입찰이므로 REQUIRES_NEW로 구매자 입찰 상태를 기록하지 않습니다. buyBiddingId={}", myBid.getId());
+                }
+
+                // 판매자의 매물은 기존 엔티티이므로 반드시 복원
                 biddingStatusService.markStatusInNewTx(targetBid.getId(), BiddingStatus.PROCESS);
 
                 // 메인 트랜잭션의 영속성 컨텍스트와 DB 상태 동기화
