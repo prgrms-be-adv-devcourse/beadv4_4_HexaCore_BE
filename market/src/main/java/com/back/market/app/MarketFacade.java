@@ -40,8 +40,8 @@ public class MarketFacade {
     @Transactional
     public MarketPaymentResponseDto registerBuyBid(Long userId, String ip, BiddingRequestDto requestDto) {
         MarketUser user = marketSupport.findMarketUserById(userId);
-        marketDetectorAdapter.detectBidSpam(userId);
-        marketDetectorAdapter.detectHijack(userId, user.getEmail(), ip, requestDto.price());
+//        marketDetectorAdapter.detectBidSpam(userId);
+//        marketDetectorAdapter.detectHijack(userId, user.getEmail(), ip, requestDto.price());
         return registerBidUseCase.registerBuyBid(userId, requestDto);
     }
 
@@ -54,8 +54,8 @@ public class MarketFacade {
     @Transactional
     public MarketPaymentResponseDto registerSellBid(Long userId, String ip, BiddingRequestDto requestDto) {
         MarketUser user = marketSupport.findMarketUserById(userId);
-        marketDetectorAdapter.detectBidSpam(userId);
-        marketDetectorAdapter.detectHijack(userId, user.getEmail(), ip, requestDto.price());
+//        marketDetectorAdapter.detectBidSpam(userId);
+//        marketDetectorAdapter.detectHijack(userId, user.getEmail(), ip, requestDto.price());
         return registerBidUseCase.registerSellBid(userId, requestDto);
     }
 
@@ -97,8 +97,8 @@ public class MarketFacade {
      */
     public MarketPaymentResponseDto purchaseNow(Long buyerId, String ip, BiddingRequestDto requestDto) {
         MarketUser user = marketSupport.findMarketUserById(buyerId);
-        marketDetectorAdapter.detectBidSpam(buyerId);
-        marketDetectorAdapter.detectHijack(buyerId, user.getEmail(), ip, requestDto.price());
+//        marketDetectorAdapter.detectBidSpam(buyerId);
+//        marketDetectorAdapter.detectHijack(buyerId, user.getEmail(), ip, requestDto.price());
         return matchInstantTradeUseCase.buyNow(buyerId, requestDto);
     }
 
@@ -110,8 +110,8 @@ public class MarketFacade {
      */
     public MarketPaymentResponseDto sellNow(Long sellerId, String ip, BiddingRequestDto requestDto) {
         MarketUser user = marketSupport.findMarketUserById(sellerId);
-        marketDetectorAdapter.detectBidSpam(sellerId);
-        marketDetectorAdapter.detectHijack(sellerId, user.getEmail(), ip, requestDto.price());
+//        marketDetectorAdapter.detectBidSpam(sellerId);
+//        marketDetectorAdapter.detectHijack(sellerId, user.getEmail(), ip, requestDto.price());
         return matchInstantTradeUseCase.sellNow(sellerId, requestDto);
     }
 

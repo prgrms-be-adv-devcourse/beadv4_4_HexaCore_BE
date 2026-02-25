@@ -38,7 +38,8 @@ public class BaseSecurityConfig {
                         "/swagger-ui/**",
                         "/swagger-ui.html",
                         "/actuator/**",
-                        "/ws/**"
+                        "/ws/**",
+                        "/api/v1/internal/**"
                 ).permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/products/**", "/api/v1/market/products/**").permitAll()
                 .anyRequest().authenticated()
