@@ -72,13 +72,22 @@ public class RegisterBidUseCase {
         );
 
         //요청에 따른 결과 수신
-        PayAndHoldResponseDto responseData = marketCashAdapter.getPayAndHoldResult(cashRequest);
+        PayAndHoldResponseDto responseData;
+        try {
+            responseData = marketCashAdapter.getPayAndHoldResult(cashRequest);
 
-        if (responseData.status() == PayAndHoldStatus.PAID) {
-            savedBidding.changeStatus(BiddingStatus.PROCESS);
-            log.info("[RegisterBid] 예치금 홀딩 & 입찰 등록 완료 (HOLD->PROCESS) - BiddingId: {}", savedBidding.getId());
-        } else if (responseData.status() == PayAndHoldStatus.REQUIRES_PG) {
-            log.info("[RegisterBid] PG 결제 필요, HOLD 상태 유지- relId: {}", responseData.relId());
+            if (responseData.status() == PayAndHoldStatus.PAID) {
+                savedBidding.changeStatus(BiddingStatus.PROCESS);
+                log.info("[RegisterBuyBid] 예치금 홀딩 & 입찰 등록 완료 (HOLD->PROCESS) - BiddingId: {}", savedBidding.getId());
+            } else if (responseData.status() == PayAndHoldStatus.REQUIRES_PG) {
+                log.info("[RegisterBuyBid] PG 결제 필요, HOLD 상태 유지- relId: {}", responseData.relId());
+            } else {
+                savedBidding.changeStatus(BiddingStatus.CANCELLED_PAYMENT_FAILED);
+            }
+        } catch (Exception e) {
+            log.error("[RegisterBuyBid] Cash 모듈 호출 중 에러 발생. 입찰을 FAIL 처리합니다. BiddingId: {}, Error: {}", savedBidding.getId(), e.getMessage(), e);
+            savedBidding.changeStatus(BiddingStatus.CANCELLED_PAYMENT_FAILED);
+            throw e;
         }
 
         return MarketPaymentResponseDto.from(
