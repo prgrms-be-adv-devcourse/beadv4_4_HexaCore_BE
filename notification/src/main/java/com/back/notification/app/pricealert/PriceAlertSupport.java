@@ -25,7 +25,12 @@ public class PriceAlertSupport {
         List<PriceAlert> priceAlerts = priceAlertRepository.findEligibleAlerts(payload.productId(),
                 payload.currentPrice(), now.minusDays(1));
 
-        priceAlerts.forEach(alert -> alert.trigger(now));
+        List<Long> ids = priceAlerts.stream().map(PriceAlert::getId).toList();
+        int chunkSize = 1000;
+        for (int i = 0; i < ids.size(); i += chunkSize) {
+            List<Long> chunk = ids.subList(i, Math.min(i + chunkSize, ids.size()));
+            priceAlertRepository.bulkTrigger(chunk, now);
+        }
 
         return priceAlerts.stream()
                 .map(PriceAlert::getUser)
