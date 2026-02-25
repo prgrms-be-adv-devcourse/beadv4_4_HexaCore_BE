@@ -44,10 +44,18 @@ spring:
               uri: ${CASH_SERVICE_URL:http://cash-service:8080}
               predicates:
                 - Path=/api/v1/cash/**
-            - id: chat-service
+            - id: chat-service-api
               uri: ${CHAT_SERVICE_URL:http://chat-service:8080}
               predicates:
-                - Path=/api/v1/chat/**,/api/v1/chat-ws/**,/ws/chat/**
+                - Path=/api/v1/chat/**
+
+            - id: chat-service-ws
+              uri: ${CHAT_SERVICE_URL:http://chat-service:8080}
+              predicates:
+                - Path=/ws/chat/**
+              filters:
+                - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_FIRST
+
             - id: notification-service
               uri: ${NOTIFICATION_SERVICE_URL:http://notification-service:8080}
               predicates:
