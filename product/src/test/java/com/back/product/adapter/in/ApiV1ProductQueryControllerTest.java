@@ -24,7 +24,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -65,7 +64,6 @@ class ApiV1ProductQueryControllerTest {
 
         @Test
         @DisplayName("상품 상세 조회를 성공한다")
-        @WithMockUser
         void getProductDetail_Success() throws Exception {
             // given
             long productInfoId = 1L;
@@ -86,7 +84,6 @@ class ApiV1ProductQueryControllerTest {
 
         @Test
         @DisplayName("존재하지 않는 상품 정보 ID로 조회 시 404 Not Found를 반환한다")
-        @WithMockUser
         void getProductDetail_Fail_NotFound() throws Exception {
             // given
             long productInfoId = 999L;
@@ -110,7 +107,6 @@ class ApiV1ProductQueryControllerTest {
 
         @Test
         @DisplayName("상품 목록 조회 및 검색을 성공한다")
-        @WithMockUser
         void searchProducts_Success() throws Exception {
             // given
             ProductSearchDto productSearchDto = ProductSearchDto.builder()
@@ -150,7 +146,6 @@ class ApiV1ProductQueryControllerTest {
 
         @Test
         @DisplayName("잘못된 정렬 조건으로 조회 시 400 Bad Request를 반환한다")
-        @WithMockUser
         void searchProducts_Fail_InvalidSort() throws Exception {
             // when & then
             mockMvc.perform(
@@ -168,7 +163,6 @@ class ApiV1ProductQueryControllerTest {
 
         @Test
         @DisplayName("페이지 크기가 최대값을 초과할 경우 400 Bad Request를 반환한다")
-        @WithMockUser
         void searchProducts_Fail_PageSizeExceedsMax() throws Exception {
             // when & then
             mockMvc.perform(

@@ -18,7 +18,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -62,7 +61,6 @@ class ApiV1CategoryControllerTest {
     class GetCategoriesTest {
         @Test
         @DisplayName("카테고리 목록 조회를 성공한다")
-        @WithMockUser
         void getCategories() throws Exception {
             // given
             CategoryPageResponseDto responseDto = CategoryPageResponseDto.builder()
@@ -94,7 +92,6 @@ class ApiV1CategoryControllerTest {
 
         @Test
         @DisplayName("카테고리 생성을 성공한다")
-        @WithMockUser
         void createCategories_Success() throws Exception {
             // given
             CategoryDataRequestDto newCategory1 = new CategoryDataRequestDto("Tops", "https://example.com/image1.png");
@@ -126,7 +123,6 @@ class ApiV1CategoryControllerTest {
 
         @Test
         @DisplayName("요청에 중복된 카테고리 이름이 있어도, 새로운 카테고리만 생성하고 201 Created를 반환한다")
-        @WithMockUser
         void createCategories_Filter_DuplicateName() throws Exception {
             // given
             CategoryDataRequestDto existingCategory = new CategoryDataRequestDto("Existed", "https://example.com/image_exist.png");
@@ -156,7 +152,6 @@ class ApiV1CategoryControllerTest {
 
         @Test
         @DisplayName("유효하지 않은 요청 값으로 생성 시 400 Bad Request를 반환한다")
-        @WithMockUser
         void createCategories_Fail_Validation() throws Exception {
             // given
             CategoryDataRequestDto invalidCategory = new CategoryDataRequestDto("123", "invalid-url");
@@ -182,7 +177,6 @@ class ApiV1CategoryControllerTest {
 
         @Test
         @DisplayName("카테고리 수정을 성공한다")
-        @WithMockUser
         void modifyCategory_Success() throws Exception {
             // given
             CategoryDataRequestDto requestDto = CategoryDataRequestDto.builder()
@@ -211,7 +205,6 @@ class ApiV1CategoryControllerTest {
 
         @Test
         @DisplayName("존재하지 않는 카테고리 수정 시 404 Not Found를 반환한다")
-        @WithMockUser
         void modifyCategory_Fail_CategoryNotFound() throws Exception {
             // given
             CategoryDataRequestDto requestDto = CategoryDataRequestDto.builder()
@@ -236,7 +229,6 @@ class ApiV1CategoryControllerTest {
 
         @Test
         @DisplayName("중복된 이름으로 카테고리 수정 시 409 Conflict를 반환한다")
-        @WithMockUser
         void modifyCategory_Fail_DuplicateName() throws Exception {
             // given
             CategoryDataRequestDto requestDto = CategoryDataRequestDto.builder()
@@ -261,7 +253,6 @@ class ApiV1CategoryControllerTest {
 
         @Test
         @DisplayName("유효하지 않은 요청 값으로 카테고리 수정 시 400 Bad Request를 반환한다")
-        @WithMockUser
         void modifyCategory_Fail_Validation() throws Exception {
             // given
             // Invalid name (blank or non-alphabet) and invalid URL
@@ -290,7 +281,6 @@ class ApiV1CategoryControllerTest {
 
         @Test
         @DisplayName("카테고리 삭제를 성공한다")
-        @WithMockUser
         void deleteCategory_Success() throws Exception {
             // given
             // categoryFacade.deleteCategory(CATEGORY_ID)가 호출될 때 아무것도 하지 않도록 설정 (void 메소드)
@@ -309,7 +299,6 @@ class ApiV1CategoryControllerTest {
 
         @Test
         @DisplayName("사용 중인 카테고리를 삭제 시도 시 409 Conflict를 반환한다")
-        @WithMockUser
         void deleteCategory_Fail_CategoryInUse() throws Exception {
             // given
             // categoryFacade.deleteCategory(CATEGORY_ID)가 호출될 때 CATEGORY_IN_USE 예외를 던지도록 설정
