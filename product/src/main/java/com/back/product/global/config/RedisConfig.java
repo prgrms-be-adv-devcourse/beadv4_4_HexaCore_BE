@@ -43,6 +43,7 @@ public class RedisConfig {
         redisCacheConfigurations.put(CacheNames.CATEGORIES, defaultCacheConfig.entryTtl(Duration.ofDays(1))); // 카테고리 목록 (1일)
         redisCacheConfigurations.put(CacheNames.PRODUCT_DETAIL, defaultCacheConfig.entryTtl(Duration.ofHours(1))); // 상품 상세 (1시간)
         redisCacheConfigurations.put(CacheNames.PRODUCT_SEARCH, defaultCacheConfig.entryTtl(Duration.ofMinutes(10))); // 검색 결과 (10분)
+        redisCacheConfigurations.put(CacheNames.PRODUCT_SIMILAR, defaultCacheConfig.entryTtl(Duration.ofMinutes(10))); // 유사 상품 (10분)
 
         return RedisCacheManager.RedisCacheManagerBuilder
                 .fromConnectionFactory(redisConnectionFactory)

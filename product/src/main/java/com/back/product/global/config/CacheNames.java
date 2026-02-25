@@ -6,4 +6,5 @@ public interface CacheNames {
     String CATEGORIES = "categories";
     String PRODUCT_DETAIL = "productDetails";
     String PRODUCT_SEARCH = "productSearch";
+    String PRODUCT_SIMILAR = "productSimilar";
 }
