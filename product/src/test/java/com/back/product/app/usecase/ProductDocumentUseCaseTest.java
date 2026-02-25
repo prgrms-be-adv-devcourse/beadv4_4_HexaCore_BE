@@ -4,6 +4,7 @@ import com.back.ai.app.usecase.EmbeddingUseCase;
 import com.back.common.code.FailureCode;
 import com.back.common.exception.CustomException;
 import com.back.product.adapter.out.document.ProductDocumentRepository;
+import com.back.product.adapter.out.event.ProductSpringEventPublisher;
 import com.back.product.document.ProductDocument;
 import com.back.product.dto.command.ProductSearchCommand;
 import com.back.product.dto.enums.ProductSortType;
@@ -46,6 +47,9 @@ class ProductDocumentUseCaseTest {
 
     @Mock
     private ProductDocumentMapper productDocumentMapper;
+
+    @Mock
+    private ProductSpringEventPublisher eventPublisher;
 
     @Mock
     private EmbeddingUseCase embeddingUseCase;
@@ -237,6 +241,7 @@ class ProductDocumentUseCaseTest {
                     .embedding(List.of()) // Empty embedding
                     .productInfo(ProductDocument.ProductInfo.builder().productName("Target Product").build())
                     .build();
+            targetProduct.assignId(PRODUCT_INFO_ID.toString());
 
             given(productDocumentSupport.findProductWithEmbedding(any(Query.class))).willReturn(targetProduct);
 
@@ -248,6 +253,7 @@ class ProductDocumentUseCaseTest {
             assertThat(result.products()).isEmpty();
             assertThat(result.totalElements()).isEqualTo(0);
             verify(productDocumentSupport).findProductWithEmbedding(any(Query.class));
+            verify(eventPublisher).sendResyncRequestEvent(PRODUCT_INFO_ID);
             verify(productDocumentSupport, org.mockito.Mockito.never()).findProductPage(any(Query.class));
         }
 
