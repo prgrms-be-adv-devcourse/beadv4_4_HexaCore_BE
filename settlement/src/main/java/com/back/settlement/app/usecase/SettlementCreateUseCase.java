@@ -10,6 +10,8 @@ import com.back.settlement.domain.SettlementItem;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -24,16 +26,23 @@ public class SettlementCreateUseCase {
     private final SettlementItemRepository settlementItemRepository;
     private final SettlementSupport settlementSupport;
 
-    public SettlementWithItems createSettlement(Long payeeId, YearMonth targetMonth) {
+    public List<SettlementWithItems> createSettlements(List<Long> payeeIds, YearMonth targetMonth) {
         LocalDateTime startAt = LocalDateUtils.startOfMonth(targetMonth);
         LocalDateTime endAt = LocalDateUtils.endOfMonth(targetMonth);
 
-        List<SettlementItem> items = settlementSupport.findUnsettledItems(payeeId, startAt, endAt);
+        List<SettlementItem> allItems = settlementSupport.findUnsettledItemsByPayeeIds(payeeIds, startAt, endAt);
 
-        Settlement settlement = Settlement.create(payeeId, items, startAt, endAt);
-        log.info("정산 생성 완료. payeeId={}, itemCount={}, netAmount={}", payeeId, items.size(), settlement.getTotalNetAmount());
+        Map<Long, List<SettlementItem>> itemsByPayee = allItems.stream()
+                .collect(Collectors.groupingBy(SettlementItem::getPayeeId));
 
-        return new SettlementWithItems(settlement, items);
+        return payeeIds.stream()
+                .map(payeeId -> itemsByPayee.getOrDefault(payeeId, List.of()))
+                .filter(items -> !items.isEmpty())
+                .map(items -> {
+                    Settlement settlement = Settlement.create(items.get(0).getPayeeId(), items, startAt, endAt);
+                    return new SettlementWithItems(settlement, items);
+                })
+                .toList();
     }
 
     @Transactional
@@ -44,8 +53,8 @@ public class SettlementCreateUseCase {
             item.included();
         });
         settlementItemRepository.saveAll(items);
-        saved.complete(); // PENDING -> COMPLETED
-        settlementRepository.save(saved);
+        saved.complete(); // PENDING -> COMPLETED, 도메인 이벤트 등록
+        settlementRepository.save(saved); // AbstractAggregateRoot의 도메인 이벤트 발행을 위해 save() 필수 (dirty checking만으로는 이벤트 미발행)
         log.info("정산 생성 및 확정 완료. settlementId={}", saved.getId());
     }
 }
