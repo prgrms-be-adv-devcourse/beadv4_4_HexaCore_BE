@@ -5,6 +5,7 @@ import com.back.cash.app.usecase.CashPayoutUseCase;
 import com.back.cash.domain.event.CashPayoutRequestedCommand;
 import com.back.common.code.FailureCode;
 import com.back.common.exception.BadRequestException;
+import com.back.common.exception.EntityNotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -62,6 +63,18 @@ class CashPayoutFacadeTest {
     void badRequest_saveFailedAndReturn() {
         CashPayoutRequestedCommand event = event(102L);
         doThrow(new BadRequestException(FailureCode.INVALID_AMOUNT))
+                .when(cashPayoutUseCase).execute(event);
+
+        cashPayoutFacade.requestPayout(event);
+
+        verify(cashPayoutUseCase, times(1)).saveFailedPayout(eq(event), anyString());
+    }
+
+    @Test
+    @DisplayName("EntityNotFoundException이면 실패 마킹 후 종료한다")
+    void entityNotFound_saveFailedAndReturn() {
+        CashPayoutRequestedCommand event = event(104L);
+        doThrow(new EntityNotFoundException(FailureCode.WALLET_NOT_FOUND))
                 .when(cashPayoutUseCase).execute(event);
 
         cashPayoutFacade.requestPayout(event);
