@@ -191,7 +191,7 @@ public class MatchInstantTradeUseCase {
         }
         log.info("[MatchInstantTrade] executeTrade 완료 - orderId={}, resultStatus={}", savedOrder.getId(), resultData.status());
          return MarketPaymentResponseDto.from(resultData, targetBid.getMarketProduct().getName(), me.getName(), me.getEmail());
-     }
+    }
 
     private void handleCompensation(Bidding targetBid, Bidding myBid, Order savedOrder, boolean isOrderNew, boolean isMyBidNew) {
         // 판매 입찰 원상복구(process로)
