@@ -1,6 +1,6 @@
 package com.back.detector.app.event.payload;
 
-import com.back.common.event.EventName;
+import com.back.common.event.KafkaPayload;
 
 public record UserCreatedEvent(
         Long id,
@@ -11,5 +11,5 @@ public record UserCreatedEvent(
         String phone,
         String profileImageUrl,
         String ipAddress
-) implements EventName {
+) implements KafkaPayload {
 }
