@@ -1,5 +1,8 @@
 package com.back.settlement.app.usecase;
 
+import static com.back.settlement.domain.SettlementEventType.SETTLEMENT_PRODUCT_SALES_AMOUNT;
+import static com.back.settlement.domain.SettlementEventType.SETTLEMENT_PRODUCT_SALES_FEE;
+
 import com.back.settlement.adapter.out.SettlementItemRepository;
 import com.back.settlement.adapter.out.SettlementRepository;
 import com.back.settlement.app.support.LocalDateUtils;
@@ -11,9 +14,11 @@ import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,20 +31,51 @@ public class SettlementCreateUseCase {
     private final SettlementItemRepository settlementItemRepository;
     private final SettlementSupport settlementSupport;
 
+    @Value("${settlement.system-payee-id}")
+    private Long systemPayeeId;
+
     public List<SettlementWithItems> createSettlements(List<Long> payeeIds, YearMonth targetMonth) {
         LocalDateTime startAt = LocalDateUtils.startOfMonth(targetMonth);
         LocalDateTime endAt = LocalDateUtils.endOfMonth(targetMonth);
 
         List<SettlementItem> allItems = settlementSupport.findUnsettledItemsByPayeeIds(payeeIds, startAt, endAt);
 
+        // 청크에 시스템 계좌가 없으면 수수료 항목을 별도 조회
+        boolean hasSystemPayee = payeeIds.contains(systemPayeeId);
+        List<SettlementItem> feeItems;
+        if (hasSystemPayee) {
+            feeItems = allItems.stream()
+                    .filter(item -> item.getEventType() == SETTLEMENT_PRODUCT_SALES_FEE)
+                    .toList();
+        } else {
+            feeItems = settlementSupport.findUnsettledItemsByPayeeIds(
+                    List.of(systemPayeeId), startAt, endAt);
+        }
+
         Map<Long, List<SettlementItem>> itemsByPayee = allItems.stream()
                 .collect(Collectors.groupingBy(SettlementItem::getPayeeId));
+
+        Map<Long, SettlementItem> feeItemsByOrderId = feeItems.stream()
+                .filter(item -> item.getEventType() == SETTLEMENT_PRODUCT_SALES_FEE)
+                .collect(Collectors.toMap(SettlementItem::getOrderId, item -> item, (a, b) -> a));
 
         return payeeIds.stream()
                 .map(payeeId -> itemsByPayee.getOrDefault(payeeId, List.of()))
                 .filter(items -> !items.isEmpty())
                 .map(items -> {
-                    Settlement settlement = Settlement.create(items.get(0).getPayeeId(), items, startAt, endAt);
+                    Long payeeId = items.get(0).getPayeeId();
+
+                    Settlement settlement;
+                    if (!payeeId.equals(systemPayeeId)) {
+                        List<SettlementItem> matchedFees = items.stream()
+                                .filter(item -> item.getEventType() == SETTLEMENT_PRODUCT_SALES_AMOUNT)
+                                .map(item -> feeItemsByOrderId.get(item.getOrderId()))
+                                .filter(Objects::nonNull)
+                                .toList();
+                        settlement = Settlement.createForSeller(payeeId, items, matchedFees, startAt, endAt);
+                    } else {
+                        settlement = Settlement.createForSystem(payeeId, items, startAt, endAt);
+                    }
                     return new SettlementWithItems(settlement, items);
                 })
                 .toList();

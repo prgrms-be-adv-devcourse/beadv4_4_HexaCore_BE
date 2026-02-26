@@ -78,8 +78,17 @@ public class Settlement extends BaseAggregateEntity<Settlement> {
 
     private static final String SYSTEM_NAME = "SYSTEM";
 
-    public static Settlement create(Long sellerId, List<SettlementItem> items, LocalDateTime startAt, LocalDateTime endAt) {
-        SettlementAmounts amounts = SettlementAmounts.fromItems(items);
+    public static Settlement createForSystem(Long sellerId, List<SettlementItem> items, LocalDateTime startAt, LocalDateTime endAt) {
+        SettlementAmounts amounts = SettlementAmounts.forSystem(items);
+        return buildSettlement(sellerId, items, amounts, startAt, endAt);
+    }
+
+    public static Settlement createForSeller(Long sellerId, List<SettlementItem> items, List<SettlementItem> feeItems, LocalDateTime startAt, LocalDateTime endAt) {
+        SettlementAmounts amounts = SettlementAmounts.forSeller(items, feeItems);
+        return buildSettlement(sellerId, items, amounts, startAt, endAt);
+    }
+
+    private static Settlement buildSettlement(Long sellerId, List<SettlementItem> items, SettlementAmounts amounts, LocalDateTime startAt, LocalDateTime endAt) {
         return Settlement.builder()
                 .sellerId(sellerId)
                 .sellerName(extractSellerName(items))
