@@ -19,7 +19,8 @@ public enum SettlementStatus {
         return switch (this) {
             case PENDING -> Set.of(COMPLETED, HOLD, FAILED);
             case HOLD -> Set.of(COMPLETED, FAILED);
-            case COMPLETED, FAILED -> Set.of();  // 최종 상태, 전이 불가
+            case COMPLETED -> Set.of(FAILED);  // 보상 트랜잭션: 지급 실패 시 FAILED 전이 허용
+            case FAILED -> Set.of();  // 최종 상태, 전이 불가
         };
     }
 
