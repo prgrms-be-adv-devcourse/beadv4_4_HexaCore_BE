@@ -1,25 +1,31 @@
 package com.back.product.app;
 
-import com.back.common.event.EventName;
-import com.back.common.event.KafkaEventPublisher;
+import com.back.ai.app.usecase.EmbeddingUseCase;
 import com.back.product.adapter.in.event.BrandSpringEventListener;
-import com.back.product.adapter.in.event.ProductSpringEventListener;
 import com.back.product.adapter.out.document.ProductDocumentRepository;
 import com.back.product.adapter.out.event.BrandKafkaEventPublisher;
-import com.back.product.adapter.out.event.ProductKafkaEventPublisher;
 import com.back.product.adapter.out.persistence.EventConsumptionLogRepository;
 import com.back.product.adapter.out.persistence.ProductOutboxEventRepository;
+import com.back.product.app.usecase.ProductDocumentSupport;
 import com.back.product.app.usecase.ProductDocumentUseCase;
+import com.back.product.app.usecase.ProductInfoUseCase;
+import com.back.product.app.usecase.ProductUseCase;
+import com.back.product.document.ProductDocument;
+import com.back.product.domain.Brand;
+import com.back.product.domain.Category;
+import com.back.product.domain.ProductInfo;
 import com.back.product.domain.ProductOutboxEvent;
 import com.back.product.dto.enums.EventConsumptionStatus;
 import com.back.product.dto.enums.OutboxEventStatus;
 import com.back.product.dto.model.BrandDto;
 import com.back.product.dto.model.CategoryDto;
 import com.back.product.dto.model.OptionDto;
+import com.back.product.dto.model.ProductDto;
 import com.back.product.dto.model.ProductInfoDto;
 import com.back.product.event.spring.ProductCreationCompletedEvent;
 import com.back.product.event.spring.ProductDeletionCompletedEvent;
 import com.back.product.event.spring.ProductUpdateCompletedEvent;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,12 +34,14 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
+import org.springframework.data.elasticsearch.core.query.Query;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.math.BigDecimal;
@@ -44,7 +52,12 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @SpringBootTest
 @DirtiesContext // 테스트 간 컨텍스트를 분리하여 Kafka 브로커 충돌 방지
@@ -86,8 +99,20 @@ class ProductSyncEventPublishTest {
     @MockitoBean
     private ProductDocumentRepository productDocumentRepository;
 
-    @MockitoBean
+    @MockitoSpyBean
     private ProductDocumentUseCase productDocumentUseCase;
+
+    @MockitoBean
+    private ProductDocumentSupport productDocumentSupport;
+
+    @MockitoBean
+    private ProductInfoUseCase productInfoUseCase;
+
+    @MockitoBean
+    private ProductUseCase productUseCase;
+
+    @MockitoBean
+    private EmbeddingUseCase embeddingUseCase;
 
     @Autowired
     private ApplicationEventPublisher applicationEventPublisher;
@@ -100,6 +125,11 @@ class ProductSyncEventPublishTest {
 
     @Autowired
     private EventConsumptionLogRepository eventConsumptionLogRepository;
+
+    @BeforeEach
+    void setUp() {
+        when(embeddingUseCase.generateEmbeddings(anyString())).thenReturn(List.of(0.1f, 0.2f, 0.3f));
+    }
 
     @Test
     @DisplayName("상품 생성 시나리오: Spring Event 발행 -> Outbox 기록 -> Kafka 발행 -> Kafka 소비 -> 최종 동기화 완료")
@@ -218,6 +248,68 @@ class ProductSyncEventPublishTest {
         });
 
         verify(productDocumentUseCase, atLeastOnce()).deleteProduct(any());
+    }
+
+    @Test
+    @DisplayName("유사 상품 조회 시 임베딩이 없으면 재동기화가 트리거되어 최종적으로 syncProduct가 호출된다")
+    void productResyncFlowTest() {
+        // given
+        Long productInfoId = 1L;
+
+        // 1. 임베딩이 없는 문서를 리턴하도록 모킹
+        ProductDocument document = ProductDocument.builder()
+                .embedding(null)
+                .build();
+        document.assignId(productInfoId.toString());
+
+        when(productDocumentSupport.findProductWithEmbedding(any(Query.class))).thenReturn(document);
+
+        // 2. Facade에서 호출할 UseCase 및 도메인 객체 모킹 (NPE 방지)
+        Brand brand = mock(Brand.class);
+        when(brand.getId()).thenReturn(1L);
+        when(brand.getName()).thenReturn("Nike");
+        when(brand.getImageUrl()).thenReturn("https://example.com/nike.png");
+
+        Category category = mock(Category.class);
+        when(category.getId()).thenReturn(1L);
+        when(category.getName()).thenReturn("shoes");
+        when(category.getImageUrl()).thenReturn("https://example.com/shoes.png");
+
+        ProductInfo productInfo = mock(ProductInfo.class);
+        when(productInfo.getId()).thenReturn(productInfoId);
+        when(productInfo.getBrand()).thenReturn(brand);       // Brand 모킹 추가
+        when(productInfo.getCategory()).thenReturn(category); // Category 모킹 추가
+        when(productInfo.getName()).thenReturn("Test Product");
+        when(productInfo.getProductCode()).thenReturn("TP-123");
+        when(productInfo.getReleasePrice()).thenReturn(new BigDecimal("100000.00"));
+        when(productInfo.getReleasedDate()).thenReturn(LocalDateTime.now());
+
+        when(productInfoUseCase.findProductInfo(productInfoId)).thenReturn(productInfo);
+
+        List<ProductDto> productDtos = List.of(
+                ProductDto.builder()
+                        .productId(101L)
+                        .inventory(10L)
+                        .options(createOptionDtos())
+                        .imageUrls(List.of("https://example.com/image.jpg"))
+                        .build()
+        );
+        when(productUseCase.findAllProduct(productInfo)).thenReturn(productDtos);
+
+        // when
+        productDocumentUseCase.findSimilarProducts(productInfoId, 0, 10);
+
+        // then: 재동기화 이벤트 -> Kafka -> Consumer를 거쳐 최종적으로 syncProduct가 호출되는지 확인
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            verify(productDocumentUseCase, atLeastOnce()).syncProduct(any(), any(), any());
+        });
+
+        // Outbox에 ProductUpdateCompletedEvent가 생성되었는지 검증
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            boolean hasUpdateEvent = productOutboxEventRepository.findAll().stream()
+                    .anyMatch(event -> event.getEventType().equals("ProductUpdateCompletedEvent"));
+            assertThat(hasUpdateEvent).isTrue();
+        });
     }
 
     private ProductInfoDto createProductInfoDto(Long productInfoId, String name, String code) {

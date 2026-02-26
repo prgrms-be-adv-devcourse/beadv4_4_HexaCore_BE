@@ -18,7 +18,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -61,7 +60,6 @@ class ApiV1BrandControllerTest {
     class GetBrandsTest {
         @Test
         @DisplayName("브랜드 목록 조회를 성공한다")
-        @WithMockUser
         void getBrands() throws Exception {
             // given
             BrandPageResponseDto responseDto = BrandPageResponseDto.builder()
@@ -93,7 +91,6 @@ class ApiV1BrandControllerTest {
 
         @Test
         @DisplayName("브랜드 생성을 성공한다")
-        @WithMockUser
         void createBrand_Success() throws Exception {
             // given
             BrandDataRequestDto newBrand1 = new BrandDataRequestDto("New Balance", "https://example.com/logo.png");
@@ -125,7 +122,6 @@ class ApiV1BrandControllerTest {
 
         @Test
         @DisplayName("요청에 중복된 브랜드 이름이 포함되어 있어도, 생성 가능한 브랜드만 생성하고 201 Created를 반환한다")
-        @WithMockUser
         void createBrand_Filter_DuplicateName() throws Exception {
             // given
             BrandDataRequestDto existingBrand = new BrandDataRequestDto("Existing Brand", "https://example.com/logo_exist.png");
@@ -158,7 +154,6 @@ class ApiV1BrandControllerTest {
 
         @Test
         @DisplayName("유효하지 않은 요청 값으로 생성 시 400 Bad Request를 반환한다")
-        @WithMockUser
         void createBrand_Fail_Validation() throws Exception {
             // given
             BrandDataRequestDto invalidBrand = new BrandDataRequestDto(" ", "invalid-url");
@@ -185,7 +180,6 @@ class ApiV1BrandControllerTest {
 
         @Test
         @DisplayName("브랜드 수정을 성공한다")
-        @WithMockUser
         void modifyBrand_Success() throws Exception {
             // given
             BrandDataRequestDto requestDto = BrandDataRequestDto.builder()
@@ -214,7 +208,6 @@ class ApiV1BrandControllerTest {
 
         @Test
         @DisplayName("존재하지 않는 브랜드 수정 시 404 Not Found를 반환한다")
-        @WithMockUser
         void modifyBrand_Fail_BrandNotFound() throws Exception {
             // given
             BrandDataRequestDto requestDto = BrandDataRequestDto.builder()
@@ -239,7 +232,6 @@ class ApiV1BrandControllerTest {
 
         @Test
         @DisplayName("중복된 이름으로 브랜드 수정 시 409 Conflict를 반환한다")
-        @WithMockUser
         void modifyBrand_Fail_DuplicateName() throws Exception {
             // given
             BrandDataRequestDto requestDto = BrandDataRequestDto.builder()
@@ -264,7 +256,6 @@ class ApiV1BrandControllerTest {
 
         @Test
         @DisplayName("유효하지 않은 요청 값으로 브랜드 수정 시 400 Bad Request를 반환한다")
-        @WithMockUser
         void modifyBrand_Fail_Validation() throws Exception {
             // given
             // Invalid name (blank) and invalid URL
@@ -293,7 +284,6 @@ class ApiV1BrandControllerTest {
 
         @Test
         @DisplayName("브랜드 삭제를 성공한다")
-        @WithMockUser
         void deleteBrand_Success() throws Exception {
             // given
             // brandFacade.deleteBrand(BRAND_ID)가 호출될 때 아무것도 하지 않도록 설정 (void 메소드)
@@ -312,7 +302,6 @@ class ApiV1BrandControllerTest {
 
         @Test
         @DisplayName("사용 중인 브랜드를 삭제 시도 시 409 Conflict를 반환한다")
-        @WithMockUser
         void deleteBrand_Fail_BrandInUse() throws Exception {
             // given
             // brandFacade.deleteBrand(BRAND_ID)가 호출될 때 BRAND_IN_USE 예외를 던지도록 설정

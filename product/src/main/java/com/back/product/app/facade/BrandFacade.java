@@ -15,8 +15,11 @@ import com.back.product.dto.response.BrandPageResponseDto;
 import com.back.product.dto.response.BrandResponseDto;
 import com.back.product.mapper.BrandDataCommandMapper;
 import com.back.product.mapper.BrandMapper;
+import com.back.product.global.config.ProductCacheNames;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,6 +37,7 @@ public class BrandFacade {
 
     @Loggable
     @Transactional(readOnly = true)
+    @Cacheable(value = ProductCacheNames.BRANDS, key = "#page + '-' + #size")
     public BrandPageResponseDto getBrands(Integer page, Integer size) {
         Page<BrandDto> brands = brandUseCase.getBrands(page, size);
         return brandMapper.toPageResponseDto(
@@ -46,6 +50,7 @@ public class BrandFacade {
 
     @Loggable
     @Transactional
+    @CacheEvict(value = ProductCacheNames.BRANDS, allEntries = true)
     public BrandListResponseDto createBrands(@Valid BrandListCreateRequestDto request) {
         List<BrandDataCommand> brandsCommands = request.brands().stream().map(brandDataCommandMapper::toCommand).toList();
         List<BrandDto> brandDtos = brandUseCase.createBrands(brandsCommands);
@@ -55,6 +60,7 @@ public class BrandFacade {
 
     @Loggable
     @Transactional
+    @CacheEvict(value = ProductCacheNames.BRANDS, allEntries = true)
     public BrandResponseDto modifyBrand(Long brandId, @Valid BrandDataRequestDto request) {
         BrandDataCommand brandCommand = brandDataCommandMapper.toCommand(request);
         BrandDto brandDto = brandUseCase.modifyBrand(brandId, brandCommand);
@@ -64,6 +70,7 @@ public class BrandFacade {
 
     @Loggable
     @Transactional
+    @CacheEvict(value = ProductCacheNames.BRANDS, allEntries = true)
     public void deleteBrand(Long brandId) {
         Boolean isUsed = productInfoUseCase.isBrandInUse(brandId);
 

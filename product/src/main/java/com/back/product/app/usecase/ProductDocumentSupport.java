@@ -1,5 +1,8 @@
 package com.back.product.app.usecase;
 
+import com.back.common.annotation.Loggable;
+import com.back.common.code.FailureCode;
+import com.back.common.exception.CustomException;
 import com.back.product.document.ProductDocument;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageImpl;
@@ -17,6 +20,7 @@ import java.util.List;
 public class ProductDocumentSupport {
     private final ElasticsearchOperations elasticsearchOperations;
 
+    @Loggable
     public PageImpl<ProductDocument> findProductPage(Query searchQuery) {
         SearchHits<ProductDocument> searchHits = elasticsearchOperations.search(searchQuery, ProductDocument.class);
 
@@ -27,5 +31,16 @@ public class ProductDocumentSupport {
         long totalHits = searchHits.getTotalHits();
 
         return new PageImpl<>(content, pageable, totalHits);
+    }
+
+    @Loggable
+    public ProductDocument findProductWithEmbedding(Query query) {
+        SearchHits<ProductDocument> hits = elasticsearchOperations.search(query, ProductDocument.class);
+
+        if (!hits.hasSearchHits()) {
+            throw new CustomException(FailureCode.PRODUCT_INFO_NOT_FOUND);
+        }
+
+        return hits.getSearchHit(0).getContent();
     }
 }

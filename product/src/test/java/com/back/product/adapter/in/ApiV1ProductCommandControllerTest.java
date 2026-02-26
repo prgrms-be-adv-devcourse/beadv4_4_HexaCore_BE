@@ -18,7 +18,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -61,7 +60,6 @@ class ApiV1ProductCommandControllerTest {
 
         @Test
         @DisplayName("상품 생성을 성공한다")
-        @WithMockUser
         void createProduct_Success() throws Exception {
             // given
             ProductCreateRequestDto request = RequestFixture.createProductCreateRequest();
@@ -85,7 +83,6 @@ class ApiV1ProductCommandControllerTest {
 
         @Test
         @DisplayName("유효하지 않은 요청 값으로 생성 시 400 Bad Request를 반환한다")
-        @WithMockUser
         void createProduct_Fail_Validation() throws Exception {
             // given
             ProductCreateRequestDto request = null;
@@ -108,7 +105,6 @@ class ApiV1ProductCommandControllerTest {
 
         @Test
         @DisplayName("상품 수정을 성공한다")
-        @WithMockUser
         void updateProduct_Success() throws Exception {
             // given
             long productInfoId = 1L;
@@ -133,7 +129,6 @@ class ApiV1ProductCommandControllerTest {
 
         @Test
         @DisplayName("존재하지 않는 상품 정보 ID로 수정 시 404 Not Found를 반환한다")
-        @WithMockUser
         void updateProduct_Fail_NotFound() throws Exception {
             // given
             long productInfoId = 999L;
@@ -154,7 +149,6 @@ class ApiV1ProductCommandControllerTest {
 
         @Test
         @DisplayName("유효하지 않은 요청 값으로 수정 시 400 Bad Request를 반환한다")
-        @WithMockUser
         void updateProduct_Fail_Validation() throws Exception {
             // given
             long productInfoId = 1L;
@@ -178,7 +172,6 @@ class ApiV1ProductCommandControllerTest {
 
         @Test
         @DisplayName("상품 삭제를 성공한다")
-        @WithMockUser
         void deleteProduct_Success() throws Exception {
             // given
             long productInfoId = 1L;
@@ -195,7 +188,6 @@ class ApiV1ProductCommandControllerTest {
 
         @Test
         @DisplayName("존재하지 않는 상품 정보 ID로 삭제 시 404 Not Found를 반환한다")
-        @WithMockUser
         void deleteProduct_Fail_NotFound() throws Exception {
             // given
             long productInfoId = 999L;

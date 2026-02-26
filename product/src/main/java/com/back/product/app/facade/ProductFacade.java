@@ -27,6 +27,7 @@ import com.back.product.dto.request.ProductUpdateRequestDto;
 import com.back.product.dto.response.ProductDetailListResponseDto;
 import com.back.product.dto.response.ProductDetailResponseDto;
 import com.back.product.dto.response.ProductSearchResponseDto;
+import com.back.product.global.config.ProductCacheNames;
 import com.back.product.mapper.ProductInfoDataCommandMapper;
 import com.back.product.mapper.ProductInfoMapper;
 import com.back.product.mapper.ProductMapper;
@@ -35,6 +36,9 @@ import com.back.product.mapper.ProductVariantCreateCommandMapper;
 import com.back.product.mapper.ProductVariantUpdateCommandMapper;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -67,6 +71,10 @@ public class ProductFacade {
 
     @Loggable
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = ProductCacheNames.PRODUCT_SEARCH, allEntries = true),
+            @CacheEvict(value = ProductCacheNames.PRODUCT_SIMILAR, allEntries = true),
+    })
     public ProductDetailResponseDto createProduct(@Valid ProductCreateRequestDto request) {
         Brand brand = brandUseCase.findBrandExists(request.productInfo().brandId());
 
@@ -88,6 +96,11 @@ public class ProductFacade {
 
     @Loggable
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = ProductCacheNames.PRODUCT_DETAIL, key = "#productInfoId"),
+            @CacheEvict(value = ProductCacheNames.PRODUCT_SEARCH, allEntries = true),
+            @CacheEvict(value = ProductCacheNames.PRODUCT_SIMILAR, allEntries = true),
+    })
     public ProductDetailResponseDto updateProduct(Long productInfoId, @Valid ProductUpdateRequestDto request) {
         Brand brand = brandUseCase.findBrandExists(request.productInfo().brandId());
 
@@ -109,6 +122,11 @@ public class ProductFacade {
 
     @Loggable
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = ProductCacheNames.PRODUCT_DETAIL, key = "#productInfoId"),
+            @CacheEvict(value = ProductCacheNames.PRODUCT_SEARCH, allEntries = true),
+            @CacheEvict(value = ProductCacheNames.PRODUCT_SIMILAR, allEntries = true),
+    })
     public void deleteProduct(Long productInfoId) {
         productUseCase.deleteMultipleProduct(productInfoId);
 
@@ -119,6 +137,7 @@ public class ProductFacade {
 
     @Loggable
     @Transactional(readOnly = true)
+    @Cacheable(value = ProductCacheNames.PRODUCT_DETAIL, key = "#productInfoId")
     public ProductDetailResponseDto getProductDetail(Long productInfoId) {
         ProductInfo productInfo = productInfoUseCase.findProductInfo(productInfoId);
 
@@ -131,6 +150,7 @@ public class ProductFacade {
 
     @Loggable
     @Transactional(readOnly = true)
+    @Cacheable(value = ProductCacheNames.PRODUCT_SEARCH, key = "#request")
     public ProductSearchResponseDto findProductPage(@Valid ProductSearchRequestDto request) {
         ProductSearchCommand productSearchCommand = productSearchCommandMapper.toCommand(request);
         return productDocumentUseCase.findProductPage(productSearchCommand);
@@ -138,8 +158,21 @@ public class ProductFacade {
 
     @Loggable
     @Transactional(readOnly = true)
+    @Cacheable(value = ProductCacheNames.PRODUCT_SIMILAR, key = "#productInfoId + '-' + #request.page() + '-' + #request.size()")
     public ProductSearchResponseDto findSimilarProducts(Long productInfoId, PageRequestDto request) {
         return productDocumentUseCase.findSimilarProducts(productInfoId, request.page(), request.size());
+    }
+
+    @Loggable
+    @Transactional
+    public void resyncProduct(Long productInfoId) {
+        ProductInfo productInfo = productInfoUseCase.findProductInfo(productInfoId);
+        List<ProductDto> productDtos = productUseCase.findAllProduct(productInfo);
+
+        ProductInfoDto productInfoDto = productInfoMapper.toDto(productInfo);
+        String thumbnail = findThumbnailUrl(productDtos);
+
+        productSpringEventPublisher.sendModifiedEvent(productInfoDto, productDtos, thumbnail);
     }
 
     private String findThumbnailUrl(List<ProductDto> productDtos) {

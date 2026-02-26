@@ -9,6 +9,7 @@ import com.back.common.annotation.Loggable;
 import com.back.common.code.FailureCode;
 import com.back.common.exception.CustomException;
 import com.back.product.adapter.out.document.ProductDocumentRepository;
+import com.back.product.adapter.out.event.ProductSpringEventPublisher;
 import com.back.product.document.ProductDocument;
 import com.back.product.dto.command.ProductSearchCommand;
 import com.back.product.dto.enums.ProductSortType;
@@ -18,6 +19,7 @@ import com.back.product.dto.model.ProductSearchDto;
 import com.back.product.dto.response.ProductSearchResponseDto;
 import com.back.product.mapper.ProductDocumentMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -31,14 +33,17 @@ import org.springframework.util.StringUtils;
 import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ProductDocumentUseCase {
     private final ProductDocumentMapper productDocumentMapper;
     private final ProductDocumentSupport productDocumentSupport;
     private final ProductDocumentRepository productDocumentRepository;
+    private final ProductSpringEventPublisher eventPublisher;
 
     private final EmbeddingUseCase embeddingUseCase;
 
@@ -49,7 +54,11 @@ public class ProductDocumentUseCase {
     public void syncProduct(ProductInfoDto productInfoDto, List<OptionDto> optionDtos, String thumbnailUrl) {
         String description = buildProductInfo(productInfoDto, optionDtos);
 
-        float[] embedding = embeddingUseCase.generateEmbeddings(description);
+        List<Float> embedding = embeddingUseCase.generateEmbeddings(description);
+        if (embedding == null || embedding.isEmpty()) {
+            log.error("[ProductDocumentUseCase] Generate Embedding Failed.");
+            throw new CustomException(FailureCode.EMBEDDING_PROCESSING_FAILED);
+        }
 
         ProductDocument documentToSync = productDocumentMapper.toDocument(productInfoDto, optionDtos, thumbnailUrl, embedding);
 
@@ -79,12 +88,25 @@ public class ProductDocumentUseCase {
 
     @Loggable
     public ProductSearchResponseDto findSimilarProducts(Long productInfoId, Integer page, Integer size) {
-        ProductDocument targetProduct = productDocumentRepository.findById(productInfoId.toString())
-                .orElseThrow(() -> new CustomException(FailureCode.PRODUCT_INFO_NOT_FOUND));
+        NativeQuery embeddingQuery = NativeQuery.builder()
+                .withQuery(q -> q.term(t -> t.field("_id").value(productInfoId.toString())))
+                .withFields("embedding") // 핵심: 임베딩 필드를 콕 집어서 가져오라고 명령
+                .build();
 
-        float[] embedding = targetProduct.getEmbedding();
-        if (embedding == null || embedding.length == 0) {
-            throw new CustomException(FailureCode.EMBEDDING_NOT_FOUND);
+        ProductDocument document = productDocumentSupport.findProductWithEmbedding(embeddingQuery);
+        if (document == null) {
+            log.error("[ProductDocumentUseCase] Product Finding Failed. Product Document is Null");
+            throw new CustomException(FailureCode.PRODUCT_NOT_FOUND);
+        }
+        List<Float> embedding = document.getEmbedding();
+
+        if (embedding == null || embedding.isEmpty()) {
+            log.warn("[ProductDocumentUseCase] Embedding not found for product: {}. Returning empty results.", productInfoId);
+
+            Long productInfoIdToResync = Long.valueOf(Objects.requireNonNull(document.getId()));
+            eventPublisher.sendResyncRequestEvent(productInfoIdToResync);
+
+            return convertToDto(List.of(), 0, 0L, page);
         }
 
         // 자기 자신을 제외하는 필터 생성
@@ -133,7 +155,7 @@ public class ProductDocumentUseCase {
 
         // 4. 임베딩 유사도 검색 (should: 점수 기반 검색)
         if (StringUtils.hasText(search.keyword())) {
-            float[] embedding = embeddingUseCase.generateEmbeddings(search.keyword());
+            List<Float> embedding = embeddingUseCase.generateEmbeddings(search.keyword());
 
             KnnSearch knnSearch = buildKnnSearch(embedding, search.size(), search.size() * SEARCH_MULTIPLIER);
 
@@ -221,15 +243,13 @@ public class ProductDocumentUseCase {
         return PageRequest.of(page.intValue(), size.intValue(), sort);
     }
 
-    private KnnSearch buildKnnSearch(float[] embedding, Integer k, Integer candidate) {
+    private KnnSearch buildKnnSearch(List<Float> embedding, Integer k, Integer candidate) {
         return buildKnnSearch(embedding, k, candidate, null);
     }
 
-    private KnnSearch buildKnnSearch(float[] embedding, Integer k, Integer candidate, TermQuery mustNotFilter) {
-        List<Float> vectors = embeddingUseCase.convertArrayToList(embedding);
-
+    private KnnSearch buildKnnSearch(List<Float> embedding, Integer k, Integer candidate, TermQuery mustNotFilter) {
         return KnnSearch.of(knn -> {
-            knn.queryVector(vectors)
+            knn.queryVector(embedding)
                     .field("embedding")
                     .k(k) // 최종 결과 수
                     .numCandidates(candidate); // 후보 수 (k * 2 ~ k * 10 권장)
