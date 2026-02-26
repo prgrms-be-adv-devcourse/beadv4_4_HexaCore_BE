@@ -7,11 +7,13 @@ import com.back.cash.domain.Payout;
 import com.back.cash.domain.Wallet;
 import com.back.cash.domain.enums.PayoutStatus;
 import com.back.cash.domain.event.CashPayoutRequestedCommand;
+import com.back.cash.domain.event.PayoutFailedEvent;
 import com.back.cash.mapper.PayoutMapper;
 import com.back.common.code.FailureCode;
 import com.back.common.exception.BadRequestException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -26,6 +28,7 @@ public class CashPayoutUseCase {
     private final PayoutRepository payoutRepository;
     private final WalletSupport walletSupport;
     private final CashLogSupport cashLogSupport;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public void execute(CashPayoutRequestedCommand command) {
@@ -89,12 +92,14 @@ public class CashPayoutUseCase {
             }
 
             payout.markFailed(reason);
+            eventPublisher.publishEvent(new PayoutFailedEvent(event.settlementId(), reason));
         } catch (DataIntegrityViolationException e) {
             // 동시성으로 insert한 경우 재조회 후 상태 판단
             payoutRepository.findBySettlementId(event.settlementId())
                     .ifPresent(existing -> {
                         if (existing.getStatus() != PayoutStatus.DONE) {
                             existing.markFailed(reason);
+                            eventPublisher.publishEvent(new PayoutFailedEvent(event.settlementId(), reason));
                         }
                     });
         }

@@ -1,9 +1,12 @@
 package com.back.cash.app.usecase;
 
 import com.back.cash.adapter.out.PayoutRepository;
+import com.back.cash.adapter.out.outbox.PayoutOutboxRepository;
 import com.back.cash.domain.Payout;
 import com.back.cash.domain.enums.PayoutStatus;
 import com.back.cash.domain.event.CashPayoutRequestedCommand;
+import com.back.cash.domain.outbox.PayoutOutbox;
+import com.back.cash.domain.outbox.enums.OutboxStatus;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -15,6 +18,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -32,11 +36,15 @@ class CashPayoutUseCaseTest {
     @MockitoSpyBean
     PayoutRepository payoutRepository;
 
+    @Autowired
+    PayoutOutboxRepository payoutOutboxRepository;
+
     private static final Long TEST_SETTLEMENT_ID = 99999L;
     private static final Long DONE_SETTLEMENT_ID = 99991L;
     private static final Long PROCESSING_SETTLEMENT_ID = 99992L;
     private static final Long NEW_SETTLEMENT_ID = 99993L;
     private static final Long DUPLICATE_CHECK_ID = 99994L;
+    private static final Long OUTBOX_TEST_SETTLEMENT_ID = 99995L;
 
     @BeforeEach
     void setUp() {
@@ -45,6 +53,7 @@ class CashPayoutUseCaseTest {
         deleteBySettlementId(PROCESSING_SETTLEMENT_ID);
         deleteBySettlementId(NEW_SETTLEMENT_ID);
         deleteBySettlementId(DUPLICATE_CHECK_ID);
+        deleteBySettlementId(OUTBOX_TEST_SETTLEMENT_ID);
     }
 
     @Test
@@ -190,6 +199,28 @@ class CashPayoutUseCaseTest {
 
         assertThatThrownBy(() -> cashPayoutUseCase.execute(event))
                 .isInstanceOf(BadRequestException.class);
+    }
+
+    @Test
+    @DisplayName("saveFailedPayout: 실패 처리 시 PayoutOutbox가 PENDING 상태로 저장된다")
+    void saveFailedPayout_savesOutboxAsPending() {
+        // given
+        long settlementId = 99995L;
+        payoutOutboxRepository.findAll().stream()
+                .filter(o -> o.getTopic().equals("cash.payout.failed"))
+                .forEach(o -> payoutOutboxRepository.deleteById(o.getId()));
+
+        // when
+        cashPayoutUseCase.saveFailedPayout(event(settlementId), "지갑 없음");
+
+        // then
+        List<PayoutOutbox> outboxes = payoutOutboxRepository.findByStatusOrderByCreatedAtAsc(
+                OutboxStatus.PENDING, org.springframework.data.domain.Limit.of(100));
+
+        assertThat(outboxes).anyMatch(o ->
+                o.getTopic().equals("cash.payout.failed") &&
+                o.getPayload().contains(String.valueOf(settlementId))
+        );
     }
 
     private CashPayoutRequestedCommand event(Long settlementId) {
