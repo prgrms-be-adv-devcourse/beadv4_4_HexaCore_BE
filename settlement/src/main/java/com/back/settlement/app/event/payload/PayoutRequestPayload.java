@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 public record PayoutRequestPayload(
         Long settlementId,
         Long payeeId,
-        BigDecimal totalSalesAmount,
+        BigDecimal totalGrossAmount,
         BigDecimal totalFeeAmount,
         BigDecimal totalNetAmount,
         LocalDateTime occurredAt
