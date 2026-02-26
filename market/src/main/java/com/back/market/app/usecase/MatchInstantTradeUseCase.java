@@ -2,7 +2,6 @@ package com.back.market.app.usecase;
 
 import com.back.common.code.FailureCode;
 import com.back.common.exception.BadRequestException;
-import com.back.common.exception.CustomException;
 import com.back.market.event.OrderCreatedEvent;
 import com.back.market.adapter.out.BiddingRepository;
 import com.back.market.adapter.out.OrderRepository;
@@ -15,7 +14,6 @@ import com.back.market.domain.enums.BiddingPosition;
 import com.back.market.domain.enums.BiddingStatus;
 import com.back.market.domain.enums.OrderStatus;
 import com.back.common.dto.cash.enums.PayAndHoldStatus;
-import com.back.common.dto.cash.enums.RelType;
 import com.back.market.dto.request.BiddingRequestDto;
 import com.back.common.dto.cash.request.PayAndHoldRequestDto;
 import com.back.common.dto.cash.response.PayAndHoldResponseDto;
