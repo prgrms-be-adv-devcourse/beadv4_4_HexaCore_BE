@@ -9,15 +9,18 @@ import com.back.market.dto.request.BiddingRequestDto;
 import com.back.market.dto.response.*;
 import com.back.market.event.OrderCompletedEvent;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class MarketFacade {
@@ -40,8 +43,7 @@ public class MarketFacade {
     @Transactional
     public MarketPaymentResponseDto registerBuyBid(Long userId, String ip, BiddingRequestDto requestDto) {
         MarketUser user = marketSupport.findMarketUserById(userId);
-//        marketDetectorAdapter.detectBidSpam(userId);
-//        marketDetectorAdapter.detectHijack(userId, user.getEmail(), ip, requestDto.price());
+        callDetector(userId, user.getEmail(), ip, requestDto.price());
         return registerBidUseCase.registerBuyBid(userId, requestDto);
     }
 
@@ -54,8 +56,7 @@ public class MarketFacade {
     @Transactional
     public MarketPaymentResponseDto registerSellBid(Long userId, String ip, BiddingRequestDto requestDto) {
         MarketUser user = marketSupport.findMarketUserById(userId);
-//        marketDetectorAdapter.detectBidSpam(userId);
-//        marketDetectorAdapter.detectHijack(userId, user.getEmail(), ip, requestDto.price());
+        callDetector(userId, user.getEmail(), ip, requestDto.price());
         return registerBidUseCase.registerSellBid(userId, requestDto);
     }
 
@@ -97,8 +98,7 @@ public class MarketFacade {
      */
     public MarketPaymentResponseDto purchaseNow(Long buyerId, String ip, BiddingRequestDto requestDto) {
         MarketUser user = marketSupport.findMarketUserById(buyerId);
-//        marketDetectorAdapter.detectBidSpam(buyerId);
-//        marketDetectorAdapter.detectHijack(buyerId, user.getEmail(), ip, requestDto.price());
+        callDetector(buyerId, user.getEmail(), ip, requestDto.price());
         return matchInstantTradeUseCase.buyNow(buyerId, requestDto);
     }
 
@@ -110,8 +110,7 @@ public class MarketFacade {
      */
     public MarketPaymentResponseDto sellNow(Long sellerId, String ip, BiddingRequestDto requestDto) {
         MarketUser user = marketSupport.findMarketUserById(sellerId);
-//        marketDetectorAdapter.detectBidSpam(sellerId);
-//        marketDetectorAdapter.detectHijack(sellerId, user.getEmail(), ip, requestDto.price());
+        callDetector(sellerId, user.getEmail(), ip, requestDto.price());
         return matchInstantTradeUseCase.sellNow(sellerId, requestDto);
     }
 
@@ -178,5 +177,14 @@ public class MarketFacade {
     @Transactional(readOnly = true)
     public OrderDetailResponseDto getOrderDetail(Long userId, Long orderId) {
         return getOrdersUseCase.getOrderDetail(userId, orderId);
+    }
+
+    private void callDetector(Long sellerId, String email, String ip, BigDecimal price) {
+        try {
+            marketDetectorAdapter.detectBidSpam(sellerId);
+            marketDetectorAdapter.detectHijack(sellerId, email, ip, price);
+        } catch (Exception e) {
+            log.warn("[MarketFacade] Detector API 호출 실패. userId: {}, email: {}, ip: {}, price: {}, error: {}", sellerId, email, ip, price, e.getMessage(), e);
+        }
     }
 }

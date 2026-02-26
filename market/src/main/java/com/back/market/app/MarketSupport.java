@@ -180,4 +180,7 @@ public class MarketSupport {
         return products;
     }
 
+    public Order findOrderBySellBiddingId(Long sellBiddingId) {
+        return orderRepository.findBySellBiddingId(sellBiddingId).orElseThrow(() -> new BadRequestException(FailureCode.ORDER_NOT_FOUND));
+    }
 }
