@@ -1,6 +1,5 @@
 package com.back.settlement.config;
 
-import com.back.common.event.EventName;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -18,13 +17,13 @@ import org.springframework.kafka.support.serializer.JacksonJsonSerializer;
 public class OutboxKafkaConfig {
 
     @Bean(name = "kafkaTemplate")
-    public KafkaTemplate<String, EventName> kafkaTemplate(@Value("${spring.kafka.bootstrap-servers}") String bootstrapServers) {
+    public KafkaTemplate<String, Object> kafkaTemplate(@Value("${spring.kafka.bootstrap-servers}") String bootstrapServers) {
         Map<String, Object> props = new HashMap<>();
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JacksonJsonSerializer.class);
 
-        ProducerFactory<String, EventName> factory = new DefaultKafkaProducerFactory<>(props);
+        ProducerFactory<String, Object> factory = new DefaultKafkaProducerFactory<>(props);
         return new KafkaTemplate<>(factory);
     }
 
