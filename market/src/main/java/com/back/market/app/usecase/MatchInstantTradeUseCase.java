@@ -101,10 +101,11 @@ public class MatchInstantTradeUseCase {
      * </p>
      */
     private MarketPaymentResponseDto executeTrade(Long userId, BiddingRequestDto requestDto, Bidding targetBid, BiddingPosition myPosition) {
-        // 1. 자전거래 검증
-        if (Objects.equals(targetBid.getMarketUser().getId(), userId)) {
-            throw new BadRequestException(FailureCode.SELF_TRADING_NOT_ALLOWED);
-        }
+        log.info("[MatchInstantTrade] executeTrade 시작 - userId={}, productId={}, targetBidId={}, myPosition={}", userId, requestDto.productId(), targetBid.getId(), myPosition);
+         // 1. 자전거래 검증
+         if (Objects.equals(targetBid.getMarketUser().getId(), userId)) {
+             throw new BadRequestException(FailureCode.SELF_TRADING_NOT_ALLOWED);
+         }
 
         MarketUser me = marketSupport.findMarketUserById(userId);
         Order savedOrder;
@@ -159,20 +160,24 @@ public class MatchInstantTradeUseCase {
         // cash 모듈 호출부분 예외 처리
         PayAndHoldResponseDto resultData;
         try {
+            log.info("[MatchInstantTrade] calling cash module - orderId={}, buyBiddingId={}, sellBiddingId={}", savedOrder.getId(), myBid.getId(), targetBid.getId());
             resultData = marketCashAdapter.getPayAndHoldResult(paymentReq);
 
-            // 6. 결과 상태에 따른 주문 상태 업데이트
-            if (resultData == null) {
-                log.error("[MatchInstantTrade] Cash 모듈이 null을 반환했습니다. 주문 취소 처리합니다. orderId={}, buyBiddingId={}, sellBiddingId={}", savedOrder.getId(), myBid.getId(), targetBid.getId());
-                throw new BadRequestException(FailureCode.CASH_MODULE_ERROR);
-            }
-        } catch (Exception e) {
+            log.info("[MatchInstantTrade] cash module returned - orderId={}, status={}, relId={}", savedOrder.getId(), resultData == null ? null : resultData.status(), resultData == null ? null : resultData.relId());
+             // 6. 결과 상태에 따른 주문 상태 업데이트
+             if (resultData == null) {
+                 log.error("[MatchInstantTrade] Cash 모듈이 null을 반환했습니다. 주문 취소 처리합니다. orderId={}, buyBiddingId={}, sellBiddingId={}", savedOrder.getId(), myBid.getId(), targetBid.getId());
+                 throw new BadRequestException(FailureCode.CASH_MODULE_ERROR);
+             }
+         } catch (Exception e) {
             log.error("[MatchTrade] cash모듈 통신 중 에러 발생. 보상 로직 실행 - OrderId:{}, error: {}", savedOrder.getId(), e.getMessage(), e);
 
-            //공통 보상 로직 실행
-            handleCompensation(targetBid, myBid, savedOrder, isOrderNew, isMyBidNew);
-            throw new BadRequestException(FailureCode.CASH_MODULE_ERROR);
-        }
+             //공통 보상 로직 실행
+            log.info("[MatchInstantTrade] 보상 로직 시작 - orderId={}, sellBiddingId={}, buyBiddingId={}, isOrderNew={}, isMyBidNew={}", savedOrder.getId(), targetBid.getId(), myBid.getId(), isOrderNew, isMyBidNew);
+             handleCompensation(targetBid, myBid, savedOrder, isOrderNew, isMyBidNew);
+            log.info("[MatchInstantTrade] 보상 로직 완료 - orderId={}, sellBiddingId={}, buyBiddingId={}", savedOrder.getId(), targetBid.getId(), myBid.getId());
+             throw new BadRequestException(FailureCode.CASH_MODULE_ERROR);
+         }
 
         if (resultData.status() == PayAndHoldStatus.PAID) {
             savedOrder.changeStatus(OrderStatus.PAID);
@@ -184,8 +189,9 @@ public class MatchInstantTradeUseCase {
             handleCompensation(targetBid, myBid, savedOrder, isOrderNew, isMyBidNew);
             throw new BadRequestException(FailureCode.PAYMENT_CONFIRM_FAILED);
         }
-        return MarketPaymentResponseDto.from(resultData, targetBid.getMarketProduct().getName(), me.getName(), me.getEmail());
-    }
+        log.info("[MatchInstantTrade] executeTrade 완료 - orderId={}, resultStatus={}", savedOrder.getId(), resultData.status());
+         return MarketPaymentResponseDto.from(resultData, targetBid.getMarketProduct().getName(), me.getName(), me.getEmail());
+     }
 
     private void handleCompensation(Bidding targetBid, Bidding myBid, Order savedOrder, boolean isOrderNew, boolean isMyBidNew) {
         // 판매 입찰 원상복구(process로)
