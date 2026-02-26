@@ -24,7 +24,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -65,7 +64,6 @@ class ApiV1ProductQueryControllerTest {
 
         @Test
         @DisplayName("상품 상세 조회를 성공한다")
-        @WithMockUser
         void getProductDetail_Success() throws Exception {
             // given
             long productInfoId = 1L;
@@ -86,7 +84,6 @@ class ApiV1ProductQueryControllerTest {
 
         @Test
         @DisplayName("존재하지 않는 상품 정보 ID로 조회 시 404 Not Found를 반환한다")
-        @WithMockUser
         void getProductDetail_Fail_NotFound() throws Exception {
             // given
             long productInfoId = 999L;
@@ -110,7 +107,6 @@ class ApiV1ProductQueryControllerTest {
 
         @Test
         @DisplayName("상품 목록 조회 및 검색을 성공한다")
-        @WithMockUser
         void searchProducts_Success() throws Exception {
             // given
             ProductSearchDto productSearchDto = ProductSearchDto.builder()
@@ -150,7 +146,6 @@ class ApiV1ProductQueryControllerTest {
 
         @Test
         @DisplayName("잘못된 정렬 조건으로 조회 시 400 Bad Request를 반환한다")
-        @WithMockUser
         void searchProducts_Fail_InvalidSort() throws Exception {
             // when & then
             mockMvc.perform(
@@ -168,7 +163,6 @@ class ApiV1ProductQueryControllerTest {
 
         @Test
         @DisplayName("페이지 크기가 최대값을 초과할 경우 400 Bad Request를 반환한다")
-        @WithMockUser
         void searchProducts_Fail_PageSizeExceedsMax() throws Exception {
             // when & then
             mockMvc.perform(
@@ -190,16 +184,16 @@ class ApiV1ProductQueryControllerTest {
     class FindSimilarProductsTest {
 
         private final Long PRODUCT_INFO_ID = 1L;
-        private final Long DEFAULT_COUNT = 5L;
-        private final Long CUSTOM_COUNT = 8L;
-        private final Long INVALID_COUNT = 51L;
+        private final Integer DEFAULT_COUNT = 5;
+        private final Integer CUSTOM_COUNT = 8;
+        private final Integer INVALID_COUNT = 51;
 
         private ProductSearchResponseDto createMockProductSearchResponseDto(Long count) {
             return ProductSearchResponseDto.builder()
                     .products(Collections.singletonList(ProductSearchDto.builder().productName("Similar Product").build()))
                     .totalElements(count)
-                    .totalPages(1L)
-                    .currentPage(0L)
+                    .totalPages(1)
+                    .currentPage(0)
                     .build();
         }
 
@@ -207,12 +201,12 @@ class ApiV1ProductQueryControllerTest {
         @DisplayName("성공: size 파라미터 없이 유사 상품을 조회한다 (기본값 사용)")
         void findSimilarProducts_success_defaultCount() throws Exception {
             PageRequestDto request = PageRequestDto.builder()
-                    .page(0L)
+                    .page(0)
                     .size(DEFAULT_COUNT)
                     .build();
 
             // given
-            ProductSearchResponseDto mockResponseDto = createMockProductSearchResponseDto(DEFAULT_COUNT);
+            ProductSearchResponseDto mockResponseDto = createMockProductSearchResponseDto(DEFAULT_COUNT.longValue());
             given(productFacade.findSimilarProducts(PRODUCT_INFO_ID, request))
                     .willReturn(mockResponseDto);
 
@@ -230,12 +224,12 @@ class ApiV1ProductQueryControllerTest {
         @DisplayName("성공: size 파라미터를 지정하여 유사 상품을 조회한다")
         void findSimilarProducts_success_customCount() throws Exception {
             PageRequestDto request = PageRequestDto.builder()
-                    .page(0L)
+                    .page(0)
                     .size(CUSTOM_COUNT)
                     .build();
 
             // given
-            ProductSearchResponseDto mockResponseDto = createMockProductSearchResponseDto(CUSTOM_COUNT);
+            ProductSearchResponseDto mockResponseDto = createMockProductSearchResponseDto(CUSTOM_COUNT.longValue());
             given(productFacade.findSimilarProducts(PRODUCT_INFO_ID, request))
                     .willReturn(mockResponseDto);
 
@@ -255,7 +249,7 @@ class ApiV1ProductQueryControllerTest {
         void findSimilarProducts_failure_invalidCount() throws Exception {
             // given - no need to mock facade as validation happens before facade call
             PageRequestDto request = PageRequestDto.builder()
-                    .page(0L)
+                    .page(0)
                     .size(INVALID_COUNT)
                     .build();
 

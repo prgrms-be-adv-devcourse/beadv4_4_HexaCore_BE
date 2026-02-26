@@ -16,7 +16,7 @@ public record ProductSearchResponseDto(
 
         @NotNull(message = "총 페이지 수는 필수입니다.")
         @Min(value = 0, message = "총 페이지 수는 0 이상이어야 합니다.")
-        Long totalPages,
+        Integer totalPages,
 
         @NotNull(message = "총 요소 수는 필수입니다.")
         @Min(value = 0, message = "총 요소 수는 0 이상이어야 합니다.")
@@ -24,6 +24,6 @@ public record ProductSearchResponseDto(
 
         @NotNull(message = "현재 페이지는 필수입니다.")
         @Min(value = 0, message = "현재 페이지는 0 이상이어야 합니다.")
-        Long currentPage
+        Integer currentPage
 ) {
 }

@@ -3,8 +3,14 @@ package com.back.product.app;
 import com.back.common.code.FailureCode;
 import com.back.common.exception.CustomException;
 import com.back.product.adapter.out.event.BrandSpringEventPublisher;
-import com.back.product.app.facade.ProductFacade;
-import com.back.product.app.usecase.command.*;
+import com.back.product.app.facade.BrandFacade;
+import com.back.product.app.facade.CategoryFacade;
+import com.back.product.app.facade.OptionFacade;
+import com.back.product.app.usecase.BrandUseCase;
+import com.back.product.app.usecase.CategoryUseCase;
+import com.back.product.app.usecase.OptionUseCase;
+import com.back.product.app.usecase.ProductInfoUseCase;
+import com.back.product.app.usecase.ProductUseCase;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -14,18 +20,29 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ProductFacade 단위 테스트")
 class ProductFacadeTest {
 
     @InjectMocks
-    private ProductFacade productFacade;
+    private OptionFacade optionFacade;
+
+    @InjectMocks
+    private BrandFacade brandFacade;
+
+    @InjectMocks
+    private CategoryFacade categoryFacade;
 
     @Mock
     private ProductInfoUseCase productInfoUseCase;
@@ -63,7 +80,7 @@ class ProductFacadeTest {
 
             // when & then
             // 예외가 발생하지 않는 것을 검증
-            assertDoesNotThrow(() -> productFacade.deleteOptionGroup(optionGroupId));
+            assertDoesNotThrow(() -> optionFacade.deleteOptionGroup(optionGroupId));
 
             // verify
             // 1. 사용 여부 확인 메서드가 호출되었는지 검증
@@ -84,7 +101,7 @@ class ProductFacadeTest {
             // when & then
             // 2. CustomException이 발생하는지 검증
             CustomException exception = assertThrows(CustomException.class, () ->
-                    productFacade.deleteOptionGroup(optionGroupId)
+                    optionFacade.deleteOptionGroup(optionGroupId)
             );
 
             // 3. 발생한 예외의 코드가 올바른지 확인
@@ -110,7 +127,7 @@ class ProductFacadeTest {
             given(productUseCase.isOptionValueInUse(anyLong())).willReturn(false);
 
             // when & then
-            assertDoesNotThrow(() -> productFacade.deleteOptionValue(optionValueId));
+            assertDoesNotThrow(() -> optionFacade.deleteOptionValue(optionValueId));
 
             // verify
             verify(productUseCase, times(1)).isOptionValueInUse(eq(optionValueId));
@@ -126,7 +143,7 @@ class ProductFacadeTest {
 
             // when & then
             CustomException exception = assertThrows(CustomException.class, () ->
-                    productFacade.deleteOptionValue(optionValueId)
+                    optionFacade.deleteOptionValue(optionValueId)
             );
 
             assertEquals(FailureCode.OPTION_VALUE_IN_USE, exception.getFailureCode());
@@ -153,7 +170,7 @@ class ProductFacadeTest {
             doNothing().when(brandUseCase).deleteBrand(BRAND_ID);
 
             // when
-            productFacade.deleteBrand(BRAND_ID);
+            brandFacade.deleteBrand(BRAND_ID);
 
             // then
             // 각 UseCase의 메소드가 올바른 인자로 호출되었는지 검증
@@ -170,7 +187,7 @@ class ProductFacadeTest {
 
             // when & then
             // 예외 발생을 검증
-            assertThatThrownBy(() -> productFacade.deleteBrand(BRAND_ID))
+            assertThatThrownBy(() -> brandFacade.deleteBrand(BRAND_ID))
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("failureCode", FailureCode.BRAND_IN_USE);
 
@@ -197,7 +214,7 @@ class ProductFacadeTest {
             doNothing().when(categoryUseCase).deleteCategory(CATEGORY_ID);
 
             // when
-            productFacade.deleteCategory(CATEGORY_ID);
+            categoryFacade.deleteCategory(CATEGORY_ID);
 
             // then
             // 각 UseCase의 메소드가 올바른 인자로 호출되었는지 검증
@@ -214,7 +231,7 @@ class ProductFacadeTest {
 
             // when & then
             // 예외 발생을 검증
-            assertThatThrownBy(() -> productFacade.deleteCategory(CATEGORY_ID))
+            assertThatThrownBy(() -> categoryFacade.deleteCategory(CATEGORY_ID))
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("failureCode", FailureCode.CATEGORY_IN_USE);
 

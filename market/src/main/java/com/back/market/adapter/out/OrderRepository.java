@@ -27,4 +27,6 @@ public interface OrderRepository extends JpaRepository<Order, Long>, OrderReposi
 
     @Query("SELECT o from Order o JOIN FETCH o.buyBidding bb JOIN FETCH o.sellBidding sb JOIN FETCH bb.marketProduct WHERE o.id = :orderId")
     Optional<Order> findOrderWithDetails(@Param("orderId") Long orderId);
+
+    Optional<Order> findBySellBiddingId(Long sellBiddingId);
 }

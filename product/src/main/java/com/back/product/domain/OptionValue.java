@@ -1,8 +1,21 @@
 package com.back.product.domain;
 
 import com.back.common.entity.BaseTimeEntity;
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 
@@ -13,7 +26,11 @@ import org.hibernate.annotations.SQLRestriction;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @SQLDelete(sql = "UPDATE OPTION_VALUE SET deleted_at = NOW() WHERE id = ?")
 @SQLRestriction("deleted_at IS NULL")
-@Table(name = "option_value")
+@Table(name = "option_value",
+        uniqueConstraints = {
+                @UniqueConstraint(name = "uk_option_value_group_value", columnNames = {"option_group_id", "option_value"})
+        }
+)
 public class OptionValue extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,7 +40,7 @@ public class OptionValue extends BaseTimeEntity {
     @JoinColumn(name = "option_group_id", nullable = false)
     private OptionGroup optionGroup;
 
-    @Column(name="option_value", nullable = false, length = 20, unique = true)
+    @Column(name="option_value", nullable = false, length = 20)
     private String value;
 
     public void modifyName(String value) {

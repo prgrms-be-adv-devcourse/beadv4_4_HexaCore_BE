@@ -61,6 +61,26 @@ public class ConfirmPaymentSupport {
     }
 
     /**
+     * 토스 confirm 성공 직후 호출 - 토스 확정 상태를 즉시 별도 트랜잭션으로 기록
+     * applySuccess()가 롤백되더라도 토스 확정 상태는 유지
+     */
+    @Transactional
+    public void markAsTossConfirmed(String orderId, String paymentKey) {
+        Payment payment = paymentRepository.findWithLockByTossOrderId(orderId)
+                .orElseThrow(() -> new EntityNotFoundException(FailureCode.PAYMENT_NOT_FOUND));
+
+        if (payment.getStatus() == PaymentStatus.TOSS_CONFIRMED
+                || payment.getStatus() == PaymentStatus.DONE) {
+            return;
+        }
+
+        payment.setPaymentKeyIfAbsent(paymentKey);
+        payment.markAsTossConfirmed();
+
+        log.info("[TOSS_CONFIRMED_SAVED] orderId={}, paymentKey={}", orderId, paymentKey);
+    }
+
+    /**
      * 토스 성공 시 DB 반영 (트랜잭션)
      */
     @Transactional
@@ -105,10 +125,16 @@ public class ConfirmPaymentSupport {
             return ConfirmResultResponseDto.fail(PaymentMapper.toFailedDto(payment), errorCode, failReason);
         }
 
+        // 토스가 이미 confirm한 결제는 FAIL 처리 불가
+        if (payment.getStatus() == PaymentStatus.TOSS_CONFIRMED) {
+            log.error("[PAYMENT_INVALID_FAIL] TOSS_CONFIRMED 상태 결제에 applyFailure 호출됨 orderId={}", orderId);
+            throw new BadRequestException(FailureCode.INVALID_CONFIRM);
+        }
+
         handleConfirmFail(payment);
 
         eventPublisher.publishEvent(new PaymentFailedEvent(
-                payment.getRelType(), payment.getRelId()
+                payment.getRelType(), payment.getRelId(), failReason
         ));
 
         return ConfirmResultResponseDto.fail(PaymentMapper.toFailedDto(payment), errorCode, failReason);

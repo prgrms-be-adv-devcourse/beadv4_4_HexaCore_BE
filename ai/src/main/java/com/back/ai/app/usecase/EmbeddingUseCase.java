@@ -1,8 +1,10 @@
 package com.back.ai.app.usecase;
 
+import com.back.ai.config.AiCacheNames;
 import com.back.common.annotation.Loggable;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.embedding.EmbeddingModel;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -14,8 +16,9 @@ public class EmbeddingUseCase {
     private final EmbeddingModel embeddingModel;
 
     @Loggable
-    public float[] generateEmbeddings(String texts) {
-        return embeddingModel.embed(texts);
+    @Cacheable(value = AiCacheNames.EMBEDDING, key = "#texts", cacheManager = "aiCacheManager")
+    public List<Float> generateEmbeddings(String texts) {
+        return convertArrayToList(embeddingModel.embed(texts));
     }
 
     @Loggable

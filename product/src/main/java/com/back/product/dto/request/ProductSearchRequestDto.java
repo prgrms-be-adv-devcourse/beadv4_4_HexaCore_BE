@@ -1,7 +1,12 @@
 package com.back.product.dto.request;
 
 import com.back.product.dto.enums.ProductSortType;
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.Builder;
 
 import java.math.BigDecimal;
@@ -34,11 +39,11 @@ public record ProductSearchRequestDto(
 
         // 5. 페이징
         @Min(value = 0, message = "Page must be greater than or equal to 0")
-        Long page,
+        Integer page,
 
         @Min(value = 5, message = "Size must be greater than or equal to 5")
         @Max(value = 50, message = "Size must be less than or equal to 50")
-        Long size
+        Integer size
 ) {
     public ProductSearchRequestDto {
         if (brandIds == null) {
@@ -50,11 +55,11 @@ public record ProductSearchRequestDto(
         }
 
         if (page == null) {
-            page = 0L;
+            page = 0;
         }
 
         if (size == null) {
-            size = 20L;
+            size = 20;
         }
 
         if (sort == null) {

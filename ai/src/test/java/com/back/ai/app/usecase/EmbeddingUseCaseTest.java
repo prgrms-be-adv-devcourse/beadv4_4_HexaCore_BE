@@ -1,6 +1,5 @@
 package com.back.ai.app.usecase;
 
-import com.back.common.exception.CustomException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -9,7 +8,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ai.embedding.EmbeddingModel;
-import org.springframework.web.client.HttpServerErrorException;
 
 import java.util.List;
 
@@ -38,11 +36,11 @@ class EmbeddingUseCaseTest {
         void generateEmbeddings_Success() {
             // given
             String inputText = "Hello, world!";
-            float[] expectedEmbedding = {0.1f, 0.2f, 0.3f};
-            given(embeddingModel.embed(inputText)).willReturn(expectedEmbedding);
+            List<Float> expectedEmbedding = List.of(0.1f, 0.2f, 0.3f);
+            given(embeddingModel.embed(inputText)).willReturn(new float[]{0.1f, 0.2f, 0.3f});
 
             // when
-            float[] result = embeddingUseCase.generateEmbeddings(inputText);
+            List<Float> result = embeddingUseCase.generateEmbeddings(inputText);
 
             // then
             assertThat(result).isEqualTo(expectedEmbedding);
@@ -68,11 +66,11 @@ class EmbeddingUseCaseTest {
         void generateEmbeddings_EmptyString() {
             // given
             String inputText = "";
-            float[] expectedEmbedding = {0.0f, 0.0f, 0.0f}; // Assuming the model returns a zero vector for empty string
-            given(embeddingModel.embed(inputText)).willReturn(expectedEmbedding);
+            List<Float> expectedEmbedding = List.of(0.0f, 0.0f, 0.0f); // Assuming the model returns a zero vector for empty string
+            given(embeddingModel.embed(inputText)).willReturn(new float[]{0.0f, 0.0f, 0.0f});
 
             // when
-            float[] result = embeddingUseCase.generateEmbeddings(inputText);
+            List<Float> result = embeddingUseCase.generateEmbeddings(inputText);
 
             // then
             assertThat(result).isEqualTo(expectedEmbedding);
@@ -84,11 +82,11 @@ class EmbeddingUseCaseTest {
         void generateEmbeddings_LongString() {
             // given
             String longText = "a".repeat(10000);
-            float[] expectedEmbedding = {0.4f, 0.5f, 0.6f};
-            given(embeddingModel.embed(longText)).willReturn(expectedEmbedding);
+            List<Float> expectedEmbedding = List.of(0.4f, 0.5f, 0.6f);
+            given(embeddingModel.embed(longText)).willReturn(new float[]{0.4f, 0.5f, 0.6f});
 
             // when
-            float[] result = embeddingUseCase.generateEmbeddings(longText);
+            List<Float> result = embeddingUseCase.generateEmbeddings(longText);
 
             // then
             assertThat(result).isEqualTo(expectedEmbedding);

@@ -8,6 +8,7 @@ import org.apache.kafka.common.serialization.StringDeserializer;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
@@ -46,6 +47,7 @@ import static org.mockito.Mockito.*;
 class CashPayoutListenerRetryTest {
 
     @Autowired
+    @Qualifier("dltKafkaTemplate")
     KafkaTemplate<String, String> kafkaTemplate;
 
     @MockitoBean

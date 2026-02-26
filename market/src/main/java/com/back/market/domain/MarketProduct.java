@@ -1,10 +1,8 @@
 package com.back.market.domain;
 
 import com.back.common.entity.BaseTimeEntity;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import com.back.market.dto.request.MarketProductDto;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -29,15 +27,17 @@ import java.math.BigDecimal;
 @SQLRestriction("deleted_at IS NULL")
 @Table(name = "market_product")
 public class MarketProduct extends BaseTimeEntity {
-    // Product 테이블
+
     @Id
     @Column(name = "id")
-    private Long id;                    // 원본 Product의 PK를 그대로 사용
+    private Long id;        // 원본 상품의 Option Value ID (비즈니스 키)
 
     @Column(name = "product_option", nullable = false, length = 100)
-    private String productOption;                // 상품 사이즈(옵션)
+    private String productOption;        // 상품 사이즈(옵션)
 
-    // Product_info 테이블
+    @Column(name = "product_info_id", nullable = false)
+    private Long productInfoId;         // 원본 상품의 Info ID (삭제 시 활용, 상품이 삭제되면 옵션들까지 전부 삭제해야하므로, 삭제 시 기준이 됨)
+
     @Column(name = "name", nullable = false)
     private String name;                // 상품명
 
@@ -48,13 +48,20 @@ public class MarketProduct extends BaseTimeEntity {
     private String thumbnailImage;      // 제품 이미지
 
     @Column(name = "release_price")
-    private BigDecimal releasePrice;   // 발매가
+    private BigDecimal releasePrice;    // 발매가
 
-    // Brand 테이블
     @Column(name = "brand_name", nullable = false)
     private String brandName;           // 브랜드명
 
-    //Category 테이블
     @Column(name = "category_name", nullable = false)
     private String categoryName;        // 카테고리명
+
+    public void updateInfo(MarketProductDto dto) {
+        this.name = dto.name();
+        this.productNumber = dto.productNumber();
+        this.thumbnailImage = dto.thumbnailImage();
+        this.releasePrice = dto.releasePrice();
+        this.brandName = dto.brandName();
+        this.categoryName = dto.categoryName();
+    }
 }

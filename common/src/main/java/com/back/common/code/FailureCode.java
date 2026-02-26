@@ -37,6 +37,7 @@ public enum FailureCode {
     CONSTRAINT_VIOLATION(HttpStatus.BAD_REQUEST, "CONSTRAINT_VIOLATION", "제약 조건 위반으로 작업을 수행할 수 없습니다."),
     ORDER_ACCESS_DENIED(HttpStatus.BAD_REQUEST, "ORDER_ACCESS_DENIED", "해당 주문에 대한 접근 권한이 없습니다."),
     ORDER_NOT_DELIVERED(HttpStatus.BAD_REQUEST, "ORDER_NOT_DELIVERED", "배송 완료된 주문만 구매 확정할 수 있습니다."),
+    INVALID_ORDER_STATUS(HttpStatus.BAD_REQUEST, "INVALID_ORDER_STATUS", "유효하지 않은 주문 상태입니다."),
 
     /**
      * 401 Unauthorized
@@ -78,6 +79,7 @@ public enum FailureCode {
     OPTION_GROUP_NOT_FOUND(HttpStatus.NOT_FOUND, "OPTION_GROUP_NOT_FOUND", "옵션 그룹이 존재하지 않습니다."),
     CHAT_OUTBOX_NOT_FOUND(HttpStatus.NOT_FOUND, "CHAT_OUTBOX_NOT_FOUND", "해당 아웃박스를 찾을 수 없습니다."),
     EMBEDDING_NOT_FOUND(HttpStatus.NOT_FOUND, "EMBEDDING_NOT_FOUND", "상품의 임베딩을 찾을 수 없습니다."),
+    PRODUCT_OUTBOX_NOT_FOUND(HttpStatus.NOT_FOUND, "PRODUCT_OUTBOX_NOT_FOUND", "상품 이벤트의 아웃박스 데이터를 찾을 수 없습니다."),
 
     /**
      * 405 Method Not Allowed
@@ -112,6 +114,7 @@ public enum FailureCode {
      * 429 Too Many Requests
      */
     TOO_MANY_REQUESTS(HttpStatus.TOO_MANY_REQUESTS, "TOO_MANY_REQUESTS", "요청이 너무 많습니다. 잠시 후 다시 시도해주세요."),
+    BID_SPAM_DETECTED(HttpStatus.TOO_MANY_REQUESTS, "BID_SPAM_DETECTED", "입찰 스팸이 감지되어 입찰이 제한됩니다."),
 
     /**
      * 500 Internal Server Error
@@ -122,7 +125,8 @@ public enum FailureCode {
     PAYMENT_STATE_INCONSISTENT(HttpStatus.INTERNAL_SERVER_ERROR, "PAYMENT_STATE_INCONSISTENT", "결제 상태가 일관되지 않습니다."),
     BATCH_EXECUTION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "BATCH_EXECUTION_FAILED", "배치 실행에 실패했습니다."),
     EVENT_PUBLISH_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "EVENT_PUBLISH_FAILED", "이벤트 발행에 실패했습니다."),
-    IMAGE_PROCESSING_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "IMAGE_PROCESSING_FAILED", "이미지 처리에 실패했습니다.");
+    IMAGE_PROCESSING_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "IMAGE_PROCESSING_FAILED", "이미지 처리에 실패했습니다."),
+    EMBEDDING_PROCESSING_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "EMBEDDING_PROCESSING_FAILED", "임베딩 생성 처리에 실패했습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

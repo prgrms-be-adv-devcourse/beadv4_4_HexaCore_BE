@@ -29,7 +29,8 @@ public record KafkaConsumeFailLogCommand(
             Integer topicPartition,
             Long topicOffset,
             Long recordTimestampEpochMs,
-            Throwable e,
+            String errorClass,
+            String errorMessage,
             String payloadJson,
             String stacktrace,
             LocalDateTime loggedAt
@@ -42,8 +43,8 @@ public record KafkaConsumeFailLogCommand(
                 topicPartition,
                 topicOffset,
                 recordTimestampEpochMs,
-                e.getClass().getName(),
-                e.getMessage(),
+                errorClass,
+                errorMessage,
                 payloadJson,
                 stacktrace,
                 loggedAt

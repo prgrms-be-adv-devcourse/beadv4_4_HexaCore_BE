@@ -1,5 +1,6 @@
 package com.back.notification.dto.response;
 
+import com.back.notification.adapter.out.feign.product.dto.ProductDetailDto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -18,4 +19,5 @@ public class PriceAlertResponseDto {
     private BigDecimal targetPrice;
     private LocalDateTime triggeredAt;
     private LocalDateTime createdAt;
+    private ProductDetailDto productDetail;
 }

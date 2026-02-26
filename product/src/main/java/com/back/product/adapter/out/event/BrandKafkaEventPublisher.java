@@ -1,23 +1,28 @@
 package com.back.product.adapter.out.event;
 
 import com.back.common.event.Envelope;
-import com.back.common.event.KafkaEventPublisher;
-import com.back.product.event.kafka.*;
-import jakarta.validation.Valid;
+import com.back.product.domain.ProductOutboxEvent;
+import com.back.product.event.kafka.BrandCreatedPayload;
+import com.back.product.event.kafka.BrandDeletedPayload;
+import com.back.product.event.kafka.BrandUpdatedPayload;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
+import tools.jackson.databind.json.JsonMapper;
 
-import java.util.stream.Collectors;
+import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Service
 @Validated
 @RequiredArgsConstructor
 public class BrandKafkaEventPublisher {
-    private final KafkaEventPublisher kafkaEventPublisher;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
+
+    private final JsonMapper jsonMapper;
 
     @Value("${custom.kafka.topic.product-brand-created}")
     private String brandCreatedTopic;
@@ -28,32 +33,48 @@ public class BrandKafkaEventPublisher {
     @Value("${custom.kafka.topic.product-brand-deleted}")
     private String brandDeletedTopic;
 
-    public void sendCreatedEvent(@Valid BrandCreatedPayload payload) {
-        Envelope<BrandCreatedPayload> event = Envelope.of(brandCreatedTopic, payload);
+    public CompletableFuture<Void> sendCreatedEvent(ProductOutboxEvent outbox) {
+        String eventId = outbox.getEventId();
+        try {
+            BrandCreatedPayload payload = jsonMapper.readValue(outbox.getPayload(), BrandCreatedPayload.class);
 
-        kafkaEventPublisher.publish(brandCreatedTopic, event);
+            Envelope<BrandCreatedPayload> event = Envelope.of(eventId, brandCreatedTopic, payload);
 
-        log.info("[BrandKafkaEventPublisher] Sent BrandCreatedPayload size: {}, brands: {}",
-                payload.brands().size(),
-                payload.brands().stream()
-                        .map(BrandPayload::name)
-                        .collect(Collectors.joining(", "))
-        );
+            return kafkaTemplate.send(brandCreatedTopic, event)
+                    .thenRun(() -> log.info("[BrandKafkaEventPublisher] BrandCreatedEvent published"));
+        } catch (Exception e) {
+            log.error("[BrandKafkaEventPublisher] BrandCreatedEvent publish failed: {}", e.getMessage(), e);
+            throw new RuntimeException(e);
+        }
     }
 
-    public void sendUpdatedEvent(@Valid BrandUpdatedPayload payload) {
-        Envelope<BrandUpdatedPayload> event = Envelope.of(brandUpdatedTopic, payload);
+    public CompletableFuture<Void> sendUpdatedEvent(ProductOutboxEvent outbox) {
+        String eventId = outbox.getEventId();
+        try {
+            BrandUpdatedPayload payload = jsonMapper.readValue(outbox.getPayload(), BrandUpdatedPayload.class);
 
-        kafkaEventPublisher.publish(brandUpdatedTopic, event);
+            Envelope<BrandUpdatedPayload> event = Envelope.of(eventId, brandUpdatedTopic, payload);
 
-        log.info("[BrandKafkaEventPublisher] Sent BrandUpdatedPayload brandName: {}", payload.brand().name());
+            return kafkaTemplate.send(brandUpdatedTopic, event)
+                    .thenRun(() -> log.info("[BrandKafkaEventPublisher] BrandUpdatedEvent published"));
+        } catch (Exception e) {
+            log.error("[BrandKafkaEventPublisher] BrandUpdatedEvent publish failed: {}", e.getMessage(), e);
+            throw new RuntimeException(e);
+        }
     }
 
-    public void sendDeletedEvent(@Valid BrandDeletedPayload payload) {
-        Envelope<BrandDeletedPayload> event = Envelope.of(brandDeletedTopic, payload);
+    public CompletableFuture<Void> sendDeletedEvent(ProductOutboxEvent outbox) {
+        String eventId = outbox.getEventId();
+        try {
+            BrandDeletedPayload payload = jsonMapper.readValue(outbox.getPayload(), BrandDeletedPayload.class);
 
-        kafkaEventPublisher.publish(brandDeletedTopic, event);
+            Envelope<BrandDeletedPayload> event = Envelope.of(eventId, brandDeletedTopic, payload);
 
-        log.info("[BrandKafkaEventPublisher] Sent BrandDeletedPayload brandId : {}", payload.brandId());
+            return kafkaTemplate.send(brandDeletedTopic, event)
+                    .thenRun(() -> log.info("[BrandKafkaEventPublisher] BrandDeletedEvent published"));
+        } catch (Exception e) {
+            log.error("[BrandKafkaEventPublisher] BrandDeletedEvent publish failed: {}", e.getMessage(), e);
+            throw new RuntimeException(e);
+        }
     }
 }

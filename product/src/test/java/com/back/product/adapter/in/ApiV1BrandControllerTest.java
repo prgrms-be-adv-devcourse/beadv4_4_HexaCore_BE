@@ -3,11 +3,12 @@ package com.back.product.adapter.in;
 import com.back.common.code.FailureCode;
 import com.back.common.exception.CustomException;
 import com.back.product.adapter.in.web.controller.ApiV1BrandController;
-import com.back.product.app.facade.ProductFacade;
+import com.back.product.app.facade.BrandFacade;
 import com.back.product.dto.model.BrandDto;
-import com.back.product.dto.request.BrandListCreateRequestDto;
 import com.back.product.dto.request.BrandDataRequestDto;
+import com.back.product.dto.request.BrandListCreateRequestDto;
 import com.back.product.dto.response.BrandListResponseDto;
+import com.back.product.dto.response.BrandPageResponseDto;
 import com.back.product.dto.response.BrandResponseDto;
 import com.back.security.jwt.JWTUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -17,7 +18,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -25,10 +25,17 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -44,7 +51,7 @@ class ApiV1BrandControllerTest {
     private JWTUtil jwtUtil;
 
     @MockitoBean
-    private ProductFacade productFacade;
+    private BrandFacade brandFacade;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -53,19 +60,27 @@ class ApiV1BrandControllerTest {
     class GetBrandsTest {
         @Test
         @DisplayName("브랜드 목록 조회를 성공한다")
-        @WithMockUser
         void getBrands() throws Exception {
             // given
-            given(productFacade.getBrands()).willReturn(Collections.emptyList());
+            BrandPageResponseDto responseDto = BrandPageResponseDto.builder()
+                    .brands(Collections.emptyList())
+                    .totalPages(0)
+                    .totalElements(0L)
+                    .currentPage(0)
+                    .build();
+
+            given(brandFacade.getBrands(anyInt(), anyInt())).willReturn(responseDto);
 
             // when & then
             mockMvc.perform(
                             get("/api/v1/products/brands")
+                                    .param("page", "0")
+                                    .param("size", "10")
                                     .contentType(MediaType.APPLICATION_JSON)
                     ).andDo(print())
                     .andExpect(status().isOk());
 
-            verify(productFacade).getBrands();
+            verify(brandFacade).getBrands(0, 10);
         }
     }
 
@@ -76,7 +91,6 @@ class ApiV1BrandControllerTest {
 
         @Test
         @DisplayName("브랜드 생성을 성공한다")
-        @WithMockUser
         void createBrand_Success() throws Exception {
             // given
             BrandDataRequestDto newBrand1 = new BrandDataRequestDto("New Balance", "https://example.com/logo.png");
@@ -89,7 +103,7 @@ class ApiV1BrandControllerTest {
                             new BrandDto(2L, "Nike", "https://example.com/logo2.png")
                     )).build();
 
-            given(productFacade.createBrands(any(BrandListCreateRequestDto.class))).willReturn(responseDto);
+            given(brandFacade.createBrands(any(BrandListCreateRequestDto.class))).willReturn(responseDto);
 
             // when & then
             mockMvc.perform(
@@ -103,12 +117,11 @@ class ApiV1BrandControllerTest {
                     .andExpect(jsonPath("$.data.brands[0].name").value("New Balance"))
                     .andExpect(jsonPath("$.data.brands[1].name").value("Nike"));
 
-            verify(productFacade).createBrands(any(BrandListCreateRequestDto.class));
+            verify(brandFacade).createBrands(any(BrandListCreateRequestDto.class));
         }
 
         @Test
         @DisplayName("요청에 중복된 브랜드 이름이 포함되어 있어도, 생성 가능한 브랜드만 생성하고 201 Created를 반환한다")
-        @WithMockUser
         void createBrand_Filter_DuplicateName() throws Exception {
             // given
             BrandDataRequestDto existingBrand = new BrandDataRequestDto("Existing Brand", "https://example.com/logo_exist.png");
@@ -122,7 +135,7 @@ class ApiV1BrandControllerTest {
                     )).build();
 
 
-            given(productFacade.createBrands(any(BrandListCreateRequestDto.class)))
+            given(brandFacade.createBrands(any(BrandListCreateRequestDto.class)))
                     .willReturn(responseDto);
 
             // when & then
@@ -135,13 +148,12 @@ class ApiV1BrandControllerTest {
                     .andExpect(jsonPath("$.data.brands.length()").value(1))
                     .andExpect(jsonPath("$.data.brands[0].name").value("New Brand"));
 
-            verify(productFacade).createBrands(any(BrandListCreateRequestDto.class));
+            verify(brandFacade).createBrands(any(BrandListCreateRequestDto.class));
         }
 
 
         @Test
         @DisplayName("유효하지 않은 요청 값으로 생성 시 400 Bad Request를 반환한다")
-        @WithMockUser
         void createBrand_Fail_Validation() throws Exception {
             // given
             BrandDataRequestDto invalidBrand = new BrandDataRequestDto(" ", "invalid-url");
@@ -156,7 +168,7 @@ class ApiV1BrandControllerTest {
                     ).andDo(print())
                     .andExpect(status().isBadRequest());
 
-            verify(productFacade, never()).createBrands(any(BrandListCreateRequestDto.class));
+            verify(brandFacade, never()).createBrands(any(BrandListCreateRequestDto.class));
         }
     }
 
@@ -168,7 +180,6 @@ class ApiV1BrandControllerTest {
 
         @Test
         @DisplayName("브랜드 수정을 성공한다")
-        @WithMockUser
         void modifyBrand_Success() throws Exception {
             // given
             BrandDataRequestDto requestDto = BrandDataRequestDto.builder()
@@ -179,7 +190,7 @@ class ApiV1BrandControllerTest {
                     .brand(new BrandDto(BRAND_ID, "Modified Brand", "https://example.com/modified_logo.png"))
                     .build();
 
-            given(productFacade.modifyBrand(eq(BRAND_ID), any(BrandDataRequestDto.class))).willReturn(responseDto);
+            given(brandFacade.modifyBrand(eq(BRAND_ID), any(BrandDataRequestDto.class))).willReturn(responseDto);
 
             // when & then
             mockMvc.perform(
@@ -192,12 +203,11 @@ class ApiV1BrandControllerTest {
                     .andExpect(jsonPath("$.data.brand.brandId").value(BRAND_ID))
                     .andExpect(jsonPath("$.data.brand.name").value("Modified Brand"));
 
-            verify(productFacade).modifyBrand(eq(BRAND_ID), any(BrandDataRequestDto.class));
+            verify(brandFacade).modifyBrand(eq(BRAND_ID), any(BrandDataRequestDto.class));
         }
 
         @Test
         @DisplayName("존재하지 않는 브랜드 수정 시 404 Not Found를 반환한다")
-        @WithMockUser
         void modifyBrand_Fail_BrandNotFound() throws Exception {
             // given
             BrandDataRequestDto requestDto = BrandDataRequestDto.builder()
@@ -205,7 +215,7 @@ class ApiV1BrandControllerTest {
                     .imageUrl("https://example.com/non_existent.png")
                     .build();
 
-            given(productFacade.modifyBrand(eq(BRAND_ID), any(BrandDataRequestDto.class)))
+            given(brandFacade.modifyBrand(eq(BRAND_ID), any(BrandDataRequestDto.class)))
                     .willThrow(new CustomException(FailureCode.BRAND_NOT_FOUND));
 
             // when & then
@@ -217,12 +227,11 @@ class ApiV1BrandControllerTest {
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.code").value("BRAND_NOT_FOUND"));
 
-            verify(productFacade).modifyBrand(eq(BRAND_ID), any(BrandDataRequestDto.class));
+            verify(brandFacade).modifyBrand(eq(BRAND_ID), any(BrandDataRequestDto.class));
         }
 
         @Test
         @DisplayName("중복된 이름으로 브랜드 수정 시 409 Conflict를 반환한다")
-        @WithMockUser
         void modifyBrand_Fail_DuplicateName() throws Exception {
             // given
             BrandDataRequestDto requestDto = BrandDataRequestDto.builder()
@@ -230,7 +239,7 @@ class ApiV1BrandControllerTest {
                     .imageUrl("https://example.com/existing.png")
                     .build();
 
-            given(productFacade.modifyBrand(eq(BRAND_ID), any(BrandDataRequestDto.class)))
+            given(brandFacade.modifyBrand(eq(BRAND_ID), any(BrandDataRequestDto.class)))
                     .willThrow(new CustomException(FailureCode.BRAND_NAME_DUPLICATE));
 
             // when & then
@@ -242,12 +251,11 @@ class ApiV1BrandControllerTest {
                     .andExpect(status().isConflict())
                     .andExpect(jsonPath("$.code").value("BRAND_NAME_DUPLICATE"));
 
-            verify(productFacade).modifyBrand(eq(BRAND_ID), any(BrandDataRequestDto.class));
+            verify(brandFacade).modifyBrand(eq(BRAND_ID), any(BrandDataRequestDto.class));
         }
 
         @Test
         @DisplayName("유효하지 않은 요청 값으로 브랜드 수정 시 400 Bad Request를 반환한다")
-        @WithMockUser
         void modifyBrand_Fail_Validation() throws Exception {
             // given
             // Invalid name (blank) and invalid URL
@@ -264,7 +272,7 @@ class ApiV1BrandControllerTest {
                     ).andDo(print())
                     .andExpect(status().isBadRequest());
 
-            verify(productFacade, never()).modifyBrand(eq(BRAND_ID), any(BrandDataRequestDto.class));
+            verify(brandFacade, never()).modifyBrand(eq(BRAND_ID), any(BrandDataRequestDto.class));
         }
     }
 
@@ -276,11 +284,10 @@ class ApiV1BrandControllerTest {
 
         @Test
         @DisplayName("브랜드 삭제를 성공한다")
-        @WithMockUser
         void deleteBrand_Success() throws Exception {
             // given
-            // productFacade.deleteBrand(BRAND_ID)가 호출될 때 아무것도 하지 않도록 설정 (void 메소드)
-            doNothing().when(productFacade).deleteBrand(BRAND_ID);
+            // brandFacade.deleteBrand(BRAND_ID)가 호출될 때 아무것도 하지 않도록 설정 (void 메소드)
+            doNothing().when(brandFacade).deleteBrand(BRAND_ID);
 
             // when & then
             mockMvc.perform(
@@ -289,17 +296,16 @@ class ApiV1BrandControllerTest {
                     ).andDo(print())
                     .andExpect(status().isNoContent());
 
-            // productFacade.deleteBrand가 올바른 ID로 호출되었는지 검증
-            verify(productFacade).deleteBrand(BRAND_ID);
+            // brandFacade.deleteBrand가 올바른 ID로 호출되었는지 검증
+            verify(brandFacade).deleteBrand(BRAND_ID);
         }
 
         @Test
         @DisplayName("사용 중인 브랜드를 삭제 시도 시 409 Conflict를 반환한다")
-        @WithMockUser
         void deleteBrand_Fail_BrandInUse() throws Exception {
             // given
-            // productFacade.deleteBrand(BRAND_ID)가 호출될 때 BRAND_IN_USE 예외를 던지도록 설정
-            doThrow(new CustomException(FailureCode.BRAND_IN_USE)).when(productFacade).deleteBrand(BRAND_ID);
+            // brandFacade.deleteBrand(BRAND_ID)가 호출될 때 BRAND_IN_USE 예외를 던지도록 설정
+            doThrow(new CustomException(FailureCode.BRAND_IN_USE)).when(brandFacade).deleteBrand(BRAND_ID);
 
             // when & then
             mockMvc.perform(
@@ -309,8 +315,8 @@ class ApiV1BrandControllerTest {
                     .andExpect(status().isConflict())
                     .andExpect(jsonPath("$.code").value("BRAND_IN_USE"));
 
-            // productFacade.deleteBrand가 올바른 ID로 호출되었는지 검증
-            verify(productFacade).deleteBrand(BRAND_ID);
+            // brandFacade.deleteBrand가 올바른 ID로 호출되었는지 검증
+            verify(brandFacade).deleteBrand(BRAND_ID);
         }
     }
 }

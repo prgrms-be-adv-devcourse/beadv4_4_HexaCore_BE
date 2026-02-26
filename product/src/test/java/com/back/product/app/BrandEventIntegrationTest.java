@@ -1,12 +1,18 @@
 package com.back.product.app;
 
 import com.back.common.event.Envelope;
+import com.back.common.event.EventName;
 import com.back.product.adapter.out.document.ProductDocumentRepository;
-import com.back.product.adapter.out.event.BrandSpringEventPublisher;
+import com.back.product.adapter.out.persistence.ProductOutboxEventRepository;
+import com.back.product.domain.ProductOutboxEvent;
+import com.back.product.dto.enums.OutboxEventStatus;
 import com.back.product.dto.model.BrandDto;
 import com.back.product.event.kafka.BrandCreatedPayload;
 import com.back.product.event.kafka.BrandDeletedPayload;
 import com.back.product.event.kafka.BrandUpdatedPayload;
+import com.back.product.event.spring.BrandCreationCompletedEvent;
+import com.back.product.event.spring.BrandDeletionCompletedEvent;
+import com.back.product.event.spring.BrandUpdateCompletedEvent;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -21,9 +27,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
@@ -34,8 +45,12 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 @SpringBootTest
 @DirtiesContext // 테스트 간 컨텍스트를 분리하여 Kafka 브로커 충돌 방지
@@ -44,7 +59,9 @@ import static org.assertj.core.api.Assertions.assertThat;
         "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}",
         "spring.kafka.consumer.properties.spring.json.trusted.packages=*",
         "spring.kafka.consumer.auto-offset-reset=earliest",
-
+        "spring.kafka.producer.key-serializer=org.apache.kafka.common.serialization.StringSerializer",
+        "spring.kafka.producer.value-serializer=org.springframework.kafka.support.serializer.JacksonJsonSerializer",
+        
         "spring.datasource.url=jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=MySQL",
         "spring.datasource.driver-class-name=org.h2.Driver",
         "spring.datasource.username=sa",
@@ -55,11 +72,25 @@ import static org.assertj.core.api.Assertions.assertThat;
 @EnableAspectJAutoProxy(proxyTargetClass = true) // CGLIB 프록시 사용
 class BrandEventIntegrationTest {
 
+    @TestConfiguration
+    static class TestKafkaConfig {
+        @Bean
+        public KafkaTemplate<String, Object> eventNameKafkaTemplate(
+                ProducerFactory<Object, Object> producerFactory) {
+            // Spring Boot가 제공하는 기본 ProducerFactory를 주입받아
+            // 코드에서 요구하는 <String, EventName> 타입의 템플릿을 생성합니다.
+            return new KafkaTemplate(producerFactory);
+        }
+    }
+
     @MockitoBean
     private ProductDocumentRepository productDocumentRepository;
 
     @Autowired
-    private BrandSpringEventPublisher brandSpringEventPublisher;
+    private ApplicationEventPublisher applicationEventPublisher;
+
+    @Autowired
+    private ProductOutboxEventRepository outboxRepository;
 
     @Autowired
     private TransactionTemplate transactionTemplate;
@@ -96,91 +127,120 @@ class BrandEventIntegrationTest {
         if (consumer != null) {
             consumer.close();
         }
+        outboxRepository.deleteAll();
     }
 
     @Test
     @DisplayName("브랜드 생성 시 Kafka에 BrandCreated 이벤트가 발행되어야 한다")
     void createBrand_shouldPublishCreateEventToKafka() throws Exception {
         // Given
-        // ProductFacade를 호출하지 않으므로, 더미 BrandDto를 직접 생성하여 이벤트에 전달
+        String eventId = UUID.randomUUID().toString();
         List<BrandDto> brandDtos = List.of(new BrandDto(1L, "New Kafka Brand", "https://thumbNail.png"));
-        Long createdBrandId = brandDtos.get(0).brandId(); // assertion을 위한 ID
+        BrandCreationCompletedEvent event = new BrandCreationCompletedEvent(eventId, brandDtos);
 
         // When
-        // TransactionTemplate을 사용하여 트랜잭션 내에서 Spring 이벤트를 발행
         transactionTemplate.execute(status -> {
-            brandSpringEventPublisher.sendCreatedEvent(brandDtos);
+            applicationEventPublisher.publishEvent(event);
             return null;
         });
 
         // Then
-        ConsumerRecords<String, String> records = consumer.poll(Duration.ofSeconds(5));
-        assertThat(records.count()).isEqualTo(1);
+        AtomicReference<ConsumerRecord<String, String>> recordRef = new AtomicReference<>();
+        await().atMost(5, TimeUnit.SECONDS).until(() -> {
+            ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(100));
+            if (records.isEmpty()) {
+                return false;
+            }
+            recordRef.set(records.iterator().next());
+            return true;
+        });
 
-        ConsumerRecord<String, String> record = records.iterator().next();
+        ConsumerRecord<String, String> record = recordRef.get();
         assertThat(record.topic()).isEqualTo(createdTopic);
 
         Envelope<BrandCreatedPayload> envelope = objectMapper.readValue(record.value(), new TypeReference<>() {});
         BrandCreatedPayload payload = envelope.payload();
 
         assertThat(payload.brands()).hasSize(1);
-        assertThat(payload.brands().get(0).brandId()).isEqualTo(createdBrandId);
+        assertThat(payload.brands().get(0).brandId()).isEqualTo(1L);
         assertThat(payload.brands().get(0).name()).isEqualTo("New Kafka Brand");
+
+        ProductOutboxEvent outboxEvent = outboxRepository.findByEventId(eventId).orElseThrow();
+        assertThat(outboxEvent.getStatus()).isEqualTo(OutboxEventStatus.SUCCEEDED);
     }
 
     @Test
     @DisplayName("브랜드 수정 시 Kafka에 BrandUpdated 이벤트가 발행되어야 한다")
     void modifyBrand_shouldPublishUpdateEventToKafka() throws Exception {
         // Given
-        // ProductFacade를 호출하지 않으므로, 더미 BrandDto를 직접 생성
-        Long brandId = 1L; // 더미 ID
-        BrandDto updatedBrandDto = new BrandDto(brandId, "Updated Kafka Brand", "http://image2.png");
+        String eventId = UUID.randomUUID().toString();
+        BrandDto updatedBrandDto = new BrandDto(1L, "Updated Kafka Brand", "http://image2.png");
+        BrandUpdateCompletedEvent event = new BrandUpdateCompletedEvent(eventId, updatedBrandDto);
 
         // When
-        // TransactionTemplate을 사용하여 트랜잭션 내에서 Spring 이벤트를 발행
         transactionTemplate.execute(status -> {
-            brandSpringEventPublisher.sendUpdatedEvent(updatedBrandDto);
+            applicationEventPublisher.publishEvent(event);
             return null;
         });
 
         // Then
-        ConsumerRecords<String, String> records = consumer.poll(Duration.ofSeconds(5));
-        assertThat(records.count()).isEqualTo(1);
+        AtomicReference<ConsumerRecord<String, String>> recordRef = new AtomicReference<>();
+        await().atMost(5, TimeUnit.SECONDS).until(() -> {
+            ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(100));
+            if (records.isEmpty()) {
+                return false;
+            }
+            recordRef.set(records.iterator().next());
+            return true;
+        });
 
-        ConsumerRecord<String, String> record = records.iterator().next();
+        ConsumerRecord<String, String> record = recordRef.get();
         assertThat(record.topic()).isEqualTo(updatedTopic);
 
         Envelope<BrandUpdatedPayload> envelope = objectMapper.readValue(record.value(), new TypeReference<>() {});
         BrandUpdatedPayload payload = envelope.payload();
 
-        assertThat(payload.brand().brandId()).isEqualTo(brandId);
+        assertThat(payload.brand().brandId()).isEqualTo(1L);
         assertThat(payload.brand().name()).isEqualTo("Updated Kafka Brand");
+
+        ProductOutboxEvent outboxEvent = outboxRepository.findByEventId(eventId).orElseThrow();
+        assertThat(outboxEvent.getStatus()).isEqualTo(OutboxEventStatus.SUCCEEDED);
     }
 
     @Test
     @DisplayName("브랜드 삭제 시 Kafka에 BrandDeleted 이벤트가 발행되어야 한다")
     void deleteBrand_shouldPublishDeleteEventToKafka() throws Exception {
         // Given
-        // ProductFacade를 호출하지 않으므로, 더미 brandId를 직접 사용
-        Long brandId = 1L; // 더미 ID
+        String eventId = UUID.randomUUID().toString();
+        Long brandId = 1L;
+        BrandDeletionCompletedEvent event = new BrandDeletionCompletedEvent(eventId, brandId);
 
         // When
-        // TransactionTemplate을 사용하여 트랜잭션 내에서 Spring 이벤트를 발행
         transactionTemplate.execute(status -> {
-            brandSpringEventPublisher.sendDeletedEvent(brandId);
+            applicationEventPublisher.publishEvent(event);
             return null;
         });
 
         // Then
-        ConsumerRecords<String, String> records = consumer.poll(Duration.ofSeconds(5));
-        assertThat(records.count()).isEqualTo(1);
+        AtomicReference<ConsumerRecord<String, String>> recordRef = new AtomicReference<>();
+        await().atMost(5, TimeUnit.SECONDS).until(() -> {
+            ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(100));
+            if (records.isEmpty()) {
+                return false;
+            }
+            recordRef.set(records.iterator().next());
+            return true;
+        });
 
-        ConsumerRecord<String, String> record = records.iterator().next();
+        ConsumerRecord<String, String> record = recordRef.get();
         assertThat(record.topic()).isEqualTo(deletedTopic);
 
         Envelope<BrandDeletedPayload> envelope = objectMapper.readValue(record.value(), new TypeReference<>() {});
         BrandDeletedPayload payload = envelope.payload();
 
         assertThat(payload.brandId()).isEqualTo(brandId);
+
+        ProductOutboxEvent outboxEvent = outboxRepository.findByEventId(eventId).orElseThrow();
+        assertThat(outboxEvent.getStatus()).isEqualTo(OutboxEventStatus.SUCCEEDED);
     }
 }

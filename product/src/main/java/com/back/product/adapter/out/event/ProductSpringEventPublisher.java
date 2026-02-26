@@ -6,6 +6,7 @@ import com.back.product.dto.model.ProductDto;
 import com.back.product.dto.model.ProductInfoDto;
 import com.back.product.event.spring.ProductCreationCompletedEvent;
 import com.back.product.event.spring.ProductDeletionCompletedEvent;
+import com.back.product.event.spring.ProductResyncRequestEvent;
 import com.back.product.event.spring.ProductUpdateCompletedEvent;
 import com.back.product.mapper.ProductSpringEventMapper;
 import jakarta.validation.Valid;
@@ -32,7 +33,7 @@ public class ProductSpringEventPublisher {
                 .flatMap(productDto -> productDto.options().stream())
                 .toList();
 
-        ProductUpdateCompletedEvent event = productSpringEventMapper.toProductUpdatedEvent(productInfoDto, optionDtos, thumbnailUrl);
+        ProductCreationCompletedEvent event = productSpringEventMapper.toProductCreatedEvent(productInfoDto, optionDtos, thumbnailUrl);
 
         applicationEventPublisher.publishEvent(event);
     }
@@ -43,7 +44,7 @@ public class ProductSpringEventPublisher {
                 .flatMap(productDto -> productDto.options().stream())
                 .toList();
 
-        ProductCreationCompletedEvent event = productSpringEventMapper.toProductCreatedEvent(productInfoDto, optionDtos, thumbnailUrl);
+        ProductUpdateCompletedEvent event = productSpringEventMapper.toProductUpdatedEvent(productInfoDto, optionDtos, thumbnailUrl);
 
         applicationEventPublisher.publishEvent(event);
     }
@@ -51,6 +52,13 @@ public class ProductSpringEventPublisher {
     @Loggable
     public void sendDeletedEvent(@Valid Long productInfoId) {
         ProductDeletionCompletedEvent event = productSpringEventMapper.toProductDeletedEvent(productInfoId);
+
+        applicationEventPublisher.publishEvent(event);
+    }
+
+    @Loggable
+    public void sendResyncRequestEvent(@Valid Long productInfoId) {
+        ProductResyncRequestEvent event = productSpringEventMapper.toResyncRequestEvent(productInfoId);
 
         applicationEventPublisher.publishEvent(event);
     }

@@ -2,6 +2,7 @@ package com.back.notification.adapter.out;
 
 import com.back.notification.domain.PriceAlert;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -27,5 +28,9 @@ public interface PriceAlertRepository extends JpaRepository<PriceAlert, Long> {
             @Param("threshold") LocalDateTime threshold
     );
 
-    List<PriceAlert> findByUserId(Long userId);
+    List<PriceAlert> findByUserIdOrderByIdDesc(Long userId);
+
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE PriceAlert pa SET pa.triggeredAt = :now WHERE pa.id IN :ids")
+    void bulkTrigger(@Param("ids") List<Long> ids, @Param("now") LocalDateTime now);
 }

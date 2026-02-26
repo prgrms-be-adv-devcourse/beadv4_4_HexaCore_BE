@@ -1,5 +1,7 @@
 package com.back.detector.app;
 
+import com.back.common.code.FailureCode;
+import com.back.common.exception.CustomException;
 import com.back.detector.app.usecase.BidSpamLogUseCase;
 import com.back.detector.app.usecase.CrawlingLogUseCase;
 import com.back.detector.app.usecase.HijackLogUseCase;
@@ -9,7 +11,6 @@ import com.back.detector.domain.HijackDetectResult;
 import com.back.detector.dto.response.BidSpamLogResponse;
 import com.back.detector.dto.response.CrawlingLogResponse;
 import com.back.detector.dto.response.HijackLogResponse;
-import com.back.detector.exception.BidSpamException;
 import com.back.detector.exception.CrawlingDetectedException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -39,7 +40,7 @@ public class DetectorFacade {
             if (result.requestCount() > 0) {
                 bidSpamLogUseCase.save(userId, result.banLevel(), result.requestCount());
             }
-            throw new BidSpamException();
+            throw new CustomException(FailureCode.BID_SPAM_DETECTED);
         }
     }
 

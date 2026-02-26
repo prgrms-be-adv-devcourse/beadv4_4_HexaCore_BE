@@ -3,6 +3,7 @@ package com.back.product.mapper;
 import com.back.product.document.ProductDocument;
 import com.back.product.domain.Category;
 import com.back.product.dto.command.CategoryDataCommand;
+import com.back.product.dto.response.CategoryPageResponseDto;
 import com.back.product.event.kafka.CategoryPayload;
 import com.back.product.dto.model.CategoryDto;
 import com.back.product.dto.response.CategoryListResponseDto;
@@ -51,6 +52,15 @@ public class CategoryMapper {
     public CategoryListResponseDto toListResponseDto(List<CategoryDto> categoryDtos) {
         return CategoryListResponseDto.builder()
                 .categories(categoryDtos)
+                .build();
+    }
+
+    public CategoryPageResponseDto toPageResponseDto(List<CategoryDto> categoryDtos, int totalPages, long totalElements, int currentPage) {
+        return CategoryPageResponseDto.builder()
+                .categories(categoryDtos)
+                .totalPages(totalPages)
+                .totalElements(totalElements)
+                .currentPage(currentPage)
                 .build();
     }
 

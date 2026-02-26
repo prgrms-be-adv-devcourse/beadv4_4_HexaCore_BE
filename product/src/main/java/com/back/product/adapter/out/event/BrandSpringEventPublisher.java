@@ -1,6 +1,5 @@
 package com.back.product.adapter.out.event;
 
-
 import com.back.common.annotation.Loggable;
 import com.back.product.dto.model.BrandDto;
 import com.back.product.event.spring.BrandCreationCompletedEvent;

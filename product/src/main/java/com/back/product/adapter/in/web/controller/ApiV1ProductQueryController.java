@@ -5,16 +5,20 @@ import com.back.common.code.SuccessCode;
 import com.back.common.response.CommonResponse;
 import com.back.product.adapter.in.web.api.ProductQueryApiController;
 import com.back.product.app.facade.ProductFacade;
+import com.back.product.dto.request.PageRequestDto;
 import com.back.product.dto.request.ProductQueryRequestDto;
 import com.back.product.dto.request.ProductSearchRequestDto;
-import com.back.product.dto.request.PageRequestDto;
 import com.back.product.dto.response.ProductDetailListResponseDto;
 import com.back.product.dto.response.ProductDetailResponseDto;
 import com.back.product.dto.response.ProductSearchResponseDto;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping(path = "/api/v1/products", produces = MediaType.APPLICATION_JSON_VALUE)

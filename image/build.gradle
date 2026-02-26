@@ -3,5 +3,13 @@ dependencies {
     implementation project(':security')
 
     implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
+
+    // 원본 색상을 제대로 읽기 위한 플러그인
+    implementation 'com.twelvemonkeys.imageio:imageio-jpeg:3.9.4'
+    implementation 'com.twelvemonkeys.imageio:imageio-tiff:3.9.4'
+
+    // 고품질 리사이징 라이브러리
+    implementation 'net.coobird:thumbnailator:0.4.20'
+
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
 }

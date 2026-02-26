@@ -10,7 +10,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
-@Tag(name = "Product", description = "상품 관련 API")
+@Tag(name = "Image", description = "이미지 관련 API")
 public interface ImageApiController {
     @Operation(summary = "이미지 파일 업로드", description = "이미지 파일들을 업로드하여 S3에 저장합니다.")
     @ApiResponse(responseCode = "200", description = "이미지 파일 등록 성공")

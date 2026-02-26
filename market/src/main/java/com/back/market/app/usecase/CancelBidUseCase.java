@@ -36,7 +36,7 @@ public class CancelBidUseCase {
         }
 
         //상태 검증
-        if(bidding.getStatus() == BiddingStatus.MATCHED || bidding.getStatus() == BiddingStatus.CANCELLED ||bidding.getStatus() == BiddingStatus.EXPIRED) {
+        if(bidding.getStatus() == BiddingStatus.MATCHED || bidding.getStatus() == BiddingStatus.CANCELLED ||bidding.getStatus() == BiddingStatus.EXPIRED || bidding.getStatus() == BiddingStatus.CANCELLED_PAYMENT_FAILED) {
             throw new BadRequestException(FailureCode.CANNOT_CANCEL_BID);
         }
 

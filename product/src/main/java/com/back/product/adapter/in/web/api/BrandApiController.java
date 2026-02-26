@@ -8,33 +8,34 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
-@Tag(name = "Product", description = "상품 관련 API")
+@Tag(name = "Brand", description = "브랜드 관련 API")
 public interface BrandApiController {
 
-    @Operation(summary = "브랜드 목록 조회", description = "상품의 브랜드 목록을 조회합니다.")
+    @Operation(summary = "브랜드 목록 조회", description = "상품의 브랜드 목록을 페이징하여 조회합니다.")
     @ApiResponse(responseCode = "200", description = "브랜드 목록 조회 성공")
-    @ApiResponse(responseCode = "401", description = "인증 실패", content = @Content)
     @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
-    CommonResponse<?> getBrands();
+    CommonResponse<?> getBrands(Integer page, Integer size);
 
-    @Operation(summary = "브랜드 생성", description = "새로운 브랜드를 생성합니다. 다중 생성이 가능합니다.")
+    @Operation(summary = "브랜드 생성", description = "새로운 브랜드를 생성합니다. 동일한 이름(특수문자 제외)이 존재할 경우 해당 브랜드는 생성이 건너뛰어집니다.")
     @ApiResponse(responseCode = "201", description = "브랜드 생성 성공")
+    @ApiResponse(responseCode = "400", description = "잘못된 요청 (입력 값 검증 실패)", content = @Content)
     @ApiResponse(responseCode = "401", description = "인증 실패", content = @Content)
     @ApiResponse(responseCode = "403", description = "권한 없음", content = @Content)
-    @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
     CommonResponse<?> createBrands(BrandListCreateRequestDto request);
 
-    @Operation(summary = "브랜드 수정", description = "기존의 브랜드를 수정합니다.")
+    @Operation(summary = "브랜드 수정", description = "기존의 브랜드를 수정합니다. 수정하려는 이름이 이미 존재할 경우 오류가 발생합니다.")
     @ApiResponse(responseCode = "200", description = "브랜드 수정 성공")
+    @ApiResponse(responseCode = "400", description = "이미 존재하는 브랜드 이름 (BRAND_NAME_DUPLICATE)", content = @Content)
     @ApiResponse(responseCode = "401", description = "인증 실패", content = @Content)
     @ApiResponse(responseCode = "403", description = "권한 없음", content = @Content)
-    @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
+    @ApiResponse(responseCode = "404", description = "존재하지 않는 브랜드 (BRAND_NOT_FOUND)", content = @Content)
     CommonResponse<?> modifyBrand(Long brandId, BrandDataRequestDto request);
 
-    @Operation(summary = "브랜드 삭제", description = "기존의 브랜드를 삭제합니다.")
+    @Operation(summary = "브랜드 삭제", description = "브랜드를 삭제합니다. 단, 해당 브랜드를 사용 중인 상품이 있을 경우 삭제가 불가능합니다.")
     @ApiResponse(responseCode = "204", description = "브랜드 삭제 성공")
     @ApiResponse(responseCode = "401", description = "인증 실패", content = @Content)
     @ApiResponse(responseCode = "403", description = "권한 없음", content = @Content)
-    @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
+    @ApiResponse(responseCode = "404", description = "존재하지 않는 브랜드 (BRAND_NOT_FOUND)", content = @Content)
+    @ApiResponse(responseCode = "409", description = "사용 중인 브랜드 삭제 불가 (BRAND_IN_USE)", content = @Content)
     CommonResponse<?> deleteBrand(Long brandId);
 }

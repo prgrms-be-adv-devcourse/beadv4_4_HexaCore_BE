@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.Objects;
 
 /**
  * 구매/판매입찰 등록 비즈니스 로직
@@ -40,6 +41,7 @@ public class RegisterBidUseCase {
     private final MarketCashAdapter marketCashAdapter;
     private final MarketSupport marketSupport;
     private final ApplicationEventPublisher eventPublisher;
+    private final BiddingStatusService biddingStatusService;
 
     /**
      * MARKET-010: 구매 입찰 등록
@@ -72,13 +74,37 @@ public class RegisterBidUseCase {
         );
 
         //요청에 따른 결과 수신
-        PayAndHoldResponseDto responseData = marketCashAdapter.getPayAndHoldResult(cashRequest);
+        PayAndHoldResponseDto responseData;
+        try {
+            responseData = marketCashAdapter.getPayAndHoldResult(cashRequest);
 
-        if (responseData.status() == PayAndHoldStatus.PAID) {
-            savedBidding.changeStatus(BiddingStatus.PROCESS);
-            log.info("[RegisterBid] 예치금 홀딩 & 입찰 등록 완료 (HOLD->PROCESS) - BiddingId: {}", savedBidding.getId());
-        } else if (responseData.status() == PayAndHoldStatus.REQUIRES_PG) {
-            log.info("[RegisterBid] PG 결제 필요, HOLD 상태 유지- relId: {}", responseData.relId());
+            // null 체크 추가: cash 어댑터가 null을 반환할 수 있으므로 방어적으로 처리
+            if (responseData == null) {
+                // 상태 변경을 새로운 트랜잭션에서 확실히 저장
+                biddingStatusService.markStatusInNewTx(savedBidding.getId(), BiddingStatus.CANCELLED_PAYMENT_FAILED);
+                log.error("[RegisterBuyBid] Cash 모듈이 null 응답을 반환했습니다. biddingId={}, productId={}, userId={}, price={}",
+                        savedBidding.getId(), product.getId(), userId, requestDto.price());
+                throw new BadRequestException(FailureCode.CASH_MODULE_ERROR);
+            }
+
+            if (responseData.status() == PayAndHoldStatus.PAID) {
+                savedBidding.changeStatus(BiddingStatus.PROCESS);
+                log.info("[RegisterBuyBid] 예치금 홀딩 & 입찰 등록 완료 (HOLD->PROCESS) - biddingId={}, productId={}, userId={}, price={}, relId={}",
+                        savedBidding.getId(), product.getId(), userId, requestDto.price(), responseData.relId());
+            } else if (responseData.status() == PayAndHoldStatus.REQUIRES_PG) {
+                log.info("[RegisterBuyBid] PG 결제 필요, HOLD 상태 유지 - biddingId={}, productId={}, userId={}, price={}, relId={}",
+                        savedBidding.getId(), product.getId(), userId, requestDto.price(), responseData.relId());
+            } else {
+                // 결제 실패 상태를 별도 트랜잭션으로 확실히 저장
+                biddingStatusService.markStatusInNewTx(savedBidding.getId(), BiddingStatus.CANCELLED_PAYMENT_FAILED);
+                log.warn("[RegisterBuyBid] 결제 상태가 실패로 확인되어 입찰을 취소합니다. biddingId={}, productId={}, userId={}, price={}, payStatus={}",
+                        savedBidding.getId(), product.getId(), userId, requestDto.price(), responseData.status());
+            }
+        } catch (Exception e) {
+            log.error("[RegisterBuyBid] Cash 모듈 호출 중 에러 발생. 입찰을 FAIL 처리합니다. biddingId={}, productId={}, userId={}, price={}, error={}",
+                    savedBidding.getId(), product.getId(), userId, requestDto.price(), e.getMessage(), e);
+            biddingStatusService.markStatusInNewTx(savedBidding.getId(), BiddingStatus.CANCELLED_PAYMENT_FAILED);
+            throw e;
         }
 
         return MarketPaymentResponseDto.from(
@@ -158,10 +184,14 @@ public class RegisterBidUseCase {
         ).ifPresent(minSellingBid -> {
             if(requestDto.price().compareTo(minSellingBid.getPrice()) >= 0) {
                 // 본인이 올린 상품의 거래를 막음
-                if (minSellingBid.getMarketUser().getId().equals(userId)) {
+                if (Objects.equals(minSellingBid.getMarketUser().getId(), userId)) {
+                    log.warn("[checkBuyPricePolicy] self trading detected. productId={}, userId={}, minSellingBidId={}, price={}, minPrice={}",
+                            requestDto.productId(), userId, minSellingBid.getId(), requestDto.price(), minSellingBid.getPrice());
                     throw new BadRequestException(FailureCode.SELF_TRADING_NOT_ALLOWED);
                 }
 
+                log.warn("[checkBuyPricePolicy] invalid buy price. productId={}, userId={}, price={}, minSellingPrice={}",
+                        requestDto.productId(), userId, requestDto.price(), minSellingBid.getPrice());
                 throw new BadRequestException(FailureCode.INVALID_BID_PRICE_BUY);
             }
         });
@@ -180,10 +210,14 @@ public class RegisterBidUseCase {
         ).ifPresent(maxBuyingBid -> {
             if(requestDto.price().compareTo(maxBuyingBid.getPrice()) <= 0) {
                 // 본인이 올린 상품의 거래를 막음
-                if (maxBuyingBid.getMarketUser().getId().equals(userId)) {
+                if (Objects.equals(maxBuyingBid.getMarketUser().getId(), userId)) {
+                    log.warn("[checkSellPricePolicy] self trading detected. productId={}, userId={}, maxBuyingBidId={}, price={}, maxPrice={}",
+                            requestDto.productId(), userId, maxBuyingBid.getId(), requestDto.price(), maxBuyingBid.getPrice());
                     throw new BadRequestException(FailureCode.SELF_TRADING_NOT_ALLOWED);
                 }
 
+                log.warn("[checkSellPricePolicy] invalid sell price. productId={}, userId={}, price={}, maxBuyingPrice={}",
+                        requestDto.productId(), userId, requestDto.price(), maxBuyingBid.getPrice());
                 throw new BadRequestException(FailureCode.INVALID_BID_PRICE_SELL);
             }
         });
@@ -208,3 +242,4 @@ public class RegisterBidUseCase {
      */
     private record UserProduct(MarketUser user, MarketProduct product) {}
 }
+

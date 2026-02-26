@@ -1,20 +1,26 @@
 package com.back.market.app;
 
 import com.back.common.dto.cash.response.PaymentCancelResponseDto;
+import com.back.market.adapter.out.detector.MarketDetectorAdapter;
 import com.back.market.app.usecase.*;
+import com.back.market.domain.MarketUser;
 import com.back.market.domain.Order;
 import com.back.market.dto.request.BiddingRequestDto;
 import com.back.market.dto.response.*;
 import com.back.market.event.OrderCompletedEvent;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class MarketFacade {
@@ -25,6 +31,8 @@ public class MarketFacade {
     private final CompleteOrderUseCase completeOrderUseCase;
     private final GetOrdersUseCase getOrdersUseCase;
     private final ApplicationEventPublisher eventPublisher;
+    private final MarketDetectorAdapter marketDetectorAdapter;
+    private final MarketSupport marketSupport;
 
     /**
      * MARKET-010: 구매 입찰 등록
@@ -33,7 +41,9 @@ public class MarketFacade {
      * @return PayAndHoldResponseDto (결제/홀딩 상태 포함)
      */
     @Transactional
-    public MarketPaymentResponseDto registerBuyBid(Long userId, BiddingRequestDto requestDto) {
+    public MarketPaymentResponseDto registerBuyBid(Long userId, String ip, BiddingRequestDto requestDto) {
+        MarketUser user = marketSupport.findMarketUserById(userId);
+        callDetector(userId, user.getEmail(), ip, requestDto.price());
         return registerBidUseCase.registerBuyBid(userId, requestDto);
     }
 
@@ -44,8 +54,20 @@ public class MarketFacade {
      * @return PayAndHoldResponseDto (결제 불필요, PAID 상태)
      */
     @Transactional
-    public MarketPaymentResponseDto registerSellBid(Long userId, BiddingRequestDto requestDto) {
+    public MarketPaymentResponseDto registerSellBid(Long userId, String ip, BiddingRequestDto requestDto) {
+        MarketUser user = marketSupport.findMarketUserById(userId);
+        callDetector(userId, user.getEmail(), ip, requestDto.price());
         return registerBidUseCase.registerSellBid(userId, requestDto);
+    }
+
+    /**
+     * 사이즈별 즉시 구매가/판매가 조회
+     * @param productInfoId 상품 정보 ID
+     * @return List<ProductSizePriceResponseDto>
+     */
+    @Transactional(readOnly = true)
+    public List<ProductSizePriceResponseDto> getAllSizePrices(Long productInfoId) {
+        return getInstantPriceUseCase.getAllSizePrices(productInfoId);
     }
 
     /**
@@ -74,7 +96,9 @@ public class MarketFacade {
      * @param requestDto BiddingRequestDto
      * @return 생성된 주문(Order)의 ID
      */
-    public MarketPaymentResponseDto purchaseNow(Long buyerId, BiddingRequestDto requestDto) {
+    public MarketPaymentResponseDto purchaseNow(Long buyerId, String ip, BiddingRequestDto requestDto) {
+        MarketUser user = marketSupport.findMarketUserById(buyerId);
+        callDetector(buyerId, user.getEmail(), ip, requestDto.price());
         return matchInstantTradeUseCase.buyNow(buyerId, requestDto);
     }
 
@@ -84,7 +108,9 @@ public class MarketFacade {
      * @param requestDto BiddingRequestDto
      * @return 생성된 주문(Order)의 ID
      */
-    public MarketPaymentResponseDto sellNow(Long sellerId, BiddingRequestDto requestDto) {
+    public MarketPaymentResponseDto sellNow(Long sellerId, String ip, BiddingRequestDto requestDto) {
+        MarketUser user = marketSupport.findMarketUserById(sellerId);
+        callDetector(sellerId, user.getEmail(), ip, requestDto.price());
         return matchInstantTradeUseCase.sellNow(sellerId, requestDto);
     }
 
@@ -151,5 +177,14 @@ public class MarketFacade {
     @Transactional(readOnly = true)
     public OrderDetailResponseDto getOrderDetail(Long userId, Long orderId) {
         return getOrdersUseCase.getOrderDetail(userId, orderId);
+    }
+
+    private void callDetector(Long sellerId, String email, String ip, BigDecimal price) {
+        try {
+            marketDetectorAdapter.detectBidSpam(sellerId);
+            marketDetectorAdapter.detectHijack(sellerId, email, ip, price);
+        } catch (Exception e) {
+            log.warn("[MarketFacade] Detector API 호출 실패. userId: {}, email: {}, ip: {}, price: {}, error: {}", sellerId, email, ip, price, e.getMessage(), e);
+        }
     }
 }

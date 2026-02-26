@@ -38,6 +38,12 @@ public class MarketCashAdapter {
             // 공통 에러 던지기
             throw new BadRequestException(FailureCode.CASH_MODULE_ERROR);
         }
+
+        if (response.getData() == null) {
+            log.error("[MarketCashAdapter] 결제 응답 성공(OK)이나 데이터가 null입니다. (RelId: {})", paymentReq.relId());
+            // 데이터가 없으면 비즈니스 로직을 진행할 수 없으므로 예외 발생
+            throw new BadRequestException(FailureCode.CASH_MODULE_ERROR);
+        }
         return response.getData();
     }
 
