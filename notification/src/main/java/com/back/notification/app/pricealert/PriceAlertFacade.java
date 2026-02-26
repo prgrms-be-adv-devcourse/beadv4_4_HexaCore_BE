@@ -56,10 +56,15 @@ public class PriceAlertFacade {
 
     private Map<Long, ProductDetailDto> fetchProductDetailMap(List<Long> productIds) {
         try {
-            ProductDetailListResponse response = productFeignClient.getProducts(productIds).getData();
+            log.info("[PriceAlert] Feign 호출 시작 - productIds: {}", productIds);
+            var feignResponse = productFeignClient.getProducts(productIds);
+            log.info("[PriceAlert] Feign 응답 - feignResponse: {}, data: {}", feignResponse, feignResponse != null ? feignResponse.getData() : null);
+            ProductDetailListResponse response = feignResponse.getData();
             if (response == null || response.getProducts() == null) {
+                log.warn("[PriceAlert] response 또는 products가 null - response: {}", response);
                 return Collections.emptyMap();
             }
+            log.info("[PriceAlert] products 개수: {}", response.getProducts().size());
             // ProductDetailDto 하나에 여러 variant(ProductDto)가 묶여 있으므로
             // 각 variant의 productId를 key로 해당 ProductDetailDto를 매핑
             return response.getProducts().stream()
