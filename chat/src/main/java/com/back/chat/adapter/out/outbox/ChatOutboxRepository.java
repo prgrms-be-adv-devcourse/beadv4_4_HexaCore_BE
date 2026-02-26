@@ -114,4 +114,6 @@ RETURNING status
             @Param("retryBaseDelaySeconds") int retryBaseDelaySeconds,
             @Param("retryMaxDelaySeconds") int retryMaxDelaySeconds
     );
+
+    long countByStatus(OutboxStatus status);
 }

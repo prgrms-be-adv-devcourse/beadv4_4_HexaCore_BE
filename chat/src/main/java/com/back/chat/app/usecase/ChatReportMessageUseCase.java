@@ -1,5 +1,6 @@
 package com.back.chat.app.usecase;
 
+import com.back.chat.adapter.out.metrics.ChatMetrics;
 import com.back.chat.adapter.out.outbox.ChatOutbox;
 import com.back.chat.adapter.out.outbox.ChatOutboxRepository;
 import com.back.chat.app.ChatSupport;
@@ -16,6 +17,7 @@ import com.back.common.chat.ChatMessageBlindedKafkaEvent;
 import com.back.common.code.FailureCode;
 import com.back.common.exception.BadRequestException;
 import com.back.common.exception.ConflictException;
+import io.micrometer.core.instrument.Tags;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -33,6 +35,8 @@ public class ChatReportMessageUseCase {
     private final ApplicationEventPublisher eventPublisher;
     private final ChatOutboxRepository chatOutboxRepository;
     private final JsonMapper jsonMapper;
+
+    private final ChatMetrics metrics;
 
     public ChatMessageReportResponseDto reportMessage(Long reporterUserId, ChatMessageReportRequestDto requestDto) {
         Long messageId = requestDto.chatMessageId();
@@ -64,6 +68,8 @@ public class ChatReportMessageUseCase {
 
         if (blindedNow) {
 
+            metrics.incBlindTrigger();
+
             eventPublisher.publishEvent(
                     new ChatMessageBlindedEvent(
                             message.getId(),
@@ -89,16 +95,21 @@ public class ChatReportMessageUseCase {
                 throw new IllegalStateException("Outbox payload 직렬화 실패", e);
             }
 
-            ChatOutbox outbox = chatOutboxRepository.save(
-                    ChatOutbox.pending(
-                            UUID.fromString(payload.eventId()),
-                            "CHAT_MESSAGE",
-                            message.getId(),
-                            ChatEventType.MESSAGE_BLINDED,
-                            payloadJson,
-                            now
+            ChatOutbox outbox = metrics.recordCallable(
+                    "resello_chat_outbox_save",
+                    Tags.of("eventType", ChatEventType.MESSAGE_BLINDED.name()),
+                    () -> chatOutboxRepository.save(
+                            ChatOutbox.pending(
+                                    UUID.fromString(payload.eventId()),
+                                    "CHAT_MESSAGE",
+                                    message.getId(),
+                                    ChatEventType.MESSAGE_BLINDED,
+                                    payloadJson,
+                                    now
+                            )
                     )
             );
+
             eventPublisher.publishEvent(new ChatOutboxSavedEvent(outbox.getId()));
         }
 

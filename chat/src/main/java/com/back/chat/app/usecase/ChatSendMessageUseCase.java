@@ -1,5 +1,6 @@
 package com.back.chat.app.usecase;
 
+import com.back.chat.adapter.out.metrics.ChatMetrics;
 import com.back.chat.adapter.out.redis.RedisChatRestrictionReader;
 import com.back.chat.app.ChatSupport;
 import com.back.chat.domain.entity.ChatMessage;
@@ -9,6 +10,7 @@ import com.back.chat.domain.event.ChatMessageSavedEvent;
 import com.back.common.code.FailureCode;
 import com.back.common.exception.BadRequestException;
 import com.back.common.exception.ForbiddenException;
+import io.micrometer.core.instrument.Tags;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -24,6 +26,8 @@ public class ChatSendMessageUseCase {
     private final ApplicationEventPublisher eventPublisher;
     private final RedisChatRestrictionReader redisChatRestrictionReader;
 
+    private final ChatMetrics metrics;
+
     @Transactional
     public void sendMessage(ChatMessageSendRequestDto requestDto, Long userId) {
         LocalDateTime now = LocalDateTime.now();
@@ -38,8 +42,12 @@ public class ChatSendMessageUseCase {
             throw new ForbiddenException(FailureCode.CHAT_RESTRICTED);
         }
 
-        ChatMessage savedMessage = chatSupport.saveMessage(
-                ChatMessage.create(roomId,userId,requestDto.content())
+        ChatMessage savedMessage = metrics.recordCallable(
+                "resello_chat_message_save",
+                Tags.of("result", "ok"),
+                () -> chatSupport.saveMessage(
+                        ChatMessage.create(roomId, userId, requestDto.content())
+                )
         );
 
         ChatMessagePayload payload = new ChatMessagePayload(
